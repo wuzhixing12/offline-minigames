@@ -486,7 +486,7 @@
       id: id, team: team,
       x: pos.x, y: pos.y, r: 17,
       body: pos.a, aim: pos.a,
-      hp: ai ? 2 : 3, maxHp: ai ? 2 : 3,
+      hp: ai ? 2 : 5, maxHp: ai ? 2 : 5,
       lives: ai ? -1 : 3,
       alive: true, fireCd: ai ? 0.9 : 0,
       shield: 2.4, muzzle: 0, flash: 0,
@@ -499,8 +499,8 @@
 
   function newDemo(){
     demoTanks = [
-      { team:'p1', x:170, y:540, r:17, body:-1.2, aim:-1.2, hp:3, maxHp:3, lives:3, alive:true, shield:0, muzzle:0, flash:0 },
-      { team:'p2', x:830, y:540, r:17, body:-1.95, aim:-1.95, hp:3, maxHp:3, lives:3, alive:true, shield:0, muzzle:0, flash:0 },
+      { team:'p1', x:170, y:540, r:17, body:-1.2, aim:-1.2, hp:5, maxHp:5, lives:3, alive:true, shield:0, muzzle:0, flash:0 },
+      { team:'p2', x:830, y:540, r:17, body:-1.95, aim:-1.95, hp:5, maxHp:5, lives:3, alive:true, shield:0, muzzle:0, flash:0 },
       { team:'ai', x:300, y:140, r:17, body:1.4, aim:1.4, hp:2, maxHp:2, lives:-1, alive:true, shield:0, muzzle:0, flash:0 },
       { team:'ai', x:700, y:150, r:17, body:1.8, aim:1.8, hp:2, maxHp:2, lives:-1, alive:true, shield:0, muzzle:0, flash:0 }
     ];
@@ -685,8 +685,8 @@
     state.time = 0;
     state.kills = { p1:0, p2:0, team:0 };
     state.deaths = { p1:0, p2:0 };
-    state.target = mode === 'pvp' ? 5 : mode === 'solo' ? 8 : 10;
-    state.aiCount = mode === 'pvp' ? 0 : mode === 'solo' ? 2 : 3;
+    state.target = mode === 'pvp' ? 5 : mode === 'solo' ? 6 : 8;
+    state.aiCount = mode === 'pvp' ? 0 : mode === 'solo' ? 1 : 2;
 
     buildWalls();
     tanks = [];
@@ -805,9 +805,9 @@
     var dist = Math.sqrt(dist2(t.x, t.y, target.x, target.y));
     var los = lineClear(t.x, t.y, target.x, target.y);
 
-    t.aim = rotToward(t.aim, want, 2.6 * dt);
+    t.aim = rotToward(t.aim, want, 1.7 * dt);
 
-    if (los && dist < 540 && Math.abs(normAng(want - t.aim)) < 0.14) tryFire(t);
+    if (los && dist < 500 && Math.abs(normAng(want - t.aim)) < 0.2) tryFire(t);
 
     var mx = 0, my = 0;
     if (!los || dist > 310) {
@@ -845,7 +845,7 @@
       }
 
       var px = t.x, py = t.y;
-      tryMove(t, mx * 108 * dt, my * 108 * dt);
+      tryMove(t, mx * 88 * dt, my * 88 * dt);
       if (mx && my) { t.treadT -= dt; if (t.treadT <= 0) { t.treadT = 0.12; addTread(t); } }
       if (Math.abs(t.x - px) + Math.abs(t.y - py) < 0.6) {
         t.aiJitter += dt;
@@ -879,15 +879,15 @@
     if (!t.alive || state.phase !== 'play' || state.paused || state.over) return;
     if (t.fireCd > 0) return;
     var ai = t.team === 'ai';
-    t.fireCd = ai ? 0.78 + Math.random() * 0.46 : 0.4;
+    t.fireCd = ai ? 1.6 + Math.random() * 0.9 : 0.4;
     var ang = t.aim;
     if (!ai) {
       var assist = assistAngle(t);
       if (assist !== null) ang = assist;
     } else {
-      ang += (Math.random() - 0.5) * 0.06;
+      ang += (Math.random() - 0.5) * 0.22;
     }
-    var sp = ai ? 395 : 555;
+    var sp = ai ? 320 : 555;
     bullets.push({
       x: t.x + Math.cos(ang) * 26,
       y: t.y + Math.sin(ang) * 26,
@@ -928,7 +928,7 @@
     }
 
     if (t.team === 'ai') {
-      t.respawnAt = state.time + 2.3;
+      t.respawnAt = state.time + 3.4;
     } else {
       state.deaths[t.team]++;
       if (state.mode === 'pvp' || t.lives < 0) {

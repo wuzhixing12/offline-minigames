@@ -302,9 +302,11 @@
     </div>
 
     <div class="diffs" id="diffs">
+      <button class="diff-btn" data-diff="mini" type="button">迷你 6×6 · 5雷</button>
       <button class="diff-btn active" data-diff="beginner" type="button">初级 9×9 · 10雷</button>
       <button class="diff-btn" data-diff="intermediate" type="button">中级 16×16 · 40雷</button>
       <button class="diff-btn" data-diff="expert" type="button">高级 16×30 · 99雷</button>
+      <button class="diff-btn" data-diff="nightmare" type="button">地狱 20×30 · 145雷</button>
     </div>
 
     <div class="panel">
@@ -328,9 +330,11 @@
   'use strict';
 
   var DIFFS = {
+    mini: { rows: 6, cols: 6, mines: 5, cell: 42 },
     beginner: { rows: 9, cols: 9, mines: 10, cell: 34 },
     intermediate: { rows: 16, cols: 16, mines: 40, cell: 32 },
-    expert: { rows: 16, cols: 30, mines: 99, cell: 28 }
+    expert: { rows: 16, cols: 30, mines: 99, cell: 28 },
+    nightmare: { rows: 20, cols: 30, mines: 145, cell: 26 }
   };
 
   var boardEl = document.getElementById('board');
