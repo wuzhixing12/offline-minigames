@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#070d18">
+<title>汉字找茬 · 离线小游戏</title>
+<style>
+  :root{
+    --text:#eaf2ff;--muted:#8ea3bd;--line:rgba(148,163,184,.16);
+    --cyan:#38bdf8;--mint:#5eead4;--amber:#fbbf24;--rose:#fb7185;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;min-height:100%;}
+  body{
+    min-height:100vh;display:flex;align-items:center;justify-content:center;
+    padding:22px 16px 26px;color:var(--text);
+    font-family:"Segoe UI","Microsoft YaHei","PingFang SC","Hiragino Sans GB",sans-serif;
+    background:
+      radial-gradient(900px 620px at 8% -6%, rgba(94,234,212,.11), transparent 62%),
+      radial-gradient(760px 560px at 102% 104%, rgba(56,189,248,.13), transparent 62%),
+      radial-gradient(720px 520px at 50% 48%, rgba(251,191,36,.07), transparent 68%),
+      #070d18;
+    -webkit-font-smoothing:antialiased;overflow-x:hidden;-webkit-tap-highlight-color:transparent;
+  }
+  button{font:inherit;color:inherit;}
+  .app{width:min(100%,720px);display:flex;flex-direction:column;gap:15px;}
+
+  .topbar{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+  .brand{display:flex;align-items:center;gap:13px;min-width:0;}
+  .logo{
+    width:54px;height:54px;flex:0 0 auto;border-radius:16px;display:grid;place-items:center;
+    font-size:25px;font-weight:900;color:#04211d;
+    background:linear-gradient(150deg,#6ee7b7,#0d9488 58%,#0f172a);
+    box-shadow:0 12px 28px rgba(20,184,166,.24), inset 0 1px 0 rgba(255,255,255,.36);
+  }
+  h1{
+    margin:0;font-size:clamp(22px,4.2vw,28px);font-weight:800;letter-spacing:.04em;
+    background:linear-gradient(100deg,#f0f9ff,#a7f3d0 46%,#bae6fd);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .brand p{margin:4px 0 0;font-size:12.5px;color:var(--muted);}
+  .stats{display:flex;gap:8px;flex-wrap:wrap;}
+  .stat{min-width:64px;padding:8px 11px;border-radius:13px;background:rgba(255,255,255,.045);border:1px solid var(--line);}
+  .stat span{display:block;font-size:10.5px;color:var(--muted);letter-spacing:.08em;}
+  .stat b{display:block;margin-top:2px;font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;}
+  .stat b.hot{color:var(--amber);}
+
+  .timebar{height:5px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden;}
+  .timebar i{display:block;height:100%;width:100%;border-radius:inherit;background:linear-gradient(90deg,#5eead4,#38bdf8 58%,#fbbf24);transition:width .12s linear,background .3s ease;}
+  .timebar.low i{background:linear-gradient(90deg,#fb7185,#f97316);}
+
+  .stage{display:flex;justify-content:center;padding:1px 0 2px;}
+  .board-shell{
+    width:min(84vw,470px);padding:clamp(8px,1.7vw,12px);border-radius:26px;position:relative;
+    background:linear-gradient(180deg,rgba(255,255,255,.065),rgba(255,255,255,.022));
+    border:1px solid rgba(255,255,255,.10);
+    box-shadow:0 28px 70px rgba(0,0,0,.46), inset 0 1px 0 rgba(255,255,255,.10);
+  }
+  .board-shell::before{
+    content:"";position:absolute;inset:-1px;border-radius:27px;pointer-events:none;
+    background:linear-gradient(130deg,rgba(94,234,212,.34),transparent 34%,transparent 66%,rgba(56,189,248,.30));
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;mask-composite:exclude;padding:1px;
+  }
+  .board{
+    --fs:30px;position:relative;width:100%;aspect-ratio:1/1;border-radius:17px;overflow:hidden;
+    display:grid;grid-template-columns:repeat(var(--n,5),1fr);grid-template-rows:repeat(var(--n,5),1fr);
+    gap:clamp(2px,.55vw,5px);padding:clamp(5px,1.1vw,8px);
+    background:
+      radial-gradient(circle at 30% 16%, rgba(94,234,212,.07), transparent 58%),
+      linear-gradient(160deg,#0b1a25,#071019 62%,#08131f);
+    box-shadow:inset 0 0 0 1px rgba(148,163,184,.10), inset 0 18px 40px rgba(0,0,0,.32);
+    touch-action:manipulation;user-select:none;
+  }
+  .cell{
+    border:0;padding:0;border-radius:8px;cursor:pointer;position:relative;
+    display:grid;place-items:center;font-size:var(--fs);line-height:1;font-weight:600;
+    color:#dff3ff;background:linear-gradient(160deg,rgba(255,255,255,.055),rgba(255,255,255,.018));
+    box-shadow:inset 0 0 0 1px rgba(148,163,184,.075);
+    transition:background .14s ease,transform .14s ease,box-shadow .14s ease;
+  }
+  .cell:hover{background:rgba(94,234,212,.09);}
+  .cell:active{transform:scale(.95);}
+  .cell.found{
+    background:linear-gradient(160deg,rgba(94,234,212,.55),rgba(56,189,248,.30));
+    color:#04121f;box-shadow:0 0 20px rgba(94,234,212,.55),inset 0 0 0 1px rgba(255,255,255,.4);
+  }
+  .cell.wrong{animation:wrong .3s ease;background:rgba(251,113,133,.20);}
+  @keyframes wrong{0%,100%{transform:translateX(0);}25%{transform:translateX(-3px);}75%{transform:translateX(3px);}}
+
+  .panel{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  .status{font-size:12.5px;color:var(--muted);min-height:22px;display:flex;align-items:center;gap:7px;}
+  .status i{width:8px;height:8px;border-radius:50%;background:var(--mint);box-shadow:0 0 9px rgba(94,234,212,.7);}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .btn{
+    border:1px solid rgba(255,255,255,.11);border-radius:11px;padding:8px 13px;cursor:pointer;
+    background:rgba(255,255,255,.055);color:#dbeafe;font-size:12.5px;font-weight:600;
+    transition:background .16s ease,border-color .16s ease,transform .16s ease;
+  }
+  .btn:hover{background:rgba(255,255,255,.10);border-color:rgba(94,234,212,.4);transform:translateY(-1px);}
+  .btn.primary{
+    color:#04211d;border-color:transparent;
+    background:linear-gradient(135deg,#6ee7b7,#38bdf8);
+    box-shadow:0 8px 20px rgba(52,211,153,.24);
+  }
+  .foot{font-size:11.5px;color:#5f7286;letter-spacing:.03em;text-align:center;}
+
+  .overlay{
+    position:absolute;inset:0;z-index:9;display:none;align-items:center;justify-content:center;padding:18px;
+    background:rgba(3,8,18,.76);backdrop-filter:blur(7px);border-radius:17px;
+  }
+  .overlay.on{display:flex;animation:fadeIn .25s ease;}
+  @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+  .card{
+    width:min(100%,330px);padding:24px 22px 20px;border-radius:22px;text-align:center;
+    background:linear-gradient(180deg,rgba(12,33,32,.98),rgba(8,13,24,.98));
+    border:1px solid rgba(94,234,212,.24);
+    box-shadow:0 26px 70px rgba(0,0,0,.55), 0 0 44px rgba(94,234,212,.10);
+  }
+  .kicker{font-size:11.5px;letter-spacing:.22em;color:#6ee7b7;font-weight:700;}
+  .card h2{
+    margin:10px 0 6px;font-size:30px;font-weight:900;letter-spacing:.08em;
+    background:linear-gradient(100deg,#ecfdf5,#6ee7b7,#bae6fd);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .card p{margin:0 0 16px;font-size:12.5px;line-height:1.7;color:var(--muted);}
+  .res-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
+  .res-grid div{padding:9px 8px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid var(--line);}
+  .res-grid span{display:block;font-size:10.5px;color:var(--muted);}
+  .res-grid b{display:block;margin-top:2px;font-size:17px;font-variant-numeric:tabular-nums;}
+  .card .btn.primary{width:100%;padding:11px 14px;font-size:13.5px;}
+  .card .btn.ghost{width:100%;margin-top:8px;}
+
+  @media (max-width:620px){
+    body{padding:14px 12px 18px;}
+    .app{gap:12px;}
+    .logo{width:46px;height:46px;border-radius:14px;font-size:21px;}
+    .stat{min-width:56px;padding:7px 9px;}
+    .stat b{font-size:15px;}
+    .brand p{font-size:11.5px;}
+    .board-shell{padding:7px;border-radius:20px;}
+    .board{border-radius:14px;padding:5px;}
+    .cell{border-radius:6px;}
+    .overlay{position:fixed;inset:0;z-index:80;border-radius:0;padding:16px;}
+    .card{padding:20px 18px 16px;}
+    .card h2{font-size:27px;}
+  }
+  @media (max-height:730px) and (min-width:700px){
+    .board-shell{width:min(70vh,470px);}
+    .brand p{display:none;}
+    .foot{display:none;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo">字</div>
+      <div>
+        <h1>汉字找茬</h1>
+        <p>满屏相同的字里，藏着一个不一样的</p>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><span>得分</span><b id="score">0</b></div>
+      <div class="stat"><span>时间</span><b id="time">60.0</b></div>
+      <div class="stat"><span>连击</span><b id="combo" class="hot">0</b></div>
+      <div class="stat"><span>进度</span><b id="seen" class="hot">0 / 338</b></div>
+      <div class="stat"><span>最佳</span><b id="best">—</b></div>
+    </div>
+  </div>
+
+  <div class="timebar" id="timebar"><i id="timefill"></i></div>
+
+  <div class="stage">
+    <div class="board-shell">
+      <div class="board" id="board" aria-label="汉字找茬棋盘">
+        <div class="overlay on" id="overlay"><div class="card" id="ovCard"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="status" id="status"><i></i><span>点错扣 3 秒，连击越高分越多</span></div>
+    <div class="actions">
+      <button class="btn" id="skip">跳过</button>
+      <button class="btn" id="pause">暂停</button>
+      <button class="btn" id="restart">重开</button>
+    </div>
+  </div>
+  <p class="foot">每找对一个，棋盘会变大一点 · 空格暂停 · 支持鼠标和触屏</p>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var BEST_KEY = 'tx_chardiff_best_v1';
+  var TOTAL = 60;
+  var PAIRS = [
+    ['已','己'],['未','末'],['士','土'],['日','曰'],['人','入'],['力','刀'],['由','甲'],['田','由'],
+    ['木','本'],['大','太'],['王','玉'],['乌','鸟'],['免','兔'],['折','拆'],['侯','候'],['拔','拨'],
+    ['茶','荼'],['戌','戍'],['崇','祟'],['壶','壸'],['概','慨'],['燥','躁'],['即','既'],['晴','睛'],
+    ['密','蜜'],['慕','幕'],['辨','辩'],['赢','嬴'],['千','干'],['午','牛'],['天','夫'],['夫','夭'],
+    ['白','自'],['目','日'],['口','囗'],['主','王'],['正','止'],['石','右'],['今','令'],['冷','泠'],
+    ['冶','治'],['洗','冼'],['准','淮'],['住','往'],['住','注'],['柱','拄'],['侍','待'],['特','持'],
+    ['诗','侍'],['洁','结'],['根','跟'],['很','狠'],['捡','检'],['脸','睑'],['钢','纲'],['刚','钢'],
+    ['抗','坑'],['坑','炕'],['跑','抱'],['抱','胞'],['澡','燥'],['操','燥'],['赌','堵'],['堵','睹'],
+    ['棵','颗'],['课','棵'],['般','船'],['船','艘'],['宵','霄'],['削','消'],['销','消'],['稍','梢'],
+    ['辨','瓣'],['瓣','辫'],['暮','幕'],['墓','幕'],['慢','漫'],['籍','藉'],['木','术'],['木','末'],
+    ['本','末'],['天','无'],['太','犬'],['大','犬'],['大','丈'],['夫','失'],['白','百'],['白','曰'],
+    ['申','甲'],['申','由'],['电','申'],['目','自'],['贝','见'],['儿','几'],['几','凡'],['凡','九'],
+    ['凡','丸'],['丸','九'],['力','万'],['刀','刁'],['刀','刃'],['入','八'],['八','人'],['人','大'],
+    ['士','上'],['工','土'],['干','于'],['于','千'],['午','干'],['牛','半'],['半','丰'],['丰','王'],
+    ['立','产'],['未','朱'],['目','且'],['且','旦'],['日','旦'],['旦','早'],['舌','古'],['古','占'],
+    ['占','右'],['石','正'],['走','足'],['车','东'],['东','乐'],['月','用'],['用','甩'],['舟','丹'],
+    ['手','毛'],['毛','生'],['生','牛'],['立','六'],['六','文'],['广','厂'],['尸','户'],['户','卢'],
+    ['清','晴'],['清','请'],['请','情'],['情','晴'],['精','睛'],['晴','精'],['陪','培'],['赔','陪'],
+    ['破','坡'],['坡','波'],['波','破'],['玻','波'],['喝','渴'],['揭','竭'],['竭','歇'],['澡','躁'],
+    ['缥','飘'],['漂','飘'],['飘','瓢'],['狼','浪'],['狼','狠'],['唱','倡'],['倡','昌'],['担','但'],
+    ['但','胆'],['胆','担'],['坦','担'],['祖','阻'],['组','阻'],['租','组'],['祖','租'],['脸','险'],
+    ['险','检'],['剑','箭'],['剪','箭'],['桥','骄'],['骄','娇'],['娇','桥'],['轿','桥'],['侨','桥'],
+    ['棋','旗'],['港','巷'],['棕','踪'],['综','踪'],['踪','宗'],['绕','饶'],['绕','烧'],['烧','浇'],
+    ['梢','哨'],['悄','俏'],['俏','哨'],['魂','魄'],['慢','馒'],['馒','漫'],['慕','暮'],['墓','暮'],
+    ['版','板'],['伴','拌'],['拌','绊'],['绊','伴'],['伴','畔'],['畔','叛'],['叛','判'],['键','健'],
+    ['健','建'],['康','糠'],['嫌','谦'],['谦','歉'],['歉','嫌'],['嫌','赚'],['效','郊'],['校','较'],
+    ['蚊','纹'],['泡','炮'],['泡','跑'],['跑','袍'],['袍','抱'],['饱','抱'],['胞','泡'],['冒','胃'],
+    ['冒','昌'],['晶','品'],['器','哭'],['究','穷'],['穷','空'],['宫','官'],['官','管'],['管','馆'],
+    ['苔','胎'],['胎','抬'],['始','治'],['恰','洽'],['金','全'],['玲','铃'],['铃','岭'],['领','岭'],
+    ['项','顶'],['顺','须'],['散','撒'],['撒','洒'],['洒','酒'],['视','现'],['现','观'],['观','规'],
+    ['规','视'],['财','材'],['材','村'],['贩','饭'],['饿','鹅'],['鸭','鸦'],['雅','鸦'],['鸣','呜'],
+    ['岛','鸟'],['鱼','鲁'],['座','坐'],['做','作'],['作','昨'],['带','戴'],['栽','载'],['载','戴'],
+    ['裁','栽'],['裁','载'],['裁','戴'],['幸','辛'],['辛','宰'],['宰','牢'],['辩','辫'],['辩','瓣'],
+    ['赢','羸'],['鹰','雁'],['磨','摩'],['磨','魔'],['摩','魔'],['磨','蘑'],['简','筒'],['箱','厢'],
+    ['想','箱'],['像','象'],['像','橡'],['橡','象'],['春','舂'],['秦','泰'],['秦','奏'],['奏','泰'],
+    ['奉','春'],['棒','捧'],['篷','蓬'],['篷','逢'],['缝','逢'],['缝','篷'],['蜂','峰'],['锋','蜂'],
+    ['锋','峰'],['微','徽'],['路','络'],['络','洛'],['洛','落'],['阁','搁'],['搁','隔'],['隔','阁'],
+    ['融','溶'],['溶','熔'],['熔','融'],['滨','宾'],['缤','滨'],['缤','濒'],['磋','搓'],['渡','度'],
+    ['渡','镀'],['涂','途'],['除','徐'],['余','佘'],['晚','挽'],['挽','娩'],['娩','晚'],['勉','免'],
+    ['采','彩'],['彩','踩'],['踩','采'],['踩','睬'],['睬','彩'],['菜','蔡'],['察','擦'],['噪','燥'],
+    ['噪','躁'],['澡','噪'],['操','噪'],['澡','操'],['澡','藻'],['藻','燥'],['水','永'],['办','为'],
+    ['长','张'],['里','重'],['句','勾'],['旬','句'],['勺','勾'],['内','肉'],['囚','因'],['庆','厌'],
+    ['庄','压'],['在','左']
+  ];
+
+  var SEEN_KEY = 'tx_chardiff_seen_v1';
+  var seenSet = {};
+  var seenCount = 0;
+  function loadSeen() {
+    try {
+      var raw = localStorage.getItem(SEEN_KEY);
+      if (!raw) return;
+      var arr = JSON.parse(raw);
+      if (!arr || !arr.length) return;
+      for (var i = 0; i < arr.length; i++) {
+        var k = arr[i];
+        if (typeof k === 'number' && k >= 0 && k < PAIRS.length && !seenSet[k]) {
+          seenSet[k] = 1;
+          seenCount++;
+        }
+      }
+    } catch (e) {}
+  }
+  function saveSeen() {
+    try {
+      var arr = [];
+      for (var k in seenSet) {
+        if (seenSet.hasOwnProperty(k)) arr.push(Number(k));
+      }
+      localStorage.setItem(SEEN_KEY, JSON.stringify(arr));
+    } catch (e) {}
+  }
+  function markSeen(i) {
+    if (typeof i !== 'number' || seenSet[i]) return;
+    seenSet[i] = 1;
+    seenCount++;
+    saveSeen();
+  }
+
+  var board = document.getElementById('board');
+  var scoreEl = document.getElementById('score');
+  var timeEl = document.getElementById('time');
+  var comboEl = document.getElementById('combo');
+  var bestEl = document.getElementById('best');
+  var seenEl = document.getElementById('seen');
+  var timeFill = document.getElementById('timefill');
+  var timebar = document.getElementById('timebar');
+  var overlay = document.getElementById('overlay');
+  var ovCard = document.getElementById('ovCard');
+  var statusEl = document.getElementById('status');
+  var pauseBtn = document.getElementById('pause');
+  var restartBtn = document.getElementById('restart');
+  var skipBtn = document.getElementById('skip');
+
+  var score = 0, combo = 0, maxCombo = 0, found = 0, best = 0;
+  var left = TOTAL * 1000, lastTs = 0, raf = 0;
+  var running = false, paused = false, over = false;
+  var oddIndex = -1, baseChar = '', oddChar = '';
+  var curPid = -1, lastPid = -1, skips = 0;
+  var locked = false;
+
+  try { best = parseInt(localStorage.getItem(BEST_KEY) || '0', 10) || 0; } catch (e) { best = 0; }
+  bestEl.textContent = best > 0 ? best : '—';
+  loadSeen();
+
+  function fmt(ms) {
+    var s = Math.max(0, ms / 1000);
+    return s.toFixed(1);
+  }
+
+  function setStatus(text) {
+    statusEl.querySelector('span').textContent = text;
+  }
+
+  function updateHud() {
+    scoreEl.textContent = String(score);
+    comboEl.textContent = String(combo);
+    seenEl.textContent = seenCount + ' / ' + PAIRS.length;
+    timeEl.textContent = fmt(left);
+    var pct = Math.max(0, Math.min(100, left / (TOTAL * 1000) * 100));
+    timeFill.style.width = pct + '%';
+    timebar.classList.toggle('low', left <= 15000);
+  }
+
+  function layoutFont() {
+    if (!board) return;
+    var n = board.dataset.n ? parseInt(board.dataset.n, 10) : 5;
+    var w = board.clientWidth || 320;
+    var gap = Math.max(2, w * 0.008);
+    var cell = (w - gap * (n - 1)) / n;
+    board.style.setProperty('--fs', Math.max(13, Math.floor(cell * 0.56)) + 'px');
+  }
+
+  function pickPair() {
+    var all = [], unseen = [], i;
+    for (i = 0; i < PAIRS.length; i++) {
+      all.push(i);
+      if (!seenSet[i] && i !== lastPid) unseen.push(i);
+    }
+    var pool = unseen;
+    if (!pool.length) {
+      for (i = 0; i < all.length; i++) {
+        if (all[i] !== lastPid) pool.push(all[i]);
+      }
+    }
+    if (!pool.length) pool = all;
+    var pid = pool[Math.floor(Math.random() * pool.length)];
+    lastPid = pid;
+    return pid;
+  }
+
+  function newBoard() {
+    if (!board) return;
+    var n = Math.min(9, 5 + Math.floor(found / 2));
+    curPid = pickPair();
+    var pair = PAIRS[curPid];
+    if (Math.random() < 0.5) { baseChar = pair[0]; oddChar = pair[1]; }
+    else { baseChar = pair[1]; oddChar = pair[0]; }
+    var total = n * n;
+    oddIndex = Math.floor(Math.random() * total);
+    locked = false;
+
+    board.dataset.n = String(n);
+    board.style.setProperty('--n', String(n));
+    var html = '';
+    for (var i = 0; i < total; i++) {
+      html += '<button type="button" class="cell" data-i="' + i + '">' + (i === oddIndex ? oddChar : baseChar) + '</button>';
+    }
+    var ov = overlay;
+    board.innerHTML = html;
+    overlay = ov;
+    board.appendChild(overlay);
+    var cells = board.querySelectorAll('.cell');
+    for (var k = 0; k < cells.length; k++) {
+      cells[k].addEventListener('click', onCellClick);
+    }
+    layoutFont();
+    setStatus('第 ' + (found + 1) + ' 关 · ' + n + ' × ' + n);
+  }
+
+  function onCellClick(e) {
+    e.preventDefault();
+    if (!running || paused || over || locked) return;
+    var i = parseInt(this.dataset.i, 10);
+    var cell = this;
+    if (i === oddIndex) {
+      locked = true;
+      cell.classList.add('found');
+      var gain = 10 + combo * 2;
+      score += gain;
+      combo++;
+      if (combo > maxCombo) maxCombo = combo;
+      found++;
+      left = Math.min(TOTAL * 1000, left + 500);
+      markSeen(curPid);
+      updateHud();
+      setStatus('找到了 · +' + gain);
+      setTimeout(function () { if (!over) newBoard(); }, 230);
+    } else {
+      combo = 0;
+      left = Math.max(0, left - 3000);
+      cell.classList.remove('wrong');
+      void cell.offsetWidth;
+      cell.classList.add('wrong');
+      setTimeout(function () { cell.classList.remove('wrong'); }, 320);
+      updateHud();
+      setStatus('看仔细一点 · -3 秒');
+      if (left <= 0) finish();
+    }
+  }
+
+  function skip() {
+    if (!running || paused || over || locked) return;
+    skips++;
+    newBoard();
+    setStatus('已跳过 · 不扣分也不加分');
+    updateHud();
+  }
+
+  function loop(ts) {
+    if (!lastTs) lastTs = ts;
+    var dt = Math.min(60, ts - lastTs);
+    lastTs = ts;
+    if (running && !paused && !over) {
+      left -= dt;
+      if (left <= 0) { left = 0; updateHud(); finish(); }
+      else updateHud();
+    }
+    raf = requestAnimationFrame(loop);
+  }
+
+  function start() {
+    score = 0; combo = 0; maxCombo = 0; found = 0;
+    left = TOTAL * 1000;
+    over = false; paused = false; running = true;
+    lastTs = 0;
+    overlay.classList.remove('on');
+    pauseBtn.textContent = '暂停';
+    updateHud();
+    newBoard();
+    if (!raf) raf = requestAnimationFrame(loop);
+  }
+
+  function finish() {
+    if (over) return;
+    over = true; running = false; paused = false;
+    if (score > best) {
+      best = score;
+      try { localStorage.setItem(BEST_KEY, String(best)); } catch (e) {}
+    }
+    bestEl.textContent = best > 0 ? best : '—';
+    setStatus('时间到');
+    ovCard.innerHTML =
+      '<div class="kicker">TIME UP</div>' +
+      '<h2>时间到</h2>' +
+      '<p>换一组更像的字，再来一轮。</p>' +
+      '<div class="res-grid">' +
+        '<div><span>本局得分</span><b>' + score + '</b></div>' +
+        '<div><span>找到字数</span><b>' + found + '</b></div>' +
+        '<div><span>最高连击</span><b>' + maxCombo + '</b></div>' +
+        '<div><span>累计进度</span><b>' + seenCount + ' / ' + PAIRS.length + '</b></div>' +
+        '<div><span>跳过次数</span><b>' + skips + '</b></div>' +
+        '<div><span>历史最佳</span><b>' + (best > 0 ? best : '—') + '</b></div>' +
+      '</div>' +
+      '<button type="button" class="btn primary" id="again">再来一局</button>';
+    overlay.classList.add('on');
+    ovCard.querySelector('#again').addEventListener('click', start);
+  }
+
+  function showStart() {
+    overlay.classList.add('on');
+    ovCard.innerHTML =
+      '<div class="kicker">60 秒挑战</div>' +
+      '<h2>汉字找茬</h2>' +
+      '<p>在一堆相同的汉字里，找出那个不一样的。找对加分并换新棋盘，点错扣 3 秒。</p>' +
+      '<div class="res-grid">' +
+        '<div><span>历史最佳</span><b>' + (best > 0 ? best : '—') + '</b></div>' +
+        '<div><span>挑战时间</span><b>60 秒</b></div>' +
+        '<div><span>题库</span><b>' + PAIRS.length + ' 组</b></div>' +
+        '<div><span>已找出</span><b>' + seenCount + ' / ' + PAIRS.length + '</b></div>' +
+      '</div>' +
+      '<button type="button" class="btn primary" id="startBtn">开始挑战</button>';
+    ovCard.querySelector('#startBtn').addEventListener('click', start);
+  }
+
+  function togglePause() {
+    if (!running || over) return;
+    paused = !paused;
+    pauseBtn.textContent = paused ? '继续' : '暂停';
+    if (paused) {
+      ovCard.innerHTML =
+        '<div class="kicker">PAUSED</div>' +
+        '<h2>已暂停</h2>' +
+        '<p>计时已经停住，准备好再继续。</p>' +
+        '<button type="button" class="btn primary" id="resume">继续游戏</button>' +
+        '<button type="button" class="btn ghost" id="quit">重新开始</button>';
+      overlay.classList.add('on');
+      ovCard.querySelector('#resume').addEventListener('click', togglePause);
+      ovCard.querySelector('#quit').addEventListener('click', start);
+    } else {
+      overlay.classList.remove('on');
+    }
+  }
+
+  board.addEventListener('click', function (e) {
+    if (e.target === overlay) e.stopPropagation();
+  });
+  pauseBtn.addEventListener('click', function () { togglePause(); this.blur(); });
+  restartBtn.addEventListener('click', function () { start(); this.blur(); });
+  skipBtn.addEventListener('click', function () { skip(); this.blur(); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === ' ') { e.preventDefault(); togglePause(); }
+    if (e.key.toLowerCase() === 'r') start();
+  });
+  window.addEventListener('resize', layoutFont);
+
+  // build an empty board first, then show start overlay
+  board.innerHTML = '';
+  board.appendChild(overlay);
+  showStart();
+  updateHud();
+  raf = requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

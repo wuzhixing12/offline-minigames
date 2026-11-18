@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#070d18">
+<title>记忆翻牌 · 离线小游戏</title>
+<style>
+  :root{
+    --text:#eaf2ff;--muted:#8ea3bd;--line:rgba(148,163,184,.16);
+    --pink:#f472b6;--violet:#818cf8;--cyan:#38bdf8;
+    --board:min(86vw, 512px);
+    --cols:4;--rows:4;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;min-height:100%;}
+  body{
+    min-height:100vh;display:flex;align-items:center;justify-content:center;
+    padding:22px 16px 26px;color:var(--text);
+    font-family:"Segoe UI","Microsoft YaHei","PingFang SC","Hiragino Sans GB",sans-serif;
+    background:
+      radial-gradient(900px 620px at 8% -6%, rgba(244,114,182,.15), transparent 62%),
+      radial-gradient(760px 560px at 102% 104%, rgba(129,140,248,.14), transparent 62%),
+      radial-gradient(720px 520px at 50% 48%, rgba(56,189,248,.09), transparent 68%),
+      #070d18;
+    -webkit-font-smoothing:antialiased;overflow-x:hidden;-webkit-tap-highlight-color:transparent;
+  }
+  button{font:inherit;color:inherit;}
+  .app{width:min(100%,720px);display:flex;flex-direction:column;gap:16px;}
+
+  .topbar{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+  .brand{display:flex;align-items:center;gap:13px;min-width:0;}
+  .logo{
+    width:54px;height:54px;flex:0 0 auto;border-radius:16px;display:grid;place-items:center;
+    font-size:24px;background:linear-gradient(150deg,#f9a8d4,#c084fc 52%,#6366f1);
+    box-shadow:0 12px 28px rgba(192,132,252,.28), inset 0 1px 0 rgba(255,255,255,.42);
+  }
+  h1{
+    margin:0;font-size:clamp(22px,4.2vw,28px);font-weight:800;letter-spacing:.04em;
+    background:linear-gradient(100deg,#f0f9ff,#f9a8d4 48%,#c7d2fe);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .brand p{margin:4px 0 0;font-size:12.5px;color:var(--muted);}
+  .stats{display:flex;gap:8px;flex-wrap:wrap;}
+  .stat{min-width:76px;padding:9px 13px;border-radius:13px;background:rgba(255,255,255,.045);border:1px solid var(--line);}
+  .stat span{display:block;font-size:11px;color:var(--muted);letter-spacing:.08em;}
+  .stat b{display:block;margin-top:3px;font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;}
+
+  .stage{display:flex;justify-content:center;padding:2px 0;}
+  .board-shell{
+    width:var(--board);padding:clamp(9px,1.9vw,14px);border-radius:26px;position:relative;
+    background:linear-gradient(180deg,rgba(255,255,255,.065),rgba(255,255,255,.022));
+    border:1px solid rgba(255,255,255,.10);
+    box-shadow:0 28px 70px rgba(0,0,0,.46), inset 0 1px 0 rgba(255,255,255,.10);
+  }
+  .board-shell::before{
+    content:"";position:absolute;inset:-1px;border-radius:27px;pointer-events:none;
+    background:linear-gradient(130deg,rgba(244,114,182,.36),transparent 34%,transparent 66%,rgba(129,140,248,.34));
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;mask-composite:exclude;padding:1px;
+  }
+  .board{
+    position:relative;width:100%;aspect-ratio:var(--cols)/var(--rows);
+    display:grid;grid-template-columns:repeat(var(--cols),1fr);
+    gap:clamp(6px,1.5vw,10px);padding:clamp(8px,1.6vw,12px);
+    border-radius:18px;
+    background:
+      radial-gradient(circle at 26% 14%, rgba(192,132,252,.10), transparent 58%),
+      linear-gradient(160deg,#0a1424,#070d19 62%,#0b1022);
+    box-shadow:inset 0 0 0 1px rgba(148,163,184,.10), inset 0 18px 40px rgba(0,0,0,.32);
+    user-select:none;
+  }
+
+  .mem{
+    position:relative;border:0;padding:0;background:none;cursor:pointer;
+    perspective:700px;aspect-ratio:1/1;touch-action:manipulation;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .mem:focus-visible{outline:2px solid rgba(244,114,182,.7);outline-offset:3px;border-radius:14%;}
+  .inner{
+    position:absolute;inset:0;transform-style:preserve-3d;
+    transition:transform .34s cubic-bezier(.2,.7,.2,1);
+    border-radius:14%;
+  }
+  .mem.flipped .inner,.mem.matched .inner{transform:rotateY(180deg);}
+  .face{
+    position:absolute;inset:0;border-radius:14%;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+    display:grid;place-items:center;overflow:hidden;
+  }
+  .back{
+    background:
+      linear-gradient(145deg,rgba(255,255,255,.14),rgba(255,255,255,.02) 42%),
+      linear-gradient(150deg,#27324b,#171f33 58%,#121a2b);
+    border:1px solid rgba(255,255,255,.10);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.20), 0 6px 14px rgba(0,0,0,.28);
+  }
+  .back::after{
+    content:"";width:38%;height:38%;border-radius:50%;
+    background:
+      radial-gradient(circle at 36% 32%, rgba(255,255,255,.55), transparent 42%),
+      linear-gradient(150deg,rgba(244,114,182,.55),rgba(129,140,248,.50));
+    box-shadow:0 0 18px rgba(192,132,252,.25);
+    opacity:.8;
+  }
+  .back::before{
+    content:"";position:absolute;inset:7%;border-radius:12%;
+    border:1px dashed rgba(255,255,255,.10);
+  }
+  .front{
+    transform:rotateY(180deg);
+    background:
+      radial-gradient(circle at 32% 24%, rgba(255,255,255,.20), transparent 52%),
+      linear-gradient(155deg,rgba(255,255,255,.09),rgba(255,255,255,.025));
+    border:1px solid rgba(255,255,255,.12);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.18), 0 6px 14px rgba(0,0,0,.24);
+  }
+  .front i{
+    font-style:normal;font-weight:800;line-height:1;
+    font-size:clamp(24px, 4vw, 42px);
+    color:var(--c,#e2e8f0);
+    text-shadow:0 2px 12px rgba(0,0,0,.35);
+    filter:drop-shadow(0 0 10px var(--glow,rgba(255,255,255,.12)));
+  }
+  .mem.matched .front{
+    background:
+      radial-gradient(circle at 32% 24%, rgba(255,255,255,.26), transparent 52%),
+      linear-gradient(155deg,rgba(190,242,100,.14),rgba(255,255,255,.03));
+    border-color:rgba(190,242,100,.38);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.22), 0 0 20px rgba(163,230,53,.16);
+  }
+  .mem.matched .front i{color:#ecfccb;text-shadow:0 0 16px rgba(190,242,100,.55);}
+  .mem.matched{cursor:default;}
+  .mem:not(.flipped):not(.matched):hover .back{
+    border-color:rgba(244,114,182,.38);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.24), 0 8px 20px rgba(0,0,0,.34), 0 0 18px rgba(244,114,182,.12);
+  }
+  .mem.shake .inner{animation:shake .3s ease;}
+  @keyframes shake{
+    0%,100%{transform:rotateY(180deg) translateX(0);}
+    25%{transform:rotateY(180deg) translateX(-4px);}
+    75%{transform:rotateY(180deg) translateX(4px);}
+  }
+
+  .panel{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  .seg{display:inline-flex;gap:4px;padding:4px;border-radius:12px;background:rgba(255,255,255,.045);border:1px solid var(--line);}
+  .seg button{
+    border:0;background:none;color:#8ea3bd;padding:6px 12px;border-radius:9px;cursor:pointer;
+    font-size:12px;font-weight:700;letter-spacing:.02em;transition:background .16s ease,color .16s ease;
+  }
+  .seg button.on{background:linear-gradient(135deg,rgba(244,114,182,.24),rgba(129,140,248,.24));color:#f5d0fe;box-shadow:inset 0 0 0 1px rgba(244,114,182,.26);}
+  .actions{display:flex;gap:8px;}
+  .btn{
+    border:1px solid rgba(255,255,255,.11);border-radius:11px;padding:8px 14px;cursor:pointer;
+    background:rgba(255,255,255,.055);color:#dbeafe;font-size:12.5px;font-weight:600;
+    transition:background .16s ease,border-color .16s ease,transform .16s ease;
+  }
+  .btn:hover{background:rgba(255,255,255,.10);border-color:rgba(244,114,182,.35);transform:translateY(-1px);}
+  .btn.primary{
+    color:#2b0a21;border-color:transparent;
+    background:linear-gradient(135deg,#f9a8d4,#c084fc);
+    box-shadow:0 8px 20px rgba(192,132,252,.26);
+  }
+  .foot{font-size:11.5px;color:#5f7286;letter-spacing:.03em;text-align:center;}
+
+  .overlay{
+    position:absolute;inset:0;z-index:9;display:none;align-items:center;justify-content:center;padding:18px;
+    background:rgba(3,8,18,.74);backdrop-filter:blur(7px);border-radius:18px;
+  }
+  .overlay.on{display:flex;animation:fadeIn .25s ease;}
+  @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+  .card{
+    width:min(100%,330px);padding:24px 22px 20px;border-radius:22px;text-align:center;
+    background:linear-gradient(180deg,rgba(24,20,38,.98),rgba(9,13,26,.98));
+    border:1px solid rgba(244,114,182,.26);
+    box-shadow:0 26px 70px rgba(0,0,0,.55), 0 0 44px rgba(244,114,182,.10);
+  }
+  .kicker{font-size:11.5px;letter-spacing:.22em;color:#f9a8d4;font-weight:700;}
+  .card h2{
+    margin:10px 0 5px;font-size:30px;font-weight:900;letter-spacing:.08em;
+    background:linear-gradient(100deg,#fce7f3,#f9a8d4,#c7d2fe);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .card p{margin:0 0 16px;font-size:12.5px;line-height:1.65;color:var(--muted);}
+  .res-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
+  .res-grid div{padding:9px 8px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid var(--line);}
+  .res-grid span{display:block;font-size:10.5px;color:var(--muted);}
+  .res-grid b{display:block;margin-top:2px;font-size:17px;font-variant-numeric:tabular-nums;}
+  .card .btn.primary{width:100%;padding:11px 14px;font-size:13.5px;}
+
+  @media (max-width:620px){
+    body{padding:14px 12px 18px;}
+    .app{gap:12px;}
+    .logo{width:46px;height:46px;border-radius:14px;font-size:21px;}
+    .stat{min-width:64px;padding:7px 10px;}
+    .stat b{font-size:15px;}
+    .brand p{font-size:11.5px;}
+    .seg button{padding:6px 9px;}
+  }
+  @media (max-height:760px) and (min-width:700px){
+    :root{--board:min(72vh,510px);}
+    .brand p{display:none;}
+    .foot{display:none;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo">🎴</div>
+      <div>
+        <h1>记忆翻牌</h1>
+        <p>记住牌面的位置，用最少步数把所有对子配完</p>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><span>步数</span><b id="moves">0</b></div>
+      <div class="stat"><span>时间</span><b id="time">00:00</b></div>
+      <div class="stat"><span>配对</span><b id="pairs">0/8</b></div>
+      <div class="stat"><span>最佳步数</span><b id="best">—</b></div>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="board-shell">
+      <div class="board" id="board" aria-label="记忆翻牌棋盘"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="seg" id="sizes">
+      <button type="button" data-size="4" class="on">4 × 4</button>
+      <button type="button" data-size="5">5 × 4</button>
+      <button type="button" data-size="6">6 × 6</button>
+    </div>
+    <div class="actions">
+      <button class="btn" id="restart">重开</button>
+    </div>
+  </div>
+  <p class="foot">点击两张牌配对 · 全部配对完成即获胜 · R 键重开</p>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var BEST_KEY = 'tx_memory_best_v1';
+  var SYMBOLS = [
+    ['♥', '#fb7185'], ['◆', '#38bdf8'], ['★', '#fbbf24'], ['●', '#a78bfa'],
+    ['▲', '#34d399'], ['■', '#f472b6'], ['☾', '#93c5fd'], ['☀', '#fb923c'],
+    ['☘', '#4ade80'], ['♣', '#22d3ee'], ['♠', '#cbd5e1'], ['♦', '#f43f5e'],
+    ['✚', '#e879f9'], ['❄', '#7dd3fc'], ['♪', '#facc15'], ['✦', '#c084fc'],
+    ['⚑', '#fb923c'], ['∞', '#5eead4']
+  ];
+
+  var boardEl = document.getElementById('board');
+  var movesEl = document.getElementById('moves');
+  var timeEl = document.getElementById('time');
+  var pairsEl = document.getElementById('pairs');
+  var bestEl = document.getElementById('best');
+  var sizesEl = document.getElementById('sizes');
+  var restartBtn = document.getElementById('restart');
+
+  var cols = 4, rows = 4;
+  var deck = [], first = null, second = null, busy = false;
+  var moves = 0, matched = 0, started = false;
+  var startAt = 0, elapsed = 0, timer = null;
+  var bests = {};
+
+  try {
+    var raw = JSON.parse(localStorage.getItem(BEST_KEY) || '{}');
+    if (raw && typeof raw === 'object') bests = raw;
+  } catch (e) { bests = {}; }
+
+  function pairCount() { return cols * rows / 2; }
+  function sizeKey() { return cols + 'x' + rows; }
+
+  function loadBest() {
+    var v = bests[sizeKey()];
+    bestEl.textContent = v ? (v + ' 步') : '—';
+  }
+
+  function saveBest() {
+    var k = sizeKey();
+    if (!bests[k] || moves < bests[k]) {
+      bests[k] = moves;
+      try { localStorage.setItem(BEST_KEY, JSON.stringify(bests)); } catch (e) {}
+    }
+    loadBest();
+  }
+
+  function fmt(ms) {
+    var t = Math.floor(ms / 1000);
+    var m = Math.floor(t / 60), s = t % 60;
+    return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  function updateMoves() { movesEl.textContent = moves; }
+  function updatePairs() { pairsEl.textContent = matched + '/' + pairCount(); }
+
+  function startTimer() {
+    if (started) return;
+    started = true;
+    startAt = Date.now() - elapsed;
+    timer = setInterval(function () {
+      elapsed = Date.now() - startAt;
+      timeEl.textContent = fmt(elapsed);
+    }, 120);
+  }
+
+  function stopTimer() {
+    if (timer) { clearInterval(timer); timer = null; }
+  }
+
+  function shuffle(a) {
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  function build() {
+    stopTimer();
+    boardEl.innerHTML = '';
+    boardEl.style.setProperty('--cols', cols);
+    boardEl.style.setProperty('--rows', rows);
+    first = null; second = null; busy = false;
+    moves = 0; matched = 0; started = false; elapsed = 0; startAt = 0;
+    movesEl.textContent = '0';
+    timeEl.textContent = '00:00';
+    updatePairs();
+    loadBest();
+
+    var n = pairCount();
+    deck = [];
+    for (var i = 0; i < n; i++) {
+      deck.push({ id: i, sym: SYMBOLS[i][0], color: SYMBOLS[i][1] });
+      deck.push({ id: i, sym: SYMBOLS[i][0], color: SYMBOLS[i][1] });
+    }
+    shuffle(deck);
+
+    for (var k = 0; k < deck.length; k++) {
+      var item = deck[k];
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'mem';
+      b.dataset.pair = String(item.id);
+      b.setAttribute('aria-label', '未翻开的牌');
+      b.innerHTML =
+        '<span class="inner">' +
+          '<span class="face back"></span>' +
+          '<span class="face front" style="--c:' + item.color + ';--glow:' + item.color + '55"><i>' + item.sym + '</i></span>' +
+        '</span>';
+      b.addEventListener('click', function () { flip(this); });
+      boardEl.appendChild(b);
+    }
+  }
+
+  function flip(card) {
+    if (busy || card.classList.contains('matched') || card.classList.contains('flipped') || card === first) return;
+    if (!started) startTimer();
+    card.classList.add('flipped');
+    card.setAttribute('aria-label', '已翻开的牌');
+
+    if (!first) { first = card; return; }
+
+    second = card;
+    moves++;
+    updateMoves();
+    busy = true;
+
+    if (first.dataset.pair === second.dataset.pair) {
+      var a = first, b = second;
+      setTimeout(function () {
+        a.classList.add('matched');
+        b.classList.add('matched');
+        matched++;
+        updatePairs();
+        first = null; second = null; busy = false;
+        if (matched === pairCount()) win();
+      }, 300);
+    } else {
+      var x = first, y = second;
+      y.classList.add('shake');
+      setTimeout(function () {
+        x.classList.remove('flipped');
+        y.classList.remove('flipped');
+        x.setAttribute('aria-label', '未翻开的牌');
+        y.setAttribute('aria-label', '未翻开的牌');
+        y.classList.remove('shake');
+        first = null; second = null; busy = false;
+      }, 720);
+    }
+  }
+
+  function win() {
+    stopTimer();
+    saveBest();
+    var overlay = document.createElement('div');
+    overlay.className = 'overlay on';
+    var isBest = bests[sizeKey()] === moves;
+    overlay.innerHTML =
+      '<div class="card">' +
+        '<div class="kicker">全部配对完成</div>' +
+        '<h2>通关</h2>' +
+        '<p>' + (isBest ? '新的最佳步数，记性不错。' : '再来一局，试试用更少步数配完。') + '</p>' +
+        '<div class="res-grid">' +
+          '<div><span>步数</span><b>' + moves + '</b></div>' +
+          '<div><span>用时</span><b>' + fmt(elapsed) + '</b></div>' +
+          '<div><span>棋盘</span><b>' + cols + '×' + rows + '</b></div>' +
+          '<div><span>最佳步数</span><b>' + bests[sizeKey()] + '</b></div>' +
+        '</div>' +
+        '<button class="btn primary" id="again">再来一局</button>' +
+      '</div>';
+    boardEl.appendChild(overlay);
+    overlay.querySelector('#again').addEventListener('click', function () {
+      build();
+    });
+  }
+
+  sizesEl.addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-size]');
+    if (!btn) return;
+    var n = parseInt(btn.dataset.size, 10);
+    if (n === cols) return;
+    cols = n;
+    rows = n === 5 ? 4 : n;
+    var all = sizesEl.querySelectorAll('button');
+    for (var i = 0; i < all.length; i++) all[i].classList.toggle('on', all[i] === btn);
+    build();
+  });
+
+  restartBtn.addEventListener('click', function () {
+    build();
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'r' || e.key === 'R') build();
+  });
+
+  build();
+})();
+</script>
+</body>
+</html>

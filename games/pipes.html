@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#070d18">
+<title>水管连通 · 离线小游戏</title>
+<style>
+  :root{
+    --text:#eaf2ff;--muted:#8ea3bd;--line:rgba(148,163,184,.16);
+    --cyan:#38bdf8;--mint:#5eead4;--amber:#fbbf24;--rose:#fb7185;
+    --board:min(88vw, 520px);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;min-height:100%;}
+  body{
+    min-height:100vh;display:flex;align-items:center;justify-content:center;
+    padding:22px 16px 26px;color:var(--text);
+    font-family:"Segoe UI","Microsoft YaHei","PingFang SC","Hiragino Sans GB",sans-serif;
+    background:
+      radial-gradient(900px 620px at 8% -6%, rgba(56,189,248,.15), transparent 62%),
+      radial-gradient(760px 560px at 102% 104%, rgba(45,212,191,.12), transparent 62%),
+      radial-gradient(720px 520px at 50% 48%, rgba(129,140,248,.08), transparent 68%),
+      #070d18;
+    -webkit-font-smoothing:antialiased;overflow-x:hidden;-webkit-tap-highlight-color:transparent;
+  }
+  button{font:inherit;color:inherit;}
+  .app{width:min(100%,720px);display:flex;flex-direction:column;gap:15px;}
+
+  .topbar{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+  .brand{display:flex;align-items:center;gap:13px;min-width:0;}
+  .logo{
+    width:54px;height:54px;flex:0 0 auto;border-radius:16px;display:grid;place-items:center;
+    font-size:24px;font-weight:900;color:#04211d;
+    background:linear-gradient(150deg,#5eead4,#0ea5e9 60%,#6366f1);
+    box-shadow:0 12px 28px rgba(56,189,248,.26), inset 0 1px 0 rgba(255,255,255,.36);
+  }
+  h1{
+    margin:0;font-size:clamp(22px,4.2vw,28px);font-weight:800;letter-spacing:.04em;
+    background:linear-gradient(100deg,#f0f9ff,#a7f3d0 44%,#bae6fd 72%,#c7d2fe);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .brand p{margin:4px 0 0;font-size:12.5px;color:var(--muted);}
+  .stats{display:flex;gap:8px;flex-wrap:wrap;}
+  .stat{min-width:64px;padding:8px 11px;border-radius:13px;background:rgba(255,255,255,.045);border:1px solid var(--line);}
+  .stat span{display:block;font-size:10.5px;color:var(--muted);letter-spacing:.08em;}
+  .stat b{display:block;margin-top:2px;font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;}
+  .stat b.hot{color:var(--mint);}
+
+  .stage{display:flex;justify-content:center;padding:1px 0 2px;}
+  .board-shell{
+    width:var(--board);padding:clamp(8px,1.7vw,12px);border-radius:26px;position:relative;
+    background:linear-gradient(180deg,rgba(255,255,255,.065),rgba(255,255,255,.022));
+    border:1px solid rgba(255,255,255,.10);
+    box-shadow:0 28px 70px rgba(0,0,0,.46), inset 0 1px 0 rgba(255,255,255,.10);
+  }
+  .board-shell::before{
+    content:"";position:absolute;inset:-1px;border-radius:27px;pointer-events:none;z-index:2;
+    background:linear-gradient(130deg,rgba(94,234,212,.32),transparent 34%,transparent 66%,rgba(56,189,248,.30));
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;mask-composite:exclude;padding:1px;
+  }
+  .board{
+    --n:6;position:relative;width:100%;aspect-ratio:1/1;border-radius:17px;
+    display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));
+    grid-template-rows:repeat(var(--n),minmax(0,1fr));
+    gap:0;padding:clamp(5px,1.1vw,8px);
+    background:
+      radial-gradient(circle at 30% 16%, rgba(56,189,248,.07), transparent 58%),
+      linear-gradient(160deg,#0b1a25,#071019 62%,#08131f);
+    box-shadow:inset 0 0 0 1px rgba(148,163,184,.10), inset 0 18px 40px rgba(0,0,0,.32);
+    overflow:hidden;touch-action:manipulation;user-select:none;
+  }
+  .cell{
+    position:relative;min-width:0;min-height:0;border:0;padding:0;cursor:pointer;border-radius:11%;
+    background:linear-gradient(160deg,rgba(255,255,255,.055),rgba(255,255,255,.015));
+    box-shadow:inset 0 0 0 1px rgba(148,163,184,.07);
+    transition:background .16s ease,box-shadow .18s ease,transform .12s ease;
+    overflow:hidden;-webkit-tap-highlight-color:transparent;
+  }
+  .cell:hover{background:rgba(56,189,248,.09);}
+  .cell:active{transform:scale(.96);}
+  .cell svg{
+    position:absolute;inset:0;width:100%;height:100%;overflow:visible;
+    transition:transform .16s cubic-bezier(.2,.75,.25,1);
+    pointer-events:none;
+  }
+  .cell .outline{fill:none;stroke:#050d18;stroke-width:26;stroke-linecap:square;}
+  .cell .pipe{fill:none;stroke:#425a7d;stroke-width:16;stroke-linecap:square;}
+  .cell .hub{fill:#425a7d;stroke:#050d18;stroke-width:5;}
+  .cell.fixed{cursor:default;background:linear-gradient(160deg,rgba(251,191,36,.10),rgba(255,255,255,.02));}
+  .cell.source{box-shadow:inset 0 0 0 2px rgba(251,191,36,.52),0 0 16px rgba(251,191,36,.20);}
+  .cell.sink{box-shadow:inset 0 0 0 2px rgba(251,113,133,.50),0 0 16px rgba(251,113,133,.18);}
+  .cell.source .pipe{stroke:#b45309;}
+  .cell.sink .pipe{stroke:#9f1239;}
+  .cell.wet{
+    background:linear-gradient(160deg,rgba(56,189,248,.20),rgba(14,116,144,.10));
+    box-shadow:inset 0 0 0 1px rgba(103,232,249,.38),0 0 13px rgba(34,211,238,.20);
+  }
+  .cell.wet .outline{stroke:#062a3d;}
+  .cell.wet .pipe{stroke:#3dd6f5;filter:drop-shadow(0 0 4px rgba(56,189,248,.6));}
+  .cell.wet .hub{fill:#a5f3fc;stroke:#062a3d;}
+  .cell.wet.source{box-shadow:inset 0 0 0 2px rgba(251,191,36,.55),0 0 18px rgba(34,211,238,.28);}
+  .cell.wet.sink{box-shadow:inset 0 0 0 2px rgba(251,113,133,.55),0 0 18px rgba(34,211,238,.28);}
+  .cell.hintflash{animation:hintflash 1.2s ease;}
+  @keyframes hintflash{0%,100%{box-shadow:inset 0 0 0 1px rgba(251,191,36,.2);}30%,70%{box-shadow:inset 0 0 0 3px rgba(251,191,36,.9),0 0 20px rgba(251,191,36,.5);}}
+  .cell .tag{
+    position:absolute;right:5%;bottom:3%;z-index:2;pointer-events:none;
+    font-size:clamp(7px,1.35vw,10px);font-weight:800;letter-spacing:.04em;
+    color:#fbbf24;text-shadow:0 1px 3px rgba(0,0,0,.85);
+  }
+  .cell.sink .tag{color:#fb7185;}
+  .board.won .cell.wet .pipe{animation:flowpulse 1.4s ease-in-out infinite;}
+  @keyframes flowpulse{0%,100%{opacity:.85;}50%{opacity:1;}}
+
+  .panel{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  .status{font-size:12.5px;color:var(--muted);min-height:22px;display:flex;align-items:center;gap:7px;}
+  .status i{width:8px;height:8px;border-radius:50%;background:var(--mint);box-shadow:0 0 9px rgba(94,234,212,.7);}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .btn{
+    border:1px solid rgba(255,255,255,.11);border-radius:11px;padding:8px 13px;cursor:pointer;
+    background:rgba(255,255,255,.055);color:#dbeafe;font-size:12.5px;font-weight:600;
+    transition:background .16s ease,border-color .16s ease,transform .16s ease;
+  }
+  .btn:hover{background:rgba(255,255,255,.10);border-color:rgba(94,234,212,.4);transform:translateY(-1px);}
+  .btn.primary{
+    color:#04211d;border-color:transparent;
+    background:linear-gradient(135deg,#5eead4,#38bdf8 62%,#818cf8);
+    box-shadow:0 8px 20px rgba(56,189,248,.26);
+  }
+  .foot{font-size:11.5px;color:#5f7286;letter-spacing:.03em;text-align:center;}
+
+  .overlay{
+    position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;padding:18px;
+    background:rgba(3,8,18,.76);backdrop-filter:blur(7px);border-radius:26px;overflow:hidden;
+  }
+  .overlay.on{display:flex;animation:fadeIn .25s ease;}
+  @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+  .card{
+    position:relative;z-index:2;width:min(100%,340px);padding:24px 22px 20px;border-radius:22px;text-align:center;
+    background:linear-gradient(180deg,rgba(10,31,40,.98),rgba(8,13,24,.98));
+    border:1px solid rgba(94,234,212,.24);
+    box-shadow:0 26px 70px rgba(0,0,0,.55), 0 0 44px rgba(56,189,248,.10);
+  }
+  .kicker{font-size:11.5px;letter-spacing:.22em;color:#6ee7b7;font-weight:700;}
+  .card h2{
+    margin:10px 0 6px;font-size:30px;font-weight:900;letter-spacing:.08em;
+    background:linear-gradient(100deg,#ecfeff,#6ee7b7,#bae6fd);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .card p{margin:0 0 16px;font-size:12.5px;line-height:1.7;color:var(--muted);}
+  .res-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
+  .res-grid div{padding:9px 8px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid var(--line);}
+  .res-grid span{display:block;font-size:10.5px;color:var(--muted);}
+  .res-grid b{display:block;margin-top:2px;font-size:17px;font-variant-numeric:tabular-nums;}
+  .card .btn.primary{width:100%;padding:11px 14px;font-size:13.5px;}
+  .card .btn.ghost{width:100%;margin-top:8px;}
+
+  .confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:1;}
+  .confetti i{position:absolute;top:-12px;width:7px;height:12px;border-radius:2px;animation:fall linear forwards;}
+  @keyframes fall{to{transform:translate3d(var(--dx),var(--dy),0) rotate(var(--rot));opacity:0;}}
+
+  @media (max-width:620px){
+    body{padding:14px 12px 18px;}
+    .app{gap:12px;}
+    .logo{width:46px;height:46px;border-radius:14px;font-size:20px;}
+    .stat{min-width:56px;padding:7px 9px;}
+    .stat b{font-size:15px;}
+    .brand p{font-size:11.5px;}
+    .board-shell{padding:7px;border-radius:20px;}
+    .board{border-radius:14px;padding:5px;}
+    .overlay{position:fixed;inset:0;z-index:80;border-radius:0;padding:16px;}
+    .card{padding:20px 18px 16px;}
+    .card h2{font-size:27px;}
+    .actions{width:100%;justify-content:center;}
+    .actions .btn{flex:1;}
+  }
+  @media (max-height:740px) and (min-width:700px){
+    body{padding-top:12px;}
+    .app{gap:11px;}
+    .foot{display:none;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo">管</div>
+      <div>
+        <h1>水管连通</h1>
+        <p>转动每一截管道，把上方的水源接到下方的出水口</p>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><span>关卡</span><b id="level">1 / 5</b></div>
+      <div class="stat"><span>步数</span><b id="moves">0</b></div>
+      <div class="stat"><span>时间</span><b id="time">00:00</b></div>
+      <div class="stat"><span>最佳</span><b id="best">—</b></div>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="board-shell">
+      <div class="board" id="board" aria-label="水管连通棋盘"></div>
+      <div class="overlay on" id="overlay"><div class="card" id="ovCard"></div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="status" id="status"><i></i><span>点击管道顺时针旋转，右键反向</span></div>
+    <div class="actions">
+      <button class="btn" id="hint">提示</button>
+      <button class="btn" id="reroll">重排本关</button>
+      <button class="btn" id="restart">重新开始</button>
+    </div>
+  </div>
+  <p class="foot">水源 <b style="color:#fbbf24">源</b> · 出水口 <b style="color:#fb7185">口</b> · 每关管道更密，接通后自动锁定</p>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var N = 1, E = 2, S = 4, W = 8;
+  var LEVELS = [6, 7, 8, 8, 9];
+  var BEST_KEY = 'tx_pipes_best_v1';
+
+  var boardEl = document.getElementById('board');
+  var overlay = document.getElementById('overlay');
+  var ovCard = document.getElementById('ovCard');
+  var levelEl = document.getElementById('level');
+  var movesEl = document.getElementById('moves');
+  var timeEl = document.getElementById('time');
+  var bestEl = document.getElementById('best');
+  var statusEl = document.getElementById('status');
+
+  var n = 6;
+  var cells = [];
+  var els = [];
+  var srcIdx = 0, sinkIdx = 0;
+  var pathSet = {};
+  var level = 0;
+  var moves = 0;
+  var completed = false;
+  var winTimer = 0;
+  var startedAt = 0;
+  var elapsedMs = 0;
+  var penaltyMs = 0;
+  var timerId = 0;
+  var running = false;
+
+  var best = null;
+  try {
+    best = JSON.parse(localStorage.getItem(BEST_KEY) || 'null');
+    if (!best || typeof best !== 'object') best = null;
+  } catch (e) { best = null; }
+
+  function fmtMs(ms) {
+    var sec = Math.max(0, Math.floor(ms / 1000));
+    var m = Math.floor(sec / 60), s = sec % 60;
+    return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+  }
+  function totalMs() {
+    return elapsedMs + penaltyMs + (running && startedAt ? (Date.now() - startedAt) : 0);
+  }
+  function setStatus(t) { statusEl.querySelector('span').textContent = t; }
+  function renderBest() {
+    bestEl.textContent = best ? fmtMs((best.time || 0) * 1000) : '—';
+    bestEl.title = best ? ('总步数 ' + best.moves) : '还没有通关过';
+  }
+  function updateHud() {
+    levelEl.textContent = (level + 1) + ' / ' + LEVELS.length;
+    movesEl.textContent = String(moves);
+    timeEl.textContent = fmtMs(totalMs());
+    renderBest();
+  }
+
+  function startClock() {
+    if (running || completed) return;
+    running = true;
+    startedAt = Date.now();
+    clearInterval(timerId);
+    timerId = setInterval(function () { timeEl.textContent = fmtMs(totalMs()); }, 250);
+  }
+  function stopClock() {
+    if (running && startedAt) elapsedMs += Date.now() - startedAt;
+    startedAt = 0;
+    running = false;
+    clearInterval(timerId);
+    timerId = 0;
+    timeEl.textContent = fmtMs(totalMs());
+  }
+
+  function rotMask(mask, r) {
+    r = ((r % 4) + 4) % 4;
+    for (var k = 0; k < r; k++) {
+      var m = 0;
+      if (mask & N) m |= E;
+      if (mask & E) m |= S;
+      if (mask & S) m |= W;
+      if (mask & W) m |= N;
+      mask = m;
+    }
+    return mask;
+  }
+  function maskOf(c) { return rotMask(c.base, c.rot); }
+  function dirBit(from, to) {
+    if (to === from - n) return N;
+    if (to === from + 1) return E;
+    if (to === from + n) return S;
+    if (to === from - 1) return W;
+    return 0;
+  }
+  function solutionRot(base, target) {
+    for (var r = 0; r < 4; r++) if (rotMask(base, r) === target) return r;
+    return 0;
+  }
+  function randInt(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
+  function shuffle(a) {
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+  function neighborsOf(i) {
+    var r = Math.floor(i / n), c = i % n, out = [];
+    if (r > 0) out.push(i - n);
+    if (r < n - 1) out.push(i + n);
+    if (c > 0) out.push(i - 1);
+    if (c < n - 1) out.push(i + 1);
+    return out;
+  }
+
+  function carvePath(start, end, src, sink) {
+    var limit = Math.ceil(n * 2.2);
+    var visited = {};
+    var path = [start];
+    visited[start] = true;
+    function dfs(cur) {
+      if (cur === end) return true;
+      if (path.length >= limit) return false;
+      var opts = shuffle(neighborsOf(cur).filter(function (x) {
+        return x !== src && x !== sink && !visited[x];
+      }));
+      for (var i = 0; i < opts.length; i++) {
+        var nx = opts[i];
+        visited[nx] = true;
+        path.push(nx);
+        if (dfs(nx)) return true;
+        path.pop();
+        delete visited[nx];
+      }
+      return false;
+    }
+    return dfs(start) ? path.slice() : null;
+  }
+
+  function buildPuzzle() {
+    n = LEVELS[level];
+    var sc = randInt(1, n - 2);
+    var tc = randInt(1, n - 2);
+    var src = sc;
+    var sink = (n - 1) * n + tc;
+    var start = n + sc;
+    var end = (n - 2) * n + tc;
+    var path = null;
+    for (var tries = 0; tries < 30 && !path; tries++) path = carvePath(start, end, src, sink);
+    if (!path) {
+      // fallback: a simple L-shaped path
+      path = [];
+      var r = 1, c = sc;
+      path.push(r * n + c);
+      while (c !== tc) { c += (tc > c ? 1 : -1); path.push(r * n + c); }
+      while (r !== n - 2) { r++; path.push(r * n + c); }
+    }
+
+    cells = new Array(n * n);
+    pathSet = {};
+    path.forEach(function (i) { pathSet[i] = true; });
+    srcIdx = src;
+    sinkIdx = sink;
+    cells[src] = { base: S, rot: 0, angle: 0, sol: 0, fixed: true, kind: 'source' };
+    cells[sink] = { base: N, rot: 0, angle: 0, sol: 0, fixed: true, kind: 'sink' };
+
+    for (var i = 0; i < path.length; i++) {
+      var cur = path[i];
+      var prev = i > 0 ? path[i - 1] : src;
+      var next = i < path.length - 1 ? path[i + 1] : sink;
+      var mask = dirBit(cur, prev) | dirBit(cur, next);
+      var base = 5;
+      var sol = 0;
+      if (mask === 5 || mask === 10) { base = 5; sol = solutionRot(5, mask); }
+      else { base = 3; sol = solutionRot(3, mask); }
+      var banned = 0;
+      if (i === 0) banned |= N;
+      if (i === path.length - 1) banned |= S;
+      var pool = [];
+      for (var rr = 0; rr < 4; rr++) {
+        var mm = rotMask(base, rr);
+        if (mm !== mask && !(mm & banned)) pool.push(rr);
+      }
+      if (!pool.length) {
+        for (var rr2 = 0; rr2 < 4; rr2++) {
+          var mm2 = rotMask(base, rr2);
+          if (mm2 !== mask) pool.push(rr2);
+        }
+      }
+      if (!pool.length) pool = [(sol + 1) % 4];
+      var rot = pool[Math.floor(Math.random() * pool.length)];
+      cells[cur] = { base: base, rot: rot, angle: rot * 90, sol: sol, fixed: false, kind: 'path' };
+    }
+
+    var shapes = [5, 5, 5, 3, 3, 3, 3, 7, 7, 15];
+    for (var j = 0; j < n * n; j++) {
+      if (cells[j]) continue;
+      var base2 = shapes[Math.floor(Math.random() * shapes.length)];
+      var rot2 = randInt(0, 3);
+      cells[j] = { base: base2, rot: rot2, angle: rot2 * 90, sol: -1, fixed: false, kind: 'filler' };
+    }
+    return path.length;
+  }
+
+  function pipeMarkup(base) {
+    var d = '';
+    if (base & N) d += 'M50 50 L50 0 ';
+    if (base & E) d += 'M50 50 L100 50 ';
+    if (base & S) d += 'M50 50 L50 100 ';
+    if (base & W) d += 'M50 50 L0 50 ';
+    return '<svg viewBox="0 0 100 100" aria-hidden="true">' +
+      '<path class="outline" d="' + d + '"/>' +
+      '<path class="pipe" d="' + d + '"/>' +
+      '<circle class="hub" cx="50" cy="50" r="10"/>' +
+      '</svg>';
+  }
+
+  function renderBoard() {
+    boardEl.innerHTML = '';
+    boardEl.style.setProperty('--n', String(n));
+    boardEl.style.gridTemplateColumns = 'repeat(' + n + ', minmax(0,1fr))';
+    boardEl.style.gridTemplateRows = 'repeat(' + n + ', minmax(0,1fr))';
+    boardEl.classList.remove('won');
+    els = [];
+    for (var i = 0; i < n * n; i++) {
+      var c = cells[i];
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'cell';
+      b.dataset.i = String(i);
+      if (c.fixed) b.classList.add('fixed');
+      if (c.kind === 'source') b.classList.add('source');
+      if (c.kind === 'sink') b.classList.add('sink');
+      b.setAttribute('aria-label', '第 ' + (Math.floor(i / n) + 1) + ' 行第 ' + (i % n + 1) + ' 列管道');
+      b.innerHTML = pipeMarkup(c.base);
+      if (c.kind === 'source' || c.kind === 'sink') {
+        var t = document.createElement('span');
+        t.className = 'tag';
+        t.textContent = c.kind === 'source' ? '源' : '口';
+        b.appendChild(t);
+      }
+      var svg = b.querySelector('svg');
+      svg.style.transform = 'rotate(' + c.angle + 'deg)';
+      boardEl.appendChild(b);
+      els.push(b);
+    }
+  }
+
+  function paintWet() {
+    var seen = new Array(n * n);
+    var q = [srcIdx];
+    seen[srcIdx] = true;
+    while (q.length) {
+      var i = q.shift();
+      var m = maskOf(cells[i]);
+      var ns = neighborsOf(i);
+      for (var k = 0; k < ns.length; k++) {
+        var j = ns[k];
+        if (seen[j]) continue;
+        var bit = dirBit(i, j);
+        if (!(m & bit)) continue;
+        if (!(maskOf(cells[j]) & dirBit(j, i))) continue;
+        seen[j] = true;
+        q.push(j);
+      }
+    }
+    for (var x = 0; x < n * n; x++) {
+      if (els[x]) els[x].classList.toggle('wet', !!seen[x]);
+    }
+    return !!seen[sinkIdx];
+  }
+
+  function rotateCell(i, dir) {
+    if (completed || overlay.classList.contains('on')) return;
+    var c = cells[i];
+    if (!c || c.fixed) return;
+    startClock();
+    c.rot = ((c.rot + dir) % 4 + 4) % 4;
+    c.angle += dir * 90;
+    var svg = els[i].querySelector('svg');
+    svg.style.transform = 'rotate(' + c.angle + 'deg)';
+    moves++;
+    updateHud();
+    var done = paintWet();
+    if (done) {
+      completed = true;
+      boardEl.classList.add('won');
+      setStatus('接通了 · 正在注水');
+      winTimer = setTimeout(finishLevel, 520);
+    } else {
+      setStatus(dir > 0 ? '管道已旋转 · 继续找通路' : '反向旋转 · 继续找通路');
+    }
+  }
+
+  function finishLevel() {
+    stopClock();
+    if (level >= LEVELS.length - 1) {
+      finishRun();
+      return;
+    }
+    ovCard.innerHTML =
+      '<div class="kicker">LEVEL ' + (level + 1) + ' CLEAR</div>' +
+      '<h2>接通了</h2>' +
+      '<p>水流顺利抵达出水口，下一关的管道会更密一些。</p>' +
+      '<div class="res-grid">' +
+        '<div><span>当前关卡</span><b>' + (level + 1) + ' / ' + LEVELS.length + '</b></div>' +
+        '<div><span>累计步数</span><b>' + moves + '</b></div>' +
+        '<div><span>累计用时</span><b>' + fmtMs(totalMs()) + '</b></div>' +
+        '<div><span>下一关尺寸</span><b>' + LEVELS[level + 1] + ' × ' + LEVELS[level + 1] + '</b></div>' +
+      '</div>' +
+      '<button type="button" class="btn primary" id="nextLevel">进入下一关</button>';
+    overlay.classList.add('on');
+    ovCard.querySelector('#nextLevel').addEventListener('click', function () {
+      level++;
+      overlay.classList.remove('on');
+      loadLevel();
+      setStatus('新一关 · 先把水源接出去');
+    });
+  }
+
+  function finishRun() {
+    stopClock();
+    var total = totalMs();
+    var isBest = !best || total < (best.time || 0) * 1000;
+    if (isBest) {
+      best = { time: Math.round(total / 100) / 10, moves: moves };
+      try { localStorage.setItem(BEST_KEY, JSON.stringify(best)); } catch (e) {}
+    }
+    renderBest();
+    ovCard.innerHTML =
+      '<div class="kicker">ALL CLEAR</div>' +
+      '<h2>全线贯通</h2>' +
+      '<p>五关水管全部接通，' + (isBest ? '刷新了最佳用时。' : '水路畅通，收工。') + '</p>' +
+      '<div class="res-grid">' +
+        '<div><span>总用时</span><b>' + fmtMs(total) + '</b></div>' +
+        '<div><span>总步数</span><b>' + moves + '</b></div>' +
+        '<div><span>历史最佳</span><b>' + (best ? fmtMs(best.time * 1000) : '—') + '</b></div>' +
+        '<div><span>最佳步数</span><b>' + (best ? best.moves : '—') + '</b></div>' +
+      '</div>' +
+      '<button type="button" class="btn primary" id="againRun">再来一轮</button>';
+    overlay.classList.add('on');
+    confetti();
+    ovCard.querySelector('#againRun').addEventListener('click', function () {
+      resetRun();
+      overlay.classList.remove('on');
+      setStatus('新一轮开始 · 点击管道旋转');
+    });
+  }
+
+  function confetti() {
+    var box = document.createElement('div');
+    box.className = 'confetti';
+    var colors = ['#5eead4', '#38bdf8', '#818cf8', '#f472b6', '#fbbf24'];
+    for (var i = 0; i < 42; i++) {
+      var p = document.createElement('i');
+      p.style.left = (Math.random() * 100) + '%';
+      p.style.background = colors[i % colors.length];
+      p.style.opacity = String(0.5 + Math.random() * 0.5);
+      p.style.animationDuration = (1.1 + Math.random()) + 's';
+      p.style.animationDelay = (Math.random() * 0.3) + 's';
+      p.style.setProperty('--dx', (Math.random() * 120 - 60) + 'px');
+      p.style.setProperty('--dy', (280 + Math.random() * 240) + 'px');
+      p.style.setProperty('--rot', (Math.random() * 720 - 360) + 'deg');
+      box.appendChild(p);
+    }
+    overlay.appendChild(box);
+    setTimeout(function () { if (box.parentNode) box.parentNode.removeChild(box); }, 2500);
+  }
+
+  function loadLevel() {
+    clearTimeout(winTimer);
+    winTimer = 0;
+    completed = false;
+    buildPuzzle();
+    renderBoard();
+    paintWet();
+    updateHud();
+    setStatus('点击管道顺时针旋转，右键反向');
+  }
+
+  function resetRun() {
+    stopClock();
+    elapsedMs = 0;
+    penaltyMs = 0;
+    moves = 0;
+    level = 0;
+    clearTimeout(winTimer);
+    winTimer = 0;
+    completed = false;
+    loadLevel();
+    timeEl.textContent = '00:00';
+    updateHud();
+  }
+
+  function showStart() {
+    overlay.classList.add('on');
+    ovCard.innerHTML =
+      '<div class="kicker">5 关水路</div>' +
+      '<h2>水管连通</h2>' +
+      '<p>点击管道旋转 90°，把上方水源一路接到下方的出水口。接通后水流会自动灌满整条管路。</p>' +
+      '<div class="res-grid">' +
+        '<div><span>关卡数量</span><b>' + LEVELS.length + ' 关</b></div>' +
+        '<div><span>最大棋盘</span><b>9 × 9</b></div>' +
+        '<div><span>历史最佳</span><b>' + (best ? fmtMs(best.time * 1000) : '—') + '</b></div>' +
+        '<div><span>操作</span><b>点击 / 右键</b></div>' +
+      '</div>' +
+      '<button type="button" class="btn primary" id="startBtn">开始接水</button>';
+    ovCard.querySelector('#startBtn').addEventListener('click', function () {
+      overlay.classList.remove('on');
+      setStatus('点击管道顺时针旋转，右键反向');
+    });
+  }
+
+  function useHint() {
+    if (completed || overlay.classList.contains('on')) return;
+    var cand = [];
+    for (var i = 0; i < n * n; i++) {
+      if (pathSet[i] && cells[i].rot !== cells[i].sol) cand.push(i);
+    }
+    if (!cand.length) return;
+    var pick = cand[Math.floor(Math.random() * cand.length)];
+    var c = cells[pick];
+    var delta = ((c.sol - c.rot) % 4 + 4) % 4;
+    c.rot = c.sol;
+    c.angle += delta * 90;
+    var svg = els[pick].querySelector('svg');
+    svg.style.transform = 'rotate(' + c.angle + 'deg)';
+    els[pick].classList.remove('hintflash');
+    void els[pick].offsetWidth;
+    els[pick].classList.add('hintflash');
+    setTimeout(function () { els[pick].classList.remove('hintflash'); }, 1300);
+    penaltyMs += 10000;
+    moves++;
+    updateHud();
+    setStatus('已提示一截管道 · 时间 +10 秒');
+    if (paintWet()) {
+      completed = true;
+      boardEl.classList.add('won');
+      setStatus('接通了 · 正在注水');
+      winTimer = setTimeout(finishLevel, 520);
+    }
+  }
+
+  boardEl.addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('.cell') : null;
+    if (!b) return;
+    rotateCell(parseInt(b.dataset.i, 10), 1);
+  });
+  boardEl.addEventListener('contextmenu', function (e) {
+    var b = e.target.closest ? e.target.closest('.cell') : null;
+    if (!b) return;
+    e.preventDefault();
+    rotateCell(parseInt(b.dataset.i, 10), -1);
+  });
+
+  document.getElementById('hint').addEventListener('click', function () { useHint(); this.blur(); });
+  document.getElementById('reroll').addEventListener('click', function () {
+    if (overlay.classList.contains('on')) return;
+    loadLevel();
+    setStatus('本关已重排 · 步数和时间继续累计');
+    this.blur();
+  });
+  document.getElementById('restart').addEventListener('click', function () {
+    resetRun();
+    overlay.classList.remove('on');
+    setStatus('已重新开始 · 点击管道旋转');
+    this.blur();
+  });
+
+  // boot
+  buildPuzzle();
+  renderBoard();
+  paintWet();
+  updateHud();
+  showStart();
+})();
+</script>
+</body>
+</html>

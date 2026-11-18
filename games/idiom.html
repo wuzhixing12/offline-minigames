@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#070d18">
+<title>看图猜成语 · 离线小游戏</title>
+<style>
+  :root{
+    --text:#eaf2ff;--muted:#8ea3bd;--line:rgba(148,163,184,.16);
+    --cyan:#38bdf8;--violet:#818cf8;--pink:#f472b6;--mint:#5eead4;--amber:#fbbf24;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;min-height:100%;}
+  body{
+    min-height:100vh;display:flex;align-items:center;justify-content:center;
+    padding:22px 16px 26px;color:var(--text);
+    font-family:"Segoe UI","Microsoft YaHei","PingFang SC","Hiragino Sans GB",sans-serif;
+    background:
+      radial-gradient(900px 620px at 8% -6%, rgba(129,140,248,.14), transparent 62%),
+      radial-gradient(760px 560px at 102% 104%, rgba(244,114,182,.12), transparent 62%),
+      radial-gradient(720px 520px at 50% 48%, rgba(56,189,248,.08), transparent 68%),
+      #070d18;
+    -webkit-font-smoothing:antialiased;overflow-x:hidden;-webkit-tap-highlight-color:transparent;
+  }
+  button{font:inherit;color:inherit;}
+  .app{width:min(100%,680px);display:flex;flex-direction:column;gap:15px;}
+
+  .topbar{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+  .brand{display:flex;align-items:center;gap:13px;min-width:0;}
+  .logo{
+    width:54px;height:54px;flex:0 0 auto;border-radius:16px;display:grid;place-items:center;
+    font-size:26px;font-weight:900;color:#1e1035;
+    background:linear-gradient(150deg,#c4b5fd,#818cf8 56%,#db2777);
+    box-shadow:0 12px 28px rgba(129,140,248,.26), inset 0 1px 0 rgba(255,255,255,.42);
+  }
+  h1{
+    margin:0;font-size:clamp(22px,4.2vw,28px);font-weight:800;letter-spacing:.06em;
+    background:linear-gradient(100deg,#f5f3ff,#c4b5fd 46%,#f9a8d4);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .brand p{margin:4px 0 0;font-size:12.5px;color:var(--muted);}
+  .stats{display:flex;gap:8px;flex-wrap:wrap;}
+  .stat{min-width:62px;padding:8px 11px;border-radius:13px;background:rgba(255,255,255,.045);border:1px solid var(--line);}
+  .stat span{display:block;font-size:10.5px;color:var(--muted);letter-spacing:.08em;}
+  .stat b{display:block;margin-top:2px;font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;}
+  .stat b.hot{color:var(--amber);}
+  .stat b.bank{color:var(--mint);font-size:15px;}
+
+  .stage{display:flex;justify-content:center;padding:1px 0 2px;}
+  .quiz-shell{
+    width:min(100%,600px);padding:clamp(8px,1.7vw,13px);border-radius:26px;position:relative;
+    background:linear-gradient(180deg,rgba(255,255,255,.065),rgba(255,255,255,.022));
+    border:1px solid rgba(255,255,255,.10);
+    box-shadow:0 28px 70px rgba(0,0,0,.46), inset 0 1px 0 rgba(255,255,255,.10);
+  }
+  .quiz-shell::before{
+    content:"";position:absolute;inset:-1px;border-radius:27px;pointer-events:none;
+    background:linear-gradient(130deg,rgba(129,140,248,.36),transparent 34%,transparent 66%,rgba(244,114,182,.30));
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;mask-composite:exclude;padding:1px;
+  }
+  .quiz{
+    position:relative;width:100%;border-radius:17px;overflow:hidden;padding:clamp(14px,2.4vw,20px);
+    background:
+      radial-gradient(circle at 28% 12%, rgba(129,140,248,.10), transparent 58%),
+      linear-gradient(160deg,#0d1226,#080c18 60%,#0b1020);
+    box-shadow:inset 0 0 0 1px rgba(148,163,184,.10), inset 0 18px 40px rgba(0,0,0,.30);
+    touch-action:manipulation;user-select:none;
+  }
+  .qtop{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+  .qno{font-size:11.5px;color:#aab9d4;letter-spacing:.10em;font-weight:700;white-space:nowrap;}
+  .qbar{flex:1;height:5px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden;}
+  .qbar i{display:block;height:100%;width:100%;border-radius:inherit;background:linear-gradient(90deg,#818cf8,#38bdf8,#f472b6);transition:width .1s linear;}
+  .qsec{font-size:11.5px;color:#aab9d4;font-variant-numeric:tabular-nums;min-width:28px;text-align:right;}
+
+  .pic{
+    min-height:clamp(120px,24vh,190px);border-radius:16px;display:flex;align-items:center;justify-content:center;
+    gap:clamp(6px,2vw,18px);flex-wrap:wrap;padding:14px;
+    background:
+      radial-gradient(circle at 50% 30%, rgba(255,255,255,.06), transparent 62%),
+      linear-gradient(160deg,rgba(255,255,255,.045),rgba(255,255,255,.015));
+    border:1px solid rgba(255,255,255,.075);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.06);
+    margin-bottom:14px;
+  }
+  .pic span{
+    font-size:clamp(34px,8.4vw,64px);line-height:1;filter:drop-shadow(0 6px 14px rgba(0,0,0,.35));
+    animation:picIn .38s cubic-bezier(.2,.8,.2,1) backwards;
+  }
+  .pic span:nth-child(2){animation-delay:.05s;}
+  .pic span:nth-child(3){animation-delay:.10s;}
+  .pic span:nth-child(4){animation-delay:.15s;}
+  .pic span:nth-child(5){animation-delay:.20s;}
+  @keyframes picIn{from{opacity:0;transform:translateY(8px) scale(.9);}to{opacity:1;transform:none;}}
+
+  .hintbar{
+    display:none;gap:8px;align-items:flex-start;margin:-4px 0 12px;padding:10px 12px;border-radius:12px;
+    font-size:12.5px;line-height:1.65;color:#ffeab6;
+    background:linear-gradient(160deg,rgba(251,191,36,.16),rgba(251,191,36,.04));
+    border:1px solid rgba(251,191,36,.32);
+  }
+  .hintbar.on{display:flex;animation:fadeIn .22s ease;}
+  .hintbar b{flex:0 0 auto;color:var(--amber);letter-spacing:.08em;font-size:11.5px;padding-top:1px;}
+
+  .options{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+  .opt{
+    position:relative;border:1px solid rgba(255,255,255,.10);border-radius:13px;padding:12px 10px 12px 30px;
+    background:linear-gradient(160deg,rgba(255,255,255,.055),rgba(255,255,255,.020));
+    color:#e8eeff;font-size:clamp(13px,1.9vw,15px);font-weight:700;letter-spacing:.05em;text-align:left;
+    cursor:pointer;transition:background .16s ease,border-color .16s ease,transform .16s ease;
+  }
+  .opt:hover{background:rgba(129,140,248,.12);border-color:rgba(129,140,248,.42);}
+  .opt .k{
+    position:absolute;left:9px;top:50%;transform:translateY(-50%);
+    width:16px;height:16px;border-radius:5px;display:grid;place-items:center;
+    font-size:9.5px;font-weight:800;color:#aab9d4;background:rgba(255,255,255,.07);
+    border:1px solid rgba(255,255,255,.10);
+  }
+  .opt.correct{
+    background:linear-gradient(160deg,rgba(94,234,212,.24),rgba(52,211,153,.08));
+    border-color:rgba(94,234,212,.60);color:#d9fff7;
+  }
+  .opt.wrong{
+    background:linear-gradient(160deg,rgba(251,113,133,.22),rgba(190,18,60,.08));
+    border-color:rgba(251,113,133,.58);color:#ffe3e8;
+  }
+  .opt.dim{opacity:.55;}
+  .opt:disabled{cursor:default;}
+
+  .pop{
+    position:absolute;left:50%;top:44%;transform:translate(-50%,-50%) scale(.9);z-index:6;
+    padding:8px 16px;border-radius:999px;font-size:14px;font-weight:800;pointer-events:none;
+    color:#052018;background:linear-gradient(135deg,#6ee7b7,#38bdf8);
+    box-shadow:0 10px 28px rgba(56,189,248,.35);opacity:0;
+  }
+  .pop.on{animation:popShow .9s ease forwards;}
+  @keyframes popShow{
+    0%{opacity:0;transform:translate(-50%,-50%) scale(.8);}
+    18%{opacity:1;transform:translate(-50%,-50%) scale(1.05);}
+    72%{opacity:1;transform:translate(-50%,-70%) scale(1);}
+    100%{opacity:0;transform:translate(-50%,-95%) scale(.95);}
+  }
+
+  .panel{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  .status{font-size:12.5px;color:var(--muted);min-height:22px;display:flex;align-items:center;gap:7px;}
+  .status i{width:8px;height:8px;border-radius:50%;background:var(--violet);box-shadow:0 0 9px rgba(129,140,248,.7);}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .btn{
+    border:1px solid rgba(255,255,255,.11);border-radius:11px;padding:8px 13px;cursor:pointer;
+    background:rgba(255,255,255,.055);color:#dbeafe;font-size:12.5px;font-weight:600;
+    transition:background .16s ease,border-color .16s ease,transform .16s ease;
+  }
+  .btn:hover{background:rgba(255,255,255,.10);border-color:rgba(129,140,248,.45);transform:translateY(-1px);}
+  .btn:disabled{opacity:.45;cursor:default;transform:none;background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.08);}
+  .btn.primary{
+    color:#1e1035;border-color:transparent;
+    background:linear-gradient(135deg,#c4b5fd,#818cf8 55%,#f472b6);
+    box-shadow:0 8px 20px rgba(129,140,248,.26);
+  }
+  .foot{font-size:11.5px;color:#5f7286;letter-spacing:.03em;text-align:center;}
+
+  .overlay{
+    position:absolute;inset:0;z-index:9;display:none;align-items:center;justify-content:center;padding:18px;
+    background:rgba(3,8,18,.78);backdrop-filter:blur(7px);border-radius:17px;
+  }
+  .overlay.on{display:flex;animation:fadeIn .25s ease;}
+  @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+  .card{
+    width:min(100%,340px);padding:24px 22px 20px;border-radius:22px;text-align:center;
+    background:linear-gradient(180deg,rgba(22,20,44,.98),rgba(9,10,22,.98));
+    border:1px solid rgba(129,140,248,.28);
+    box-shadow:0 26px 70px rgba(0,0,0,.55), 0 0 44px rgba(129,140,248,.10);
+  }
+  .kicker{font-size:11.5px;letter-spacing:.22em;color:#c4b5fd;font-weight:700;}
+  .card h2{
+    margin:10px 0 6px;font-size:30px;font-weight:900;letter-spacing:.10em;
+    background:linear-gradient(100deg,#f5f3ff,#c4b5fd,#f9a8d4);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .card p{margin:0 0 16px;font-size:12.5px;line-height:1.7;color:var(--muted);}
+  .res-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
+  .res-grid div{padding:9px 8px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid var(--line);}
+  .res-grid span{display:block;font-size:10.5px;color:var(--muted);}
+  .res-grid b{display:block;margin-top:2px;font-size:17px;font-variant-numeric:tabular-nums;}
+  .card .btn.primary{width:100%;padding:11px 14px;font-size:13.5px;}
+
+  @media (max-width:620px){
+    body{padding:14px 12px 18px;}
+    .app{gap:12px;}
+    .logo{width:46px;height:46px;border-radius:14px;font-size:22px;}
+    .stat{min-width:54px;padding:7px 9px;}
+    .stat b{font-size:15px;}
+    .stat b.bank{font-size:13px;}
+    .brand p{font-size:11.5px;}
+    .quiz-shell{padding:7px;border-radius:20px;}
+    .quiz{border-radius:14px;padding:12px;}
+    .pic{border-radius:13px;}
+    .opt{padding:11px 8px 11px 25px;border-radius:11px;}
+    .overlay{position:fixed;inset:0;z-index:80;border-radius:0;padding:16px;}
+    .card{padding:20px 18px 16px;}
+    .card h2{font-size:27px;}
+  }
+  @media (max-height:730px) and (min-width:700px){
+    .quiz-shell{width:min(100%,560px);}
+    .pic{min-height:120px;}
+    .brand p{display:none;}
+    .foot{display:none;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo">猜</div>
+      <div>
+        <h1>看图猜成语</h1>
+        <p>根据图中的提示，选出对应的四字成语</p>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><span>得分</span><b id="score">0</b></div>
+      <div class="stat"><span>连对</span><b id="combo" class="hot">0</b></div>
+      <div class="stat"><span>本局</span><b id="progress">0 / 10</b></div>
+      <div class="stat"><span>学会</span><b id="bank" class="bank">0 / 0</b></div>
+      <div class="stat"><span>最佳</span><b id="best">—</b></div>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="quiz-shell">
+      <div class="quiz" id="quiz">
+        <div class="qtop">
+          <span class="qno" id="qno">第 1 题</span>
+          <div class="qbar"><i id="qfill"></i></div>
+          <span class="qsec" id="qsec">15s</span>
+        </div>
+        <div class="pic" id="pic"></div>
+        <div class="hintbar" id="hintbar"></div>
+        <div class="options" id="options"></div>
+        <div class="pop" id="pop"></div>
+        <div class="overlay on" id="overlay"><div class="card" id="ovCard"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="status" id="status"><i></i><span>每题 15 秒，答得越快分越高</span></div>
+    <div class="actions">
+      <button class="btn" id="hintBtn">提示 · -30</button>
+      <button class="btn" id="restart">重新开始</button>
+    </div>
+  </div>
+  <p class="foot" id="foot">题库加载中…</p>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var BEST_KEY = 'tx_idiom_best_v1';
+  var SEEN_KEY = 'tx_idiom_seen_v1';
+  var TOTAL_Q = 10;
+  var LIMIT = 15;
+  var HINT_COST = 30;
+
+  var DATA = [
+    { pic:'🐍 🖌️ 🦶', a:'画蛇添足' },
+    { pic:'🌳 ⏳ 🐇', a:'守株待兔' },
+    { pic:'🐑 🕳️ 🔨', a:'亡羊补牢' },
+    { pic:'🙉 🔔', a:'掩耳盗铃' },
+    { pic:'🐂 🎸', a:'对牛弹琴' },
+    { pic:'🦊 ➕ 🐯', a:'狐假虎威' },
+    { pic:'🕳️ 🐸', a:'井底之蛙' },
+    { pic:'🙈 🐘', a:'盲人摸象' },
+    { pic:'🔥 ➕ 🛢️', a:'火上浇油' },
+    { pic:'💧 ⬇️ 🪨', a:'水落石出' },
+    { pic:'🏹 2️⃣ 🦅', a:'一箭双雕' },
+    { pic:'3️⃣ ❤️ 2️⃣ 💭', a:'三心二意' },
+    { pic:'5️⃣ 🎨 6️⃣', a:'五颜六色' },
+    { pic:'7️⃣ ⬆️ 8️⃣ ⬇️', a:'七上八下' },
+    { pic:'9️⃣ 🐂 1️⃣ 🪶', a:'九牛一毛' },
+    { pic:'🔟 ✅ 🔟 💯', a:'十全十美' },
+    { pic:'1️⃣ ❤️ 1️⃣ 💭', a:'一心一意' },
+    { pic:'🛣️ ➡️ ❌', a:'半途而废' },
+    { pic:'💧 🪨', a:'滴水穿石' },
+    { pic:'🔩 ➡️ 🪡', a:'铁杵成针' },
+    { pic:'🤐 🍾', a:'守口如瓶' },
+    { pic:'🐉 🖌️ 👁️', a:'画龙点睛' },
+    { pic:'🥃 🏹 🐍', a:'杯弓蛇影' },
+    { pic:'🌿 🌲 😨', a:'草木皆兵' },
+    { pic:'4️⃣ 🎵', a:'四面楚歌' },
+    { pic:'👉 🦌 ➡️ 🐴', a:'指鹿为马' },
+    { pic:'🎺 🔢', a:'滥竽充数' },
+    { pic:'🌱 ⬆️', a:'拔苗助长' },
+    { pic:'🛶 🗡️', a:'刻舟求剑' },
+    { pic:'🧭 ❌', a:'南辕北辙' },
+    { pic:'🛍️ 📦 ↩️ 💎', a:'买椟还珠' },
+    { pic:'🌅 3️⃣ 🌆 4️⃣', a:'朝三暮四' },
+    { pic:'🦢 🐔 🐔', a:'鹤立鸡群' },
+    { pic:'🐔 🐕 😱', a:'鸡犬不宁' },
+    { pic:'🐟 👁️ 🔮', a:'鱼目混珠' },
+    { pic:'🐯 ⬆️ ❌', a:'骑虎难下' },
+    { pic:'🪵 🔥', a:'抱薪救火' },
+    { pic:'👀 🍒 💧', a:'望梅止渴' },
+    { pic:'🖌️ 🥞 🍽️', a:'画饼充饥' },
+    { pic:'🏹 🐦 😱', a:'惊弓之鸟' },
+    { pic:'🕸️ 🐟', a:'漏网之鱼' },
+    { pic:'🗡️ 🛡️', a:'自相矛盾' },
+    { pic:'🐎 ✅', a:'马到成功' },
+    { pic:'⛵ 💨', a:'一帆风顺' },
+    { pic:'🐯 🐍', a:'虎头蛇尾' },
+    { pic:'🐔 ✈️ 🥚 💥', a:'鸡飞蛋打' },
+    { pic:'🐕 😱 🧱', a:'狗急跳墙' },
+    { pic:'🚪 ⛰️', a:'开门见山' },
+    { pic:'1️⃣ 🐔 😲', a:'一鸣惊人' },
+    { pic:'🤚 🐑', a:'顺手牵羊' },
+    { pic:'🌫️ 👀 🌸', a:'雾里看花' },
+    { pic:'🧵 ⬆️ 🌸', a:'锦上添花' },
+    { pic:'💧 👋 🌙', a:'水中捞月' },
+    { pic:'🌳 🐟', a:'缘木求鱼' },
+    { pic:'🐲 🐯', a:'生龙活虎' },
+    { pic:'🐉 ✈️ 🦚 💃', a:'龙飞凤舞' },
+    { pic:'🌈 🌸', a:'万紫千红' },
+    { pic:'🌸 ✅ 🌕 ⭕', a:'花好月圆' },
+    { pic:'🐦 💬 🌸 👃', a:'鸟语花香' },
+    { pic:'⛰️ 💧 🌿', a:'山清水秀' },
+
+    { pic:'🍃 👴 ❤️ 🐉', a:'叶公好龙', hint:'嘴上说喜欢，心里其实怕' },
+    { pic:'👴 🚚 ⛰️', a:'愚公移山', hint:'挖山不止，终于搬走' },
+    { pic:'🦅 🪨 ➡️ 🌊', a:'精卫填海', hint:'小鸟衔石填大海' },
+    { pic:'🛏️ 🪵 👅 😖', a:'卧薪尝胆', hint:'睡柴草，尝苦胆' },
+    { pic:'🪢 🏠 🪡 🦵', a:'悬梁刺股', hint:'古人苦读的狠办法' },
+    { pic:'🚪 🧍 ❄️', a:'程门立雪', hint:'雪里站着等老师' },
+    { pic:'⛰️ ⬆️ 💧 ⬇️', a:'高山流水', hint:'知音难遇的琴曲' },
+    { pic:'🎵 🔁 🏠', a:'余音绕梁', hint:'歌声久久不散' },
+    { pic:'📛 ⬇️ ⛰️', a:'名落孙山', hint:'考试没考上' },
+    { pic:'👴 🐴 ❌ 😢', a:'塞翁失马', hint:'坏事也许变成好事' },
+    { pic:'🍲 💥 🚢 ⬇️', a:'破釜沉舟', hint:'砸锅沉船，不留退路' },
+    { pic:'🎒 💧 1️⃣ ⚔️', a:'背水一战', hint:'背靠河水，拼死一战' },
+    { pic:'📄 💬 🪖', a:'纸上谈兵', hint:'只会空谈不会打' },
+    { pic:'💎 ↩️ 🏯', a:'完璧归赵', hint:'宝物完好送回' },
+    { pic:'🪵 🎒 🙏 😔', a:'负荆请罪', hint:'背着荆条去认错' },
+    { pic:'3️⃣ 🚶 🏠', a:'三顾茅庐', hint:'三次登门请高人' },
+    { pic:'📜 3️⃣ ✅', a:'约法三章', hint:'先定下三条规矩' },
+    { pic:'🔊 ➡️ 🥊 ⬅️', a:'声东击西', hint:'喊着东边，打西边' },
+    { pic:'🐦 🦪 ⚔️', a:'鹬蚌相争', hint:'两方相争，旁人得利' },
+    { pic:'🦗 💪 🚗', a:'螳臂当车', hint:'小虫挡大车，不自量力' },
+    { pic:'🐜 💪 🌳', a:'蚍蜉撼树', hint:'蚂蚁想摇倒大树' },
+    { pic:'🦋 ➡️ 🔥', a:'飞蛾扑火', hint:'自己往火里扑' },
+    { pic:'🦅 🛣️ ♾️', a:'鹏程万里', hint:'前途远大' },
+    { pic:'🐟 ✅ 💧', a:'如鱼得水', hint:'到了最合适的环境' },
+    { pic:'🐟 ⬆️ 🚪 🐉', a:'鱼跃龙门', hint:'一跃就身价百倍' },
+    { pic:'🐟 ⬇️ 🦆 ⬇️', a:'沉鱼落雁', hint:'美得鱼沉雁落' },
+    { pic:'🌕 🙈 🌸 😊', a:'闭月羞花', hint:'美得月亮躲、花害羞' },
+    { pic:'🔥 👁️ 🥇', a:'火眼金睛', hint:'一眼看穿真假' },
+    { pic:'👀 🚫 🔁', a:'目不转睛', hint:'眼睛一眨不眨' },
+    { pic:'😐 🪵 🐔', a:'呆若木鸡', hint:'愣得像木头鸡' },
+    { pic:'🐔 🎤 🐕 🥷', a:'鸡鸣狗盗', hint:'小偷小摸的本事' },
+    { pic:'🐔 🪶 🧄 🥜', a:'鸡毛蒜皮', hint:'不值得一提的小事' },
+    { pic:'🐴 🐴 🐯 🐯', a:'马马虎虎', hint:'做事不太认真' },
+    { pic:'👴 🐎 🛣️', a:'老马识途', hint:'老手自然认得路' },
+    { pic:'🏇 👀 🌸', a:'走马观花', hint:'粗略地看一眼' },
+    { pic:'❤️ 🐒 💭 🐴', a:'心猿意马', hint:'心思定不下来' },
+    { pic:'🚗 💧 🐴 🐉', a:'车水马龙', hint:'车马很多很热闹' },
+    { pic:'🪖 🌾 🐴 🌀', a:'兵荒马乱', hint:'打仗年头不太平' },
+    { pic:'1️⃣ 🔫 1️⃣ 🐴', a:'单枪匹马', hint:'一个人独自去闯' },
+    { pic:'🕷️ 🧵 🐴 👣', a:'蛛丝马迹', hint:'细小的线索' },
+    { pic:'🐯 ➕ 🦅', a:'如虎添翼', hint:'本就厉害，又添帮手' },
+    { pic:'🌿 👊 😱 🐍', a:'打草惊蛇', hint:'一动草先把蛇惊了' },
+    { pic:'🐍 ⬆️ 🕳️', a:'引蛇出洞', hint:'想法子把对手引出来' },
+    { pic:'🐯 🎒 🐻 🧍', a:'虎背熊腰', hint:'身材魁梧结实' },
+    { pic:'🐯 👀 👀', a:'虎视眈眈', hint:'狠狠盯着不放' },
+    { pic:'🐑 ➡️ 🐯 👄', a:'羊入虎口', hint:'自己送上门去' },
+    { pic:'🐺 🍲 🐯 😋', a:'狼吞虎咽', hint:'吃得又快又猛' },
+    { pic:'🐺 🦡 🤝', a:'狼狈为奸', hint:'坏人合伙做坏事' },
+    { pic:'🐉 ⚔️ 🐯', a:'龙争虎斗', hint:'两个强者相争' },
+    { pic:'🐉 ⬆️ 🐯 ⬆️', a:'龙腾虎跃', hint:'动作矫健有生气' },
+    { pic:'🐉 🐴 ⚡', a:'龙马精神', hint:'精神头特别足' },
+    { pic:'🐉 🛏️ 🐯', a:'藏龙卧虎', hint:'暗地里藏着高手' },
+    { pic:'🦊 👥 🐕 👥', a:'狐朋狗友', hint:'一帮不三不四的朋友' },
+    { pic:'🍷 🍖 👥 👥', a:'酒肉朋友', hint:'只在吃喝时来往' },
+    { pic:'3️⃣ 👥 ✅ 🐯', a:'三人成虎', hint:'说的人多了，假的也像真的' },
+    { pic:'👥 💭 ✅ 🏰', a:'众志成城', hint:'齐心就能筑起城墙' },
+    { pic:'🔁 ❤️ 🤝 💪', a:'同心协力', hint:'一条心一起使劲' },
+    { pic:'🥚 🥊 🪨', a:'以卵击石', hint:'拿鸡蛋去碰石头' },
+    { pic:'⚖️ 💪 ⚖️ 💪', a:'势均力敌', hint:'两边本事差不多' },
+    { pic:'1️⃣ 🪖 🔥 ⚔️', a:'孤军奋战', hint:'没有帮手独自打' },
+    { pic:'🪑 😊 🉐 ✅', a:'坐享其成', hint:'不干活白得好处' },
+    { pic:'❌ 💪 ➡️ 🉐', a:'不劳而获', hint:'不出力也有收获' },
+    { pic:'🏁 ✅ 🏁 ✅', a:'有始有终', hint:'开头结尾都做好' },
+    { pic:'⏰ ➡️ 🏠 ⬆️', a:'后来居上', hint:'后起的反而超过前面' },
+    { pic:'🥇 1️⃣ 😱 ⏰', a:'争先恐后', hint:'抢着往前，怕落后' },
+    { pic:'💪 ⬆️ 🚣', a:'力争上游', hint:'拼命往好里争取' },
+    { pic:'💪 ➡️ 🛣️', a:'勇往直前', hint:'什么也不怕地向前' },
+    { pic:'🧠 😖 ➡️ ↩️', a:'知难而退', hint:'看到难处就退回来' },
+    { pic:'👀 ➡️ ↩️ 🦶', a:'望而却步', hint:'一看见就往后缩' },
+    { pic:'🌗 ✅ 🌗 ❓', a:'半信半疑', hint:'一半相信一半怀疑' },
+    { pic:'💯 ✅ ❌ ❓', a:'深信不疑', hint:'一点也不怀疑' },
+    { pic:'🖐️ 🦶 ❌ 🖐️', a:'手足无措', hint:'慌得不知怎么办' },
+    { pic:'🧘 ✅ ❌ 😰', a:'从容不迫', hint:'一点不慌不忙' },
+    { pic:'😱 😵 ❌ 🖐️', a:'惊慌失措', hint:'吓慌了手脚' },
+    { pic:'😌 ❌ ✅ 💼', a:'若无其事', hint:'像什么都没发生' },
+    { pic:'🧘 ✨ 😌', a:'泰然自若', hint:'很镇定，跟平常一样' },
+    { pic:'😌 ✨ 🉐', a:'悠然自得', hint:'清闲自在' },
+    { pic:'🉐 ✨ 😄 🎵', a:'自得其乐', hint:'自己给自己找乐子' },
+    { pic:'😄 ❌ ✅ 💪', a:'乐不可支', hint:'笑得撑不住了' },
+    { pic:'😏 ✅ 🌊 🌊', a:'得意洋洋', hint:'得意得不得了' },
+    { pic:'❤️ ⚫ 💭 🧊', a:'心灰意冷', hint:'没了劲头，灰心' },
+    { pic:'😞 ⬇️ 🧠 💨', a:'垂头丧气', hint:'低着头没精打采' },
+    { pic:'🔁 ❌ 🔁 ⚔️', a:'屡败屡战', hint:'输了还接着打' },
+    { pic:'❤️ 🌸 💥 🌼', a:'心花怒放', hint:'心里乐开了花' },
+    { pic:'❤️ ➖ 💨 😊', a:'心平气和', hint:'心情平稳不激动' },
+    { pic:'❤️ 😊 ✅ 🦶', a:'心满意足', hint:'想要的全有了' },
+    { pic:'❤️ 🏃 🔥', a:'心急如焚', hint:'急得像火烧' },
+    { pic:'❤️ 🗡️ ✂️', a:'心如刀割', hint:'心里疼得像被割' },
+    { pic:'❤️ 👄 🔁 1️⃣', a:'心口如一', hint:'想的和说的一样' },
+    { pic:'❤️ 💡 ❌ 📢', a:'心照不宣', hint:'心里明白，不说破' },
+    { pic:'❤️ 🍬 😊 🙏', a:'心甘情愿', hint:'完全是自己愿意' },
+    { pic:'🎉 ⬆️ 🔥', a:'兴高采烈', hint:'兴致特别高' },
+    { pic:'❌ ⚡ 🥊 🎨', a:'无精打采', hint:'一点精神也没有' },
+    { pic:'⚡ ✨ 😄', a:'精神抖擞', hint:'精神头很足' },
+    { pic:'😄 👀 😄', a:'眉开眼笑', hint:'眉毛舒展，眼睛带笑' },
+    { pic:'😄 ⬆️ 🎨 💃', a:'眉飞色舞', hint:'又高兴又得意' },
+    { pic:'😆 ➡️ 😊 🚪', a:'笑逐颜开', hint:'满脸都是笑' },
+    { pic:'🤲 🤰 😆', a:'捧腹大笑', hint:'捂着肚子笑' },
+    { pic:'😭 💧 😀', a:'泪流满面', hint:'眼泪流了一脸' },
+    { pic:'😔 💬 😮‍💨', a:'唉声叹气', hint:'无奈地连声叹气' },
+    { pic:'😟 😖', a:'愁眉苦脸', hint:'一脸发愁的样子' },
+    { pic:'🌱 ☀️ 🌸 🌼', a:'春暖花开', hint:'天气转暖，花开' },
+    { pic:'🍂 ⬆️ 💨 😊', a:'秋高气爽', hint:'秋天又高又凉快' },
+    { pic:'1️⃣ 🍃 👁️ 🍂', a:'一叶知秋', hint:'一片落叶就知道秋天' },
+    { pic:'🍂 ⬇️ ↩️ 🌳', a:'落叶归根', hint:'回到自己的家乡' },
+    { pic:'🌳 ⬇️ 🍃 🌿', a:'根深叶茂', hint:'根扎得深，枝叶旺' },
+    { pic:'🌸 ⬆️ 🍎', a:'开花结果', hint:'有了好收成' },
+    { pic:'❄️ ➕ 🧊', a:'雪上加霜', hint:'祸不单行' },
+    { pic:'❄️ 🎁 ♨️', a:'雪中送炭', hint:'难处时帮一把' },
+    { pic:'🌧️ ➡️ ☀️ 🌈', a:'雨过天晴', hint:'坏事过去，好起来' },
+    { pic:'💨 ➖ 🌊 😶', a:'风平浪静', hint:'没有风，也没有浪' },
+    { pic:'😱 🌊 🌊', a:'惊涛骇浪', hint:'险恶的大风浪' },
+    { pic:'💨 ⬆️ ☁️ ⬆️', a:'风起云涌', hint:'形势大变，动静大' },
+    { pic:'⚡ 💥 🔊', a:'电闪雷鸣', hint:'又打闪又打雷' },
+    { pic:'🧊 ☁️ ❄️ 🗺️', a:'冰天雪地', hint:'到处是冰雪' },
+    { pic:'☁️ 🥶 🗺️ 🧊', a:'天寒地冻', hint:'冷得地都冻住了' },
+    { pic:'☁️ ⬇️ 🗺️ ⬆️', a:'天南地北', hint:'一南一北，隔得远' },
+    { pic:'☁️ 🛣️ 🌊 📐', a:'天涯海角', hint:'最远最偏的地方' },
+    { pic:'4️⃣ 🧭 8️⃣ ➡️', a:'四面八方', hint:'各个方向都算上' },
+    { pic:'4️⃣ 🛣️ 8️⃣ ✅', a:'四通八达', hint:'路路都通' },
+    { pic:'5️⃣ 🏞️ 4️⃣ 🌊', a:'五湖四海', hint:'各地各处的人' },
+    { pic:'➡️ 👀 ⬅️ 👀', a:'东张西望', hint:'这边看看那边看看' },
+    { pic:'➡️ ⬇️ ⬅️ 🌀', a:'东倒西歪', hint:'歪歪扭扭站不稳' },
+    { pic:'➡️ 🏃 ⬅️ 🏃', a:'东奔西走', hint:'四处跑，到处忙' },
+    { pic:'🚶 ⬇️ 🚪 ⬆️', a:'走南闯北', hint:'南北都跑遍了' },
+    { pic:'⬅️ ➡️ 🤝 💧', a:'左右逢源', hint:'两边都吃得开' },
+    { pic:'⬅️ 😰 ➡️', a:'左右为难', hint:'两边都不好办' },
+    { pic:'⬆️ 🔁 ⬇️ 🔁', a:'上行下效', hint:'上面做，下面学着做' },
+    { pic:'⬆️ ⬇️ 1️⃣ ❤️', a:'上下一心', hint:'上下一条心' },
+    { pic:'✋ 1️⃣ ↩️ 3️⃣', a:'举一反三', hint:'会一个就能推三个' },
+    { pic:'🪶 😊 ✋', a:'轻而易举', hint:'像举羽毛一样容易' },
+    { pic:'🤚 😵 🦶 🌀', a:'手忙脚乱', hint:'慌得手脚都不听话' },
+    { pic:'🤚 💃 🦶 🕺', a:'手舞足蹈', hint:'高兴得手脚都动起来' },
+    { pic:'🦶 ⚡ 1️⃣ ⛰️', a:'捷足先登', hint:'腿快的先到先得' },
+    { pic:'🦶 🗺️ ✅', a:'脚踏实地', hint:'做事踏实不浮' },
+    { pic:'🙂 ⬇️ 😄 🙇', a:'点头哈腰', hint:'讨好地弯腰' },
+    { pic:'🙂 🔁 🧠 🔁', a:'摇头晃脑', hint:'得意地晃着脑袋' },
+    { pic:'🪨 2️⃣ 🐦', a:'一石二鸟', hint:'一个动作两个收获' },
+    { pic:'🪖 🐎 🪖 🐎', a:'千军万马', hint:'兵马多得数不清' },
+    { pic:'💯 ❌ 1️⃣ ❌', a:'万无一失', hint:'保证一点不出错' },
+    { pic:'💯 🎯', a:'百发百中', hint:'每次都打中' },
+    { pic:'5️⃣ 🌸 8️⃣ 🚪', a:'五花八门', hint:'花样多得数不完' },
+    { pic:'7️⃣ 0️⃣ 🍂', a:'七零八落', hint:'散得乱七八糟' },
+    { pic:'9️⃣ 💀 1️⃣ 🧬', a:'九死一生', hint:'太险了，差点没命' },
+    { pic:'6️⃣ 😇 ❌ 👑', a:'六神无主', hint:'慌得没了主意' },
+    { pic:'8️⃣ 🎲 💎', a:'八面玲珑', hint:'各处都应付得圆滑' },
+    { pic:'3️⃣ 3️⃣ 2️⃣ 2️⃣', a:'三三两两', hint:'三两个凑在一起' },
+    { pic:'3️⃣ 🔁 5️⃣ 🔁', a:'三番五次', hint:'一遍又一遍' },
+    { pic:'3️⃣ 💭 ➡️ 🚶', a:'三思而行', hint:'想清楚了再动手' },
+    { pic:'🔟 ✋ 9️⃣ 🧘', a:'十拿九稳', hint:'很有把握' }
+  ];
+
+  var scoreEl = document.getElementById('score');
+  var comboEl = document.getElementById('combo');
+  var progressEl = document.getElementById('progress');
+  var bankEl = document.getElementById('bank');
+  var bestEl = document.getElementById('best');
+  var picEl = document.getElementById('pic');
+  var optionsEl = document.getElementById('options');
+  var qnoEl = document.getElementById('qno');
+  var qsecEl = document.getElementById('qsec');
+  var qfill = document.getElementById('qfill');
+  var popEl = document.getElementById('pop');
+  var overlay = document.getElementById('overlay');
+  var ovCard = document.getElementById('ovCard');
+  var statusEl = document.getElementById('status');
+  var hintBar = document.getElementById('hintbar');
+  var hintBtn = document.getElementById('hintBtn');
+  var footEl = document.getElementById('foot');
+
+  var queue = [];
+  var qi = 0, score = 0, combo = 0, correctCount = 0, hintsUsed = 0;
+  var best = 0, locked = true, playing = false;
+  var qStart = 0, timerId = 0, advanceTimer = 0;
+  var hintShown = false;
+  var seenMap = {};
+
+  function loadSeen() {
+    var raw = '';
+    try { raw = localStorage.getItem(SEEN_KEY) || ''; } catch (e) { return {}; }
+    if (!raw) return {};
+    var obj = null;
+    try { obj = JSON.parse(raw); } catch (e2) { obj = null; }
+    if (!obj || typeof obj !== 'object') return {};
+    return obj;
+  }
+
+  function saveSeen() {
+    try { localStorage.setItem(SEEN_KEY, JSON.stringify(seenMap)); } catch (e) {}
+  }
+
+  seenMap = loadSeen();
+  try { best = parseInt(localStorage.getItem(BEST_KEY) || '0', 10) || 0; } catch (e) { best = 0; }
+
+  function solvedCount() {
+    var n = 0, i;
+    for (i = 0; i < DATA.length; i++) {
+      if (seenMap[DATA[i].a] === 1) n++;
+    }
+    return n;
+  }
+
+  function roundTotal() {
+    return queue.length > 0 ? queue.length : TOTAL_Q;
+  }
+
+  function refreshBank() {
+    bankEl.textContent = solvedCount() + ' / ' + DATA.length;
+    footEl.textContent = '题库 ' + DATA.length + ' 条 · 已学会 ' + solvedCount() +
+      ' 条 · 没答对过的题会优先出现 · 键盘 1–4 选答，H 用提示';
+  }
+
+  function markSeen(answer, ok) {
+    if (ok) seenMap[answer] = 1;
+    else if (seenMap[answer] !== 1) seenMap[answer] = 0;
+    saveSeen();
+    refreshBank();
+  }
+
+  bestEl.textContent = best > 0 ? best : '—';
+  scoreEl.textContent = '0';
+  progressEl.textContent = '0 / ' + TOTAL_Q;
+  comboEl.textContent = '0';
+  refreshBank();
+
+  function shuffle(a) {
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+  function setStatus(t) { statusEl.querySelector('span').textContent = t; }
+
+  function buildQueue() {
+    var fresh = [], review = [], i;
+    for (i = 0; i < DATA.length; i++) {
+      if (seenMap[DATA[i].a] === 1) review.push(DATA[i]);
+      else fresh.push(DATA[i]);
+    }
+    shuffle(fresh);
+    shuffle(review);
+    var pool = fresh.concat(review);
+    queue = pool.slice(0, Math.min(TOTAL_Q, pool.length));
+  }
+
+  function optionList(answer) {
+    var opts = [answer];
+    var guard = 0;
+    while (opts.length < 4 && guard++ < 400) {
+      var cand = DATA[Math.floor(Math.random() * DATA.length)].a;
+      if (opts.indexOf(cand) < 0) opts.push(cand);
+    }
+    return shuffle(opts);
+  }
+
+  function hintText(q) {
+    if (q.hint && typeof q.hint === 'string') return q.hint;
+    return '首字是「' + q.a.charAt(0) + '」，共四个字，把画面里每个图形各想成一个字。';
+  }
+
+  function resetHint() {
+    hintShown = false;
+    hintBar.classList.remove('on');
+    hintBar.innerHTML = '';
+    hintBtn.disabled = false;
+    hintBtn.textContent = '提示 · -' + HINT_COST;
+  }
+
+  function showHint() {
+    if (!playing || locked || hintShown) return;
+    var q = queue[qi];
+    if (!q) return;
+    hintShown = true;
+    hintsUsed++;
+    score = Math.max(0, score - HINT_COST);
+    scoreEl.textContent = String(score);
+    hintBar.innerHTML = '<b>提示</b><span></span>';
+    hintBar.querySelector('span').textContent = hintText(q);
+    hintBar.classList.add('on');
+    hintBtn.disabled = true;
+    hintBtn.textContent = '已用提示 · -' + HINT_COST;
+    setStatus('用了提示 · 扣 ' + HINT_COST + ' 分');
+  }
+
+  function showQuestion() {
+    if (qi >= queue.length) { finish(); return; }
+    var q = queue[qi];
+    locked = false;
+    resetHint();
+    picEl.innerHTML = '';
+    var tokens = q.pic.trim().split(/\s+/);
+    tokens.forEach(function (t) {
+      var s = document.createElement('span');
+      s.textContent = t;
+      picEl.appendChild(s);
+    });
+    optionsEl.innerHTML = '';
+    var opts = optionList(q.a);
+    opts.forEach(function (text, i) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'opt';
+      b.dataset.a = text;
+      b.innerHTML = '<span class="k">' + (i + 1) + '</span>' + text;
+      b.addEventListener('click', function () { answer(this, text); });
+      optionsEl.appendChild(b);
+    });
+    qnoEl.textContent = '第 ' + (qi + 1) + ' 题';
+    progressEl.textContent = (qi + 1) + ' / ' + roundTotal();
+    qsecEl.textContent = LIMIT + 's';
+    qfill.style.width = '100%';
+    qStart = Date.now();
+    clearInterval(timerId);
+    timerId = setInterval(tick, 100);
+    setStatus('选一个最贴切的成语');
+  }
+
+  function tick() {
+    if (locked || !playing) return;
+    var left = LIMIT - (Date.now() - qStart) / 1000;
+    if (left <= 0) {
+      qfill.style.width = '0%';
+      qsecEl.textContent = '0s';
+      answer(null, null, true);
+      return;
+    }
+    qfill.style.width = Math.max(0, left / LIMIT * 100) + '%';
+    qsecEl.textContent = Math.ceil(left) + 's';
+  }
+
+  function answer(btn, text, timeout) {
+    if (locked) return;
+    locked = true;
+    clearInterval(timerId);
+    hintBtn.disabled = true;
+    var q = queue[qi];
+    var opts = optionsEl.querySelectorAll('.opt');
+    for (var i = 0; i < opts.length; i++) {
+      if (opts[i].dataset.a === q.a) opts[i].classList.add('correct');
+      else if (opts[i] !== btn) opts[i].classList.add('dim');
+    }
+    if (timeout) {
+      combo = 0;
+      comboEl.textContent = '0';
+      markSeen(q.a, false);
+      setStatus('时间到 · 正确答案是「' + q.a + '」');
+      showPop('时间到', false);
+    } else if (text === q.a) {
+      var left = Math.max(0, LIMIT - (Date.now() - qStart) / 1000);
+      var gain = 100 + Math.round(left) * 5 + combo * 15;
+      score += gain;
+      combo++;
+      correctCount++;
+      scoreEl.textContent = String(score);
+      comboEl.textContent = String(combo);
+      markSeen(q.a, true);
+      setStatus('答对了 · +' + gain);
+      showPop('+' + gain, true);
+    } else {
+      combo = 0;
+      comboEl.textContent = '0';
+      btn.classList.add('wrong');
+      markSeen(q.a, false);
+      setStatus('答错了 · 正确答案是「' + q.a + '」');
+      showPop('答错了', false);
+    }
+    qi++;
+    progressEl.textContent = qi + ' / ' + roundTotal();
+    clearTimeout(advanceTimer);
+    advanceTimer = setTimeout(next, 1150);
+  }
+
+  function next() {
+    if (!playing) return;
+    if (qi >= queue.length) finish();
+    else showQuestion();
+  }
+
+  function showPop(text, good) {
+    popEl.textContent = text;
+    popEl.style.background = good
+      ? 'linear-gradient(135deg,#6ee7b7,#38bdf8)'
+      : 'linear-gradient(135deg,#fda4af,#fb7185)';
+    popEl.style.color = good ? '#052018' : '#2a0710';
+    popEl.classList.remove('on');
+    void popEl.offsetWidth;
+    popEl.classList.add('on');
+  }
+
+  function finish() {
+    playing = false;
+    clearInterval(timerId);
+    clearTimeout(advanceTimer);
+    locked = true;
+    hintBtn.disabled = true;
+    var total = roundTotal();
+    var isBest = score > best;
+    if (isBest) {
+      best = score;
+      try { localStorage.setItem(BEST_KEY, String(best)); } catch (e) {}
+    }
+    bestEl.textContent = best > 0 ? best : '—';
+    setStatus('本局结束');
+    var title = correctCount >= 8 ? '成语高手' : correctCount >= 5 ? '再接再厉' : '再来一局';
+    ovCard.innerHTML =
+      '<div class="kicker">ROUND OVER</div>' +
+      '<h2>' + title + '</h2>' +
+      '<p>答对 ' + correctCount + ' / ' + total + ' 题，' +
+        (isBest ? '刷新了个人最佳。' : '继续熟悉这些成语吧。') +
+        '题库已学会 ' + solvedCount() + ' / ' + DATA.length + ' 条。</p>' +
+      '<div class="res-grid">' +
+        '<div><span>本局得分</span><b>' + score + '</b></div>' +
+        '<div><span>答对题数</span><b>' + correctCount + ' / ' + total + '</b></div>' +
+        '<div><span>用了提示</span><b>' + hintsUsed + ' 次</b></div>' +
+        '<div><span>历史最佳</span><b>' + (best > 0 ? best : '—') + '</b></div>' +
+      '</div>' +
+      '<button type="button" class="btn primary" id="again">再来一局</button>';
+    overlay.classList.add('on');
+    ovCard.querySelector('#again').addEventListener('click', start);
+  }
+
+  function showStart() {
+    hintBtn.disabled = true;
+    overlay.classList.add('on');
+    ovCard.innerHTML =
+      '<div class="kicker">题库 ' + DATA.length + ' 条</div>' +
+      '<h2>看图猜成语</h2>' +
+      '<p>看图里的表情和符号，从四个选项里选出对应的成语。每题 15 秒，答得越快、连对越多，分数越高；卡住了可以点「提示」，代价是扣 ' + HINT_COST + ' 分。</p>' +
+      '<div class="res-grid">' +
+        '<div><span>历史最佳</span><b>' + (best > 0 ? best : '—') + '</b></div>' +
+        '<div><span>本局题数</span><b>' + TOTAL_Q + ' 题</b></div>' +
+        '<div><span>题库进度</span><b>' + solvedCount() + ' / ' + DATA.length + '</b></div>' +
+        '<div><span>提示扣分</span><b>-' + HINT_COST + '</b></div>' +
+      '</div>' +
+      '<button type="button" class="btn primary" id="startBtn">开始挑战</button>';
+    ovCard.querySelector('#startBtn').addEventListener('click', start);
+  }
+
+  function start() {
+    clearInterval(timerId);
+    clearTimeout(advanceTimer);
+    buildQueue();
+    qi = 0; score = 0; combo = 0; correctCount = 0; hintsUsed = 0;
+    scoreEl.textContent = '0';
+    comboEl.textContent = '0';
+    progressEl.textContent = '0 / ' + roundTotal();
+    overlay.classList.remove('on');
+    playing = true;
+    locked = false;
+    showQuestion();
+  }
+
+  document.getElementById('restart').addEventListener('click', function () { start(); this.blur(); });
+  hintBtn.addEventListener('click', function () { showHint(); this.blur(); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      if (overlay.classList.contains('on') && !playing) {
+        e.preventDefault();
+        var b = ovCard.querySelector('#startBtn, #again');
+        if (b) b.click();
+      }
+      return;
+    }
+    if (!playing || locked) return;
+    var k = e.key;
+    if (k === 'h' || k === 'H') {
+      e.preventDefault();
+      showHint();
+      return;
+    }
+    var n = parseInt(k, 10);
+    if (n >= 1 && n <= 4) {
+      e.preventDefault();
+      var b2 = optionsEl.querySelectorAll('.opt')[n - 1];
+      if (b2) b2.click();
+    }
+  });
+
+  showStart();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#08101b">
+<title>消消乐 · 宝石连锁</title>
+<style>
+  :root{
+    --text:#eef6ff;
+    --muted:#8da2bb;
+    --line:rgba(148,163,184,.16);
+    --cyan:#38bdf8;
+    --violet:#818cf8;
+    --pink:#f472b6;
+    --board:min(88vw, 500px);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;min-height:100%;}
+  body{
+    min-height:100vh;
+    display:flex;align-items:center;justify-content:center;
+    padding:22px 16px 26px;
+    color:var(--text);
+    font-family:"Segoe UI","Microsoft YaHei","PingFang SC","Hiragino Sans GB",sans-serif;
+    background:
+      radial-gradient(900px 640px at 6% -8%, rgba(56,189,248,.15), transparent 62%),
+      radial-gradient(820px 600px at 103% 104%, rgba(236,72,153,.14), transparent 64%),
+      radial-gradient(720px 520px at 48% 46%, rgba(99,102,241,.11), transparent 68%),
+      #08101b;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+    -webkit-tap-highlight-color:transparent;
+  }
+  button{font:inherit;color:inherit;}
+
+  .app{width:min(100%, 760px);display:flex;flex-direction:column;gap:15px;}
+
+  .topbar{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+  .brand{display:flex;align-items:center;gap:13px;min-width:0;}
+  .logo{
+    width:54px;height:54px;flex:0 0 auto;border-radius:16px;
+    display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:10px;
+    background:linear-gradient(150deg,rgba(255,255,255,.15),rgba(255,255,255,.03));
+    border:1px solid rgba(255,255,255,.14);
+    box-shadow:0 12px 28px rgba(56,189,248,.2), inset 0 1px 0 rgba(255,255,255,.22);
+  }
+  .logo i{border-radius:5px;display:block;box-shadow:inset 0 1px 0 rgba(255,255,255,.6);}
+  .logo i:nth-child(1){background:linear-gradient(145deg,#fb7185,#be123c);}
+  .logo i:nth-child(2){background:linear-gradient(145deg,#fbbf24,#b45309);}
+  .logo i:nth-child(3){background:linear-gradient(145deg,#38bdf8,#1d4ed8);}
+  .logo i:nth-child(4){background:linear-gradient(145deg,#c084fc,#7e22ce);}
+  h1{
+    margin:0;font-size:clamp(22px,4.2vw,28px);font-weight:800;letter-spacing:.04em;
+    background:linear-gradient(100deg,#f0f9ff,#a5f3fc 38%,#c7d2fe 68%,#f9a8d4);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .brand p{margin:5px 0 0;font-size:12.5px;color:var(--muted);letter-spacing:.02em;}
+
+  .stats{display:flex;gap:8px;flex-wrap:wrap;}
+  .stat{min-width:78px;padding:9px 13px;border-radius:13px;background:rgba(255,255,255,.045);border:1px solid var(--line);backdrop-filter:blur(8px);}
+  .stat span{display:block;font-size:11px;color:var(--muted);letter-spacing:.08em;}
+  .stat b{display:block;margin-top:3px;font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;}
+  .stat.score b{color:#fde68a;}
+  .stat.moves b{color:#7dd3fc;}
+
+  .target{padding:12px 16px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid var(--line);position:relative;overflow:hidden;}
+  .target-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:9px;}
+  .target-top span{font-size:12px;color:var(--muted);letter-spacing:.04em;}
+  .target-top b{font-size:13.5px;font-weight:800;color:#dbeafe;font-variant-numeric:tabular-nums;}
+  .bar{height:9px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.35);}
+  .bar i{
+    display:block;height:100%;width:0%;border-radius:inherit;
+    background:linear-gradient(90deg,#22d3ee,#818cf8 55%,#f472b6);
+    box-shadow:0 0 16px rgba(99,102,241,.55);
+    transition:width .28s cubic-bezier(.2,.75,.25,1);
+  }
+
+  .stage{display:flex;justify-content:center;padding:2px 0;}
+  .board-shell{
+    width:var(--board);aspect-ratio:1/1;position:relative;
+    padding:clamp(9px,1.8vw,14px);border-radius:26px;
+    background:linear-gradient(180deg,rgba(255,255,255,.066),rgba(255,255,255,.022));
+    border:1px solid rgba(255,255,255,.10);
+    box-shadow:0 30px 72px rgba(0,0,0,.48), inset 0 1px 0 rgba(255,255,255,.10);
+  }
+  .board-shell::before{
+    content:"";position:absolute;inset:-1px;border-radius:27px;pointer-events:none;
+    background:linear-gradient(130deg,rgba(56,189,248,.4),transparent 32%,transparent 68%,rgba(236,72,153,.34));
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;mask-composite:exclude;padding:1px;
+  }
+  #board{
+    display:block;width:100%;height:100%;
+    border-radius:17px;
+    background:
+      radial-gradient(circle at 30% 18%, rgba(56,189,248,.09), transparent 58%),
+      linear-gradient(160deg,#0a1526,#070e1a 62%,#0a1322);
+    box-shadow:inset 0 0 0 1px rgba(148,163,184,.10), inset 0 18px 44px rgba(0,0,0,.34);
+    touch-action:none;cursor:pointer;
+    user-select:none;
+  }
+
+  .overlay{
+    position:absolute;inset:0;z-index:9;display:none;align-items:center;justify-content:center;
+    padding:18px;border-radius:26px;
+    background:rgba(3,8,18,.74);backdrop-filter:blur(8px);
+  }
+  .overlay.on{display:flex;}
+  @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+  .over-card{
+    width:min(100%,340px);padding:26px 24px 22px;border-radius:22px;text-align:center;
+    background:linear-gradient(180deg,rgba(15,26,46,.98),rgba(8,15,30,.98));
+    border:1px solid rgba(125,211,252,.25);
+    box-shadow:0 26px 70px rgba(0,0,0,.58), 0 0 44px rgba(56,189,248,.14);
+    transform:translateY(8px);animation:rise .32s cubic-bezier(.2,.8,.2,1) forwards;
+  }
+  @keyframes rise{to{transform:none;}}
+  .over-kicker{font-size:12px;letter-spacing:.22em;color:#7dd3fc;font-weight:700;}
+  .over-title{
+    margin:10px 0 5px;font-size:31px;font-weight:900;letter-spacing:.06em;
+    background:linear-gradient(100deg,#a5f3fc,#c7d2fe,#f9a8d4);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .over-sub{margin:0 0 16px;font-size:13px;color:var(--muted);line-height:1.6;}
+  .over-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px;}
+  .over-grid div{padding:10px 8px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid var(--line);}
+  .over-grid span{display:block;font-size:11px;color:var(--muted);}
+  .over-grid b{display:block;margin-top:3px;font-size:18px;font-variant-numeric:tabular-nums;}
+
+  .start-levels{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin:0 0 14px;}
+  .start-levels i{
+    width:16px;height:16px;border-radius:5px;background:rgba(255,255,255,.07);
+    border:1px solid rgba(148,163,184,.18);font-style:normal;color:#5f7286;
+    display:grid;place-items:center;font-size:8px;font-weight:700;
+  }
+  .start-levels i.done{background:rgba(34,211,238,.20);border-color:rgba(34,211,238,.46);color:#a5f3fc;}
+  .start-levels i.cur{background:rgba(250,204,21,.20);border-color:rgba(250,204,21,.55);color:#fef08a;}
+  .start-actions{display:flex;flex-direction:column;gap:8px;}
+  .start-actions .btn{width:100%;}
+  .start-tip{margin:10px 0 0;font-size:10.5px;color:#5f7286;letter-spacing:.03em;}
+
+  .toast{
+    position:absolute;left:50%;top:-40px;transform:translate(-50%,-10px);
+    z-index:8;padding:8px 16px;border-radius:999px;
+    font-size:12.5px;font-weight:700;letter-spacing:.03em;white-space:nowrap;
+    color:#e0f2fe;background:rgba(8,17,32,.94);border:1px solid rgba(125,211,252,.3);
+    box-shadow:0 14px 34px rgba(0,0,0,.45);
+    opacity:0;pointer-events:none;transition:opacity .22s ease,transform .22s ease;
+  }
+  .toast.on{opacity:1;transform:translate(-50%,0);}
+
+  .panel{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  .level-pill{
+    display:flex;align-items:center;gap:9px;padding:9px 15px;border-radius:13px;
+    background:rgba(255,255,255,.045);border:1px solid var(--line);
+    font-size:13px;font-weight:800;letter-spacing:.05em;color:#dbeafe;
+  }
+  .level-pill i{width:8px;height:8px;border-radius:50%;background:#22d3ee;box-shadow:0 0 12px #22d3ee;}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .btn{
+    border:1px solid rgba(148,163,184,.20);background:rgba(255,255,255,.045);
+    color:#dbeafe;padding:10px 17px;border-radius:12px;
+    font-size:13px;font-weight:700;cursor:pointer;letter-spacing:.03em;
+    transition:all .18s ease;
+  }
+  .btn:hover{background:rgba(255,255,255,.085);border-color:rgba(148,163,184,.35);transform:translateY(-1px);}
+  .btn:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+  .btn.primary{
+    color:#04121f;border:0;
+    background:linear-gradient(135deg,#22d3ee,#818cf8 58%,#f472b6);
+    box-shadow:0 10px 24px rgba(99,102,241,.30);
+  }
+  .btn.primary:hover{filter:brightness(1.06);box-shadow:0 13px 30px rgba(99,102,241,.4);}
+
+  .hint{margin:0;text-align:center;font-size:12px;color:#748aa5;letter-spacing:.03em;}
+
+  @media (max-width:620px){
+    body{align-items:flex-start;padding-top:18px;}
+    .app{gap:12px;}
+    .logo{width:46px;height:46px;border-radius:14px;padding:8px;}
+    h1{font-size:22px;}
+    .brand p{font-size:11.5px;}
+    .stats{width:100%;}
+    .stat{flex:1;min-width:0;padding:8px 10px;}
+    .stat b{font-size:15.5px;}
+    .target{padding:11px 14px;}
+    .panel{justify-content:center;}
+    .actions{width:100%;}
+    .actions .btn{flex:1;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <div>
+        <h1>消消乐</h1>
+        <p>交换相邻宝石，连成三个或更多</p>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><span>关卡</span><b id="level">1</b></div>
+      <div class="stat score"><span>分数</span><b id="score">0</b></div>
+      <div class="stat moves"><span>剩余步数</span><b id="moves">25</b></div>
+    </div>
+  </header>
+
+  <div class="target">
+    <div class="target-top">
+      <span id="objText">本关目标</span>
+      <b><span id="score-now">0</span> / <span id="target">1200</span></b>
+    </div>
+    <div class="bar"><i id="progress"></i></div>
+  </div>
+
+  <div class="stage">
+    <div class="board-shell">
+      <canvas id="board" aria-label="消消乐棋盘"></canvas>
+      <div class="toast" id="toast"></div>
+      <div class="overlay" id="startOverlay">
+        <div class="over-card">
+          <div class="over-kicker">GEM CASCADE</div>
+          <h2 class="over-title">宝石连锁</h2>
+          <p class="over-sub" id="start-sub">20 关目标挑战 · 消行、破冰、连锁</p>
+          <div class="start-levels" id="startLevels"></div>
+          <div class="start-actions">
+            <button class="btn primary" id="startNext" type="button">开始第 1 关</button>
+            <button class="btn" id="startFirst" type="button" style="display:none">从第 1 关开始</button>
+          </div>
+          <p class="start-tip">进度自动保存在本地 · 下次可以继续</p>
+        </div>
+      </div>
+      <div class="overlay" id="overlay">
+        <div class="over-card">
+          <div class="over-kicker" id="over-kicker">LEVEL CLEAR</div>
+          <h2 class="over-title" id="over-title">过关</h2>
+          <p class="over-sub" id="over-sub">目标达成，下一关分数要求更高</p>
+          <div class="over-grid">
+            <div><span>本关得分</span><b id="over-score">0</b></div>
+            <div><span id="over-label2">剩余步数奖励</span><b id="over-bonus">0</b></div>
+          </div>
+          <button class="btn primary" id="over-btn" style="width:100%">下一关</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="level-pill"><i></i><span>第 <b id="level2">1</b> / <b id="levelTotal">20</b> 关</span></div>
+    <div class="actions">
+      <button type="button" class="btn" id="hint">提示</button>
+      <button type="button" class="btn" id="shuffle">重排 <span style="opacity:.65">-1 步</span></button>
+      <button type="button" class="btn primary" id="restart">重开本关</button>
+    </div>
+  </div>
+
+  <p class="hint">点击两颗相邻宝石交换 · 也可以按住拖动滑动</p>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var ROWS = 8, COLS = 8;
+  var SIZE = 640;
+  var PAD = 8;
+  var CELL = (SIZE - PAD * 2) / COLS;
+  var GEM = CELL * 0.80;
+
+  var COLOR_NAMES = ['红色', '橙色', '黄色', '绿色', '蓝色', '紫色'];
+
+  // 20 关配置：type = score(分数) / color(收集某色) / ice(清冰块)
+  var LEVELS = [
+    { type: 'score', target: 1200, moves: 26, colors: 5 },
+    { type: 'score', target: 1500, moves: 26, colors: 5 },
+    { type: 'color', color: 0, target: 12, moves: 25, colors: 5 },
+    { type: 'score', target: 1900, moves: 25, colors: 5 },
+    { type: 'ice', target: 6, moves: 25, colors: 5 },
+    { type: 'color', color: 2, target: 14, moves: 24, colors: 5 },
+    { type: 'score', target: 2400, moves: 24, colors: 6 },
+    { type: 'ice', target: 8, moves: 24, colors: 6 },
+    { type: 'score', target: 2800, moves: 24, colors: 6 },
+    { type: 'color', color: 4, target: 16, moves: 23, colors: 6 },
+    { type: 'ice', target: 10, moves: 23, colors: 6 },
+    { type: 'score', target: 3400, moves: 22, colors: 6 },
+    { type: 'color', color: 1, target: 18, moves: 22, colors: 6 },
+    { type: 'ice', target: 12, moves: 22, colors: 6 },
+    { type: 'score', target: 4000, moves: 21, colors: 6 },
+    { type: 'color', color: 3, target: 20, moves: 21, colors: 6 },
+    { type: 'ice', target: 14, moves: 21, colors: 6 },
+    { type: 'score', target: 4600, moves: 20, colors: 6 },
+    { type: 'color', color: 5, target: 22, moves: 20, colors: 6 },
+    { type: 'ice', target: 16, moves: 22, colors: 6 }
+  ];
+
+  var STORE_KEY = 'match3_progress_v1';
+  var progress = { max: 1, cleared: 0 };
+  try {
+    var rawProgress = localStorage.getItem(STORE_KEY);
+    if (rawProgress) {
+      var pp = JSON.parse(rawProgress);
+      if (pp && typeof pp === 'object') {
+        progress.max = Math.min(LEVELS.length, Math.max(1, parseInt(pp.max, 10) || 1));
+        progress.cleared = Math.min(LEVELS.length, Math.max(0, parseInt(pp.cleared, 10) || 0));
+      }
+    }
+  } catch (e) { progress = { max: 1, cleared: 0 }; }
+  function saveProgress() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(progress)); } catch (e) {}
+  }
+
+  var canvas = document.getElementById('board');
+  var ctx = canvas.getContext('2d');
+  var overlay = document.getElementById('overlay');
+  var toastEl = document.getElementById('toast');
+  var levelEl = document.getElementById('level');
+  var level2El = document.getElementById('level2');
+  var levelTotalEl = document.getElementById('levelTotal');
+  var scoreEl = document.getElementById('score');
+  var movesEl = document.getElementById('moves');
+  var scoreNowEl = document.getElementById('score-now');
+  var targetEl = document.getElementById('target');
+  var objTextEl = document.getElementById('objText');
+  var progressEl = document.getElementById('progress');
+  var overKicker = document.getElementById('over-kicker');
+  var overTitle = document.getElementById('over-title');
+  var overSub = document.getElementById('over-sub');
+  var overScore = document.getElementById('over-score');
+  var overBonus = document.getElementById('over-bonus');
+  var overLabel2 = document.getElementById('over-label2');
+  var overBtn = document.getElementById('over-btn');
+  var startOverlay = document.getElementById('startOverlay');
+  var startSub = document.getElementById('start-sub');
+  var startLevels = document.getElementById('startLevels');
+  var startNext = document.getElementById('startNext');
+  var startFirst = document.getElementById('startFirst');
+
+  var COLORS = [
+    { base:'#f43f5e', deep:'#9f1239', light:'#fecdd3', glow:'rgba(244,63,94,.5)' },
+    { base:'#fb923c', deep:'#c2410c', light:'#fed7aa', glow:'rgba(251,146,60,.5)' },
+    { base:'#facc15', deep:'#a16207', light:'#fef08a', glow:'rgba(250,204,21,.5)' },
+    { base:'#34d399', deep:'#047857', light:'#bbf7d0', glow:'rgba(52,211,153,.5)' },
+    { base:'#38bdf8', deep:'#1d4ed8', light:'#bae6fd', glow:'rgba(56,189,248,.5)' },
+    { base:'#c084fc', deep:'#7e22ce', light:'#e9d5ff', glow:'rgba(192,132,252,.5)' }
+  ];
+
+  var board = [];
+  var selected = null;
+  var hintPair = null;
+  var hintTimer = 0;
+  var busy = false;
+  var score = 0;
+  var moves = 25;
+  var level = 1;
+  var cfg = LEVELS[0];
+  var typesCount = 5;
+  var collected = [0, 0, 0, 0, 0, 0];
+  var ice = [];
+  var iceTotal = 0;
+  var iceLeft = 0;
+  var started = false;
+  var over = false;
+  var overMode = 'next';
+  var press = null;
+  var shake = 0;
+  var shakeCell = null;
+
+  var tweens = [];
+  var particles = [];
+  var floaters = [];
+  var now = 0;
+  var last = 0;
+  var dpr = 1;
+
+  function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+  function rand(a, b) { return a + Math.random() * (b - a); }
+  function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
+
+  function cellCenter(r, c) {
+    return {
+      x: PAD + c * CELL + CELL / 2,
+      y: PAD + r * CELL + CELL / 2
+    };
+  }
+
+  function makeGem(type, r, c, yOffset) {
+    var p = cellCenter(r, c);
+    return {
+      type: type,
+      x: p.x,
+      y: (yOffset == null ? p.y : p.y + yOffset),
+      scale: 1,
+      alpha: 1
+    };
+  }
+
+  function tween(duration, update) {
+    return new Promise(function (resolve) {
+      tweens.push({
+        start: -1,
+        duration: Math.max(1, duration),
+        update: update,
+        resolve: resolve
+      });
+    });
+  }
+
+  function updateTweens(t) {
+    for (var i = tweens.length - 1; i >= 0; i--) {
+      var tw = tweens[i];
+      if (tw.start < 0) tw.start = t;
+      var p = clamp((t - tw.start) / tw.duration, 0, 1);
+      tw.update(easeOut(p), p);
+      if (p >= 1) {
+        tweens.splice(i, 1);
+        tw.resolve();
+      }
+    }
+  }
+
+  function wait(ms) {
+    return new Promise(function (resolve) { setTimeout(resolve, ms); });
+  }
+
+  /* ---------------- board helpers ---------------- */
+
+  function randomType() {
+    return Math.floor(Math.random() * typesCount);
+  }
+
+  function swapData(a, b) {
+    var t = board[a.r][a.c];
+    board[a.r][a.c] = board[b.r][b.c];
+    board[b.r][b.c] = t;
+  }
+
+  function findMatches() {
+    var out = {};
+    var r, c, k;
+    for (r = 0; r < ROWS; r++) {
+      c = 0;
+      while (c < COLS) {
+        var g = board[r][c];
+        if (!g) { c++; continue; }
+        k = c + 1;
+        while (k < COLS && board[r][k] && board[r][k].type === g.type) k++;
+        if (k - c >= 3) {
+          for (var x = c; x < k; x++) out[r + ',' + x] = true;
+        }
+        c = k;
+      }
+    }
+    for (c = 0; c < COLS; c++) {
+      r = 0;
+      while (r < ROWS) {
+        var g2 = board[r][c];
+        if (!g2) { r++; continue; }
+        k = r + 1;
+        while (k < ROWS && board[k][c] && board[k][c].type === g2.type) k++;
+        if (k - r >= 3) {
+          for (var y = r; y < k; y++) out[y + ',' + c] = true;
+        }
+        r = k;
+      }
+    }
+    return out;
+  }
+
+  function matchCount(matches) {
+    var n = 0;
+    for (var k in matches) if (matches.hasOwnProperty(k)) n++;
+    return n;
+  }
+
+  function findPossibleMove() {
+    var r, c;
+    for (r = 0; r < ROWS; r++) {
+      for (c = 0; c < COLS; c++) {
+        if (c < COLS - 1) {
+          var a = { r: r, c: c }, b = { r: r, c: c + 1 };
+          swapData(a, b);
+          var ok = matchCount(findMatches()) > 0;
+          swapData(a, b);
+          if (ok) return [a, b];
+        }
+        if (r < ROWS - 1) {
+          var d = { r: r + 1, c: c }, e = { r: r, c: c };
+          swapData(e, d);
+          var ok2 = matchCount(findMatches()) > 0;
+          swapData(e, d);
+          if (ok2) return [e, d];
+        }
+      }
+    }
+    return null;
+  }
+
+  function buildBoard() {
+    var tries = 0;
+    do {
+      board = [];
+      for (var r = 0; r < ROWS; r++) {
+        board[r] = [];
+        for (var c = 0; c < COLS; c++) {
+          var type;
+          var guard = 0;
+          do {
+            type = randomType();
+            guard++;
+          } while (guard < 40 && (
+            (c >= 2 && board[r][c - 1].type === type && board[r][c - 2].type === type) ||
+            (r >= 2 && board[r - 1][c].type === type && board[r - 2][c].type === type)
+          ));
+          board[r][c] = makeGem(type, r, c);
+        }
+      }
+      tries++;
+    } while (tries < 60 && (!findPossibleMove() || matchCount(findMatches()) > 0));
+  }
+
+  /* ---------------- level goals / ice ---------------- */
+
+  function initIce() {
+    ice = [];
+    var r, c;
+    for (r = 0; r < ROWS; r++) {
+      ice[r] = [];
+      for (c = 0; c < COLS; c++) ice[r][c] = 0;
+    }
+    iceTotal = 0;
+    iceLeft = 0;
+    if (cfg.type !== 'ice') return;
+    var cells = [];
+    for (r = 0; r < ROWS; r++) {
+      for (c = 0; c < COLS; c++) cells.push([r, c]);
+    }
+    for (var i = cells.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = cells[i]; cells[i] = cells[j]; cells[j] = tmp;
+    }
+    var count = Math.min(cfg.target, cells.length);
+    for (var k = 0; k < count; k++) {
+      ice[cells[k][0]][cells[k][1]] = 1;
+    }
+    iceTotal = count;
+    iceLeft = count;
+  }
+
+  function objectiveText() {
+    if (cfg.type === 'color') return '消除 ' + cfg.target + ' 个' + COLOR_NAMES[cfg.color] + '宝石';
+    if (cfg.type === 'ice') return '清掉全部冰块';
+    return cfg.moves + ' 步内拿到 ' + cfg.target + ' 分';
+  }
+  function goalNow() {
+    if (cfg.type === 'color') return collected[cfg.color];
+    if (cfg.type === 'ice') return iceTotal - iceLeft;
+    return score;
+  }
+  function goalNeed() {
+    if (cfg.type === 'ice') return iceTotal;
+    return cfg.target;
+  }
+  function goalMet() { return goalNow() >= goalNeed(); }
+
+  /* ---------------- drawing ---------------- */
+
+  function roundRect(x, y, w, h, r) {
+    r = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function drawGlyph(type, s) {
+    ctx.beginPath();
+    if (type === 0) {
+      ctx.moveTo(0, -s);
+      ctx.lineTo(s * 0.92, 0);
+      ctx.lineTo(0, s);
+      ctx.lineTo(-s * 0.92, 0);
+      ctx.closePath();
+    } else if (type === 1) {
+      for (var i = 0; i < 10; i++) {
+        var rr = i % 2 === 0 ? s : s * 0.45;
+        var a = -Math.PI / 2 + i * Math.PI / 5;
+        var px = Math.cos(a) * rr, py = Math.sin(a) * rr;
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+    } else if (type === 2) {
+      for (var j = 0; j < 6; j++) {
+        var aa = -Math.PI / 2 + j * Math.PI / 3;
+        var hx = Math.cos(aa) * s, hy = Math.sin(aa) * s;
+        if (j === 0) ctx.moveTo(hx, hy); else ctx.lineTo(hx, hy);
+      }
+      ctx.closePath();
+    } else if (type === 3) {
+      ctx.arc(0, 0, s * 0.9, 0, Math.PI * 2);
+      ctx.closePath();
+    } else if (type === 4) {
+      ctx.moveTo(0, -s);
+      ctx.bezierCurveTo(s * 0.9, -s * 0.1, s * 0.75, s, 0, s);
+      ctx.bezierCurveTo(-s * 0.75, s, -s * 0.9, -s * 0.1, 0, -s);
+      ctx.closePath();
+    } else {
+      ctx.moveTo(0, s * 0.9);
+      ctx.bezierCurveTo(-s * 1.25, -s * 0.05, -s * 0.55, -s * 1.0, 0, -s * 0.38);
+      ctx.bezierCurveTo(s * 0.55, -s * 1.0, s * 1.25, -s * 0.05, 0, s * 0.9);
+      ctx.closePath();
+    }
+    ctx.fill();
+  }
+
+  function drawGem(g, t) {
+    if (!g) return;
+    var col = COLORS[g.type];
+    var s = GEM;
+    ctx.save();
+    ctx.translate(g.x, g.y);
+    ctx.scale(g.scale, g.scale);
+    ctx.globalAlpha = g.alpha;
+
+    // shadow + body
+    ctx.save();
+    ctx.shadowColor = col.glow;
+    ctx.shadowBlur = 16;
+    var grd = ctx.createLinearGradient(0, -s / 2, 0, s / 2);
+    grd.addColorStop(0, col.light);
+    grd.addColorStop(0.20, col.base);
+    grd.addColorStop(1, col.deep);
+    ctx.fillStyle = grd;
+    roundRect(-s / 2, -s / 2, s, s, s * 0.26);
+    ctx.fill();
+    ctx.restore();
+
+    // inner rim
+    ctx.strokeStyle = 'rgba(255,255,255,.42)';
+    ctx.lineWidth = Math.max(1.1, s * 0.025);
+    roundRect(-s / 2 + 1.5, -s / 2 + 1.5, s - 3, s - 3, s * 0.24);
+    ctx.stroke();
+
+    // gloss
+    ctx.save();
+    roundRect(-s / 2 + 2, -s / 2 + 2, s - 4, s * 0.46, s * 0.22);
+    var gloss = ctx.createLinearGradient(0, -s / 2, 0, 0);
+    gloss.addColorStop(0, 'rgba(255,255,255,.34)');
+    gloss.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = gloss;
+    ctx.fill();
+    ctx.restore();
+
+    // glyph
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,255,255,.88)';
+    ctx.shadowColor = 'rgba(0,0,0,.22)';
+    ctx.shadowBlur = 4;
+    ctx.shadowOffsetY = 1.5;
+    drawGlyph(g.type, s * 0.29);
+    ctx.restore();
+
+    // selection ring
+    var isSel = selected && board[selected.r] && board[selected.r][selected.c] === g;
+    var isHint = hintPair && hintPair.some(function (p) {
+      return board[p.r] && board[p.r][p.c] === g;
+    });
+    if (isSel || isHint) {
+      var pulse = 0.55 + 0.45 * Math.sin(t * 0.008);
+      ctx.strokeStyle = isHint ? 'rgba(250,204,21,' + (0.55 + 0.35 * pulse) + ')' : 'rgba(255,255,255,' + (0.55 + 0.35 * pulse) + ')';
+      ctx.lineWidth = 3.2;
+      roundRect(-s / 2 - 4, -s / 2 - 4, s + 8, s + 8, s * 0.30);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  }
+
+  function drawIceBase(r, c) {
+    if (!ice[r] || !ice[r][c]) return;
+    var x = PAD + c * CELL + CELL * 0.035;
+    var y = PAD + r * CELL + CELL * 0.035;
+    var w = CELL * 0.93;
+    ctx.save();
+    roundRect(x, y, w, w, CELL * 0.235);
+    var g = ctx.createLinearGradient(x, y, x + w, y + w);
+    g.addColorStop(0, 'rgba(224,242,254,.60)');
+    g.addColorStop(0.5, 'rgba(125,211,252,.46)');
+    g.addColorStop(1, 'rgba(129,140,248,.46)');
+    ctx.fillStyle = g;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(240,249,255,.85)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(140,196,255,.55)';
+    ctx.lineWidth = 1;
+    roundRect(x + 2.5, y + 2.5, w - 5, w - 5, CELL * 0.19);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawIceFrost(r, c) {
+    if (!ice[r] || !ice[r][c]) return;
+    var x = PAD + c * CELL + CELL * 0.07;
+    var y = PAD + r * CELL + CELL * 0.07;
+    var w = CELL * 0.86;
+    ctx.save();
+    roundRect(x, y, w, w, CELL * 0.20);
+    ctx.fillStyle = 'rgba(224,242,254,.17)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(240,249,255,.60)';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,.55)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x + w * 0.18, y + w * 0.10);
+    ctx.lineTo(x + w * 0.44, y + w * 0.42);
+    ctx.lineTo(x + w * 0.31, y + w * 0.64);
+    ctx.lineTo(x + w * 0.52, y + w * 0.94);
+    ctx.moveTo(x + w * 0.86, y + w * 0.08);
+    ctx.lineTo(x + w * 0.66, y + w * 0.36);
+    ctx.moveTo(x + w * 0.08, y + w * 0.70);
+    ctx.lineTo(x + w * 0.26, y + w * 0.70);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function draw(t) {
+    ctx.clearRect(0, 0, SIZE, SIZE);
+
+    // cells
+    for (var r = 0; r < ROWS; r++) {
+      for (var c = 0; c < COLS; c++) {
+        var x = PAD + c * CELL + CELL * 0.095;
+        var y = PAD + r * CELL + CELL * 0.095;
+        var w = CELL * 0.81;
+        ctx.fillStyle = (r + c) % 2 ? 'rgba(255,255,255,.028)' : 'rgba(255,255,255,.045)';
+        roundRect(x, y, w, w, CELL * 0.20);
+        ctx.fill();
+        drawIceBase(r, c);
+      }
+    }
+
+    // shake offset for invalid swap
+    var ox = 0, oy = 0;
+    if (shake > 0) {
+      ox = Math.sin(t * 0.06) * shake;
+      oy = Math.cos(t * 0.05) * shake * 0.4;
+    }
+    ctx.save();
+    ctx.translate(ox, oy);
+
+    for (var rr = 0; rr < ROWS; rr++) {
+      for (var cc = 0; cc < COLS; cc++) {
+        drawGem(board[rr][cc], t);
+      }
+    }
+    for (var ir = 0; ir < ROWS; ir++) {
+      for (var ic = 0; ic < COLS; ic++) {
+        drawIceFrost(ir, ic);
+      }
+    }
+    ctx.restore();
+
+    // particles
+    for (var i = 0; i < particles.length; i++) {
+      var p = particles[i];
+      ctx.globalAlpha = clamp(p.life / p.max, 0, 1);
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    // score floaters
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    for (var f = 0; f < floaters.length; f++) {
+      var fl = floaters[f];
+      var a = clamp(fl.life / fl.max, 0, 1);
+      ctx.globalAlpha = a;
+      ctx.font = '800 ' + (fl.big ? 26 : 21) + 'px "Segoe UI","Microsoft YaHei",sans-serif';
+      ctx.fillStyle = fl.color || '#fef08a';
+      ctx.shadowColor = 'rgba(0,0,0,.45)';
+      ctx.shadowBlur = 8;
+      ctx.fillText(fl.text, fl.x, fl.y);
+    }
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
+  }
+
+  /* ---------------- effects ---------------- */
+
+  function spawnParticles(r, c, type, count) {
+    var p = cellCenter(r, c);
+    var col = COLORS[type];
+    for (var i = 0; i < count; i++) {
+      var a = rand(0, Math.PI * 2);
+      var sp = rand(40, 190);
+      particles.push({
+        x: p.x, y: p.y,
+        vx: Math.cos(a) * sp,
+        vy: Math.sin(a) * sp - 40,
+        life: rand(0.45, 0.9),
+        max: 0.9,
+        size: rand(2.5, 6),
+        color: i % 3 === 0 ? '#ffffff' : (i % 2 ? col.base : col.light)
+      });
+    }
+  }
+
+  function spawnShards(r, c) {
+    var p = cellCenter(r, c);
+    for (var i = 0; i < 7; i++) {
+      var a = rand(0, Math.PI * 2);
+      var sp = rand(30, 120);
+      particles.push({
+        x: p.x, y: p.y,
+        vx: Math.cos(a) * sp,
+        vy: Math.sin(a) * sp - 30,
+        life: rand(0.4, 0.8),
+        max: 0.8,
+        size: rand(1.8, 4),
+        color: i % 2 ? '#e0f2fe' : '#7dd3fc'
+      });
+    }
+  }
+
+  function addFloater(r, c, text, color, big) {
+    var p = cellCenter(r, c);
+    floaters.push({
+      x: p.x, y: p.y - 8,
+      text: text,
+      color: color || '#fef08a',
+      life: 0.95,
+      max: 0.95,
+      big: !!big
+    });
+  }
+
+  function updateEffects(dt) {
+    for (var i = particles.length - 1; i >= 0; i--) {
+      var p = particles[i];
+      p.life -= dt;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vy += 240 * dt;
+      p.vx *= 0.985;
+      if (p.life <= 0) particles.splice(i, 1);
+    }
+    for (var j = floaters.length - 1; j >= 0; j--) {
+      var f = floaters[j];
+      f.life -= dt;
+      f.y -= 34 * dt;
+      if (f.life <= 0) floaters.splice(j, 1);
+    }
+    if (shake > 0) shake = Math.max(0, shake - dt * 60);
+  }
+
+  /* ---------------- animation sequences ---------------- */
+
+  function animateSwap(a, b) {
+    var ga = board[a.r][a.c];
+    var gb = board[b.r][b.c];
+    if (!ga || !gb) return Promise.resolve();
+    var ca = cellCenter(a.r, a.c);
+    var cb = cellCenter(b.r, b.c);
+    return Promise.all([
+      tween(150, function (e) {
+        ga.x = ca.x + (cb.x - ca.x) * e;
+        ga.y = ca.y + (cb.y - ca.y) * e;
+      }),
+      tween(150, function (e) {
+        gb.x = cb.x + (ca.x - cb.x) * e;
+        gb.y = cb.y + (ca.y - cb.y) * e;
+      })
+    ]).then(function () {
+      swapData(a, b);
+      ga.x = cb.x; ga.y = cb.y;
+      gb.x = ca.x; gb.y = ca.y;
+    });
+  }
+
+  function animateClear(matches) {
+    var cells = [];
+    for (var key in matches) {
+      if (!matches.hasOwnProperty(key)) continue;
+      var parts = key.split(',');
+      var r = parseInt(parts[0], 10), c = parseInt(parts[1], 10);
+      if (board[r][c]) cells.push({ r: r, c: c, gem: board[r][c] });
+    }
+    var tasks = [];
+    cells.forEach(function (item) {
+      var g = item.gem;
+      tasks.push(tween(190, function (e) {
+        g.scale = 1 - e * 0.95;
+        g.alpha = 1 - e;
+      }));
+      spawnParticles(item.r, item.c, g.type, 5);
+    });
+    return Promise.all(tasks).then(function () {
+      cells.forEach(function (item) {
+        if (board[item.r][item.c] === item.gem) board[item.r][item.c] = null;
+      });
+    });
+  }
+
+  function animateCollapse() {
+    var tasks = [];
+    for (var c = 0; c < COLS; c++) {
+      var write = ROWS - 1;
+      for (var r = ROWS - 1; r >= 0; r--) {
+        var g = board[r][c];
+        if (!g) continue;
+        if (write !== r) {
+          board[write][c] = g;
+          board[r][c] = null;
+        }
+        var target = cellCenter(write, c);
+        if (g.y !== target.y) {
+          (function (gem, ty) {
+            var from = gem.y;
+            tasks.push(tween(230, function (e) {
+              gem.y = from + (ty - from) * e;
+            }));
+          })(g, target.y);
+        }
+        write--;
+      }
+      var spawn = 0;
+      for (var rr = write; rr >= 0; rr--) {
+        var startY = PAD - GEM * (spawn + 1) - CELL * 0.2;
+        var gem = makeGem(randomType(), rr, c, 0);
+        gem.y = startY;
+        board[rr][c] = gem;
+        spawn++;
+        (function (gm, ty) {
+          var from = gm.y;
+          tasks.push(tween(260, function (e) {
+            gm.y = from + (ty - from) * e;
+          }));
+        })(gem, cellCenter(rr, c).y);
+      }
+    }
+    return Promise.all(tasks);
+  }
+
+  function resolveBoard() {
+    var chain = 0;
+    function step() {
+      var matches = findMatches();
+      var count = matchCount(matches);
+      if (!count) return Promise.resolve();
+      chain++;
+
+      var iceHits = 0;
+      for (var mk in matches) {
+        if (!matches.hasOwnProperty(mk)) continue;
+        var parts = mk.split(',');
+        var mr = parseInt(parts[0], 10), mc = parseInt(parts[1], 10);
+        var gem = board[mr][mc];
+        if (!gem) continue;
+        collected[gem.type]++;
+        if (ice[mr] && ice[mr][mc] > 0) {
+          ice[mr][mc]--;
+          iceLeft = Math.max(0, iceLeft - 1);
+          iceHits++;
+          spawnShards(mr, mc);
+        }
+      }
+
+      var pts = count * 60 * chain + iceHits * 80;
+      score += pts;
+      var key = Object.keys(matches)[0].split(',');
+      addFloater(parseInt(key[0], 10), parseInt(key[1], 10),
+        '+' + pts + (iceHits ? ' 破冰×' + iceHits : '') + (chain > 1 ? ' 连击×' + chain : ''),
+        chain > 1 ? '#f9a8d4' : '#fef08a', chain > 1 || iceHits > 0);
+      updateHud();
+      return animateClear(matches)
+        .then(function () { return animateCollapse(); })
+        .then(function () { return step(); });
+    }
+    return step().then(function () {
+      if (!findPossibleMove()) {
+        return reshuffleBoard(false).then(function () { return resolveBoard(); });
+      }
+    });
+  }
+
+  function reshuffleBoard(manual) {
+    return new Promise(function (resolve) {
+      var tasks = [];
+      for (var r = 0; r < ROWS; r++) {
+        for (var c = 0; c < COLS; c++) {
+          var g = board[r][c];
+          if (!g) continue;
+          (function (gem) {
+            tasks.push(tween(130, function (e) {
+              gem.scale = 1 - e * 0.55;
+              gem.alpha = 1 - e * 0.6;
+            }));
+          })(g);
+        }
+      }
+      Promise.all(tasks).then(function () {
+        var tries = 0;
+        do {
+          var types = [];
+          for (var r2 = 0; r2 < ROWS; r2++) {
+            for (var c2 = 0; c2 < COLS; c2++) types.push(board[r2][c2].type);
+          }
+          for (var i = types.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var t = types[i]; types[i] = types[j]; types[j] = t;
+          }
+          var k = 0;
+          for (var r3 = 0; r3 < ROWS; r3++) {
+            for (var c3 = 0; c3 < COLS; c3++) board[r3][c3].type = types[k++];
+          }
+          tries++;
+        } while (tries < 120 && (matchCount(findMatches()) > 0 || !findPossibleMove()));
+
+        if (tries >= 120) {
+          buildBoard();
+        }
+        var back = [];
+        for (var r4 = 0; r4 < ROWS; r4++) {
+          for (var c4 = 0; c4 < COLS; c4++) {
+            var gem = board[r4][c4];
+            var pt = cellCenter(r4, c4);
+            gem.x = pt.x;
+            gem.y = pt.y;
+            (function (gm) {
+              back.push(tween(190, function (e) {
+                gm.scale = 0.45 + e * 0.55;
+                gm.alpha = 0.4 + e * 0.6;
+              }));
+            })(gem);
+          }
+        }
+        Promise.all(back).then(function () {
+          if (manual) showToast('已重排，消耗 1 步');
+          else showToast('没有可交换的组合，已自动重排');
+          resolve();
+        });
+      });
+    });
+  }
+
+  /* ---------------- game flow ---------------- */
+
+  function updateHud() {
+    levelEl.textContent = level;
+    level2El.textContent = level;
+    levelTotalEl.textContent = LEVELS.length;
+    scoreEl.textContent = score;
+    movesEl.textContent = moves;
+    scoreNowEl.textContent = goalNow();
+    targetEl.textContent = goalNeed();
+    objTextEl.textContent = '本关目标：' + objectiveText();
+    progressEl.style.width = clamp(goalNow() / Math.max(1, goalNeed()) * 100, 0, 100) + '%';
+  }
+
+  function isAdjacent(a, b) {
+    return Math.abs(a.r - b.r) + Math.abs(a.c - b.c) === 1;
+  }
+
+  function attemptSwap(a, b) {
+    if (busy || over || !board[a.r][a.c] || !board[b.r][b.c]) return;
+    if (!isAdjacent(a, b)) return;
+    busy = true;
+    selected = null;
+    hintPair = null;
+    animateSwap(a, b).then(function () {
+      var matches = findMatches();
+      if (matchCount(matches) === 0) {
+        shake = 5;
+        return animateSwap(a, b).then(function () {
+          busy = false;
+        });
+      }
+      moves--;
+      updateHud();
+      return resolveBoard().then(function () {
+        if (goalMet()) {
+          levelClear();
+        } else if (moves <= 0) {
+          gameOver();
+        } else {
+          busy = false;
+        }
+      });
+    });
+  }
+
+  function levelClear() {
+    over = true;
+    busy = false;
+    var finalLevel = level >= LEVELS.length;
+    overMode = finalLevel ? 'again' : 'next';
+    var bonus = Math.max(0, moves) * 40;
+    score += bonus;
+
+    if (level > progress.cleared) progress.cleared = level;
+    if (finalLevel) progress.cleared = LEVELS.length;
+    progress.max = Math.min(LEVELS.length, Math.max(progress.max, level + 1));
+    saveProgress();
+
+    updateHud();
+    overKicker.textContent = finalLevel ? 'ALL CLEAR' : 'LEVEL CLEAR';
+    overTitle.textContent = finalLevel ? '全部通关' : '第 ' + level + ' 关完成';
+    overSub.textContent = finalLevel
+      ? '20 关目标全部达成，宝石连锁大师就是你'
+      : objectiveText() + ' 达成，剩余步数已转成奖励';
+    overLabel2.textContent = '剩余步数奖励';
+    overScore.textContent = score - bonus;
+    overBonus.textContent = '+' + bonus;
+    overBtn.textContent = finalLevel ? '再玩一次' : '进入第 ' + (level + 1) + ' 关';
+    overlay.classList.add('on');
+    for (var i = 0; i < 8; i++) {
+      spawnParticles(Math.floor(Math.random() * ROWS), Math.floor(Math.random() * COLS), Math.floor(Math.random() * typesCount), 8);
+    }
+    addFloater(3, 3, '过关！', '#f9a8d4', true);
+  }
+
+  function gameOver() {
+    over = true;
+    busy = false;
+    overMode = 'retry';
+    overKicker.textContent = 'OUT OF MOVES';
+    overTitle.textContent = '步数用完';
+    overSub.textContent = '目标：' + objectiveText() + ' · 还差 ' + Math.max(0, goalNeed() - goalNow());
+    overLabel2.textContent = '目标进度';
+    overScore.textContent = score;
+    overBonus.textContent = goalNow() + ' / ' + goalNeed();
+    overBtn.textContent = '重玩本关';
+    overlay.classList.add('on');
+  }
+
+  function startLevel(n) {
+    level = clamp(n, 1, LEVELS.length);
+    cfg = LEVELS[level - 1];
+    typesCount = Math.min(cfg.colors, COLORS.length);
+    moves = cfg.moves;
+    score = 0;
+    collected = [0, 0, 0, 0, 0, 0];
+    over = false;
+    busy = false;
+    selected = null;
+    hintPair = null;
+    overlay.classList.remove('on');
+    particles.length = 0;
+    floaters.length = 0;
+    buildBoard();
+    initIce();
+    updateHud();
+  }
+
+  function retryLevel() {
+    startLevel(level);
+  }
+
+  function nextLevel() {
+    startLevel(level + 1);
+  }
+
+  function nextPlayLevel() {
+    if (progress.cleared >= LEVELS.length) return 1;
+    return Math.min(progress.max, LEVELS.length);
+  }
+
+  function renderStartDots() {
+    var html = '';
+    var cur = nextPlayLevel();
+    for (var i = 1; i <= LEVELS.length; i++) {
+      var cls = '';
+      if (i <= progress.cleared || i < progress.max) cls = 'done';
+      if (i === cur && progress.cleared < LEVELS.length) cls = 'cur';
+      html += '<i class="' + cls + '">' + i + '</i>';
+    }
+    startLevels.innerHTML = html;
+  }
+
+  function showStart() {
+    started = false;
+    var cleared = Math.min(progress.cleared, LEVELS.length);
+    if (cleared >= LEVELS.length) {
+      startSub.textContent = LEVELS.length + ' / ' + LEVELS.length + ' 关全部通关 · 可以再刷一遍';
+      startNext.textContent = '再玩一次';
+      startFirst.style.display = 'none';
+    } else if (cleared > 0) {
+      startSub.textContent = '已通关 ' + cleared + ' / ' + LEVELS.length + ' 关 · 继续冲第 ' + nextPlayLevel() + ' 关';
+      startNext.textContent = '继续第 ' + nextPlayLevel() + ' 关';
+      startFirst.style.display = 'inline-block';
+    } else {
+      startSub.textContent = '共 ' + LEVELS.length + ' 关 · 从得分、收集到破冰，目标逐关变难';
+      startNext.textContent = '开始第 1 关';
+      startFirst.style.display = 'none';
+    }
+    startOverlay.classList.add('on');
+    renderStartDots();
+  }
+
+  function hideStart() {
+    started = true;
+    startOverlay.classList.remove('on');
+  }
+
+  function showToast(text) {
+    toastEl.textContent = text;
+    toastEl.classList.add('on');
+    clearTimeout(toastEl._timer);
+    toastEl._timer = setTimeout(function () { toastEl.classList.remove('on'); }, 1900);
+  }
+
+  /* ---------------- input ---------------- */
+
+  function cellFromEvent(e) {
+    var rect = canvas.getBoundingClientRect();
+    var x = (e.clientX - rect.left) / rect.width * SIZE;
+    var y = (e.clientY - rect.top) / rect.height * SIZE;
+    var c = Math.floor((x - PAD) / CELL);
+    var r = Math.floor((y - PAD) / CELL);
+    if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return null;
+    return { r: r, c: c };
+  }
+
+  canvas.addEventListener('pointerdown', function (e) {
+    if (busy || over || !started) return;
+    e.preventDefault();
+    var cell = cellFromEvent(e);
+    if (!cell) return;
+    press = { cell: cell, x: e.clientX, y: e.clientY, moved: false };
+    if (canvas.setPointerCapture) { try { canvas.setPointerCapture(e.pointerId); } catch (err) {} }
+
+    if (selected && selected.r === cell.r && selected.c === cell.c) {
+      selected = null;
+      press = null;
+      return;
+    }
+    if (selected && isAdjacent(selected, cell)) {
+      attemptSwap(selected, cell);
+      press = null;
+      return;
+    }
+    selected = cell;
+    hintPair = null;
+  }, { passive: false });
+
+  canvas.addEventListener('pointermove', function (e) {
+    if (!started || !press || press.moved || busy || over) return;
+    var dx = e.clientX - press.x;
+    var dy = e.clientY - press.y;
+    if (Math.abs(dx) < 18 && Math.abs(dy) < 18) return;
+    press.moved = true;
+    var cell = press.cell;
+    var other;
+    if (Math.abs(dx) > Math.abs(dy)) {
+      other = { r: cell.r, c: cell.c + (dx > 0 ? 1 : -1) };
+    } else {
+      other = { r: cell.r + (dy > 0 ? 1 : -1), c: cell.c };
+    }
+    if (other.r < 0 || other.r >= ROWS || other.c < 0 || other.c >= COLS) return;
+    attemptSwap(cell, other);
+    press = null;
+  }, { passive: true });
+
+  canvas.addEventListener('pointerup', function () {
+    press = null;
+  }, { passive: true });
+
+  canvas.addEventListener('pointercancel', function () {
+    press = null;
+  }, { passive: true });
+
+  canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+
+  /* ---------------- buttons ---------------- */
+
+  document.getElementById('hint').addEventListener('click', function () {
+    if (busy || over || !started) return;
+    var pair = findPossibleMove();
+    if (!pair) { showToast('暂时没有可交换的组合'); return; }
+    hintPair = pair;
+    showToast('试试交换这两颗宝石');
+    clearTimeout(hintTimer);
+    hintTimer = setTimeout(function () { hintPair = null; }, 2800);
+    this.blur();
+  });
+
+  document.getElementById('shuffle').addEventListener('click', function () {
+    if (busy || over || !started) return;
+    if (moves <= 0) return;
+    busy = true;
+    moves--;
+    updateHud();
+    selected = null;
+    hintPair = null;
+    reshuffleBoard(true).then(function () {
+      busy = false;
+      if (moves <= 0) gameOver();
+    });
+    this.blur();
+  });
+
+  document.getElementById('restart').addEventListener('click', function () {
+    if (busy || !started) return;
+    retryLevel();
+    this.blur();
+  });
+
+  startNext.addEventListener('click', function () {
+    if (started) return;
+    hideStart();
+    startLevel(nextPlayLevel());
+    this.blur();
+  });
+
+  startFirst.addEventListener('click', function () {
+    if (started) return;
+    hideStart();
+    startLevel(1);
+    this.blur();
+  });
+
+  overBtn.addEventListener('click', function () {
+    if (overMode === 'retry') retryLevel();
+    else if (overMode === 'again') startLevel(1);
+    else startLevel(level + 1);
+    this.blur();
+  });
+
+  /* ---------------- render loop ---------------- */
+
+  function resize() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var rect = canvas.getBoundingClientRect();
+    var w = Math.max(1, Math.round(rect.width * dpr));
+    canvas.width = w;
+    canvas.height = w;
+    var scale = rect.width / SIZE;
+    ctx.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
+  }
+
+  function frame(ts) {
+    if (!last) last = ts;
+    var dt = Math.min(0.05, Math.max(0, (ts - last) / 1000));
+    last = ts;
+    now = ts;
+    updateTweens(ts);
+    updateEffects(dt);
+    draw(ts);
+    requestAnimationFrame(frame);
+  }
+
+  window.addEventListener('resize', resize);
+
+  // init
+  startLevel(1);
+  resize();
+  requestAnimationFrame(frame);
+  showStart();
+})();
+</script>
+</body>
+</html>

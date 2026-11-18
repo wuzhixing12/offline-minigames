@@ -1,0 +1,1583 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>数织 · 离线数织小游戏</title>
+<style>
+  :root {
+    --bg: #0e1621;
+    --bg2: #121b26;
+    --panel: #1b2634;
+    --panel2: #16202c;
+    --line: rgba(255, 255, 255, .1);
+    --amber: #ffd479;
+    --text: #e8eef5;
+    --muted: #8fa3b7;
+    --dim: #63768a;
+    --fill: #cfe3f2;
+    --cs: 34px;
+    --clw: 76px;
+    --clh: 64px;
+    --fs: 14px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body { min-height: 100%; }
+
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", "Segoe UI", system-ui, sans-serif;
+    background:
+      radial-gradient(1100px 620px at 50% -12%, #1e2c3c 0%, rgba(18, 27, 38, 0) 62%),
+      linear-gradient(168deg, #121b26 0%, #0e1621 55%, #0a1119 100%);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100vh;
+    padding: 14px 16px 16px;
+    overflow: hidden;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .app {
+    width: min(1120px, 100%);
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* ---------------- 顶部 ---------------- */
+  header.top {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+
+  .logo {
+    width: 44px; height: 44px; flex: 0 0 auto;
+    border-radius: 12px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 3px;
+    padding: 7px;
+    background: linear-gradient(160deg, #26384e, #18232f);
+    border: 1px solid rgba(255, 212, 121, .3);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12), 0 8px 20px -10px #000;
+  }
+
+  .logo i { border-radius: 2px; background: rgba(255, 255, 255, .1); }
+  .logo i.a { background: var(--amber); box-shadow: 0 0 8px rgba(255, 212, 121, .55); }
+  .logo i.b { background: rgba(207, 227, 242, .78); }
+
+  h1 {
+    font-size: 23px;
+    letter-spacing: .22em;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .brand p {
+    margin-top: 3px;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: .04em;
+  }
+
+  .sizes {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, .04);
+  }
+
+  .size-btn {
+    font-family: inherit;
+    font-size: 12.5px;
+    padding: 7px 13px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background .15s, color .15s;
+  }
+
+  .size-btn:hover { color: var(--text); background: rgba(255, 255, 255, .06); }
+
+  .size-btn.active {
+    background: var(--amber);
+    border-color: var(--amber);
+    color: #1c2734;
+    font-weight: 700;
+  }
+
+  /* ---------------- 状态栏 ---------------- */
+  .statusbar {
+    display: flex;
+    align-items: stretch;
+    flex-wrap: wrap;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    box-shadow: 0 10px 26px -22px #000;
+  }
+
+  .stat {
+    padding: 7px 14px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1px;
+    min-width: 0;
+  }
+
+  .stat + .stat { border-left: 1px solid rgba(255, 255, 255, .06); }
+
+  .stat span {
+    font-size: 10px;
+    color: var(--dim);
+    letter-spacing: .14em;
+    line-height: 1.2;
+  }
+
+  .stat b {
+    font-size: 14.5px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    line-height: 1.35;
+    max-width: 190px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .stat.name b { color: var(--amber); }
+  .stat.err b.has-err { color: #ff8d84; }
+
+  /* ---------------- 棋盘 ---------------- */
+  .board-area {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 240px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    overflow: auto;
+    background: radial-gradient(620px 420px at 50% 46%, rgba(255, 212, 121, .045), transparent 72%);
+  }
+
+  .board {
+    display: grid;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--panel2);
+    border: 1px solid rgba(255, 212, 121, .2);
+    box-shadow: 0 26px 60px -30px #000, 0 0 0 5px rgba(255, 255, 255, .02);
+    touch-action: none;
+  }
+
+  .corner { background: rgba(0, 0, 0, .22); }
+
+  .clue {
+    display: flex;
+    background: rgba(0, 0, 0, .18);
+    color: #b9c8d8;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .clue span { font-size: var(--fs); line-height: 1; }
+
+  .clue.col {
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 1px;
+    padding: 4px 2px 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, .09);
+  }
+
+  .clue.row {
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+    gap: calc(var(--fs) * .42);
+    padding: 0 8px;
+    border-right: 1px solid rgba(255, 255, 255, .09);
+  }
+
+  .clue.done span { color: #6f9a83; }
+  .clue.done { background: rgba(0, 0, 0, .1); }
+
+  .cell {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #232f40;
+    border-right: 1px solid rgba(255, 255, 255, .055);
+    border-bottom: 1px solid rgba(255, 255, 255, .055);
+    cursor: pointer;
+    transition: background .08s ease;
+  }
+
+  .cell:hover { background: #2b3a4d; }
+
+  .cell.sep-r { border-right: 1px solid rgba(255, 212, 121, .24); }
+  .cell.sep-b { border-bottom: 1px solid rgba(255, 212, 121, .24); }
+
+  .cell.on {
+    background: var(--fill);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .3), inset 0 -2px 5px rgba(30, 60, 90, .16);
+  }
+
+  .cell.on:hover { background: #dfeefa; }
+
+  .cell.x::after {
+    content: "✕";
+    color: #67798d;
+    font-size: calc(var(--cs) * .46);
+    line-height: 1;
+    font-weight: 600;
+  }
+
+  .cell.wrong { background: #cf5c52; }
+  .cell.wrong:hover { background: #db6a60; }
+  .cell.x.wrong { background: transparent; }
+  .cell.x.wrong::after { color: #ff9188; }
+
+  .cell.cursor::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border: 2px solid var(--amber);
+    z-index: 3;
+    pointer-events: none;
+    box-shadow: inset 0 0 8px rgba(255, 212, 121, .35);
+  }
+
+  /* ---------------- 提示浮层 ---------------- */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(6, 10, 16, .72);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+    opacity: 1;
+    transition: opacity .2s ease;
+  }
+
+  .overlay.hidden { opacity: 0; pointer-events: none; }
+
+  .win-card {
+    width: min(340px, calc(100% - 32px));
+    padding: 24px 24px 20px;
+    text-align: center;
+    border-radius: 16px;
+    background: linear-gradient(180deg, #202d3c, #16212d);
+    border: 1px solid rgba(255, 212, 121, .24);
+    box-shadow: 0 26px 60px -18px #000;
+    animation: pop .26s cubic-bezier(.2, 1.3, .5, 1);
+  }
+
+  @keyframes pop {
+    from { transform: scale(.92); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .win-icon { font-size: 34px; line-height: 1; margin-bottom: 6px; }
+
+  .win-card h2 {
+    font-size: 23px;
+    letter-spacing: .12em;
+    color: var(--amber);
+    margin-bottom: 7px;
+  }
+
+  .win-card p { font-size: 13px; color: var(--muted); line-height: 1.85; }
+  .win-card p b { color: var(--text); font-size: 15px; font-variant-numeric: tabular-nums; }
+
+  .win-btns { display: flex; gap: 8px; justify-content: center; margin-top: 16px; }
+
+  /* ---------------- 按钮 ---------------- */
+  .btn {
+    font-family: inherit;
+    font-size: 12.5px;
+    color: var(--text);
+    background: rgba(255, 255, 255, .06);
+    border: 1px solid rgba(255, 255, 255, .12);
+    border-radius: 9px;
+    padding: 8px 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background .15s, border-color .15s, color .15s;
+  }
+
+  .btn:hover { background: rgba(255, 255, 255, .12); border-color: rgba(255, 255, 255, .2); }
+  .btn:active { transform: translateY(1px); }
+
+  .btn.primary {
+    background: var(--amber);
+    border-color: var(--amber);
+    color: #1c2734;
+    font-weight: 700;
+  }
+
+  .btn.primary:hover { background: #ffe1a0; }
+
+  .btn.ghost { background: transparent; }
+
+  .btn kbd {
+    font-family: inherit;
+    font-size: 10.5px;
+    color: var(--dim);
+    border: 1px solid rgba(255, 255, 255, .14);
+    border-radius: 4px;
+    padding: 0 4px;
+    line-height: 15px;
+  }
+
+  .btn.primary kbd { color: rgba(28, 39, 52, .6); border-color: rgba(28, 39, 52, .3); }
+
+  .btn.toggle .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #54677b;
+    transition: background .15s, box-shadow .15s;
+  }
+
+  .btn.toggle.on {
+    border-color: rgba(255, 212, 121, .45);
+    background: rgba(255, 212, 121, .1);
+    color: var(--amber);
+  }
+
+  .btn.toggle.on .dot {
+    background: var(--amber);
+    box-shadow: 0 0 8px rgba(255, 212, 121, .8);
+  }
+
+  .toolbar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .toolbar .grow { flex: 1 1 auto; }
+
+  .seg {
+    display: inline-flex;
+    border: 1px solid rgba(255, 255, 255, .12);
+    border-radius: 9px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, .04);
+  }
+
+  .seg button {
+    font-family: inherit;
+    font-size: 12.5px;
+    color: var(--muted);
+    background: transparent;
+    border: 0;
+    padding: 8px 11px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: background .15s, color .15s;
+  }
+
+  .seg button + button { border-left: 1px solid rgba(255, 255, 255, .1); }
+  .seg button:hover { color: var(--text); background: rgba(255, 255, 255, .06); }
+  .seg button.active { background: rgba(255, 212, 121, .16); color: var(--amber); font-weight: 700; }
+
+  /* ---------------- 图库 ---------------- */
+  .gallery-wrap {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 8px 10px 10px;
+  }
+
+  .gallery-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 6px;
+    font-size: 10.5px;
+    color: var(--dim);
+    letter-spacing: .12em;
+  }
+
+  .gallery { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  .gal {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    font-family: inherit;
+    font-size: 12px;
+    color: #c2d1df;
+    background: rgba(255, 255, 255, .04);
+    border: 1px solid rgba(255, 255, 255, .09);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background .14s, border-color .14s, color .14s;
+  }
+
+  .gal:hover { background: rgba(255, 255, 255, .09); }
+
+  .gal.active {
+    border-color: var(--amber);
+    background: rgba(255, 212, 121, .12);
+    color: var(--amber);
+    font-weight: 700;
+  }
+
+  .gal .ico { font-size: 14px; line-height: 1; }
+  .gal .ok { color: #7fe0a8; font-size: 11px; }
+
+  .hint-line {
+    font-size: 11px;
+    color: #66798c;
+    letter-spacing: .03em;
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  /* ---------------- 自检条 ---------------- */
+  .selftest-bar {
+    display: none;
+    width: min(1120px, 100%);
+    margin: 0 0 10px;
+    padding: 9px 14px;
+    border-radius: 9px;
+    border: 1px solid #2f6b52;
+    background: #0f2a20;
+    color: #a9e8c4;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 12px;
+    line-height: 1.85;
+    letter-spacing: .01em;
+  }
+
+  .selftest-bar.bad { border-color: #7a3b39; background: #2a1414; color: #ffb3ac; }
+  .selftest-bar b { color: #d9ffe9; }
+  .selftest-bar.bad b { color: #ffd7d3; }
+  .selftest-bar .st { display: inline-block; margin-right: 10px; white-space: nowrap; }
+
+  @media (max-height: 720px) {
+    body { height: auto; min-height: 100vh; overflow: auto; }
+    .app { flex: none; }
+    .board-area { flex: none; height: 52vh; min-height: 230px; }
+  }
+
+  @media (max-width: 720px) {
+    body { height: auto; min-height: 100vh; overflow: auto; padding: 12px 10px 14px; }
+    .app { min-height: calc(100vh - 26px); }
+    header.top { align-items: center; }
+    h1 { font-size: 20px; letter-spacing: .16em; }
+    .brand p { font-size: 11px; }
+    .statusbar { border-radius: 10px; }
+    .stat { padding: 6px 11px; }
+    .stat b { font-size: 13.5px; max-width: 130px; }
+    .board-area { min-height: 260px; }
+    .toolbar .grow { display: none; }
+    .hint-line { font-size: 10.5px; }
+  }
+</style>
+</head>
+<body>
+<div class="selftest-bar" id="selftestBar"></div>
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">
+        <i></i><i class="b"></i><i></i>
+        <i class="b"></i><i class="a"></i><i class="b"></i>
+        <i></i><i class="b"></i><i></i>
+      </div>
+      <div>
+        <h1>数织</h1>
+        <p>按行与列的数字涂格子，每一行、每一列都要对得上</p>
+      </div>
+    </div>
+    <div class="sizes" id="sizeTabs">
+      <button class="size-btn" data-size="5">5 × 5</button>
+      <button class="size-btn" data-size="10">10 × 10</button>
+      <button class="size-btn" data-size="15">15 × 15</button>
+    </div>
+  </header>
+
+  <div class="statusbar">
+    <div class="stat name"><span>图案</span><b id="puzzleName">—</b></div>
+    <div class="stat"><span>尺寸</span><b id="sizeLabel">5 × 5</b></div>
+    <div class="stat"><span>已填</span><b id="fillLabel">0 / 0</b></div>
+    <div class="stat"><span>用时</span><b id="timeLabel">00:00</b></div>
+    <div class="stat err"><span>错误</span><b id="errLabel">—</b></div>
+  </div>
+
+  <div class="board-area" id="boardArea">
+    <div class="board" id="board"></div>
+    <div class="overlay hidden" id="overlay">
+      <div class="win-card">
+        <div class="win-icon">🎉</div>
+        <h2 id="winTitle">完成！</h2>
+        <p><b id="winName">心形</b><br>用时 <b id="winTime">00:00</b></p>
+        <div class="win-btns">
+          <button class="btn ghost" id="btnWinClose">看看棋盘</button>
+          <button class="btn" id="btnReplay">再来一次</button>
+          <button class="btn primary" id="btnNext">下一幅</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <button class="btn" id="btnUndo">撤销 <kbd>Z</kbd></button>
+    <button class="btn" id="btnReset">重置本图</button>
+    <button class="btn toggle" id="btnHintToggle"><span class="dot"></span>错误提示</button>
+    <button class="btn" id="btnHint">提示一笔 <kbd>H</kbd></button>
+    <div class="grow"></div>
+    <div class="seg" id="brushSeg">
+      <button data-brush="fill" class="active">✏️ 涂色</button>
+      <button data-brush="mark">✕ 打叉</button>
+    </div>
+  </div>
+
+  <div class="gallery-wrap">
+    <div class="gallery-head">
+      <span>图案库</span>
+      <span id="galleryHint">5 × 5 · 5 幅</span>
+    </div>
+    <div class="gallery" id="gallery"></div>
+  </div>
+
+  <p class="hint-line">左键涂色 · 右键打叉 · 按住拖动连涂 · 方向键移动 · 空格涂色 · X 打叉 · Z 撤销 · H 提示<br>触屏可先切换「涂色 / 打叉」再拖动</p>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var STORAGE_KEY = 'nonogram.save.v1';
+
+  /* 图案数据：由构建脚本注入，每行 # 为涂色格，. 为空格 */
+  var RAW_PUZZLES = [{"id":"heart5","name":"心形","icon":"❤️","rows":[".#.#.","#####","#####",".###.","..#.."]},{"id":"plus5","name":"十字","icon":"➕","rows":["..#..","..#..","#####","..#..","..#.."]},{"id":"hourglass5","name":"沙漏","icon":"⏳","rows":["#####",".###.","..#..",".###.","#####"]},{"id":"house5","name":"房子","icon":"🏠","rows":["..#..",".###.","#####","#.#.#","#.#.#"]},{"id":"arrow5","name":"箭头","icon":"⬆️","rows":["..#..",".###.","#.#.#","..#..","..#.."]},{"id":"heart10","name":"心形","icon":"💗","rows":["..........","..##..##..",".########.","##########","##########",".########.","..######..","...####...","....##....",".........."]},{"id":"cat10","name":"猫脸","icon":"🐱","rows":["##......##","###....###","##########","##.####.##","#..####..#","#..####..#","##########","##.####.##",".#......#.","..######.."]},{"id":"star10","name":"星星","icon":"⭐","rows":["....##....","....##....","...####...","...####...","##########",".########.","..######..","..######..",".##.##.##.","##......##"]},{"id":"umbrella10","name":"雨伞","icon":"☂️","rows":["....##....","...####...","..######..",".########.","##########","##########","....##....","....##....","...#.#....","..##.##..."]},{"id":"cat15","name":"猫脸 · 大","icon":"😺","rows":["..#.........#..",".##.........##.","..###########..","..###########..",".#############.","###############","###...###...###","###...###...###","###############","######...######","#####.....#####","######...######",".#############.","..###########..","....#######...."]},{"id":"star15","name":"星星 · 大","icon":"🌟","rows":[".......#.......","......###......","......###......",".....#####.....",".....#####.....","....#######....","###############","###############",".#############.","..###########..","...#########...","...###...###...","..###.....###..",".###.......###.","##...........##"]},{"id":"umbrella15","name":"雨伞 · 大","icon":"⛱️","rows":[".......#.......","......###......",".....#####.....","....#######....","...#########...","..###########..",".#############.","###############","###############",".......#.......",".......#.......",".......#.......",".......#.......","....####.......","...####........"]},{"id":"moon10","name":"月亮","icon":"🌙","rows":["...####...","..######..",".###......","###.......","###.......","###.......","###.......",".###......","..######..","...####..."]},{"id":"tree10","name":"松树","icon":"🌲","rows":["....##....","...####...","...####...","..######..","..######..",".########.",".########.","##########","....##....","....##...."]},{"id":"fish10","name":"小鱼","icon":"🐟","rows":["..........","....####..","..########","##########","###.#####.","##########","..########","....####..","..........",".........."]},{"id":"cup10","name":"咖啡杯","icon":"☕","rows":["..........",".########.",".#......#.",".#......#.",".#......##",".#......#.",".########.","..######..","..........","##########"]},{"id":"smile10","name":"笑脸","icon":"🙂","rows":["...####...","..######..",".########.",".##.##.##.",".########.",".###..###.",".##....##.",".########.","..######..","...####..."]},{"id":"letterA10","name":"字母 A","icon":"🅰️","rows":["....##....","...####...","...####...","..##..##..","..##..##..",".########.",".########.","##......##","##......##",".........."]},{"id":"house15","name":"小房子","icon":"🏠","rows":["......##.......",".....####......","....######.....","...########....","..##########...",".############..","##############.","###############","..##########...","..#........#...","..#..####..#...","..#..####..#...","..#..####..#...","..#..####..#...","..##########..."]},{"id":"diamond15","name":"钻石","icon":"💎","rows":["...............",".....######....","....########...","...##########..","..############.",".##############","###############",".##############","..############.","...##########..","....########...",".....######....","......####.....",".......##......","..............."]},{"id":"boat15","name":"帆船","icon":"⛵","rows":["........#......","........##.....",".......###.....","......####.....",".....#####.....","....######.....","...#######.....","..########.....",".....#####.....","...............","..##########...",".############..","..###########..","...............","..............."]},{"id":"key15","name":"钥匙","icon":"🔑","rows":["...............",".....#####.....","....##...##....","....#.....#....","....##...##....",".....#####.....",".......#.......",".......#.......",".......###.....",".......#.......",".......###.....",".......#.......",".......###.....",".......#.......","..............."]},{"id":"flag15","name":"旗帜","icon":"🚩","rows":["...#...........","...###########.","...###########.","...###########.","...##########..","...#...........","...#...........","...#...........","...#...........","...#...........","...#...........","...#...........","...#...........","...#...........","...#..........."]}];
+
+  /* ================================================================
+     一、图案与提示数字
+     ================================================================ */
+
+  function runsOfLine(vals) {
+    var runs = [];
+    var cur = 0;
+    for (var i = 0; i < vals.length; i++) {
+      if (vals[i] === 1) {
+        cur++;
+      } else if (cur > 0) {
+        runs.push(cur);
+        cur = 0;
+      }
+    }
+    if (cur > 0) runs.push(cur);
+    return runs;
+  }
+
+  var PUZZLES = [];
+  var BY_ID = {};
+
+  function preparePuzzles() {
+    for (var i = 0; i < RAW_PUZZLES.length; i++) {
+      var raw = RAW_PUZZLES[i];
+      var n = raw.rows.length;
+      var solution = new Uint8Array(n * n);
+      var filled = 0;
+      var r, c;
+      for (r = 0; r < n; r++) {
+        if (raw.rows[r].length !== n) throw new Error('图案 ' + raw.id + ' 第 ' + r + ' 行长度不对');
+        for (c = 0; c < n; c++) {
+          var v = raw.rows[r].charAt(c) === '#' ? 1 : 0;
+          solution[r * n + c] = v;
+          filled += v;
+        }
+      }
+      var rowClues = [];
+      var colClues = [];
+      for (r = 0; r < n; r++) {
+        var line = [];
+        for (c = 0; c < n; c++) line.push(solution[r * n + c]);
+        rowClues.push(runsOfLine(line));
+      }
+      for (c = 0; c < n; c++) {
+        var line2 = [];
+        for (r = 0; r < n; r++) line2.push(solution[r * n + c]);
+        colClues.push(runsOfLine(line2));
+      }
+      var p = {
+        id: raw.id,
+        name: raw.name,
+        icon: raw.icon,
+        size: n,
+        rows: raw.rows,
+        solution: solution,
+        clues: { rows: rowClues, cols: colClues },
+        total: filled
+      };
+      PUZZLES.push(p);
+      BY_ID[p.id] = p;
+    }
+  }
+
+  /* ================================================================
+     二、行/列约束传播求解器（仅用于 ?selftest=1 自检）
+     枚举每条线所有合法摆放，取交集推出必涂/必空，不猜任何一格。
+     ================================================================ */
+
+  function enumerateLine(line, clue) {
+    var n = line.length;
+    var k = clue.length;
+    var res = [];
+    if (k === 0) {
+      for (var i = 0; i < n; i++) if (line[i] === 1) return res;
+      res.push(new Array(n).fill(0));
+      return res;
+    }
+    var mask = new Array(n).fill(0);
+
+    function rec(ci, start) {
+      if (ci === k) {
+        for (var j = start; j < n; j++) if (line[j] === 1) return;
+        res.push(mask.slice());
+        return;
+      }
+      var block = clue[ci];
+      var remaining = k - ci - 1;
+      for (var q = ci; q < k; q++) remaining += clue[q];
+      var maxStart = n - remaining;
+      for (var s = start; s <= maxStart; s++) {
+        var ok = true;
+        for (var t = start; t < s; t++) {
+          if (line[t] === 1) { ok = false; break; }
+        }
+        if (!ok) break;
+        for (var b = 0; b < block; b++) {
+          if (s + b >= n || line[s + b] === 2) { ok = false; break; }
+        }
+        if (!ok) continue;
+        for (var b2 = 0; b2 < block; b2++) mask[s + b2] = 1;
+        var next = s + block;
+        if (ci < k - 1) {
+          if (next < n && line[next] !== 1) rec(ci + 1, next + 1);
+        } else {
+          rec(ci + 1, next);
+        }
+        for (var b3 = 0; b3 < block; b3++) mask[s + b3] = 0;
+      }
+    }
+
+    rec(0, 0);
+    return res;
+  }
+
+  function solveByLogic(n, clues) {
+    var st = new Uint8Array(n * n);
+    var changed = true;
+    var guard = 0;
+    var r, c, i;
+    while (changed && guard < 4000) {
+      changed = false;
+      guard++;
+      for (r = 0; r < n; r++) {
+        var line = [], idx = [];
+        for (c = 0; c < n; c++) { line.push(st[r * n + c]); idx.push(r * n + c); }
+        var pl = enumerateLine(line, clues.rows[r]);
+        if (pl.length === 0) return { solved: false, contradiction: true, unknown: n * n };
+        var canFill = new Array(n).fill(false);
+        var canEmpty = new Array(n).fill(false);
+        var p, j;
+        for (p = 0; p < pl.length; p++) {
+          for (j = 0; j < n; j++) {
+            if (pl[p][j]) canFill[j] = true; else canEmpty[j] = true;
+          }
+        }
+        for (c = 0; c < n; c++) {
+          if (st[idx[c]] === 0) {
+            if (!canFill[c]) { st[idx[c]] = 2; changed = true; }
+            else if (!canEmpty[c]) { st[idx[c]] = 1; changed = true; }
+          }
+        }
+      }
+      for (c = 0; c < n; c++) {
+        var line2 = [], idx2 = [];
+        for (r = 0; r < n; r++) { line2.push(st[r * n + c]); idx2.push(r * n + c); }
+        var pc = enumerateLine(line2, clues.cols[c]);
+        if (pc.length === 0) return { solved: false, contradiction: true, unknown: n * n };
+        var canF = new Array(n).fill(false);
+        var canE = new Array(n).fill(false);
+        for (p = 0; p < pc.length; p++) {
+          for (j = 0; j < n; j++) {
+            if (pc[p][j]) canF[j] = true; else canE[j] = true;
+          }
+        }
+        for (r = 0; r < n; r++) {
+          if (st[idx2[r]] === 0) {
+            if (!canF[r]) { st[idx2[r]] = 2; changed = true; }
+            else if (!canE[r]) { st[idx2[r]] = 1; changed = true; }
+          }
+        }
+      }
+    }
+    var unknown = 0;
+    for (i = 0; i < st.length; i++) if (st[i] === 0) unknown++;
+    return { solved: unknown === 0, contradiction: false, unknown: unknown, state: st };
+  }
+
+  function runSelfTest() {
+    var bar = document.getElementById('selftestBar');
+    var details = [];
+    var passed = 0;
+    var t0 = Date.now();
+    for (var i = 0; i < PUZZLES.length; i++) {
+      var p = PUZZLES[i];
+      var res = solveByLogic(p.size, p.clues);
+      var ok = res.solved && !res.contradiction;
+      if (ok) {
+        for (var j = 0; j < p.solution.length; j++) {
+          if ((res.state[j] === 1) !== (p.solution[j] === 1)) { ok = false; break; }
+        }
+      }
+      if (ok) passed++;
+      details.push((ok ? '✓ ' : '✗ ') + p.name + ' ' + p.size + '×' + p.size);
+      console.log('[数织自检] ' + (ok ? '通过' : '失败') + ' · ' + p.name + ' ' + p.size + '×' + p.size +
+        ' · 逻辑推断格数 ' + (res.state ? p.size * p.size - res.unknown : 0) + '/' + (p.size * p.size));
+    }
+    var allOk = passed === PUZZLES.length;
+    bar.className = 'selftest-bar' + (allOk ? '' : ' bad');
+    bar.style.display = 'block';
+    bar.innerHTML = '<b>纯逻辑可解自检：' + passed + ' / ' + PUZZLES.length + ' 幅通过</b>' +
+      '（行/列约束传播求解，不猜测；全部推满即唯一解，' + (Date.now() - t0) + ' ms）<br>' +
+      details.map(function (s) { return '<span class="st">' + s + '</span>'; }).join('');
+    console.log('[数织自检] ' + passed + '/' + PUZZLES.length + ' 幅' + (allOk ? '全部通过' : '存在失败'));
+    setTimeout(fitBoard, 30);
+  }
+
+  /* ================================================================
+     三、应用状态
+     ================================================================ */
+
+  var S = {
+    puzzle: null,
+    cells: null,
+    undo: [],
+    drag: null,
+    elapsed: 0,
+    startAt: 0,
+    running: false,
+    solved: false,
+    overlayOpen: false,
+    errorHint: false,
+    brush: 'fill',
+    cursorR: 0,
+    cursorC: 0,
+    done: {},
+    progress: {},
+    lastBySize: {},
+    sizeGroup: 5
+  };
+
+  var board = document.getElementById('board');
+  var boardArea = document.getElementById('boardArea');
+  var gallery = document.getElementById('gallery');
+  var galleryHint = document.getElementById('galleryHint');
+  var overlay = document.getElementById('overlay');
+  var winName = document.getElementById('winName');
+  var winTime = document.getElementById('winTime');
+  var puzzleNameEl = document.getElementById('puzzleName');
+  var sizeLabelEl = document.getElementById('sizeLabel');
+  var fillLabel = document.getElementById('fillLabel');
+  var timeLabel = document.getElementById('timeLabel');
+  var errLabel = document.getElementById('errLabel');
+  var hintToggleBtn = document.getElementById('btnHintToggle');
+  var winTitle = document.getElementById('winTitle');
+
+  var cellEls = [];
+  var rowClueEls = [];
+  var colClueEls = [];
+  var tickCount = 0;
+  var resizeTimer = null;
+
+  /* ================================================================
+     四、渲染棋盘
+     ================================================================ */
+
+  function clueSpan(v) {
+    var s = document.createElement('span');
+    s.textContent = String(v);
+    return s;
+  }
+
+  function buildBoard() {
+    var p = S.puzzle;
+    var n = p.size;
+    var r, c, i, el;
+
+    board.innerHTML = '';
+    board.style.gridTemplateColumns = 'var(--clw) repeat(' + n + ', var(--cs))';
+    board.style.gridTemplateRows = 'var(--clh) repeat(' + n + ', var(--cs))';
+
+    var corner = document.createElement('div');
+    corner.className = 'corner';
+    corner.style.gridColumn = '1';
+    corner.style.gridRow = '1';
+    board.appendChild(corner);
+
+    rowClueEls = [];
+    colClueEls = [];
+
+    for (c = 0; c < n; c++) {
+      el = document.createElement('div');
+      el.className = 'clue col';
+      el.style.gridColumn = String(c + 2);
+      el.style.gridRow = '1';
+      var cr = p.clues.cols[c];
+      if (!cr.length) el.appendChild(clueSpan(0));
+      else for (i = 0; i < cr.length; i++) el.appendChild(clueSpan(cr[i]));
+      board.appendChild(el);
+      colClueEls.push(el);
+    }
+
+    for (r = 0; r < n; r++) {
+      el = document.createElement('div');
+      el.className = 'clue row';
+      el.style.gridColumn = '1';
+      el.style.gridRow = String(r + 2);
+      var rr = p.clues.rows[r];
+      if (!rr.length) el.appendChild(clueSpan(0));
+      else for (i = 0; i < rr.length; i++) el.appendChild(clueSpan(rr[i]));
+      board.appendChild(el);
+      rowClueEls.push(el);
+    }
+
+    cellEls = [];
+    for (r = 0; r < n; r++) {
+      for (c = 0; c < n; c++) {
+        el = document.createElement('div');
+        el.className = 'cell';
+        el.setAttribute('data-r', String(r));
+        el.setAttribute('data-c', String(c));
+        el.style.gridColumn = String(c + 2);
+        el.style.gridRow = String(r + 2);
+        board.appendChild(el);
+        cellEls.push(el);
+      }
+    }
+    S.cursorR = 0;
+    S.cursorC = 0;
+  }
+
+  function cellClass(r, c) {
+    var n = S.puzzle.size;
+    var idx = r * n + c;
+    var v = S.cells[idx];
+    var sol = S.puzzle.solution[idx];
+    var cls = 'cell';
+    if (c % 5 === 4 && c < n - 1) cls += ' sep-r';
+    if (r % 5 === 4 && r < n - 1) cls += ' sep-b';
+    if (v === 1) cls += ' on';
+    if (v === 2) cls += ' x';
+    if (S.errorHint && ((v === 1 && sol === 0) || (v === 2 && sol === 1))) cls += ' wrong';
+    if (S.cursorR === r && S.cursorC === c) cls += ' cursor';
+    return cls;
+  }
+
+  function updateCell(r, c) {
+    cellEls[r * S.puzzle.size + c].className = cellClass(r, c);
+  }
+
+  function updateAllCells() {
+    var n = S.puzzle.size;
+    for (var r = 0; r < n; r++) {
+      for (var c = 0; c < n; c++) updateCell(r, c);
+    }
+  }
+
+  function sameArr(a, b) {
+    if (a.length !== b.length) return false;
+    for (var i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+    return true;
+  }
+
+  function updateClueStates() {
+    var p = S.puzzle;
+    var n = p.size;
+    var r, c;
+    for (r = 0; r < n; r++) {
+      var line = [];
+      for (c = 0; c < n; c++) line.push(S.cells[r * n + c] === 1 ? 1 : 0);
+      rowClueEls[r].className = 'clue row' + (sameArr(runsOfLine(line), p.clues.rows[r]) ? ' done' : '');
+    }
+    for (c = 0; c < n; c++) {
+      var line2 = [];
+      for (r = 0; r < n; r++) line2.push(S.cells[r * n + c] === 1 ? 1 : 0);
+      colClueEls[c].className = 'clue col' + (sameArr(runsOfLine(line2), p.clues.cols[c]) ? ' done' : '');
+    }
+  }
+
+  function updateStats() {
+    var p = S.puzzle;
+    var sol = p.solution;
+    var filled = 0;
+    var wrong = 0;
+    for (var i = 0; i < S.cells.length; i++) {
+      if (S.cells[i] === 1) filled++;
+      if (S.errorHint) {
+        if (S.cells[i] === 1 && sol[i] === 0) wrong++;
+        else if (S.cells[i] === 2 && sol[i] === 1) wrong++;
+      }
+    }
+    fillLabel.textContent = filled + ' / ' + p.total;
+    if (S.errorHint) {
+      errLabel.textContent = String(wrong);
+      errLabel.className = wrong > 0 ? 'has-err' : '';
+    } else {
+      errLabel.textContent = '—';
+      errLabel.className = '';
+    }
+    timeLabel.textContent = formatTime(S.elapsed);
+    updateClueStates();
+  }
+
+  function formatTime(ms) {
+    var total = Math.max(0, Math.floor(ms / 1000));
+    var h = Math.floor(total / 3600);
+    var m = Math.floor((total % 3600) / 60);
+    var s = total % 60;
+    function pad(v) { return v < 10 ? '0' + v : String(v); }
+    if (h > 0) return pad(h) + ':' + pad(m) + ':' + pad(s);
+    return pad(m) + ':' + pad(s);
+  }
+
+  /* 自适应尺寸：先按可用空间估格子大小，再倒推提示区 */
+  function fitBoard() {
+    if (!S.puzzle) return;
+    var n = S.puzzle.size;
+    var maxR = 1;
+    var maxC = 1;
+    var i;
+    for (i = 0; i < n; i++) {
+      maxR = Math.max(maxR, S.puzzle.clues.rows[i].length || 1);
+      maxC = Math.max(maxC, S.puzzle.clues.cols[i].length || 1);
+    }
+    var rect = boardArea.getBoundingClientRect();
+    var availW = Math.max(150, rect.width - 22);
+    var availH = Math.max(150, rect.height - 16);
+    var cs = 72;
+    var fs = 14;
+    var clw = 60;
+    var clh = 50;
+    for (; cs >= 13; cs--) {
+      fs = Math.max(9, Math.min(20, Math.round(cs * 0.42)));
+      clw = Math.max(28, maxR * (fs + 4) + 12);
+      clh = Math.max(28, maxC * (fs + 3) + 10);
+      if (clw + n * cs <= availW && clh + n * cs <= availH) break;
+    }
+    if (cs < 13) cs = 13;
+    board.style.setProperty('--cs', cs + 'px');
+    board.style.setProperty('--clw', clw + 'px');
+    board.style.setProperty('--clh', clh + 'px');
+    board.style.setProperty('--fs', fs + 'px');
+  }
+
+  /* ================================================================
+     五、存档
+     ================================================================ */
+
+  function cellsToString() {
+    var out = '';
+    for (var i = 0; i < S.cells.length; i++) out += String(S.cells[i]);
+    return out;
+  }
+
+  function storeCurrentProgress() {
+    if (!S.puzzle) return;
+    S.progress[S.puzzle.id] = {
+      c: cellsToString(),
+      e: Math.round(S.elapsed),
+      s: S.solved ? 1 : 0
+    };
+  }
+
+  function save() {
+    try {
+      storeCurrentProgress();
+      var payload = {
+        v: 1,
+        current: S.puzzle ? S.puzzle.id : '',
+        progress: S.progress,
+        done: S.done,
+        lastBySize: S.lastBySize,
+        errorHint: S.errorHint,
+        brush: S.brush,
+        sizeGroup: S.sizeGroup
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    } catch (e) {
+      /* 隐私模式或禁用本地存储时忽略 */
+    }
+  }
+
+  function loadSave() {
+    var data = null;
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) data = JSON.parse(raw);
+    } catch (e) {
+      data = null;
+    }
+    if (!data || typeof data !== 'object') return null;
+    if (data.progress && typeof data.progress === 'object') S.progress = data.progress;
+    if (data.done && typeof data.done === 'object') S.done = data.done;
+    if (data.lastBySize && typeof data.lastBySize === 'object') S.lastBySize = data.lastBySize;
+    if (typeof data.errorHint === 'boolean') S.errorHint = data.errorHint;
+    if (data.brush === 'mark' || data.brush === 'fill') S.brush = data.brush;
+    return data;
+  }
+
+  function restoreCells(p, saved) {
+    var n = p.size;
+    var arr = new Uint8Array(n * n);
+    var ok = false;
+    if (saved && typeof saved.c === 'string' && saved.c.length === n * n) {
+      ok = true;
+      for (var i = 0; i < arr.length; i++) {
+        var ch = saved.c.charAt(i);
+        if (ch !== '0' && ch !== '1' && ch !== '2') { ok = false; break; }
+        arr[i] = ch === '1' ? 1 : (ch === '2' ? 2 : 0);
+      }
+    }
+    if (!ok) return null;
+    return arr;
+  }
+
+  /* ================================================================
+     六、载入 / 切换图案
+     ================================================================ */
+
+  function applyProgress(p, saved) {
+    S.puzzle = p;
+    S.sizeGroup = p.size;
+    S.undo = [];
+    S.drag = null;
+    S.overlayOpen = false;
+    overlay.classList.add('hidden');
+    S.cursorR = 0;
+    S.cursorC = 0;
+
+    var cells = restoreCells(p, saved);
+    if (cells) {
+      S.cells = cells;
+      S.elapsed = typeof saved.e === 'number' && saved.e >= 0 ? saved.e : 0;
+    } else {
+      S.cells = new Uint8Array(p.size * p.size);
+      S.elapsed = 0;
+    }
+    S.solved = checkSolved();
+    S.running = !S.solved;
+    S.startAt = Date.now() - S.elapsed;
+
+    buildBoard();
+    fitBoard();
+    updateAllCells();
+    updateStats();
+    updateChrome();
+    if (S.solved && !S.done[p.id]) S.done[p.id] = Math.max(1, Math.round(S.elapsed));
+  }
+
+  function loadPuzzle(id) {
+    var p = BY_ID[id];
+    if (!p) return;
+    storeCurrentProgress();
+    S.lastBySize[p.size] = p.id;
+    applyProgress(p, S.progress[p.id]);
+    save();
+  }
+
+  function updateChrome() {
+    var p = S.puzzle;
+    var doneMark = S.done[p.id] ? ' ✓' : '';
+    puzzleNameEl.textContent = p.icon + ' ' + p.name + doneMark;
+    sizeLabelEl.textContent = p.size + ' × ' + p.size;
+
+    var tabs = document.querySelectorAll('.size-btn');
+    for (var i = 0; i < tabs.length; i++) {
+      tabs[i].className = 'size-btn' + (Number(tabs[i].getAttribute('data-size')) === S.sizeGroup ? ' active' : '');
+    }
+
+    var brushBtns = document.querySelectorAll('#brushSeg button');
+    for (var j = 0; j < brushBtns.length; j++) {
+      brushBtns[j].className = brushBtns[j].getAttribute('data-brush') === S.brush ? 'active' : '';
+    }
+
+    hintToggleBtn.className = 'btn toggle' + (S.errorHint ? ' on' : '');
+    renderGallery();
+  }
+
+  function renderGallery() {
+    gallery.innerHTML = '';
+    var list = [];
+    for (var i = 0; i < PUZZLES.length; i++) {
+      if (PUZZLES[i].size === S.sizeGroup) list.push(PUZZLES[i]);
+    }
+    for (var j = 0; j < list.length; j++) {
+      (function (p) {
+        var btn = document.createElement('button');
+        btn.className = 'gal' + (p.id === S.puzzle.id ? ' active' : '');
+        var ico = document.createElement('span');
+        ico.className = 'ico';
+        ico.textContent = p.icon;
+        var nm = document.createElement('span');
+        nm.textContent = p.name;
+        btn.appendChild(ico);
+        btn.appendChild(nm);
+        if (S.done[p.id]) {
+          var ok = document.createElement('span');
+          ok.className = 'ok';
+          ok.textContent = '✓';
+          btn.appendChild(ok);
+        }
+        btn.addEventListener('click', function () {
+          if (p.id !== S.puzzle.id) loadPuzzle(p.id);
+          if (btn.blur) btn.blur();
+        });
+        gallery.appendChild(btn);
+      })(list[j]);
+    }
+    galleryHint.textContent = S.sizeGroup + ' × ' + S.sizeGroup + ' · ' + list.length + ' 幅';
+  }
+
+  /* ================================================================
+     七、交互（涂色 / 打叉 / 拖动 / 撤销 / 提示）
+     ================================================================ */
+
+  function idxOf(r, c) {
+    return r * S.puzzle.size + c;
+  }
+
+  function checkSolved() {
+    if (!S.puzzle) return false;
+    var sol = S.puzzle.solution;
+    for (var i = 0; i < sol.length; i++) {
+      if (sol[i] === 1) {
+        if (S.cells[i] !== 1) return false;
+      } else if (S.cells[i] === 1) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function commitStroke(cells) {
+    if (!cells || !cells.length) return;
+    S.undo.push(cells);
+    if (S.undo.length > 400) S.undo.shift();
+    updateStats();
+    if (checkSolved()) {
+      handleWin();
+    } else {
+      save();
+    }
+  }
+
+  function paint(idx, value) {
+    if (S.cells[idx] === value) return false;
+    S.cells[idx] = value;
+    var n = S.puzzle.size;
+    updateCell(Math.floor(idx / n), idx % n);
+    return true;
+  }
+
+  function singleAction(r, c, target) {
+    if (!S.puzzle || S.solved || S.overlayOpen) return;
+    var idx = idxOf(r, c);
+    if (S.cells[idx] === target) return;
+    var before = S.cells[idx];
+    paint(idx, target);
+    commitStroke([{ i: idx, b: before }]);
+  }
+
+  function setCursor(r, c) {
+    var n = S.puzzle.size;
+    if (r < 0) r = 0;
+    if (r > n - 1) r = n - 1;
+    if (c < 0) c = 0;
+    if (c > n - 1) c = n - 1;
+    if (r === S.cursorR && c === S.cursorC) return;
+    var oldR = S.cursorR;
+    var oldC = S.cursorC;
+    S.cursorR = r;
+    S.cursorC = c;
+    updateCell(oldR, oldC);
+    updateCell(r, c);
+  }
+
+  function undo() {
+    if (!S.puzzle || S.solved) return;
+    var stroke = S.undo.pop();
+    if (!stroke) return;
+    var n = S.puzzle.size;
+    for (var i = 0; i < stroke.length; i++) {
+      S.cells[stroke[i].i] = stroke[i].b;
+      updateCell(Math.floor(stroke[i].i / n), stroke[i].i % n);
+    }
+    updateStats();
+    save();
+  }
+
+  function hintOne() {
+    if (!S.puzzle || S.solved) return;
+    var sol = S.puzzle.solution;
+    var idx = -1;
+    var target = 0;
+    var i;
+    for (i = 0; i < sol.length; i++) {
+      if (sol[i] === 1 && S.cells[i] !== 1) { idx = i; target = 1; break; }
+    }
+    if (idx < 0) {
+      for (i = 0; i < sol.length; i++) {
+        if (sol[i] === 0 && S.cells[i] !== 2) { idx = i; target = 2; break; }
+      }
+    }
+    if (idx < 0) return;
+    var before = S.cells[idx];
+    paint(idx, target);
+    commitStroke([{ i: idx, b: before }]);
+    var el = cellEls[idx];
+    el.style.transition = 'filter .12s';
+    el.style.filter = 'brightness(1.35)';
+    setTimeout(function () { el.style.filter = ''; }, 240);
+  }
+
+  function resetPuzzle() {
+    if (!S.puzzle) return;
+    S.cells = new Uint8Array(S.puzzle.size * S.puzzle.size);
+    S.undo = [];
+    S.drag = null;
+    S.solved = false;
+    S.overlayOpen = false;
+    S.elapsed = 0;
+    S.startAt = Date.now();
+    S.running = true;
+    overlay.classList.add('hidden');
+    updateAllCells();
+    updateStats();
+    updateChrome();
+    save();
+  }
+
+  function handleWin() {
+    if (S.solved) return;
+    S.solved = true;
+    S.running = false;
+    S.elapsed = Math.max(0, Date.now() - S.startAt);
+    S.done[S.puzzle.id] = Math.max(1, Math.round(S.elapsed));
+    /* 收尾：把确定是空格的格子补上叉，棋盘看起来更完整 */
+    var sol = S.puzzle.solution;
+    for (var i = 0; i < sol.length; i++) {
+      if (sol[i] === 0 && S.cells[i] === 0) S.cells[i] = 2;
+    }
+    updateAllCells();
+    updateStats();
+    updateChrome();
+    winName.textContent = S.puzzle.icon + ' ' + S.puzzle.name;
+    winTime.textContent = formatTime(S.elapsed);
+    S.overlayOpen = true;
+    overlay.classList.remove('hidden');
+    save();
+  }
+
+  function hideOverlay() {
+    S.overlayOpen = false;
+    overlay.classList.add('hidden');
+  }
+
+  function nextPuzzle() {
+    var idx = PUZZLES.indexOf(S.puzzle);
+    var next = PUZZLES[(idx + 1) % PUZZLES.length];
+    loadPuzzle(next.id);
+  }
+
+  /* ---------------- 指针：点击 + 拖动 ---------------- */
+
+  function applyDrag(r, c) {
+    var d = S.drag;
+    if (!d) return;
+    var idx = idxOf(r, c);
+    if (d.seen[idx]) return;
+    d.seen[idx] = true;
+    if (S.cells[idx] === d.target) return;
+    d.cells.push({ i: idx, b: S.cells[idx] });
+    S.cells[idx] = d.target;
+    updateCell(r, c);
+    updateStats();
+  }
+
+  function onPointerDown(e) {
+    if (!S.puzzle || S.solved || S.overlayOpen) return;
+    var cell = e.target && e.target.closest ? e.target.closest('.cell') : null;
+    if (!cell || !board.contains(cell)) return;
+
+    var r = parseInt(cell.getAttribute('data-r'), 10);
+    var c = parseInt(cell.getAttribute('data-c'), 10);
+    if (isNaN(r) || isNaN(c)) return;
+
+    var mark = S.brush === 'mark';
+    if (e.button === 2) mark = true;
+    else if (e.button !== 0) return;
+
+    e.preventDefault();
+    setCursor(r, c);
+
+    var cur = S.cells[idxOf(r, c)];
+    var target = mark ? (cur === 2 ? 0 : 2) : (cur === 1 ? 0 : 1);
+    S.drag = { target: target, cells: [], seen: {} };
+    applyDrag(r, c);
+
+    window.addEventListener('pointermove', onPointerMove, { passive: false });
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerUp);
+  }
+
+  function onPointerMove(e) {
+    if (!S.drag) return;
+    var el = document.elementFromPoint(e.clientX, e.clientY);
+    if (el && el.classList && el.classList.contains('cell') && board.contains(el)) {
+      var r = parseInt(el.getAttribute('data-r'), 10);
+      var c = parseInt(el.getAttribute('data-c'), 10);
+      if (!isNaN(r) && !isNaN(c)) applyDrag(r, c);
+    }
+    if (e.cancelable) e.preventDefault();
+  }
+
+  function onPointerUp() {
+    window.removeEventListener('pointermove', onPointerMove);
+    window.removeEventListener('pointerup', onPointerUp);
+    window.removeEventListener('pointercancel', onPointerUp);
+    var d = S.drag;
+    S.drag = null;
+    if (d && d.cells.length) commitStroke(d.cells);
+    else updateStats();
+  }
+
+  /* ================================================================
+     八、键盘
+     ================================================================ */
+
+  function toggleAtCursor() {
+    var idx = idxOf(S.cursorR, S.cursorC);
+    var target;
+    if (S.brush === 'mark') target = S.cells[idx] === 2 ? 0 : 2;
+    else target = S.cells[idx] === 1 ? 0 : 1;
+    singleAction(S.cursorR, S.cursorC, target);
+  }
+
+  function markAtCursor() {
+    var idx = idxOf(S.cursorR, S.cursorC);
+    singleAction(S.cursorR, S.cursorC, S.cells[idx] === 2 ? 0 : 2);
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (!S.puzzle) return;
+    var tag = (e.target && e.target.tagName) || '';
+    var typing = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+    if (typing) return;
+
+    if ((e.ctrlKey || e.metaKey) && String(e.key).toLowerCase() === 'z') {
+      e.preventDefault();
+      undo();
+      return;
+    }
+
+    var k = e.key;
+    if (k === 'ArrowUp' || k === 'ArrowDown' || k === 'ArrowLeft' || k === 'ArrowRight') {
+      e.preventDefault();
+      if (k === 'ArrowUp') setCursor(S.cursorR - 1, S.cursorC);
+      else if (k === 'ArrowDown') setCursor(S.cursorR + 1, S.cursorC);
+      else if (k === 'ArrowLeft') setCursor(S.cursorR, S.cursorC - 1);
+      else setCursor(S.cursorR, S.cursorC + 1);
+      return;
+    }
+
+    if (k === ' ' || k === 'Spacebar' || e.code === 'Space') {
+      if (tag === 'BUTTON') return;
+      e.preventDefault();
+      toggleAtCursor();
+      return;
+    }
+
+    var lower = String(k).toLowerCase();
+    if (lower === 'x') {
+      e.preventDefault();
+      markAtCursor();
+    } else if (lower === 'z') {
+      e.preventDefault();
+      undo();
+    } else if (lower === 'h') {
+      e.preventDefault();
+      hintOne();
+    }
+  });
+
+  /* ================================================================
+     九、按钮与计时
+     ================================================================ */
+
+  function bindUI() {
+    board.addEventListener('pointerdown', onPointerDown);
+    board.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+
+    document.getElementById('btnUndo').addEventListener('click', function () {
+      undo();
+      if (this.blur) this.blur();
+    });
+    document.getElementById('btnReset').addEventListener('click', function () {
+      resetPuzzle();
+      if (this.blur) this.blur();
+    });
+    document.getElementById('btnHint').addEventListener('click', function () {
+      hintOne();
+      if (this.blur) this.blur();
+    });
+    hintToggleBtn.addEventListener('click', function () {
+      S.errorHint = !S.errorHint;
+      updateAllCells();
+      updateStats();
+      updateChrome();
+      save();
+      if (this.blur) this.blur();
+    });
+
+    var brushBtns = document.querySelectorAll('#brushSeg button');
+    for (var i = 0; i < brushBtns.length; i++) {
+      brushBtns[i].addEventListener('click', function () {
+        S.brush = this.getAttribute('data-brush') === 'mark' ? 'mark' : 'fill';
+        updateChrome();
+        save();
+        if (this.blur) this.blur();
+      });
+    }
+
+    var sizeBtns = document.querySelectorAll('.size-btn');
+    for (var j = 0; j < sizeBtns.length; j++) {
+      sizeBtns[j].addEventListener('click', function () {
+        var size = Number(this.getAttribute('data-size'));
+        if (size === S.sizeGroup) { if (this.blur) this.blur(); return; }
+        var target = null;
+        var lastId = S.lastBySize[size];
+        if (lastId && BY_ID[lastId] && BY_ID[lastId].size === size) target = BY_ID[lastId];
+        if (!target) {
+          for (var k = 0; k < PUZZLES.length; k++) {
+            if (PUZZLES[k].size === size && !S.done[PUZZLES[k].id]) { target = PUZZLES[k]; break; }
+          }
+        }
+        if (!target) {
+          for (var m = 0; m < PUZZLES.length; m++) {
+            if (PUZZLES[m].size === size) { target = PUZZLES[m]; break; }
+          }
+        }
+        if (target) loadPuzzle(target.id);
+        if (this.blur) this.blur();
+      });
+    }
+
+    document.getElementById('btnReplay').addEventListener('click', function () {
+      resetPuzzle();
+      if (this.blur) this.blur();
+    });
+    document.getElementById('btnNext').addEventListener('click', function () {
+      nextPuzzle();
+      if (this.blur) this.blur();
+    });
+    document.getElementById('btnWinClose').addEventListener('click', function () {
+      hideOverlay();
+      if (this.blur) this.blur();
+    });
+
+    window.addEventListener('resize', function () {
+      if (resizeTimer) clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(fitBoard, 90);
+    });
+
+    window.addEventListener('beforeunload', function () {
+      if (S.running) S.elapsed = Math.max(0, Date.now() - S.startAt);
+      save();
+    });
+
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden && S.running) S.elapsed = Math.max(0, Date.now() - S.startAt);
+      save();
+    });
+  }
+
+  function tick() {
+    if (!S.puzzle || !S.running || S.overlayOpen) return;
+    S.elapsed = Math.max(0, Date.now() - S.startAt);
+    timeLabel.textContent = formatTime(S.elapsed);
+    tickCount++;
+    if (tickCount % 20 === 0) save();
+  }
+
+  /* ================================================================
+     十、启动
+     ================================================================ */
+
+  function boot() {
+    preparePuzzles();
+    var saved = loadSave();
+    var startId = '';
+    if (saved && typeof saved.current === 'string' && BY_ID[saved.current]) startId = saved.current;
+    if (!startId) startId = PUZZLES[0].id;
+    var p = BY_ID[startId];
+    S.sizeGroup = p.size;
+    applyProgress(p, S.progress[p.id]);
+    S.lastBySize[p.size] = p.id;
+    bindUI();
+    setInterval(tick, 250);
+    updateStats();
+    updateChrome();
+    fitBoard();
+
+    var q = String(location.search || '');
+    if (q.indexOf('selftest=1') !== -1) runSelfTest();
+  }
+
+  boot();
+})();
+</script>
+</body>
+</html>

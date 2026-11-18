@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#070d18">
+<title>15 数字拼图 · 离线小游戏</title>
+<style>
+  :root{
+    --text:#eaf2ff;--muted:#8ea3bd;--line:rgba(148,163,184,.16);
+    --cyan:#38bdf8;--violet:#818cf8;--mint:#5eead4;--amber:#fbbf24;
+    --board:min(86vw, 470px);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;min-height:100%;}
+  body{
+    min-height:100vh;display:flex;align-items:center;justify-content:center;
+    padding:22px 16px 26px;color:var(--text);
+    font-family:"Segoe UI","Microsoft YaHei","PingFang SC","Hiragino Sans GB",sans-serif;
+    background:
+      radial-gradient(900px 620px at 8% -6%, rgba(56,189,248,.15), transparent 62%),
+      radial-gradient(760px 560px at 102% 104%, rgba(129,140,248,.14), transparent 62%),
+      radial-gradient(720px 520px at 50% 48%, rgba(94,234,212,.08), transparent 68%),
+      #070d18;
+    -webkit-font-smoothing:antialiased;overflow-x:hidden;-webkit-tap-highlight-color:transparent;
+  }
+  button{font:inherit;color:inherit;}
+  .app{width:min(100%,720px);display:flex;flex-direction:column;gap:15px;}
+
+  .topbar{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+  .brand{display:flex;align-items:center;gap:13px;min-width:0;}
+  .logo{
+    width:54px;height:54px;flex:0 0 auto;border-radius:16px;display:grid;place-items:center;
+    font-size:22px;font-weight:900;letter-spacing:-.04em;color:#04121f;
+    background:linear-gradient(150deg,#67e8f9,#818cf8 58%,#f472b6);
+    box-shadow:0 12px 28px rgba(56,189,248,.26), inset 0 1px 0 rgba(255,255,255,.36);
+  }
+  h1{
+    margin:0;font-size:clamp(22px,4.2vw,28px);font-weight:800;letter-spacing:.04em;
+    background:linear-gradient(100deg,#f0f9ff,#a5f3fc 44%,#c7d2fe 74%,#f9a8d4);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .brand p{margin:4px 0 0;font-size:12.5px;color:var(--muted);}
+  .stats{display:flex;gap:8px;flex-wrap:wrap;}
+  .stat{min-width:64px;padding:8px 11px;border-radius:13px;background:rgba(255,255,255,.045);border:1px solid var(--line);}
+  .stat span{display:block;font-size:10.5px;color:var(--muted);letter-spacing:.08em;}
+  .stat b{display:block;margin-top:2px;font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;}
+  .stat b.ok{color:var(--mint);}
+
+  .stage{display:flex;justify-content:center;padding:1px 0 2px;}
+  .board-shell{
+    width:var(--board);padding:clamp(8px,1.7vw,12px);border-radius:26px;position:relative;
+    background:linear-gradient(180deg,rgba(255,255,255,.065),rgba(255,255,255,.022));
+    border:1px solid rgba(255,255,255,.10);
+    box-shadow:0 28px 70px rgba(0,0,0,.46), inset 0 1px 0 rgba(255,255,255,.10);
+  }
+  .board-shell::before{
+    content:"";position:absolute;inset:-1px;border-radius:27px;pointer-events:none;
+    background:linear-gradient(130deg,rgba(56,189,248,.34),transparent 34%,transparent 66%,rgba(236,72,153,.30));
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;mask-composite:exclude;padding:1px;
+  }
+  .board{
+    position:relative;width:100%;aspect-ratio:1/1;border-radius:17px;overflow:hidden;
+    background:
+      radial-gradient(circle at 30% 16%, rgba(56,189,248,.08), transparent 58%),
+      linear-gradient(160deg,#0a1424,#070d19 62%,#091120);
+    box-shadow:inset 0 0 0 1px rgba(148,163,184,.10), inset 0 18px 40px rgba(0,0,0,.32);
+    touch-action:none;user-select:none;
+  }
+  .slot{
+    position:absolute;border-radius:12%;
+    background:rgba(255,255,255,.028);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.04);
+  }
+  .tile{
+    position:absolute;left:0;top:0;border:0;padding:0;
+    border-radius:12%;cursor:pointer;overflow:hidden;
+    background-repeat:no-repeat;background-size:400% 400%;
+    box-shadow:0 9px 18px rgba(2,8,23,.45), inset 0 0 0 1px rgba(255,255,255,.16);
+    transition:transform .15s cubic-bezier(.2,.75,.25,1), box-shadow .18s ease, filter .18s ease;
+    will-change:transform;-webkit-tap-highlight-color:transparent;
+  }
+  .tile::after{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(160deg,rgba(255,255,255,.16),transparent 42%,rgba(0,0,0,.16));
+  }
+  .tile:hover{filter:brightness(1.08);}
+  .tile:active{filter:brightness(1.14);}
+  .tile .num{
+    position:absolute;left:6%;top:6%;z-index:2;
+    min-width:1.55em;height:1.55em;padding:0 .28em;border-radius:99px;
+    display:grid;place-items:center;
+    font-size:clamp(10px,2.4vw,14px);font-weight:800;font-variant-numeric:tabular-nums;
+    color:#f8fbff;background:rgba(4,10,22,.62);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.22);
+    text-shadow:0 1px 2px rgba(0,0,0,.5);
+  }
+  .board.hide-num .tile .num{display:none;}
+  .tile.placed{box-shadow:0 9px 18px rgba(2,8,23,.45), inset 0 0 0 1px rgba(94,234,212,.55), 0 0 14px rgba(94,234,212,.18);}
+  .tile.pop{animation:pop .22s ease;}
+  @keyframes pop{0%{filter:brightness(1.45);}100%{filter:brightness(1);}}
+  .board.won .tile{animation:winGlow 1.1s ease-in-out infinite alternate;}
+  @keyframes winGlow{from{filter:brightness(1);}to{filter:brightness(1.18);}}
+
+  .preview{
+    position:absolute;inset:0;z-index:12;border-radius:17px;overflow:hidden;
+    background-size:cover;background-position:center;
+    opacity:0;pointer-events:none;transition:opacity .22s ease;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.2);
+  }
+  .preview.on{opacity:1;pointer-events:auto;}
+
+  .win{
+    position:absolute;inset:0;z-index:9;display:none;align-items:center;justify-content:center;
+    padding:18px;background:rgba(3,8,18,.74);backdrop-filter:blur(7px);border-radius:17px;overflow:hidden;
+  }
+  .win.on{display:flex;animation:fadeIn .26s ease;}
+  @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+  .win-card{
+    position:relative;z-index:2;width:min(100%,330px);padding:24px 22px 20px;border-radius:22px;text-align:center;
+    background:linear-gradient(180deg,rgba(14,28,50,.98),rgba(8,15,30,.98));
+    border:1px solid rgba(125,211,252,.25);
+    box-shadow:0 26px 70px rgba(0,0,0,.55), 0 0 44px rgba(56,189,248,.13);
+  }
+  .kicker{font-size:11.5px;letter-spacing:.22em;color:#7dd3fc;font-weight:700;}
+  .win-card h2{
+    margin:10px 0 6px;font-size:30px;font-weight:900;letter-spacing:.08em;
+    background:linear-gradient(100deg,#ecfeff,#67e8f9,#c7d2fe);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .win-card p{margin:0 0 16px;font-size:12.5px;line-height:1.7;color:var(--muted);}
+  .res-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
+  .res-grid div{padding:9px 8px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid var(--line);}
+  .res-grid span{display:block;font-size:10.5px;color:var(--muted);}
+  .res-grid b{display:block;margin-top:2px;font-size:17px;font-variant-numeric:tabular-nums;}
+  .win-card .btn.primary{width:100%;padding:11px 14px;font-size:13.5px;}
+  .win-card .btn.ghost{width:100%;margin-top:8px;}
+
+  .panel{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  .status{font-size:12.5px;color:var(--muted);min-height:22px;display:flex;align-items:center;gap:7px;}
+  .status i{width:8px;height:8px;border-radius:50%;background:var(--mint);box-shadow:0 0 9px rgba(94,234,212,.7);}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .btn{
+    border:1px solid rgba(255,255,255,.11);border-radius:11px;padding:8px 13px;cursor:pointer;
+    background:rgba(255,255,255,.055);color:#dbeafe;font-size:12.5px;font-weight:600;
+    transition:background .16s ease,border-color .16s ease,transform .16s ease;
+  }
+  .btn:hover{background:rgba(255,255,255,.10);border-color:rgba(125,211,252,.4);transform:translateY(-1px);}
+  .btn.on{border-color:rgba(94,234,212,.55);color:#a7f3d0;background:rgba(94,234,212,.10);}
+  .btn.primary{
+    color:#04121f;border-color:transparent;
+    background:linear-gradient(135deg,#67e8f9,#818cf8 58%,#f472b6);
+    box-shadow:0 8px 20px rgba(99,102,241,.24);
+  }
+  .foot{font-size:11.5px;color:#5f7286;letter-spacing:.03em;text-align:center;}
+
+  .confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:1;}
+  .confetti i{position:absolute;top:-12px;width:7px;height:12px;border-radius:2px;animation:fall linear forwards;}
+  @keyframes fall{to{transform:translate3d(var(--dx),var(--dy),0) rotate(var(--rot));opacity:0;}}
+
+  @media (max-width:620px){
+    body{padding:14px 12px 18px;}
+    .app{gap:12px;}
+    .logo{width:46px;height:46px;border-radius:14px;font-size:18px;}
+    .stat{min-width:56px;padding:7px 9px;}
+    .stat b{font-size:15px;}
+    .brand p{font-size:11.5px;}
+    .board-shell{padding:7px;border-radius:20px;}
+    .board{border-radius:14px;}
+    .win{border-radius:14px;position:fixed;inset:0;border-radius:0;z-index:80;padding:16px;}
+    .win-card{padding:20px 18px 16px;}
+    .win-card h2{font-size:27px;}
+    .actions{width:100%;justify-content:center;}
+    .actions .btn{flex:1;}
+  }
+  @media (max-height:740px) and (min-width:700px){
+    body{padding-top:12px;}
+    .app{gap:11px;}
+    .foot{display:none;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo">15</div>
+      <div>
+        <h1>15 数字拼图</h1>
+        <p>滑动方块，把被打乱的极光夜景拼回原样</p>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><span>步数</span><b id="moves">0</b></div>
+      <div class="stat"><span>时间</span><b id="time">00:00</b></div>
+      <div class="stat"><span>归位</span><b id="placed" class="ok">0 / 15</b></div>
+      <div class="stat"><span>最佳</span><b id="best">—</b></div>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="board-shell">
+      <div class="board" id="board" aria-label="15 数字拼图棋盘">
+        <div class="preview" id="preview"></div>
+        <div class="win" id="win">
+          <div class="win-card" id="winCard"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="status" id="status"><i></i><span>点击空格旁的方块，或按方向键滑动</span></div>
+    <div class="actions">
+      <button class="btn" id="numBtn" title="显示或隐藏方块编号">编号 开</button>
+      <button class="btn" id="peek">预览原图</button>
+      <button class="btn primary" id="shuffle">重新打乱</button>
+      <button class="btn" id="restart">重开本局</button>
+    </div>
+  </div>
+  <p class="foot">4 × 4 · 每块都有编号，拼的是完整图案 · 支持鼠标、触屏和方向键</p>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var N = 4;
+  var TOTAL = N * N;
+  var BEST_KEY = 'tx_puzzle15_best_v1';
+
+  var boardEl = document.getElementById('board');
+  var previewEl = document.getElementById('preview');
+  var winEl = document.getElementById('win');
+  var winCard = document.getElementById('winCard');
+  var movesEl = document.getElementById('moves');
+  var timeEl = document.getElementById('time');
+  var placedEl = document.getElementById('placed');
+  var bestEl = document.getElementById('best');
+  var statusEl = document.getElementById('status');
+  var numBtn = document.getElementById('numBtn');
+  var peekBtn = document.getElementById('peek');
+  var shuffleBtn = document.getElementById('shuffle');
+  var restartBtn = document.getElementById('restart');
+
+  var ART = (function () {
+    var svg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 600'>" +
+      "<defs>" +
+        "<linearGradient id='sky' x1='0' y1='0' x2='0' y2='1'>" +
+          "<stop offset='0' stop-color='#050b1c'/><stop offset='.5' stop-color='#0d2247'/><stop offset='1' stop-color='#274a78'/>" +
+        "</linearGradient>" +
+        "<linearGradient id='aur' x1='0' y1='0' x2='1' y2='1'>" +
+          "<stop offset='0' stop-color='#5eead4' stop-opacity='.05'/><stop offset='.45' stop-color='#5eead4' stop-opacity='.62'/>" +
+          "<stop offset='.75' stop-color='#818cf8' stop-opacity='.5'/><stop offset='1' stop-color='#f472b6' stop-opacity='0'/>" +
+        "</linearGradient>" +
+        "<linearGradient id='aur2' x1='1' y1='0' x2='0' y2='1'>" +
+          "<stop offset='0' stop-color='#38bdf8' stop-opacity='0'/><stop offset='.4' stop-color='#67e8f9' stop-opacity='.45'/>" +
+          "<stop offset='.8' stop-color='#a78bfa' stop-opacity='.38'/><stop offset='1' stop-color='#f472b6' stop-opacity='0'/>" +
+        "</linearGradient>" +
+        "<linearGradient id='lake' x1='0' y1='0' x2='0' y2='1'>" +
+          "<stop offset='0' stop-color='#163a63'/><stop offset='.45' stop-color='#0b1e3a'/><stop offset='1' stop-color='#050d1d'/>" +
+        "</linearGradient>" +
+        "<radialGradient id='moon' cx='.35' cy='.32' r='.75'>" +
+          "<stop offset='0' stop-color='#fdf6d8'/><stop offset='.55' stop-color='#e8e2c0'/><stop offset='1' stop-color='#b9b48f'/>" +
+        "</radialGradient>" +
+        "<radialGradient id='glow' cx='.5' cy='.5' r='.5'>" +
+          "<stop offset='0' stop-color='#fef9c3' stop-opacity='.55'/><stop offset='1' stop-color='#fef9c3' stop-opacity='0'/>" +
+        "</radialGradient>" +
+      "</defs>" +
+      "<rect width='600' height='600' fill='url(#sky)'/>";
+
+    var stars = [
+      [38,48,1.6],[92,86,1.1],[146,40,1.3],[205,74,1.0],[258,32,1.5],[318,66,1.1],
+      [372,42,1.2],[430,92,1.4],[492,36,1.0],[548,78,1.5],[570,132,1.1],[70,150,1.2],
+      [128,196,1.0],[246,150,1.3],[345,168,1.0],[512,190,1.2],[560,232,1.0],[28,268,1.1]
+    ];
+    stars.forEach(function (s) {
+      svg += "<circle cx='" + s[0] + "' cy='" + s[1] + "' r='" + s[2] + "' fill='#e0f2fe' opacity='" + (0.45 + (s[2] / 3)) + "'/>";
+    });
+
+    svg += "<circle cx='462' cy='132' r='96' fill='url(#glow)'/>" +
+      "<circle cx='462' cy='132' r='52' fill='url(#moon)'/>" +
+      "<circle cx='446' cy='116' r='9' fill='#cbc7a4' opacity='.5'/>" +
+      "<circle cx='478' cy='152' r='6' fill='#cbc7a4' opacity='.4'/>" +
+      "<circle cx='470' cy='108' r='4' fill='#cbc7a4' opacity='.35'/>" +
+      "<path d='M-40 120 C90 40 170 190 300 112 C420 42 510 160 640 92 L640 246 C510 306 420 186 300 254 C170 330 90 196 -40 272 Z' fill='url(#aur)'/>" +
+      "<path d='M-30 196 C110 118 200 250 330 178 C440 118 540 220 630 160 L630 286 C540 342 440 250 330 310 C200 380 110 264 -30 332 Z' fill='url(#aur2)' opacity='.85'/>" +
+      "<path d='M0 352 L86 246 L150 316 L214 224 L300 344 L368 258 L444 340 L512 268 L600 356 L600 430 L0 430 Z' fill='#122748'/>" +
+      "<path d='M0 392 L74 316 L136 374 L206 300 L284 388 L348 330 L430 398 L506 330 L600 402 L600 470 L0 470 Z' fill='#0d1c36'/>" +
+      "<path d='M86 246 L116 284 L96 282 L112 302 L64 302 L74 282 L58 284 Z' fill='#c7d2fe' opacity='.45'/>" +
+      "<path d='M214 224 L246 266 L224 263 L242 286 L188 286 L202 263 L182 266 Z' fill='#c7d2fe' opacity='.4'/>" +
+      "<path d='M512 268 L540 304 L520 301 L536 322 L486 322 L500 301 L482 304 Z' fill='#c7d2fe' opacity='.35'/>" +
+      "<rect y='418' width='600' height='182' fill='url(#lake)'/>" +
+      "<path d='M0 420 C90 434 150 412 230 424 C320 438 390 412 470 424 C530 432 570 418 600 424 L600 452 C520 462 460 442 380 452 C290 464 210 440 130 452 C80 460 34 452 0 456 Z' fill='#67e8f9' opacity='.10'/>" +
+      "<path d='M40 476 C130 464 210 486 300 474 C390 462 470 482 560 470' stroke='#7dd3fc' stroke-width='2' fill='none' opacity='.16'/>" +
+      "<path d='M80 508 C170 496 250 518 340 506 C420 496 500 512 566 502' stroke='#a5b4fc' stroke-width='2' fill='none' opacity='.12'/>" +
+      "<path d='M160 544 C240 534 320 552 400 540 C460 532 520 544 570 538' stroke='#f9a8d4' stroke-width='2' fill='none' opacity='.09'/>" +
+      "<ellipse cx='462' cy='520' rx='72' ry='9' fill='#fef9c3' opacity='.07'/>" +
+      "<ellipse cx='462' cy='556' rx='108' ry='11' fill='#fef9c3' opacity='.04'/>";
+
+    function tree(x, base, h, w) {
+      return "<g fill='#06101f'>" +
+        "<rect x='" + (x - w * 0.10) + "' y='" + (base - h * 0.18) + "' width='" + (w * 0.2) + "' height='" + (h * 0.2) + "'/>" +
+        "<path d='M" + x + " " + (base - h) + " L" + (x + w / 2) + " " + (base - h * 0.62) + " L" + (x + w * 0.18) + " " + (base - h * 0.62) + " L" + (x + w * 0.62) + " " + (base - h * 0.3) + " L" + (x + w * 0.12) + " " + (base - h * 0.3) + " L" + (x + w * 0.8) + " " + base + " L" + (x - w * 0.8) + " " + base + " L" + (x - w * 0.12) + " " + (base - h * 0.3) + " L" + (x - w * 0.62) + " " + (base - h * 0.3) + " L" + (x - w * 0.18) + " " + (base - h * 0.62) + " L" + (x - w / 2) + " " + (base - h * 0.62) + " Z'/>" +
+        "</g>";
+    }
+    svg += tree(56, 600, 150, 96) + tree(118, 600, 104, 66) + tree(536, 600, 168, 104) + tree(474, 600, 112, 70);
+
+    svg += "<g>" +
+      "<rect x='252' y='502' width='96' height='62' rx='4' fill='#1e293b'/>" +
+      "<path d='M244 504 L300 462 L356 504 Z' fill='#334155'/>" +
+      "<rect x='318' y='470' width='14' height='24' fill='#334155'/>" +
+      "<rect x='298' y='526' width='16' height='16' fill='#fbbf24' opacity='.9'/>" +
+      "<rect x='276' y='526' width='12' height='12' fill='#fbbf24' opacity='.65'/>" +
+      "<rect x='270' y='506' width='8' height='8' fill='#fde68a' opacity='.8'/>" +
+      "</g>" +
+      "<path d='M244 566 C270 558 320 558 356 566' stroke='#fbbf24' stroke-width='3' fill='none' opacity='.16'/>" +
+      "</svg>";
+    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+  })();
+
+  var tiles = [];
+  var els = {};
+  var blank = TOTAL - 1;
+  var moves = 0;
+  var startedAt = 0;
+  var elapsed = 0;
+  var timerId = 0;
+  var solved = true;
+  var locked = false;
+  var cellPx = 0;
+  var gapPx = 0;
+  var initial = null;
+  var best = null;
+  var peekTimer = 0;
+
+  try {
+    best = JSON.parse(localStorage.getItem(BEST_KEY) || 'null');
+    if (!best || typeof best !== 'object') best = null;
+  } catch (e) { best = null; }
+
+  function rowOf(i) { return Math.floor(i / N); }
+  function colOf(i) { return i % N; }
+  function fmt(sec) {
+    sec = Math.max(0, Math.floor(sec));
+    var m = Math.floor(sec / 60), s = sec % 60;
+    return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+  }
+  function setStatus(t) { statusEl.querySelector('span').textContent = t; }
+
+  function renderBest() {
+    bestEl.textContent = best ? (best.moves + ' 步') : '—';
+    bestEl.title = best ? ('用时 ' + fmt(best.time || 0)) : '还没有完成过';
+  }
+
+  function measure() {
+    var w = boardEl.clientWidth || 1;
+    gapPx = Math.max(4, Math.round(w * 0.015));
+    cellPx = (w - gapPx * (N + 1)) / N;
+  }
+
+  function buildSlots() {
+    var old = boardEl.querySelectorAll('.slot');
+    for (var i = 0; i < old.length; i++) old[i].parentNode.removeChild(old[i]);
+    measure();
+    for (var r = 0; r < N; r++) {
+      for (var c = 0; c < N; c++) {
+        var s = document.createElement('div');
+        s.className = 'slot';
+        s.style.width = cellPx + 'px';
+        s.style.height = cellPx + 'px';
+        s.style.left = (gapPx + c * (cellPx + gapPx)) + 'px';
+        s.style.top = (gapPx + r * (cellPx + gapPx)) + 'px';
+        boardEl.insertBefore(s, boardEl.firstChild);
+      }
+    }
+  }
+
+  function tileBackground(v) {
+    var idx = v - 1;
+    var c = colOf(idx), r = rowOf(idx);
+    var px = (c / (N - 1)) * 100;
+    var py = (r / (N - 1)) * 100;
+    return ART + '|' + px + '% ' + py + '%';
+  }
+
+  function buildTiles() {
+    var old = boardEl.querySelectorAll('.tile');
+    for (var i = 0; i < old.length; i++) old[i].parentNode.removeChild(old[i]);
+    els = {};
+    for (var v = 1; v < TOTAL; v++) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'tile';
+      b.dataset.v = String(v);
+      var bg = tileBackground(v).split('|');
+      b.style.backgroundImage = 'url("' + bg[0] + '")';
+      b.style.backgroundPosition = bg[1];
+      b.setAttribute('aria-label', '第 ' + v + ' 块');
+      var num = document.createElement('span');
+      num.className = 'num';
+      num.textContent = String(v);
+      b.appendChild(num);
+      b.addEventListener('click', onTileClick);
+      els[v] = b;
+      boardEl.appendChild(b);
+    }
+  }
+
+  function layout(animate) {
+    var w = boardEl.clientWidth;
+    if (!w) return;
+    measure();
+    for (var v = 1; v < TOTAL; v++) {
+      var el = els[v];
+      var idx = tiles.indexOf(v);
+      if (!el || idx < 0) continue;
+      var x = gapPx + colOf(idx) * (cellPx + gapPx);
+      var y = gapPx + rowOf(idx) * (cellPx + gapPx);
+      if (!animate) el.style.transition = 'none';
+      el.style.width = cellPx + 'px';
+      el.style.height = cellPx + 'px';
+      el.style.transform = 'translate3d(' + x + 'px,' + y + 'px,0)';
+      el.style.borderRadius = Math.round(cellPx * 0.13) + 'px';
+      if (!animate) { void el.offsetWidth; el.style.transition = ''; }
+    }
+  }
+
+  function updatePlaced() {
+    var n = 0;
+    for (var i = 0; i < TOTAL - 1; i++) if (tiles[i] === i + 1) n++;
+    placedEl.textContent = n + ' / ' + (TOTAL - 1);
+    for (var v = 1; v < TOTAL; v++) {
+      var idx = tiles.indexOf(v);
+      if (els[v]) els[v].classList.toggle('placed', idx === v - 1);
+    }
+  }
+
+  function updateHud() {
+    movesEl.textContent = String(moves);
+    timeEl.textContent = fmt(elapsed);
+    updatePlaced();
+  }
+
+  function beginTimer() {
+    if (startedAt) return;
+    startedAt = Date.now();
+    clearInterval(timerId);
+    timerId = setInterval(function () {
+      elapsed = (Date.now() - startedAt) / 1000;
+      timeEl.textContent = fmt(elapsed);
+    }, 250);
+  }
+  function stopTimer() {
+    clearInterval(timerId);
+    timerId = 0;
+    if (startedAt) elapsed = (Date.now() - startedAt) / 1000;
+  }
+
+  function isAdjacent(a, b) {
+    return Math.abs(rowOf(a) - rowOf(b)) + Math.abs(colOf(a) - colOf(b)) === 1;
+  }
+
+  function onTileClick(e) {
+    e.preventDefault();
+    if (locked || solved) return;
+    tryMove(parseInt(this.dataset.v, 10));
+  }
+
+  function tryMove(v) {
+    if (locked || solved) return;
+    var idx = tiles.indexOf(v);
+    if (idx < 0 || !isAdjacent(idx, blank)) return;
+    beginTimer();
+
+    var el = els[v];
+    var tmp = tiles[idx];
+    tiles[idx] = tiles[blank];
+    tiles[blank] = tmp;
+    blank = idx;
+
+    var x = gapPx + colOf(idx) * (cellPx + gapPx);
+    var y = gapPx + rowOf(idx) * (cellPx + gapPx);
+    el.style.transform = 'translate3d(' + x + 'px,' + y + 'px,0)';
+    el.classList.remove('pop');
+    void el.offsetWidth;
+    el.classList.add('pop');
+
+    moves++;
+    updateHud();
+    setStatus(moves < 5 ? '保持节奏，先拼四个角' : '已归位 ' + placedEl.textContent);
+    checkWin();
+  }
+
+  function checkWin() {
+    for (var i = 0; i < TOTAL - 1; i++) if (tiles[i] !== i + 1) return;
+    solved = true;
+    locked = false;
+    stopTimer();
+    boardEl.classList.add('won');
+    var isBest = !best || moves < best.moves || (moves === best.moves && elapsed < (best.time || 0));
+    if (isBest) {
+      best = { moves: moves, time: elapsed };
+      try { localStorage.setItem(BEST_KEY, JSON.stringify(best)); } catch (e) {}
+    }
+    renderBest();
+    winCard.innerHTML =
+      '<div class="kicker">PUZZLE SOLVED</div>' +
+      '<h2>拼好了</h2>' +
+      '<p>' + (isBest ? '刷新了最佳步数，这张夜景归你了。' : '极光夜景完整归位，漂亮。') + '</p>' +
+      '<div class="res-grid">' +
+        '<div><span>步数</span><b>' + moves + '</b></div>' +
+        '<div><span>用时</span><b>' + fmt(elapsed) + '</b></div>' +
+        '<div><span>历史最佳</span><b>' + best.moves + ' 步</b></div>' +
+        '<div><span>最佳用时</span><b>' + fmt(best.time || 0) + '</b></div>' +
+      '</div>' +
+      '<button type="button" class="btn primary" id="again">再来一局</button>' +
+      '<button type="button" class="btn ghost" id="peekWin">看看完整原图</button>';
+    winEl.classList.add('on');
+    winCard.querySelector('#again').addEventListener('click', shuffle);
+    winCard.querySelector('#peekWin').addEventListener('click', function () { togglePeek(true); });
+    confetti();
+  }
+
+  function confetti() {
+    var box = document.createElement('div');
+    box.className = 'confetti';
+    var colors = ['#22d3ee', '#818cf8', '#f472b6', '#facc15', '#4ade80', '#fb7185'];
+    for (var i = 0; i < 44; i++) {
+      var p = document.createElement('i');
+      p.style.left = (Math.random() * 100) + '%';
+      p.style.background = colors[i % colors.length];
+      p.style.opacity = String(0.55 + Math.random() * 0.45);
+      p.style.animationDuration = (1.1 + Math.random()) + 's';
+      p.style.animationDelay = (Math.random() * 0.3) + 's';
+      p.style.setProperty('--dx', (Math.random() * 120 - 60) + 'px');
+      p.style.setProperty('--dy', (260 + Math.random() * 240) + 'px');
+      p.style.setProperty('--rot', (Math.random() * 720 - 360) + 'deg');
+      box.appendChild(p);
+    }
+    winEl.appendChild(box);
+    setTimeout(function () { if (box.parentNode) box.parentNode.removeChild(box); }, 2500);
+  }
+
+  function solvedState() {
+    var a = [];
+    for (var i = 1; i < TOTAL; i++) a.push(i);
+    a.push(0);
+    return a;
+  }
+
+  function neighborsOf(idx) {
+    var r = rowOf(idx), c = colOf(idx), out = [];
+    if (r > 0) out.push(idx - N);
+    if (r < N - 1) out.push(idx + N);
+    if (c > 0) out.push(idx - 1);
+    if (c < N - 1) out.push(idx + 1);
+    return out;
+  }
+
+  function shuffle() {
+    winEl.classList.remove('on');
+    boardEl.classList.remove('won');
+    var box = winEl.querySelectorAll('.confetti');
+    for (var i = 0; i < box.length; i++) box[i].parentNode.removeChild(box[i]);
+    solved = false;
+    locked = false;
+    moves = 0;
+    elapsed = 0;
+    startedAt = 0;
+    stopTimer();
+    movesEl.textContent = '0';
+    timeEl.textContent = '00:00';
+    setStatus('点击空格旁的方块，或按方向键滑动');
+
+    tiles = solvedState();
+    blank = TOTAL - 1;
+    var steps = 240;
+    var tries = 0;
+    do {
+      tiles = solvedState();
+      blank = TOTAL - 1;
+      var last = -1;
+      for (var s = 0; s < steps; s++) {
+        var opts = neighborsOf(blank).filter(function (i) { return i !== last; });
+        if (!opts.length) opts = neighborsOf(blank);
+        var pick = opts[Math.floor(Math.random() * opts.length)];
+        last = blank;
+        tiles[blank] = tiles[pick];
+        tiles[pick] = 0;
+        blank = pick;
+      }
+      var inPlace = 0;
+      for (var k = 0; k < TOTAL - 1; k++) if (tiles[k] === k + 1) inPlace++;
+      tries++;
+    } while (inPlace > 5 && tries < 8);
+    if (isSolved()) {
+      var p = neighborsOf(blank)[0];
+      tiles[blank] = tiles[p];
+      tiles[p] = 0;
+      blank = p;
+    }
+    initial = tiles.slice();
+    renderAll(false);
+    updateHud();
+    renderBest();
+  }
+
+  function isSolved() {
+    for (var i = 0; i < TOTAL - 1; i++) if (tiles[i] !== i + 1) return false;
+    return true;
+  }
+
+  function restartRound() {
+    if (!initial) return;
+    winEl.classList.remove('on');
+    boardEl.classList.remove('won');
+    solved = false;
+    locked = false;
+    tiles = initial.slice();
+    blank = tiles.indexOf(0);
+    moves = 0;
+    elapsed = 0;
+    startedAt = 0;
+    stopTimer();
+    movesEl.textContent = '0';
+    timeEl.textContent = '00:00';
+    setStatus('本局已重开，还是同一张打乱图');
+    renderAll(false);
+    updateHud();
+  }
+
+  function renderAll(animate) {
+    layout(animate);
+    updatePlaced();
+  }
+
+  function togglePeek(force) {
+    var on = typeof force === 'boolean' ? force : !previewEl.classList.contains('on');
+    previewEl.classList.toggle('on', on);
+    if (on) {
+      clearTimeout(peekTimer);
+      peekTimer = setTimeout(function () { previewEl.classList.remove('on'); }, 1600);
+    }
+  }
+
+  function toggleNumbers() {
+    var hidden = boardEl.classList.toggle('hide-num');
+    numBtn.textContent = hidden ? '编号 关' : '编号 开';
+    numBtn.classList.toggle('on', !hidden);
+  }
+
+  // swipe controls: move the tile in the swipe direction into the blank
+  var touchX = 0, touchY = 0, touching = false;
+  boardEl.addEventListener('touchstart', function (e) {
+    if (!e.touches.length) return;
+    touchX = e.touches[0].clientX;
+    touchY = e.touches[0].clientY;
+    touching = true;
+  }, { passive: true });
+  boardEl.addEventListener('touchend', function (e) {
+    if (!touching || !e.changedTouches.length) return;
+    touching = false;
+    var dx = e.changedTouches[0].clientX - touchX;
+    var dy = e.changedTouches[0].clientY - touchY;
+    if (Math.abs(dx) < 24 && Math.abs(dy) < 24) return;
+    if (locked || solved) return;
+    var br = rowOf(blank), bc = colOf(blank);
+    var idx = -1;
+    if (Math.abs(dx) > Math.abs(dy)) {
+      idx = dx > 0 ? (bc > 0 ? blank - 1 : -1) : (bc < N - 1 ? blank + 1 : -1);
+    } else {
+      idx = dy > 0 ? (br > 0 ? blank - N : -1) : (br < N - 1 ? blank + N : -1);
+    }
+    if (idx >= 0) tryMove(tiles[idx]);
+  }, { passive: true });
+
+  document.addEventListener('keydown', function (e) {
+    var map = { ArrowLeft: 0, ArrowRight: 1, ArrowUp: 2, ArrowDown: 3 };
+    if (map[e.key] !== undefined) {
+      e.preventDefault();
+      if (locked || solved) return;
+      var br = rowOf(blank), bc = colOf(blank);
+      var idx = -1;
+      if (e.key === 'ArrowLeft') idx = bc < N - 1 ? blank + 1 : -1;
+      else if (e.key === 'ArrowRight') idx = bc > 0 ? blank - 1 : -1;
+      else if (e.key === 'ArrowUp') idx = br < N - 1 ? blank + N : -1;
+      else idx = br > 0 ? blank - N : -1;
+      if (idx >= 0) tryMove(tiles[idx]);
+      return;
+    }
+    if (e.key.toLowerCase() === 'p') togglePeek();
+    if (e.key.toLowerCase() === 'r') shuffle();
+  });
+  window.addEventListener('resize', function () { layout(false); });
+
+  numBtn.addEventListener('click', function () { toggleNumbers(); this.blur(); });
+  peekBtn.addEventListener('click', function () { togglePeek(); this.blur(); });
+  shuffleBtn.addEventListener('click', function () { shuffle(); this.blur(); });
+  restartBtn.addEventListener('click', function () { restartRound(); this.blur(); });
+
+  previewEl.style.backgroundImage = 'url("' + ART + '")';
+  buildSlots();
+  buildTiles();
+  numBtn.classList.add('on');
+  renderBest();
+  updateHud();
+  shuffle();
+})();
+</script>
+</body>
+</html>

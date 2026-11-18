@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>推箱子 · 仓库番</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
+    background: radial-gradient(1200px 700px at 50% -10%, #22303f 0%, #141c26 55%, #0d1319 100%);
+    color: #e8eef5;
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px; overflow: hidden;
+    -webkit-user-select: none; user-select: none;
+    touch-action: manipulation;
+  }
+  .app {
+    width: min(980px, 100%);
+    height: min(96vh, 860px);
+    display: flex; flex-direction: column; gap: 12px;
+  }
+
+  header { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .logo {
+    width: 42px; height: 42px; border-radius: 12px; flex: 0 0 auto;
+    background: linear-gradient(160deg, #c98a3e, #8a5718);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 6px 16px rgba(0,0,0,.35);
+    position: relative;
+  }
+  .logo::before, .logo::after {
+    content: ""; position: absolute; left: 7px; right: 7px; height: 2px; border-radius: 2px;
+    background: rgba(255,255,255,.25);
+  }
+  .logo::before { top: 13px; }
+  .logo::after { bottom: 13px; }
+  h1 { font-size: 22px; letter-spacing: .06em; font-weight: 700; }
+  .brand p { font-size: 12.5px; color: #8fa3b7; margin-top: 3px; }
+
+  .stats { display: flex; gap: 8px; }
+  .stat {
+    min-width: 74px; padding: 7px 12px; border-radius: 10px;
+    background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08);
+    text-align: center;
+  }
+  .stat .label { display: block; font-size: 11px; color: #8fa3b7; letter-spacing: .08em; }
+  .stat b { font-size: 16px; font-variant-numeric: tabular-nums; }
+  .stat.hl b { color: #ffd479; }
+
+  .stage {
+    position: relative; flex: 1 1 auto; min-height: 0;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.015));
+    border: 1px solid rgba(255,255,255,.08);
+    box-shadow: 0 24px 60px -30px rgba(0,0,0,.9);
+    overflow: hidden;
+  }
+  canvas { display: block; border-radius: 14px; }
+
+  .overlay {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    background: rgba(9,14,19,.72); backdrop-filter: blur(3px);
+    opacity: 1; transition: opacity .22s ease;
+  }
+  .overlay.hidden { opacity: 0; pointer-events: none; }
+  .ov-card {
+    text-align: center; padding: 26px 34px; border-radius: 16px;
+    background: linear-gradient(180deg, #1d2836, #16202b);
+    border: 1px solid rgba(255,255,255,.1);
+    box-shadow: 0 20px 50px -20px #000;
+    animation: pop .24s cubic-bezier(.2,1.4,.5,1);
+  }
+  @keyframes pop { from { transform: scale(.9); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+  .ov-card h2 { font-size: 24px; margin-bottom: 8px; color: #ffd479; }
+  .ov-card p { font-size: 13.5px; color: #9db0c2; line-height: 1.7; }
+  .ov-card .ov-btns { margin-top: 16px; display: flex; gap: 10px; justify-content: center; }
+
+  footer { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .levels { display: flex; gap: 6px; flex-wrap: wrap; flex: 1 1 auto; }
+  .chip {
+    width: 34px; height: 34px; border-radius: 9px; border: 1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.05); color: #c8d6e4; font-size: 13px; cursor: pointer;
+    font-variant-numeric: tabular-nums; transition: .15s;
+  }
+  .chip:hover { background: rgba(255,255,255,.12); transform: translateY(-1px); }
+  .chip.done { color: #7ee2a8; border-color: rgba(126,226,168,.35); }
+  .chip.active { background: #ffd479; color: #1a2430; border-color: #ffd479; font-weight: 700; }
+
+  .btn {
+    padding: 8px 14px; border-radius: 9px; cursor: pointer; font-size: 13px;
+    border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.07); color: #e8eef5;
+    transition: .15s;
+  }
+  .btn:hover { background: rgba(255,255,255,.14); }
+  .btn.primary { background: #ffd479; color: #20293a; border-color: #ffd479; font-weight: 700; }
+  .btn.primary:hover { background: #ffe2a0; }
+  .hint { flex: 1 1 100%; font-size: 11.5px; color: #6f8296; letter-spacing: .03em; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <div class="logo"></div>
+      <div>
+        <h1>推箱子</h1>
+        <p>把所有箱子推到目标点上，箱子只能推、不能拉</p>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="label">关卡</span><b id="lvLabel">1 / 20</b></div>
+      <div class="stat"><span class="label">步数</span><b id="stepLabel">0</b></div>
+      <div class="stat"><span class="label">推动</span><b id="pushLabel">0</b></div>
+      <div class="stat hl"><span class="label">参考最少</span><b id="bestLabel">-</b></div>
+    </div>
+  </header>
+
+  <div class="stage">
+    <canvas id="cv"></canvas>
+    <div class="overlay hidden" id="overlay">
+      <div class="ov-card">
+        <h2 id="ovTitle">过关！</h2>
+        <p id="ovText"></p>
+        <div class="ov-btns">
+          <button class="btn" id="ovRetry">重玩本关</button>
+          <button class="btn primary" id="ovNext">下一关</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="levels" id="levels"></div>
+    <button class="btn" id="btnUndo">撤销 (Z)</button>
+    <button class="btn" id="btnReset">重来 (R)</button>
+    <p class="hint">方向键 / WASD 移动 · Z 撤销 · R 重来 · 手机可上下左右滑动</p>
+  </footer>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ---------------------------------------------------------------- 关卡数据 */
+  var LEVELS = [
+    { name: '第一步', best: 1, rows: [
+      '#######',
+      '#     #',
+      '# @$. #',
+      '#     #',
+      '#######'
+    ]},
+    { name: '转身', best: 1, rows: [
+      '#######',
+      '#     #',
+      '# .$@ #',
+      '#     #',
+      '#######'
+    ]},
+    { name: '竖井', best: 1, rows: [
+      '#########',
+      '#       #',
+      '#  ###  #',
+      '#  #.#  #',
+      '#  #$#  #',
+      '#  # #  #',
+      '#  # #  #',
+      '#  @ #  #',
+      '#       #',
+      '#########'
+    ]},
+    { name: '两个箱子', best: 2, rows: [
+      '#########',
+      '# .   . #',
+      '# $   $ #',
+      '#   @   #',
+      '#       #',
+      '#########'
+    ]},
+    { name: '双击', best: 2, rows: [
+      '########',
+      '#  .   #',
+      '#  $   #',
+      '#      #',
+      '#   $  #',
+      '#   .  #',
+      '#   @  #',
+      '########'
+    ]},
+    { name: '并排', best: 2, rows: [
+      '##########',
+      '#        #',
+      '#  $  $  #',
+      '#  .  .  #',
+      '#   @    #',
+      '#        #',
+      '##########'
+    ]},
+    { name: '拐个弯', best: 3, rows: [
+      '#######',
+      '#     #',
+      '# $   #',
+      '#   . #',
+      '#     #',
+      '#  @  #',
+      '#######'
+    ]},
+    { name: '绕一圈', best: 3, rows: [
+      '#########',
+      '#       #',
+      '# ##### #',
+      '# #   # #',
+      '# # $ # #',
+      '# # @ # #',
+      '# #   # #',
+      '# # . # #',
+      '# ##### #',
+      '#       #',
+      '#########'
+    ]},
+    { name: '小方阵', best: 4, rows: [
+      '#########',
+      '#       #',
+      '#  #    #',
+      '#   .   #',
+      '#   . $ #',
+      '#  @$   #',
+      '#       #',
+      '#       #',
+      '#########'
+    ]},
+    { name: '双星', best: 5, rows: [
+      '#########',
+      '#    .  #',
+      '#  $.   #',
+      '#  $@   #',
+      '#    ## #',
+      '# ##    #',
+      '#    #  #',
+      '#########'
+    ]},
+    { name: '隔墙', best: 6, rows: [
+      '##########',
+      '#        #',
+      '#  #  #  #',
+      '#  $  $  #',
+      '#  .  .  #',
+      '#   @    #',
+      '#        #',
+      '##########'
+    ]},
+    { name: '错位', best: 7, rows: [
+      '#########',
+      '#   .$@ #',
+      '#       #',
+      '#  $  $ #',
+      '#   .   #',
+      '#   .#  #',
+      '#    #  #',
+      '#  #    #',
+      '#########'
+    ]},
+    { name: '台阶', best: 8, rows: [
+      '#########',
+      '#  .    #',
+      '#       #',
+      '#       #',
+      '#. .$ ###',
+      '# $@$   #',
+      '#  #    #',
+      '#########'
+    ]},
+    { name: '四箱', best: 9, rows: [
+      '#########',
+      '#       #',
+      '#..     #',
+      '#   .$ ##',
+      '# $ .@ ##',
+      '#$$     #',
+      '#    #  #',
+      '#########'
+    ]},
+    { name: '柱列', best: 10, rows: [
+      '#########',
+      '#      .#',
+      '#      .#',
+      '#   $   #',
+      '#    @#$#',
+      '###  $  #',
+      '#      .#',
+      '#       #',
+      '#########'
+    ]},
+    { name: '通道', best: 11, rows: [
+      '##########',
+      '#        #',
+      '#   $    #',
+      '#        #',
+      '# .$$    #',
+      '###@     #',
+      '#.       #',
+      '#   .    #',
+      '##########'
+    ]},
+    { name: '最后一把', best: 12, rows: [
+      '##########',
+      '#   #    #',
+      '# $ # .  #',
+      '#   #    #',
+      '#   ###  #',
+      '#        #',
+      '#   @    #',
+      '##########'
+    ]},
+    { name: '窄巷', best: 13, rows: [
+      '#########',
+      '#       #',
+      '#  $ # .#',
+      '#    # .#',
+      '#   #   #',
+      '#     $ #',
+      '###   @ #',
+      '#########'
+    ]},
+    { name: '长路', best: 14, rows: [
+      '#########',
+      '# .     #',
+      '#$      #',
+      '#  #    #',
+      '# $   $ #',
+      '# @     #',
+      '# .     #',
+      '#.      #',
+      '#########'
+    ]},
+    { name: '回旋', best: 15, rows: [
+      '##########',
+      '#  .    .#',
+      '#  $    *#',
+      '#     #  #',
+      '# $      #',
+      '#.@   $  #',
+      '##########'
+    ]}
+  ];
+
+  /* ---------------------------------------------------------------- 状态 */
+  var cv = document.getElementById('cv');
+  var ctx = cv.getContext('2d');
+  var lvLabel = document.getElementById('lvLabel');
+  var stepLabel = document.getElementById('stepLabel');
+  var pushLabel = document.getElementById('pushLabel');
+  var bestLabel = document.getElementById('bestLabel');
+  var levelsBox = document.getElementById('levels');
+  var overlay = document.getElementById('overlay');
+  var ovTitle = document.getElementById('ovTitle');
+  var ovText = document.getElementById('ovText');
+
+  var SAVE_KEY = 'sokoban.save.v1';
+  var bestSteps = {};      /* 关卡序号 -> 本人最少步数 */
+
+  var cols = 0, rows = 0;
+  var wall = [], goal = [];
+  var boxes = [], player = { r: 0, c: 0, pr: 0, pc: 0, face: 0 };
+  var steps = 0, pushes = 0, levelIndex = 0;
+  var history = [];
+  var ts = 40;             /* 每格像素 */
+  var anim = 0;            /* 箱子落点闪光 */
+  var winAt = 0;
+  var solved = false;
+  var winSeq = 0;          /* 关卡切换时自增，用来作废尚未弹出的通关浮层 */
+
+  /* ---------------------------------------------------------------- 存读档 */
+  function loadSave() {
+    try {
+      var raw = localStorage.getItem(SAVE_KEY);
+      if (raw) bestSteps = JSON.parse(raw) || {};
+    } catch (e) { bestSteps = {}; }
+  }
+  function saveSave() {
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(bestSteps)); } catch (e) {}
+  }
+
+  /* ---------------------------------------------------------------- 关卡解析 */
+  function parseLevel(idx) {
+    var data = LEVELS[idx];
+    var map = data.rows;
+    rows = map.length;
+    cols = 0;
+    for (var i = 0; i < rows; i++) cols = Math.max(cols, map[i].length);
+
+    wall = []; goal = []; boxes = []; history = [];
+    steps = 0; pushes = 0; solved = false; winAt = 0;
+    winSeq++;
+
+    for (var r = 0; r < rows; r++) {
+      wall[r] = []; goal[r] = [];
+      for (var c = 0; c < cols; c++) {
+        var ch = map[r].charAt(c) || ' ';
+        wall[r][c] = (ch === '#');
+        goal[r][c] = (ch === '.' || ch === '*' || ch === '+');
+        if (ch === '$' || ch === '*') boxes.push({ r: r, c: c, pr: r, pc: c });
+        if (ch === '@' || ch === '+') { player.r = r; player.c = c; player.pr = r; player.pc = c; }
+      }
+    }
+    player.face = 0;
+    levelIndex = idx;
+    overlay.classList.add('hidden');
+    updateHUD();
+    renderChips();
+    layout();
+  }
+
+  /* ---------------------------------------------------------------- 绘制尺寸 */
+  function layout() {
+    var stage = cv.parentElement;
+    var pad = 18;
+    var availW = Math.max(120, stage.clientWidth - pad * 2);
+    var availH = Math.max(120, stage.clientHeight - pad * 2);
+    ts = Math.floor(Math.min(availW / cols, availH / rows));
+    ts = Math.max(18, Math.min(ts, 74));
+
+    var w = cols * ts, h = rows * ts;
+    var dpr = window.devicePixelRatio || 1;
+    cv.style.width = w + 'px';
+    cv.style.height = h + 'px';
+    cv.width = Math.round(w * dpr);
+    cv.height = Math.round(h * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  /* ---------------------------------------------------------------- 规则 */
+  function isWall(r, c) {
+    if (r < 0 || c < 0 || r >= rows || c >= cols) return true;
+    return wall[r][c];
+  }
+  function boxAt(r, c) {
+    for (var i = 0; i < boxes.length; i++) {
+      if (boxes[i].r === r && boxes[i].c === c) return i;
+    }
+    return -1;
+  }
+  function snapshot() {
+    var bs = boxes.map(function (b) { return [b.r, b.c]; });
+    history.push({ p: [player.r, player.c], b: bs, s: steps, u: pushes, f: player.face });
+    if (history.length > 300) history.shift();
+  }
+  function isWin() {
+    for (var i = 0; i < boxes.length; i++) {
+      if (!goal[boxes[i].r][boxes[i].c]) return false;
+    }
+    return boxes.length > 0;
+  }
+
+  function tryMove(dr, dc) {
+    if (solved) return;
+    var nr = player.r + dr, nc = player.c + dc;
+    if (isWall(nr, nc)) return;
+
+    var bi = boxAt(nr, nc);
+    if (bi >= 0) {
+      var br = nr + dr, bc = nc + dc;
+      if (isWall(br, bc) || boxAt(br, bc) >= 0) return;
+      snapshot();
+      boxes[bi].r = br; boxes[bi].c = bc;
+      player.face = dr < 0 ? 3 : dr > 0 ? 1 : dc < 0 ? 2 : 0;
+      player.r = nr; player.c = nc;
+      pushes++; steps++;
+    } else {
+      snapshot();
+      player.face = dr < 0 ? 3 : dr > 0 ? 1 : dc < 0 ? 2 : 0;
+      player.r = nr; player.c = nc;
+      steps++;
+    }
+    updateHUD();
+
+    if (isWin()) {
+      solved = true;
+      bestSteps[levelIndex] = Math.min(bestSteps[levelIndex] || 1e9, steps);
+      saveSave();
+      winAt = performance.now();
+      renderChips();
+      var seq = winSeq;
+      setTimeout(function () { if (seq === winSeq) showWin(); }, 420);
+    }
+  }
+
+  function undo() {
+    if (!history.length || solved) return;
+    var h = history.pop();
+    player.r = h.p[0]; player.c = h.p[1]; player.face = h.f;
+    for (var i = 0; i < boxes.length; i++) { boxes[i].r = h.b[i][0]; boxes[i].c = h.b[i][1]; }
+    steps = h.s; pushes = h.u;
+    updateHUD();
+  }
+
+  function reset() {
+    parseLevel(levelIndex);
+  }
+
+  function updateHUD() {
+    lvLabel.textContent = (levelIndex + 1) + ' / ' + LEVELS.length;
+    stepLabel.textContent = steps;
+    pushLabel.textContent = pushes;
+    bestLabel.textContent = LEVELS[levelIndex].best;
+  }
+
+  /* ---------------------------------------------------------------- 胜利 */
+  function showWin() {
+    var last = levelIndex === LEVELS.length - 1;
+    ovTitle.textContent = last ? '全部通关！' : '过关！';
+    var mine = bestSteps[levelIndex];
+    var txt = '用 ' + steps + ' 步 / 推动 ' + pushes + ' 次　参考最少 ' + LEVELS[levelIndex].best + ' 推';
+    if (mine) txt += '　你的最好 ' + mine + ' 步';
+    ovText.textContent = txt;
+    document.getElementById('ovNext').textContent = last ? '从第一关重来' : '下一关';
+    overlay.classList.remove('hidden');
+  }
+
+  function nextLevel() {
+    var n = levelIndex + 1;
+    if (n >= LEVELS.length) n = 0;
+    parseLevel(n);
+  }
+
+  /* ---------------------------------------------------------------- 渲染 */
+  function rrect(x, y, w, h, r) {
+    r = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function drawFloor(r, c, x, y) {
+    ctx.fillStyle = ((r + c) % 2 === 0) ? '#e9dfc9' : '#e3d8bf';
+    ctx.fillRect(x, y, ts, ts);
+    ctx.strokeStyle = 'rgba(120,100,70,.10)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x + .5, y + .5, ts - 1, ts - 1);
+  }
+
+  function drawGoal(x, y) {
+    var cx = x + ts / 2, cy = y + ts / 2;
+    ctx.strokeStyle = 'rgba(196,124,26,.55)';
+    ctx.lineWidth = Math.max(2, ts * 0.06);
+    ctx.beginPath();
+    ctx.arc(cx, cy, ts * 0.19, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(196,124,26,.28)';
+    ctx.beginPath();
+    ctx.arc(cx, cy, ts * 0.075, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawWall(x, y) {
+    var g = ctx.createLinearGradient(x, y, x, y + ts);
+    g.addColorStop(0, '#43596f');
+    g.addColorStop(1, '#2c3d4e');
+    ctx.fillStyle = g;
+    rrect(x + .5, y + .5, ts - 1, ts - 1, ts * 0.16);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,.28)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,.10)';
+    rrect(x + ts * 0.16, y + ts * 0.14, ts * 0.68, ts * 0.14, ts * 0.07);
+    ctx.fill();
+  }
+
+  function drawBox(b, now) {
+    var x = b.pc * ts, y = b.pr * ts;
+    var on = goal[b.r][b.c];
+    var pad = ts * 0.08;
+    var s = ts - pad * 2;
+
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,.35)';
+    ctx.shadowBlur = ts * 0.14;
+    ctx.shadowOffsetY = ts * 0.06;
+
+    var g = ctx.createLinearGradient(x, y, x, y + ts);
+    if (on) {
+      var pulse = 1 + Math.sin(now / 240) * 0.02;
+      g.addColorStop(0, '#63c98a');
+      g.addColorStop(1, '#2f8a58');
+      ctx.translate(x + ts / 2, y + ts / 2);
+      ctx.scale(pulse, pulse);
+      ctx.translate(-x - ts / 2, -y - ts / 2);
+    } else {
+      g.addColorStop(0, '#d29a52');
+      g.addColorStop(1, '#a06b25');
+    }
+    ctx.fillStyle = g;
+    rrect(x + pad, y + pad, s, s, ts * 0.14);
+    ctx.fill();
+    ctx.restore();
+
+    /* 木箱纹理 */
+    ctx.save();
+    rrect(x + pad, y + pad, s, s, ts * 0.14);
+    ctx.clip();
+    ctx.strokeStyle = on ? 'rgba(255,255,255,.35)' : 'rgba(110,65,15,.55)';
+    ctx.lineWidth = Math.max(1.5, ts * 0.045);
+    ctx.beginPath();
+    ctx.moveTo(x + pad, y + pad); ctx.lineTo(x + pad + s, y + pad + s);
+    ctx.moveTo(x + pad + s, y + pad); ctx.lineTo(x + pad, y + pad + s);
+    ctx.stroke();
+    ctx.strokeStyle = on ? 'rgba(255,255,255,.5)' : 'rgba(255,225,180,.35)';
+    ctx.lineWidth = Math.max(1, ts * 0.035);
+    rrect(x + pad + ts * 0.06, y + pad + ts * 0.06, s - ts * 0.12, s - ts * 0.12, ts * 0.1);
+    ctx.stroke();
+    ctx.restore();
+
+    /* 角钉 */
+    var dots = [[0.2, 0.2], [0.8, 0.2], [0.2, 0.8], [0.8, 0.8]];
+    ctx.fillStyle = on ? 'rgba(255,255,255,.45)' : 'rgba(255,235,200,.45)';
+    for (var i = 0; i < dots.length; i++) {
+      ctx.beginPath();
+      ctx.arc(x + ts * dots[i][0], y + ts * dots[i][1], Math.max(1.2, ts * 0.035), 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    if (on) {
+      ctx.strokeStyle = 'rgba(255,255,255,.9)';
+      ctx.lineWidth = Math.max(2, ts * 0.075);
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.moveTo(x + ts * 0.32, y + ts * 0.52);
+      ctx.lineTo(x + ts * 0.46, y + ts * 0.66);
+      ctx.lineTo(x + ts * 0.70, y + ts * 0.36);
+      ctx.stroke();
+    }
+  }
+
+  function drawPlayer(now) {
+    var x = player.pc * ts, y = player.pr * ts;
+    var cx = x + ts / 2;
+    var cy = y + ts / 2 + Math.sin(now / 320) * ts * 0.012;
+    var rad = ts * 0.32;
+
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,.22)';
+    ctx.beginPath();
+    ctx.ellipse(cx, y + ts * 0.82, rad * 0.9, rad * 0.32, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    var g = ctx.createRadialGradient(cx - rad * 0.3, cy - rad * 0.4, rad * 0.2, cx, cy, rad * 1.1);
+    g.addColorStop(0, '#86c9ff');
+    g.addColorStop(1, '#3d8ed6');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(cx, cy, rad, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(12,50,84,.65)';
+    ctx.lineWidth = Math.max(1.5, ts * 0.045);
+    ctx.stroke();
+
+    /* 朝向的眼睛 */
+    var ex = [0, 0], ey = [0, 0];
+    if (player.face === 0) ex = [1, 0];        /* 右 */
+    else if (player.face === 1) { ex = [0, 1]; ey = [0, 1]; }  /* 下 */
+    else if (player.face === 2) ex = [-1, 0];  /* 左 */
+    else { ex = [0, 1]; ey = [0, -1]; }        /* 上 */
+
+    var eyeR = rad * 0.17;
+    var offX = rad * 0.34, offY = rad * 0.16;
+    var shift = rad * 0.13;
+    for (var i = 0; i < 2; i++) {
+      var sx = cx + (i === 0 ? -offX : offX) + ex[0] * shift;
+      var sy = cy - offY + ex[1] * shift * (ey[1] || 1);
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(sx, sy, eyeR, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#152534';
+      ctx.beginPath();
+      ctx.arc(sx + ex[0] * eyeR * 0.45, sy + (ex[1] || 0) * eyeR * 0.45, eyeR * 0.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function render(now) {
+    ctx.clearRect(0, 0, cols * ts, rows * ts);
+
+    for (var r = 0; r < rows; r++) {
+      for (var c = 0; c < cols; c++) {
+        var x = c * ts, y = r * ts;
+        if (wall[r][c]) { drawWall(x, y); continue; }
+        drawFloor(r, c, x, y);
+        if (goal[r][c]) drawGoal(x, y);
+      }
+    }
+
+    /* 箱子按行排序，下面的盖住上面的 */
+    var order = boxes.map(function (b, i) { return i; });
+    order.sort(function (a, b) { return boxes[a].r - boxes[b].r; });
+    for (var k = 0; k < order.length; k++) drawBox(boxes[order[k]], now);
+
+    drawPlayer(now);
+
+    if (solved && winAt) {
+      var t = (now - winAt) / 700;
+      if (t < 1) {
+        ctx.save();
+        ctx.globalAlpha = (1 - t) * 0.5;
+        ctx.fillStyle = '#ffd479';
+        ctx.fillRect(0, 0, cols * ts, rows * ts);
+        ctx.restore();
+      }
+    }
+  }
+
+  /* ---------------------------------------------------------------- 主循环 */
+  var lastT = 0;
+  function loop(t) {
+    var dt = lastT ? Math.min(0.05, (t - lastT) / 1000) : 0.016;
+    lastT = t;
+    var k = Math.min(1, dt * 16);
+
+    player.pr += (player.r - player.pr) * k;
+    player.pc += (player.c - player.pc) * k;
+    for (var i = 0; i < boxes.length; i++) {
+      var b = boxes[i];
+      b.pr += (b.r - b.pr) * k;
+      b.pc += (b.c - b.pc) * k;
+    }
+
+    render(t);
+    requestAnimationFrame(loop);
+  }
+
+  /* ---------------------------------------------------------------- 关卡按钮 */
+  function renderChips() {
+    levelsBox.innerHTML = '';
+    for (var i = 0; i < LEVELS.length; i++) {
+      var btn = document.createElement('button');
+      btn.className = 'chip';
+      btn.textContent = String(i + 1);
+      if (i === levelIndex) btn.className += ' active';
+      else if (bestSteps[i]) btn.className += ' done';
+      btn.title = LEVELS[i].name;
+      (function (idx) {
+        btn.addEventListener('click', function () { parseLevel(idx); });
+      })(i);
+      levelsBox.appendChild(btn);
+    }
+  }
+
+  /* ---------------------------------------------------------------- 输入 */
+  document.addEventListener('keydown', function (e) {
+    var k = e.key;
+    if (k === 'ArrowUp' || k === 'w' || k === 'W') { e.preventDefault(); tryMove(-1, 0); }
+    else if (k === 'ArrowDown' || k === 's' || k === 'S') { e.preventDefault(); tryMove(1, 0); }
+    else if (k === 'ArrowLeft' || k === 'a' || k === 'A') { e.preventDefault(); tryMove(0, -1); }
+    else if (k === 'ArrowRight' || k === 'd' || k === 'D') { e.preventDefault(); tryMove(0, 1); }
+    else if (k === 'z' || k === 'Z') { e.preventDefault(); undo(); }
+    else if (k === 'r' || k === 'R') { e.preventDefault(); reset(); }
+    else if (k === 'Enter' && solved) { e.preventDefault(); nextLevel(); }
+  });
+
+  var touchStart = null;
+  cv.addEventListener('pointerdown', function (e) { touchStart = { x: e.clientX, y: e.clientY }; });
+  cv.addEventListener('pointerup', function (e) {
+    if (!touchStart) return;
+    var dx = e.clientX - touchStart.x, dy = e.clientY - touchStart.y;
+    touchStart = null;
+    if (Math.abs(dx) < 22 && Math.abs(dy) < 22) return;
+    if (Math.abs(dx) > Math.abs(dy)) tryMove(0, dx > 0 ? 1 : -1);
+    else tryMove(dy > 0 ? 1 : -1, 0);
+  });
+
+  document.getElementById('btnUndo').addEventListener('click', undo);
+  document.getElementById('btnReset').addEventListener('click', reset);
+  document.getElementById('ovNext').addEventListener('click', nextLevel);
+  document.getElementById('ovRetry').addEventListener('click', function () {
+    overlay.classList.add('hidden');
+    reset();
+  });
+
+  window.addEventListener('resize', function () { layout(); });
+
+  /* ---------------------------------------------------------------- 启动 */
+  loadSave();
+  renderChips();
+  parseLevel(0);
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

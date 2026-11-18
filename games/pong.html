@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#070d18">
+<title>乒乓 · 离线小游戏</title>
+<style>
+  :root{
+    --text:#eaf2ff;--muted:#8ea3bd;--line:rgba(148,163,184,.16);
+    --cyan:#38bdf8;--pink:#f472b6;--violet:#818cf8;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;min-height:100%;}
+  body{
+    min-height:100vh;display:flex;align-items:center;justify-content:center;
+    padding:18px 16px 22px;color:var(--text);
+    font-family:"Segoe UI","Microsoft YaHei","PingFang SC","Hiragino Sans GB",sans-serif;
+    background:
+      radial-gradient(900px 620px at 8% -6%, rgba(56,189,248,.15), transparent 62%),
+      radial-gradient(760px 560px at 102% 104%, rgba(244,114,182,.12), transparent 62%),
+      radial-gradient(720px 520px at 50% 48%, rgba(129,140,248,.10), transparent 68%),
+      #070d18;
+    -webkit-font-smoothing:antialiased;overflow-x:hidden;-webkit-tap-highlight-color:transparent;
+  }
+  button{font:inherit;color:inherit;}
+  .app{width:min(100%,980px);display:flex;flex-direction:column;gap:12px;}
+
+  .topbar{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;}
+  .brand{display:flex;align-items:center;gap:13px;min-width:0;}
+  .logo{
+    width:54px;height:54px;flex:0 0 auto;border-radius:16px;display:grid;place-items:center;
+    font-size:25px;background:linear-gradient(150deg,#7dd3fc,#6366f1 55%,#ec4899);
+    box-shadow:0 12px 28px rgba(56,189,248,.26), inset 0 1px 0 rgba(255,255,255,.4);
+  }
+  h1{
+    margin:0;font-size:clamp(22px,4vw,28px);font-weight:800;letter-spacing:.04em;
+    background:linear-gradient(100deg,#f0f9ff,#a5f3fc 44%,#c7d2fe 72%,#f9a8d4);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .brand p{margin:4px 0 0;font-size:12.5px;color:var(--muted);}
+  .stats{display:flex;gap:8px;flex-wrap:wrap;}
+  .stat{min-width:72px;padding:8px 12px;border-radius:13px;background:rgba(255,255,255,.045);border:1px solid var(--line);}
+  .stat span{display:block;font-size:10.5px;color:var(--muted);letter-spacing:.08em;}
+  .stat b{display:block;margin-top:2px;font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;}
+  .stat b.score{font-size:18px;letter-spacing:.08em;}
+
+  .stage{
+    position:relative;padding:clamp(7px,1.2vw,11px);border-radius:22px;
+    background:linear-gradient(180deg,rgba(255,255,255,.065),rgba(255,255,255,.02));
+    border:1px solid rgba(255,255,255,.10);
+    box-shadow:0 26px 64px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.10);
+  }
+  .stage::before{
+    content:"";position:absolute;inset:-1px;border-radius:23px;pointer-events:none;
+    background:linear-gradient(130deg,rgba(56,189,248,.36),transparent 34%,transparent 66%,rgba(236,72,153,.30));
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;mask-composite:exclude;padding:1px;
+  }
+  canvas{
+    display:block;width:100%;aspect-ratio:1000/560;border-radius:14px;
+    background:#07101d;touch-action:none;cursor:none;
+  }
+
+  .panel{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  .seg{display:inline-flex;gap:4px;padding:4px;border-radius:12px;background:rgba(255,255,255,.045);border:1px solid var(--line);}
+  .seg button{
+    border:0;background:none;color:#8ea3bd;padding:6px 12px;border-radius:9px;cursor:pointer;
+    font-size:11.5px;font-weight:700;transition:background .16s ease,color .16s ease;
+  }
+  .seg button.on{background:linear-gradient(135deg,rgba(56,189,248,.24),rgba(129,140,248,.22));color:#e0f2fe;box-shadow:inset 0 0 0 1px rgba(56,189,248,.26);}
+  .actions{display:flex;gap:8px;}
+  .btn{
+    border:1px solid rgba(255,255,255,.11);border-radius:11px;padding:8px 14px;cursor:pointer;
+    background:rgba(255,255,255,.055);color:#dbeafe;font-size:12.5px;font-weight:600;
+    transition:background .16s ease,border-color .16s ease,transform .16s ease;
+  }
+  .btn:hover{background:rgba(255,255,255,.10);border-color:rgba(56,189,248,.4);transform:translateY(-1px);}
+  .btn.primary{
+    color:#061a2a;border-color:transparent;
+    background:linear-gradient(135deg,#7dd3fc,#38bdf8);
+    box-shadow:0 8px 20px rgba(56,189,248,.26);
+  }
+  .foot{font-size:11.5px;color:#5f7286;letter-spacing:.03em;text-align:center;}
+
+  .overlay{
+    position:absolute;inset:0;z-index:9;display:none;align-items:center;justify-content:center;padding:20px;
+    background:rgba(3,8,18,.72);backdrop-filter:blur(6px);border-radius:22px;
+  }
+  .overlay.on{display:flex;animation:fadeIn .24s ease;}
+  @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+  .card{
+    width:min(100%,360px);padding:24px 24px 20px;border-radius:22px;text-align:center;
+    background:linear-gradient(180deg,rgba(14,24,42,.98),rgba(8,13,26,.98));
+    border:1px solid rgba(56,189,248,.26);
+    box-shadow:0 26px 70px rgba(0,0,0,.55), 0 0 44px rgba(56,189,248,.10);
+  }
+  .kicker{font-size:11.5px;letter-spacing:.22em;color:#7dd3fc;font-weight:700;}
+  .card h2{
+    margin:10px 0 5px;font-size:31px;font-weight:900;letter-spacing:.08em;
+    background:linear-gradient(100deg,#e0f2fe,#7dd3fc,#c7d2fe);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .card p{margin:0 0 16px;font-size:12.5px;line-height:1.65;color:var(--muted);}
+  .res-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
+  .res-grid div{padding:9px 8px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid var(--line);}
+  .res-grid span{display:block;font-size:10.5px;color:var(--muted);}
+  .res-grid b{display:block;margin-top:2px;font-size:17px;font-variant-numeric:tabular-nums;}
+  .card .btn.primary{width:100%;padding:11px 14px;font-size:13.5px;}
+
+  @media (max-width:700px){
+    body{padding:12px 10px 16px;}
+    .app{gap:10px;}
+    .logo{width:44px;height:44px;border-radius:13px;font-size:20px;}
+    .stat{min-width:56px;padding:6px 9px;}
+    .stat b{font-size:14px;}
+    .stat b.score{font-size:15px;}
+    .brand p{font-size:11px;}
+    .foot{font-size:10.5px;line-height:1.5;}
+    .seg button{padding:6px 9px;}
+    .btn{padding:7px 10px;font-size:11.5px;}
+    .overlay{position:fixed;inset:0;z-index:80;border-radius:0;padding:16px;}
+    .card{padding:20px 18px 16px;}
+    .card h2{font-size:27px;}
+  }
+  @media (max-height:720px) and (min-width:700px){
+    .brand p{display:none;}
+    .foot{display:none;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo">🏓</div>
+      <div>
+        <h1>乒乓</h1>
+        <p>移动挡板接球，用角度调动对手，先到 7 分获胜</p>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><span>比分</span><b class="score" id="score">0 : 0</b></div>
+      <div class="stat"><span>难度</span><b id="diff">标准</b></div>
+      <div class="stat"><span>连胜</span><b id="streak">0</b></div>
+      <div class="stat"><span>最佳</span><b id="best">—</b></div>
+    </div>
+  </div>
+
+  <div class="stage" id="stage">
+    <canvas id="court" width="1000" height="560" aria-label="乒乓球场"></canvas>
+  </div>
+
+  <div class="panel">
+    <div class="seg" id="levels">
+      <button type="button" data-diff="easy">轻松</button>
+      <button type="button" data-diff="normal" class="on">标准</button>
+      <button type="button" data-diff="hard">困难</button>
+    </div>
+    <div class="actions">
+      <button class="btn" id="pause">暂停</button>
+      <button class="btn" id="restart">重开</button>
+    </div>
+  </div>
+  <p class="foot">鼠标移动 / 触屏拖动 / W S 或 ↑ ↓ 控制挡板 · 空格暂停 · 手机横屏更顺手</p>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var W = 1000, H = 560;
+  var PW = 13, PH = 96;
+  var BALL_R = 10;
+  var WIN_SCORE = 7;
+  var BEST_KEY = 'tx_pong_best_v1';
+
+  var canvas = document.getElementById('court');
+  var ctx = canvas.getContext('2d');
+  var scoreEl = document.getElementById('score');
+  var diffEl = document.getElementById('diff');
+  var streakEl = document.getElementById('streak');
+  var bestEl = document.getElementById('best');
+  var levelsEl = document.getElementById('levels');
+  var pauseBtn = document.getElementById('pause');
+  var restartBtn = document.getElementById('restart');
+  var stageEl = document.getElementById('stage');
+
+  var DIFFS = {
+    easy:   { name: '轻松', speed: 300, error: 58 },
+    normal: { name: '标准', speed: 430, error: 24 },
+    hard:   { name: '困难', speed: 572, error: 7 }
+  };
+
+  var diff = 'normal';
+  var phase = 'ready';
+  var prevPhase = 'serve';
+
+  var player = { y: H / 2 - PH / 2, vy: 0 };
+  var ai = { y: H / 2 - PH / 2, vy: 0 };
+  var ball = { x: W / 2, y: H / 2, vx: 0, vy: 0, r: BALL_R, speed: 390 };
+  var playerScore = 0, aiScore = 0;
+  var streak = 0, best = 0;
+  var serveTimer = 0, serveDir = 1, lastScorer = 0;
+  var trail = [], particles = [], flash = 0;
+  var keys = {};
+  var pointerY = H / 2, dragging = false;
+  var lastTs = 0, raf = 0;
+  var shake = 0;
+
+  try { best = parseInt(localStorage.getItem(BEST_KEY) || '0', 10) || 0; } catch (e) { best = 0; }
+  bestEl.textContent = best > 0 ? best : '—';
+
+  function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
+  function rnd(a, b) { return a + Math.random() * (b - a); }
+
+  function setDiff(d) {
+    if (!DIFFS[d]) return;
+    diff = d;
+    diffEl.textContent = DIFFS[d].name;
+    var btns = levelsEl.querySelectorAll('button');
+    for (var i = 0; i < btns.length; i++) btns[i].classList.toggle('on', btns[i].dataset.diff === d);
+  }
+
+  function hud() {
+    scoreEl.textContent = playerScore + ' : ' + aiScore;
+    streakEl.textContent = streak;
+    bestEl.textContent = best > 0 ? best : '—';
+  }
+
+  function overlay(html) {
+    var old = stageEl.querySelector('.overlay');
+    if (old) old.remove();
+    if (!html) return null;
+    var o = document.createElement('div');
+    o.className = 'overlay on';
+    o.innerHTML = html;
+    stageEl.appendChild(o);
+    return o;
+  }
+
+  function removeOverlay() {
+    var old = stageEl.querySelector('.overlay');
+    if (old) old.remove();
+  }
+
+  function showReady() {
+    phase = 'ready';
+    var o = overlay(
+      '<div class="card">' +
+        '<div class="kicker">先到 7 分</div>' +
+        '<h2>乒乓</h2>' +
+        '<p>挡板边缘能打出更大的角度。接球后球会越来越快，别让对方把角度拉开。</p>' +
+        '<div class="res-grid">' +
+          '<div><span>当前难度</span><b>' + DIFFS[diff].name + '</b></div>' +
+          '<div><span>历史最佳连胜</span><b>' + (best > 0 ? best : '—') + '</b></div>' +
+        '</div>' +
+        '<button class="btn primary" id="start">开始比赛</button>' +
+      '</div>'
+    );
+    o.querySelector('#start').addEventListener('click', startMatch);
+  }
+
+  function startMatch() {
+    removeOverlay();
+    playerScore = 0; aiScore = 0;
+    player.y = H / 2 - PH / 2;
+    pointerY = H / 2;
+    ai.y = H / 2 - PH / 2;
+    serveDir = Math.random() < 0.5 ? -1 : 1;
+    lastScorer = 0;
+    trail = []; particles = []; flash = 0;
+    hud();
+    serve();
+  }
+
+  function serve() {
+    phase = 'serve';
+    serveTimer = 0.9;
+    ball.x = W / 2;
+    ball.y = H / 2;
+    ball.vx = 0; ball.vy = 0;
+    ball.speed = 390;
+    trail = [];
+    pauseBtn.textContent = '暂停';
+  }
+
+  function launch() {
+    phase = 'play';
+    var angle = rnd(-0.38, 0.38);
+    ball.vx = Math.cos(angle) * ball.speed * serveDir;
+    ball.vy = Math.sin(angle) * ball.speed;
+  }
+
+  function addParticles(x, y, color, n) {
+    for (var i = 0; i < n; i++) {
+      var a = rnd(0, Math.PI * 2), sp = rnd(60, 260);
+      particles.push({
+        x: x, y: y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+        life: rnd(0.25, 0.6), max: 0.6, size: rnd(2, 5), color: color
+      });
+    }
+  }
+
+  function point(who) {
+    if (phase === 'over') return;
+    lastScorer = who;
+    if (who === 0) { playerScore++; serveDir = 1; }
+    else { aiScore++; serveDir = -1; }
+    flash = 1;
+    shake = 6;
+    addParticles(who === 0 ? W - 20 : 20, ball.y, who === 0 ? '#7dd3fc' : '#f9a8d4', 26);
+    hud();
+    if (playerScore >= WIN_SCORE || aiScore >= WIN_SCORE) {
+      finishMatch();
+      return;
+    }
+    serve();
+  }
+
+  function finishMatch() {
+    phase = 'over';
+    var won = playerScore >= WIN_SCORE;
+    if (won) {
+      streak++;
+      if (streak > best) {
+        best = streak;
+        try { localStorage.setItem(BEST_KEY, String(best)); } catch (e) {}
+      }
+    } else {
+      streak = 0;
+    }
+    hud();
+    var o = overlay(
+      '<div class="card">' +
+        '<div class="kicker">' + (won ? '比赛结束' : '再来一局') + '</div>' +
+        '<h2>' + (won ? '你赢了' : '电脑赢了') + '</h2>' +
+        '<p>' + (won ? '把角度和节奏都控制住了。' : '试着用挡板边缘接球，回球角度会更刁。') + '</p>' +
+        '<div class="res-grid">' +
+          '<div><span>最终比分</span><b>' + playerScore + ' : ' + aiScore + '</b></div>' +
+          '<div><span>难度</span><b>' + DIFFS[diff].name + '</b></div>' +
+          '<div><span>当前连胜</span><b>' + streak + '</b></div>' +
+          '<div><span>最佳连胜</span><b>' + (best > 0 ? best : '—') + '</b></div>' +
+        '</div>' +
+        '<button class="btn primary" id="again">再来一局</button>' +
+      '</div>'
+    );
+    o.querySelector('#again').addEventListener('click', startMatch);
+  }
+
+  function togglePause() {
+    if (phase === 'ready' || phase === 'over') return;
+    if (phase === 'paused') {
+      phase = prevPhase;
+      removeOverlay();
+      pauseBtn.textContent = '暂停';
+      lastTs = 0;
+      return;
+    }
+    prevPhase = phase;
+    phase = 'paused';
+    pauseBtn.textContent = '继续';
+    overlay(
+      '<div class="card">' +
+        '<div class="kicker">已暂停</div>' +
+        '<h2>歇一下</h2>' +
+        '<p>比分和球的轨迹都停在这里，回来后继续。</p>' +
+        '<button class="btn primary" id="resume">继续比赛</button>' +
+      '</div>'
+    ).querySelector('#resume').addEventListener('click', togglePause);
+  }
+
+  function updatePlayer(dt) {
+    var sp = 660;
+    var dir = 0;
+    if (keys['w'] || keys['arrowup']) dir -= 1;
+    if (keys['s'] || keys['arrowdown']) dir += 1;
+    if (dir) {
+      player.y = clamp(player.y + dir * sp * dt, 0, H - PH);
+      player.vy = dir * sp;
+      pointerY = player.y + PH / 2;
+    } else {
+      player.y = clamp(pointerY - PH / 2, 0, H - PH);
+      player.vy = 0;
+    }
+  }
+
+  function updateAI(dt) {
+    var cfg = DIFFS[diff];
+    var target = H / 2;
+    if (ball.vx > 0 || phase === 'serve') {
+      target = ball.y + Math.sin(performance.now() / 620) * cfg.error;
+      if (diff === 'easy') target += rnd(-18, 18);
+    }
+    var cy = ai.y + PH / 2;
+    var d = target - cy;
+    var step = cfg.speed * dt;
+    if (Math.abs(d) < step) {
+      ai.y = clamp(target - PH / 2, 0, H - PH);
+      ai.vy = 0;
+    } else {
+      ai.y = clamp(ai.y + Math.sign(d) * step, 0, H - PH);
+      ai.vy = Math.sign(d) * cfg.speed;
+    }
+  }
+
+  function hitPaddle(paddleX, paddleY, isPlayer) {
+    var py = ball.y;
+    var cy = paddleY + PH / 2;
+    var rel = clamp((py - cy) / (PH / 2), -1, 1);
+    var angle = rel * 0.92;
+    ball.speed = Math.min(940, ball.speed * 1.045);
+    ball.vx = (isPlayer ? 1 : -1) * Math.cos(angle) * ball.speed;
+    ball.vy = Math.sin(angle) * ball.speed;
+    if (isPlayer) ball.vy += clamp(player.vy, -500, 500) * 0.18;
+    else ball.vy += clamp(ai.vy, -500, 500) * 0.12;
+    ball.vy = clamp(ball.vy, -ball.speed * 0.9, ball.speed * 0.9);
+    ball.x = isPlayer ? paddleX + PW + ball.r : paddleX - ball.r;
+    addParticles(ball.x, ball.y, isPlayer ? '#7dd3fc' : '#f9a8d4', 9);
+    flash = Math.max(flash, 0.35);
+  }
+
+  function updateBall(dt) {
+    if (phase === 'serve') {
+      serveTimer -= dt;
+      if (serveTimer <= 0) launch();
+      return;
+    }
+    if (phase !== 'play') return;
+
+    ball.x += ball.vx * dt;
+    ball.y += ball.vy * dt;
+
+    trail.push({ x: ball.x, y: ball.y });
+    if (trail.length > 14) trail.shift();
+
+    if (ball.y - ball.r < 0) {
+      ball.y = ball.r;
+      ball.vy = Math.abs(ball.vy);
+      addParticles(ball.x, ball.y, '#a5f3fc', 5);
+    } else if (ball.y + ball.r > H) {
+      ball.y = H - ball.r;
+      ball.vy = -Math.abs(ball.vy);
+      addParticles(ball.x, ball.y, '#a5f3fc', 5);
+    }
+
+    var px = 44;
+    if (ball.vx < 0 &&
+        ball.x - ball.r <= px + PW &&
+        ball.x - ball.r >= px - 12 &&
+        ball.y + ball.r >= player.y &&
+        ball.y - ball.r <= player.y + PH) {
+      hitPaddle(px, player.y, true);
+    }
+
+    var ax = W - 44 - PW;
+    if (ball.vx > 0 &&
+        ball.x + ball.r >= ax &&
+        ball.x + ball.r <= ax + PW + 12 &&
+        ball.y + ball.r >= ai.y &&
+        ball.y - ball.r <= ai.y + PH) {
+      hitPaddle(ax, ai.y, false);
+    }
+
+    if (ball.x < -ball.r * 2) point(1);
+    else if (ball.x > W + ball.r * 2) point(0);
+  }
+
+  function updateParticles(dt) {
+    for (var i = particles.length - 1; i >= 0; i--) {
+      var p = particles[i];
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vx *= 0.96;
+      p.vy *= 0.96;
+      p.life -= dt;
+      if (p.life <= 0) particles.splice(i, 1);
+    }
+    if (flash > 0) flash = Math.max(0, flash - dt * 2.6);
+    if (shake > 0) shake = Math.max(0, shake - dt * 30);
+  }
+
+  function roundRect(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function draw() {
+    ctx.save();
+    if (shake > 0) ctx.translate(rnd(-shake, shake) * 0.5, rnd(-shake, shake) * 0.5);
+
+    var g = ctx.createLinearGradient(0, 0, W, H);
+    g.addColorStop(0, '#081426');
+    g.addColorStop(0.55, '#060e1b');
+    g.addColorStop(1, '#0b1022');
+    ctx.fillStyle = g;
+    ctx.fillRect(-20, -20, W + 40, H + 40);
+
+    ctx.strokeStyle = 'rgba(125,211,252,.10)';
+    ctx.lineWidth = 2;
+    for (var x = 0; x <= W; x += 50) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    }
+    for (var y = 0; y <= H; y += 50) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    }
+
+    ctx.strokeStyle = 'rgba(148,163,184,.22)';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([13, 16]);
+    ctx.beginPath(); ctx.moveTo(W / 2, 24); ctx.lineTo(W / 2, H - 24); ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.beginPath();
+    ctx.arc(W / 2, H / 2, 78, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(148,163,184,.12)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.font = '900 136px "Segoe UI",sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'rgba(125,211,252,.065)';
+    ctx.fillText(String(playerScore), W * 0.27, H * 0.45);
+    ctx.fillStyle = 'rgba(249,168,212,.06)';
+    ctx.fillText(String(aiScore), W * 0.73, H * 0.45);
+
+    if (flash > 0) {
+      ctx.fillStyle = 'rgba(125,211,252,' + (flash * 0.05) + ')';
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    // trail
+    for (var i = 0; i < trail.length; i++) {
+      var t = trail[i];
+      var a = (i / trail.length) * 0.22;
+      ctx.beginPath();
+      ctx.arc(t.x, t.y, ball.r * (0.35 + i / trail.length * 0.8), 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(125,211,252,' + a + ')';
+      ctx.fill();
+    }
+
+    // paddles
+    var pg = ctx.createLinearGradient(44, 0, 44 + PW, 0);
+    pg.addColorStop(0, '#22d3ee');
+    pg.addColorStop(1, '#818cf8');
+    ctx.shadowColor = 'rgba(56,189,248,.65)';
+    ctx.shadowBlur = 18;
+    ctx.fillStyle = pg;
+    roundRect(44, player.y, PW, PH, 6);
+    ctx.fill();
+
+    var ag = ctx.createLinearGradient(W - 44 - PW, 0, W - 44, 0);
+    ag.addColorStop(0, '#818cf8');
+    ag.addColorStop(1, '#f472b6');
+    ctx.shadowColor = 'rgba(244,114,182,.6)';
+    ctx.fillStyle = ag;
+    roundRect(W - 44 - PW, ai.y, PW, PH, 6);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // ball
+    if (phase !== 'ready') {
+      var bg = ctx.createRadialGradient(ball.x - 2, ball.y - 3, 1, ball.x, ball.y, ball.r * 1.6);
+      bg.addColorStop(0, '#ffffff');
+      bg.addColorStop(0.55, '#bae6fd');
+      bg.addColorStop(1, 'rgba(56,189,248,.15)');
+      ctx.beginPath();
+      ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+      ctx.fillStyle = bg;
+      ctx.shadowColor = 'rgba(125,211,252,.9)';
+      ctx.shadowBlur = 22;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+
+    // particles
+    for (var k = 0; k < particles.length; k++) {
+      var p = particles[k];
+      ctx.globalAlpha = clamp(p.life / p.max, 0, 1);
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    if (phase === 'serve') {
+      ctx.font = '700 15px "Segoe UI",sans-serif';
+      ctx.fillStyle = 'rgba(226,232,240,.55)';
+      ctx.textAlign = 'center';
+      ctx.fillText('准备发球  ' + Math.max(1, Math.ceil(serveTimer)), W / 2, H / 2 + 128);
+    }
+
+    if (phase === 'paused') {
+      ctx.fillStyle = 'rgba(3,8,18,.2)';
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    ctx.restore();
+  }
+
+  function loop(ts) {
+    if (!lastTs) lastTs = ts;
+    var dt = Math.min(0.045, Math.max(0, (ts - lastTs) / 1000));
+    lastTs = ts;
+
+    if (phase === 'play' || phase === 'serve') {
+      updatePlayer(dt);
+      updateAI(dt);
+      updateBall(dt);
+      updateParticles(dt);
+    }
+
+    draw();
+    raf = requestAnimationFrame(loop);
+  }
+
+  function toGameY(clientY) {
+    var r = canvas.getBoundingClientRect();
+    return (clientY - r.top) / r.height * H;
+  }
+
+  canvas.addEventListener('pointermove', function (e) {
+    if (phase === 'ready' || phase === 'over') return;
+    pointerY = toGameY(e.clientY);
+  });
+  canvas.addEventListener('pointerdown', function (e) {
+    if (phase === 'ready' || phase === 'over') return;
+    dragging = true;
+    pointerY = toGameY(e.clientY);
+    try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  canvas.addEventListener('pointerup', function () { dragging = false; });
+  canvas.addEventListener('pointercancel', function () { dragging = false; });
+  canvas.addEventListener('pointerleave', function () { dragging = false; });
+
+  document.addEventListener('keydown', function (e) {
+    var k = e.key.toLowerCase();
+    if (k === ' ' || k === 'spacebar') {
+      e.preventDefault();
+      if (phase === 'ready' || phase === 'over') {
+        var b = stageEl.querySelector('.overlay .btn.primary');
+        if (b) b.click();
+      } else {
+        togglePause();
+      }
+      return;
+    }
+    if (k === 'r') {
+      startMatch();
+      return;
+    }
+    if (k === 'w' || k === 's' || k === 'arrowup' || k === 'arrowdown') {
+      e.preventDefault();
+      keys[k] = true;
+    }
+  });
+  document.addEventListener('keyup', function (e) {
+    var k = e.key.toLowerCase();
+    keys[k] = false;
+  });
+
+  levelsEl.addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-diff]');
+    if (!btn) return;
+    setDiff(btn.dataset.diff);
+    if (phase === 'play' || phase === 'serve' || phase === 'paused') {
+      startMatch();
+    } else if (phase === 'ready') {
+      var cardDiff = stageEl.querySelector('.overlay .res-grid b');
+      if (cardDiff) cardDiff.textContent = DIFFS[diff].name;
+    }
+  });
+
+  pauseBtn.addEventListener('click', togglePause);
+  restartBtn.addEventListener('click', function () {
+    startMatch();
+  });
+
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden && (phase === 'play' || phase === 'serve')) togglePause();
+  });
+
+  function resize() {
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var rect = canvas.getBoundingClientRect();
+    var w = Math.max(1, Math.round(rect.width * dpr));
+    var h = Math.max(1, Math.round(rect.height * dpr));
+    canvas.width = w;
+    canvas.height = h;
+    var sx = rect.width / W, sy = rect.height / H;
+    ctx.setTransform(sx * dpr, 0, 0, sy * dpr, 0, 0);
+  }
+  window.addEventListener('resize', resize);
+
+  setDiff('normal');
+  hud();
+  resize();
+  showReady();
+  raf = requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
