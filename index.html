@@ -28283,16 +28283,9 @@ function drawShrimpShape(r, color, accent, pattern, time, seed) {
   #wrap{width:min(97vw,1000px);position:relative}
   canvas{width:100%;height:auto;display:block;border-radius:16px;
     box-shadow:0 20px 70px rgba(0,0,0,.65);cursor:crosshair;}
-  #rotate{display:none;position:fixed;inset:0;background:#05060a;color:#fff;
-    z-index:999;align-items:center;justify-content:center;flex-direction:column;
-    font-size:18px;text-align:center;gap:16px;}
-  @media (orientation:portrait) and (max-width:600px){
-    #rotate{display:flex;}
-  }
 </style>
 </head>
 <body>
-<div id="rotate"><div style="font-size:64px">📱↻</div><div>请横屏游玩体验更佳</div></div>
 <div id="wrap"><canvas id="game"></canvas></div>
 <script>
 "use strict";
