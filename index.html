@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#070b14">
+  <meta property="og:title" content="离线小游戏合集 · 45 款单文件版">
+  <meta property="og:description" content="45 款小游戏，全部完整内嵌在单个 HTML 文件里，完全离线可玩。">
+  <meta property="og:type" content="website">
 <meta name="description" content="45 款小游戏，全部完整内嵌在单个 HTML 文件里，完全离线可玩。">
 <title>离线小游戏合集 · 单文件版</title>
 <link rel="icon" href="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b1220'/%3E%3Ctext x='32' y='46' font-size='38' text-anchor='middle'%3E%F0%9F%8E%AE%3C/text%3E%3C/svg%3E">
@@ -977,7 +981,7 @@
       <button class="clear-search" id="clear-search" type="button" aria-label="清空搜索" hidden>×</button>
     </label>
     <div class="chips" id="chips" role="group" aria-label="按分类筛选"></div>
-    <button class="snd-btn" id="snd-btn" type="button" aria-pressed="true" title="音效已开（M 切换）" aria-label="切换音效">♪</button>
+    <button class="snd-btn" id="snd-btn" type="button" aria-pressed="true" title="界面音效已开（M 切换）" aria-label="切换界面音效">♪</button>
     <button class="view-btn" id="view-btn" type="button" aria-pressed="false" title="切换紧凑列表视图">
       <span class="vb-ico" aria-hidden="true">▤</span><span class="vb-label">紧凑视图</span>
     </button>
@@ -1050,8 +1054,8 @@
       <span class="data-status" id="data-status" role="status"></span>
     </div>
     <div class="foot-bottom">
-      <span>离线小游戏合集 · 单文件版 · v1.1</span>
-      <span id="foot-en">44 games · 9 categories · fully offline</span>
+      <span>离线小游戏合集 · 单文件版 · v1.2</span>
+      <span id="foot-en">45 games · 9 categories · fully offline</span>
     </div>
   </footer>
 </div>
@@ -1077,11 +1081,11 @@
 
 <div id="player">
   <div id="bar">
-    <button id="back" type="button">← 返回</button>
+    <button id="back" type="button" title="返回游戏列表（Shift+Esc）">← 返回</button>
     <span id="title"></span>
-    <span id="hint">Esc 返回 · F11 全屏 · M 静音 · 鼠标移到顶部显示此栏</span>
+    <span id="hint">Shift+Esc 返回 · F11 全屏 · M 界面音效 · 鼠标/手指移到顶部显示此栏</span>
     <div class="bar-tools">
-      <button id="sound-toggle" class="tool-btn" type="button" title="音效已开（M 切换）" aria-pressed="true">♪ <span class="tool-label snd-label">音效</span></button>
+      <button id="sound-toggle" class="tool-btn" type="button" title="界面音效已开（M 切换）" aria-pressed="true">♪ <span class="tool-label snd-label">界面音效</span></button>
       <button id="fav-toggle" class="tool-btn" type="button" title="收藏当前游戏" aria-pressed="false">☆ <span class="tool-label">收藏</span></button>
       <button id="restart" class="tool-btn" type="button" title="重新开始这一局">↻ <span class="tool-label">重开</span></button>
       <button id="fullscreen" class="tool-btn" type="button" title="全屏显示">⛶ <span class="tool-label">全屏</span></button>
@@ -1190,7 +1194,7 @@
 
   GAMES.push({
     id:'hoopshot', name:'街球时刻', icon:'🏀',
-    desc:'60 秒投篮挑战：按住画面拖动瞄准，松手出手。进球 2 分，空心球额外加 1 分并续 2 秒，连中 3 球以上有加成，命中越多篮筐摆动越明显。支持鼠标、触屏和键盘。',
+    desc:'五种投篮模式：经典 60 秒、十球挑战、三条命生存、随机横风、移动小篮筐大师模式。拖动瞄准，松手出手；空心球与连中加成，最高分分模式保存在本机。支持鼠标、触屏和键盘。',
     keys:['拖动 瞄准', '空格 出手', '↑↓←→ 调角度力度'],
     sid:'src-hoopshot'
   });
@@ -1386,16 +1390,16 @@
     if (lobby) {
       lobby.classList.toggle('off', !sfxOn);
       lobby.setAttribute('aria-pressed', sfxOn ? 'true' : 'false');
-      lobby.setAttribute('aria-label', sfxOn ? '关闭音效' : '开启音效');
-      lobby.title = sfxOn ? '音效已开（M 切换）' : '音效已关（M 切换）';
+      lobby.setAttribute('aria-label', sfxOn ? '关闭界面音效' : '开启界面音效');
+      lobby.title = sfxOn ? '界面音效已开（M 切换）' : '界面音效已关（M 切换）';
     }
     var barBtn = document.getElementById('sound-toggle');
     if (barBtn) {
       barBtn.classList.toggle('off', !sfxOn);
       barBtn.setAttribute('aria-pressed', sfxOn ? 'true' : 'false');
-      barBtn.title = sfxOn ? '音效已开（M 切换）' : '音效已关（M 切换）';
+      barBtn.title = sfxOn ? '界面音效已开（M 切换）' : '界面音效已关（M 切换）';
       var lbl = barBtn.querySelector('.snd-label');
-      if (lbl) lbl.textContent = sfxOn ? '音效' : '静音';
+      if (lbl) lbl.textContent = sfxOn ? '界面音效' : '已静音';
     }
   }
 
@@ -2510,12 +2514,53 @@
     checkAch(false);
   }
 
-  function openGame(id, src) {
+  var baseTitle = document.title;
+  var wrapEl = document.querySelector('.wrap');
+
+  function lockBackground(on) {
+    if (!wrapEl) return;
+    if ('inert' in wrapEl) {
+      wrapEl.inert = on;
+    } else if (on) {
+      wrapEl.setAttribute('aria-hidden', 'true');
+    } else {
+      wrapEl.removeAttribute('aria-hidden');
+    }
+  }
+
+  function hashId() {
+    var h = location.hash || '';
+    return h.charAt(0) === '#' ? h.slice(1) : '';
+  }
+
+  function syncFromHash() {
+    var id = hashId();
+    if (id && byId[id]) {
+      if (currentId !== id) openGame(id, 'history', true);
+    } else if (currentId !== null) {
+      closeGame(true);
+    }
+  }
+
+  function openGame(id, src, skipHistory) {
     var g = byId[id];
     if (!g) return;
+    var wasOpen = currentId !== null;
     sfxPlay('open', (META[id] || {}).cat);
     currentId = id;
     titleEl.textContent = g.name;
+    frame.title = g.name;
+    document.title = g.name + ' · 离线小游戏合集';
+    lockBackground(true);
+    if (!skipHistory) {
+      var hash = '#' + id;
+      try {
+        if (location.hash === hash || wasOpen) history.replaceState({ game: id }, '', hash);
+        else history.pushState({ game: id }, '', hash);
+      } catch (e) {
+        if (location.hash !== hash) location.hash = id;
+      }
+    }
     refreshFavToggle();
     if (g.href) {
       frame.removeAttribute('srcdoc');
@@ -2537,11 +2582,15 @@
     }, 260);
   }
 
-  function closeGame() {
+  function closeGame(noHistory) {
+    if (currentId === null) return;
     sfxPlay('close');
     var last = currentId;
     exitNativeFullscreen();
     currentId = null;
+    document.title = baseTitle;
+    frame.title = '游戏';
+    lockBackground(false);
     player.classList.remove('on');
     refreshFavToggle();
     frame.removeAttribute('src');
@@ -2559,6 +2608,19 @@
           backCards[bi].focus({ preventScroll: true });
           break;
         }
+      }
+    }
+    if (noHistory) return;
+    var st = null;
+    try { st = history.state; } catch (e) {}
+    if (st && st.game) {
+      try { history.back(); return; } catch (e) {}
+    }
+    if (location.hash) {
+      try {
+        history.replaceState(null, '', location.pathname + location.search);
+      } catch (e) {
+        location.hash = '';
       }
     }
   }
@@ -2642,8 +2704,7 @@
       var doc = frame.contentDocument;
       if (!doc) return;
       doc.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') {
-          if (doc.querySelector && doc.querySelector('dialog[open]')) return;
+        if (e.key === 'Escape' && e.shiftKey) {
           e.preventDefault(); closeGame();
         }
         else if (e.key === 'F11') { e.preventDefault(); toggleFullscreen(); }
@@ -2651,6 +2712,9 @@
       doc.addEventListener('mousemove', function (e) {
         if (e.clientY < 46) showBar();
       }, false);
+      doc.addEventListener('pointerdown', function (e) {
+        if (e.clientY < 64) showBar();
+      }, { capture: true, passive: true });
 
       /* 统一音效：点击 / 按键 / 常见结算文案 */
       doc.addEventListener('pointerdown', function () {
@@ -2965,7 +3029,7 @@
   });
   bar.addEventListener('mouseleave', showBar);
 
-  document.getElementById('back').addEventListener('click', closeGame);
+  document.getElementById('back').addEventListener('click', function () { closeGame(); });
   document.getElementById('restart').addEventListener('click', restartGame);
   document.getElementById('fullscreen').addEventListener('click', toggleFullscreen);
   document.getElementById('fav-toggle').addEventListener('click', function () {
@@ -2976,6 +3040,7 @@
     if (e.key === 'Escape' && achModalEl && !achModalEl.hidden) { e.preventDefault(); closeAch(); return; }
     if (achModalEl && !achModalEl.hidden) return;
     if (e.key === 'F11' && currentId !== null) { e.preventDefault(); toggleFullscreen(); return; }
+    if (e.key === 'Escape' && e.shiftKey && currentId !== null) { e.preventDefault(); closeGame(); return; }
     if (currentId !== null) return;
     var tag = (e.target && e.target.tagName || '').toLowerCase();
     var typing = tag === 'input' || tag === 'textarea' || (e.target && e.target.isContentEditable);
@@ -3014,6 +3079,9 @@
   document.addEventListener('mousemove', function (e) {
     if (currentId !== null && e.clientY < 46) showBar();
   });
+  document.addEventListener('pointerdown', function (e) {
+    if (currentId !== null && e.clientY < 64) showBar();
+  }, { passive: true });
 
   /* ================= 初始化 ================= */
 
@@ -3065,6 +3133,10 @@
   initAch();
   renderPick(choosePick(null));
   schedulePick();
+
+  window.addEventListener('popstate', syncFromHash);
+  window.addEventListener('hashchange', syncFromHash);
+  syncFromHash();
 
   /* ================= 软件版全屏桥接 ================= */
   var nativeFsReady = false;
@@ -26358,8 +26430,8 @@ function drawShrimpShape(r, color, accent, pattern, time, seed) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="街球时刻是一款本地运行的 60 秒投篮挑战小游戏，拖动瞄准，松手投篮。">
-<title>街球时刻 · 投篮挑战</title>
+<meta name="description" content="街球时刻是一款本地运行的投篮挑战小游戏，包含经典 60 秒、十球挑战、生存模式、狂风模式、大师模式五种玩法，拖动瞄准，松手投篮。">
+<title>街球时刻 · 五模式投篮挑战</title>
 <style>
   :root{
     --bg:#05080f;
@@ -26448,6 +26520,17 @@ function drawShrimpShape(r, color, accent, pattern, time, seed) {
   }
   .sound-btn:hover{color:var(--text);border-color:rgba(255,209,102,.45)}
   .sound-btn:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+  .topbar-right{display:flex;align-items:center;gap:10px;flex:none}
+  .mode-pill{
+    border:1px solid rgba(255,209,102,.35);
+    border-radius:999px;
+    background:rgba(255,209,102,.08);
+    color:var(--amber);
+    padding:7px 13px;
+    font-size:11.5px;
+    letter-spacing:.08em;
+    white-space:nowrap;
+  }
 
   .game{
     background:linear-gradient(168deg,var(--panel-2),var(--panel));
@@ -26486,6 +26569,8 @@ function drawShrimpShape(r, color, accent, pattern, time, seed) {
     letter-spacing:.02em;
   }
   .stat.time strong{color:var(--amber)}
+  .stat.lives strong{color:var(--pink);letter-spacing:.12em}
+  .stat.wind strong{color:var(--cyan)}
   .spacer{flex:1}
   .btn{
     appearance:none;
@@ -26588,6 +26673,60 @@ function drawShrimpShape(r, color, accent, pattern, time, seed) {
     width:5px;height:5px;
     border-radius:50%;
     background:var(--amber);
+  }
+  .overlay-card.wide{width:min(560px,100%)}
+  .mode-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:8px;
+    margin:16px 0 12px;
+    text-align:left;
+  }
+  .mode-card{
+    appearance:none;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:3px;
+    padding:11px 12px;
+    border:1px solid var(--line);
+    border-radius:12px;
+    background:rgba(6,11,21,.45);
+    color:var(--text);
+    cursor:pointer;
+    transition:border-color .16s ease,background .16s ease,transform .16s ease;
+  }
+  .mode-card:hover{background:rgba(16,27,46,.8);border-color:rgba(74,214,255,.35)}
+  .mode-card:active{transform:translateY(1px)}
+  .mode-card:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+  .mode-card.selected{
+    border-color:rgba(255,209,102,.75);
+    background:rgba(255,209,102,.09);
+    box-shadow:0 0 0 1px rgba(255,209,102,.18) inset;
+  }
+  .mode-name{font-size:13px;font-weight:650;letter-spacing:.03em}
+  .mode-card.selected .mode-name{color:var(--amber)}
+  .mode-desc{font-size:10.5px;line-height:1.45;color:var(--muted)}
+  .mode-best{
+    margin-top:2px;
+    font-size:10px;
+    letter-spacing:.06em;
+    color:var(--muted-2);
+    font-variant-numeric:tabular-nums;
+  }
+  .end-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+  @media (min-width:560px){
+    .mode-grid{grid-template-columns:repeat(3,1fr)}
+  }
+  @media (max-width:559px){
+    .overlay-card.wide{padding:16px 14px}
+    .overlay-card .lead{font-size:12px;margin-bottom:8px}
+    .mode-grid{gap:6px;margin:10px 0 8px}
+    .mode-card{padding:8px 10px;gap:1px}
+    .mode-desc{display:none}
+    .mode-name{font-size:12.5px}
+    .mode-best{font-size:9.5px}
+    .rules{font-size:11.5px;gap:5px;margin-bottom:12px}
   }
   .result-grid{
     display:grid;
@@ -26694,14 +26833,19 @@ function drawShrimpShape(r, color, accent, pattern, time, seed) {
         <span>Hoop Shot</span>
       </div>
     </div>
-    <button class="sound-btn" id="soundBtn" type="button" aria-pressed="true" data-component="sound-toggle">音效：开</button>
+    <div class="topbar-right" data-component="topbar-actions">
+      <span class="mode-pill" id="modePill" data-component="mode-pill">经典 60 秒</span>
+      <button class="sound-btn" id="soundBtn" type="button" aria-pressed="true" data-component="sound-toggle">音效：开</button>
+    </div>
   </header>
 
   <main class="game" data-component="game-stage">
     <section class="hud" data-component="score-hud" aria-label="比赛数据">
       <div class="stat"><span>得分</span><strong id="score">0</strong></div>
       <div class="stat"><span>连中</span><strong id="streak">0</strong></div>
-      <div class="stat time"><span>时间</span><strong id="time">60.0</strong></div>
+      <div class="stat time"><span id="timeLabel">时间</span><strong id="time">60.0</strong></div>
+      <div class="stat lives" id="livesStat" hidden><span>生命</span><strong id="lives">♥♥♥</strong></div>
+      <div class="stat wind" id="windStat" hidden><span>风</span><strong id="windVal">无风</strong></div>
       <div class="stat"><span>最佳</span><strong id="best">0</strong></div>
       <div class="spacer"></div>
       <button class="btn" id="restartBtn" type="button" data-component="restart-button">重新开始</button>
@@ -26711,22 +26855,19 @@ function drawShrimpShape(r, color, accent, pattern, time, seed) {
       <canvas id="court" tabindex="0" role="application" aria-label="投篮场地：在球附近按住并拖动瞄准，松手投篮" data-component="court-canvas"></canvas>
 
       <div class="overlay open" id="startOverlay" data-component="start-overlay">
-        <div class="overlay-card">
-          <p class="eyebrow">60 秒投篮挑战</p>
+        <div class="overlay-card wide">
+          <p class="eyebrow">选择模式</p>
           <h2>街球时刻</h2>
-          <p class="lead">拖动瞄准，松手投篮。进球 2 分，空心球额外加 1 分，并给倒计时续上 2 秒。</p>
-          <ul class="rules">
-            <li>鼠标 / 触屏：按住画面拖动，松手出手</li>
-            <li>键盘：↑↓ 调角度，←→ 调力度，空格出手</li>
-            <li>连中 3 球以上有加成，命中越多篮筐越活</li>
-          </ul>
-          <button class="btn primary" id="startBtn" type="button" data-component="start-button">开始比赛</button>
+          <p class="lead">拖动瞄准，松手投篮。五个模式各有各的压力，先挑一个再开始。</p>
+          <div class="mode-grid" id="modeGrid" role="radiogroup" aria-label="游戏模式"></div>
+          <ul class="rules" id="modeRules"></ul>
+          <button class="btn primary" id="startBtn" type="button" data-component="start-button">开始 · 经典 60 秒</button>
         </div>
       </div>
 
       <div class="overlay" id="endOverlay" data-component="result-overlay">
         <div class="overlay-card">
-          <p class="eyebrow">比赛结束</p>
+          <p class="eyebrow" id="endEyebrow">比赛结束</p>
           <div class="final-score"><b id="finalScore">0</b><em>分</em></div>
           <p class="final-line" id="finalLine">命中 0 / 0 次出手</p>
           <div class="result-grid">
@@ -26734,13 +26875,16 @@ function drawShrimpShape(r, color, accent, pattern, time, seed) {
             <div><span>最长连中</span><strong id="finalStreak">0</strong></div>
             <div><span>历史最佳</span><strong id="finalBest">0</strong></div>
           </div>
-          <button class="btn primary" id="againBtn" type="button" data-component="again-button">再来一局</button>
+          <div class="end-actions">
+            <button class="btn primary" id="againBtn" type="button" data-component="again-button">再来一局</button>
+            <button class="btn" id="changeModeBtn" type="button">换个模式</button>
+          </div>
         </div>
       </div>
     </div>
 
     <p class="hint" data-component="control-hint">
-      <b>拖动瞄准</b>，松手投篮 · 空心 +1 分 · 进球 +2 秒 · 键盘 <b>↑↓</b> 调角度、<b>←→</b> 调力度、<b>空格</b> 出手
+      <b>拖动瞄准</b>，松手投篮 · 键盘 <b>↑↓</b> 调角度、<b>←→</b> 调力度、<b>空格</b> 出手 · 五个模式的规则见开局面板，最高分分模式保存
     </p>
   </main>
 
@@ -26757,7 +26901,17 @@ function drawShrimpShape(r, color, accent, pattern, time, seed) {
   var scoreEl = document.getElementById('score');
   var streakEl = document.getElementById('streak');
   var timeEl = document.getElementById('time');
+  var timeLabel = document.getElementById('timeLabel');
+  var livesEl = document.getElementById('lives');
+  var livesStat = document.getElementById('livesStat');
+  var windEl = document.getElementById('windVal');
+  var windStat = document.getElementById('windStat');
   var bestEl = document.getElementById('best');
+  var modePill = document.getElementById('modePill');
+  var modeGrid = document.getElementById('modeGrid');
+  var modeRules = document.getElementById('modeRules');
+  var endEyebrow = document.getElementById('endEyebrow');
+  var changeModeBtn = document.getElementById('changeModeBtn');
   var startOverlay = document.getElementById('startOverlay');
   var endOverlay = document.getElementById('endOverlay');
   var startBtn = document.getElementById('startBtn');
@@ -26772,8 +26926,63 @@ function drawShrimpShape(r, color, accent, pattern, time, seed) {
 
   var STORE_BEST = 'hoopshot.best';
   var STORE_SOUND = 'hoopshot.sound';
+  var STORE_MODE = 'hoopshot.mode';
   var GAME_SECONDS = 60;
   var GRAVITY = 1600;
+  var WIND_ACCEL = 240;
+
+  var MODES = {
+    classic: {
+      name: '经典 60 秒', desc: '60 秒内尽量多进',
+      rules: ['60 秒倒计时，进球 +2 秒', '空心球额外 +1 分', '连中 3 球以上每球再 +1 分'],
+      seconds: 60, shots: 0, lives: 0, wind: false, movingRim: false,
+      rimScale: 1, swishBonus: 1, streakBonus: 1, extend: 2,
+      bestKey: 'hoopshot.best'
+    },
+    ten: {
+      name: '十球挑战', desc: '10 次出手拼总分',
+      rules: ['固定 10 次出手，没有倒计时', '空心 +1 分，连中 3 球以上 +1 分', '第 10 球结算后结束'],
+      seconds: 0, shots: 10, lives: 0, wind: false, movingRim: false,
+      rimScale: 1, swishBonus: 1, streakBonus: 1, extend: 0,
+      bestKey: 'hoopshot.best.ten'
+    },
+    survival: {
+      name: '生存模式', desc: '3 条命，投失扣命',
+      rules: ['60 秒限时，允许 3 次投失', '每次投失扣 1 条命，命用完立即结束', '进球 +2 秒，空心 +1 分'],
+      seconds: 60, shots: 0, lives: 3, wind: false, movingRim: false,
+      rimScale: 1, swishBonus: 1, streakBonus: 1, extend: 2,
+      bestKey: 'hoopshot.best.survival'
+    },
+    wind: {
+      name: '狂风模式', desc: '每球都有随机横风',
+      rules: ['每球重置一次随机横风', '瞄准线不计算风向，需要自己修正', '进球 +2 秒，空心 +1 分'],
+      seconds: 60, shots: 0, lives: 0, wind: true, movingRim: false,
+      rimScale: 1, swishBonus: 1, streakBonus: 1, extend: 2,
+      bestKey: 'hoopshot.best.wind'
+    },
+    master: {
+      name: '大师模式', desc: '移动小筐 + 45 秒',
+      rules: ['篮筐从第一球起上下移动且更小', '45 秒限时，进球 +1 秒', '空心 +2 分，连中 3 球以上 +1 分'],
+      seconds: 45, shots: 0, lives: 0, wind: false, movingRim: true,
+      rimScale: 0.85, swishBonus: 2, streakBonus: 1, extend: 1,
+      bestKey: 'hoopshot.best.master'
+    }
+  };
+  var MODE_ORDER = ['classic', 'ten', 'survival', 'wind', 'master'];
+
+  function loadMode() {
+    try {
+      var m = localStorage.getItem(STORE_MODE);
+      return MODES[m] ? m : 'classic';
+    } catch (e) { return 'classic'; }
+  }
+  function saveMode(id) {
+    try { localStorage.setItem(STORE_MODE, id); } catch (e) { /* 忽略 */ }
+  }
+
+  var modeId = 'classic';
+  var mode = MODES[modeId];
+  var selectedMode = 'classic';
 
   function clamp(v, lo, hi) { return v < lo ? lo : (v > hi ? hi : v); }
   function loadNum(key) {
@@ -26822,7 +27031,7 @@ function drawShrimpShape(r, color, accent, pattern, time, seed) {
   var geo = {};
   function computeGeometry() {
     var floorY = H * 0.88;
-    var rimHalf = clamp(W * 0.040, 22, 40);
+    var rimHalf = clamp(W * 0.040, 22, 40) * (mode.rimScale || 1);
     var ballR = clamp(W * 0.021, 10, 18);
     geo = {
       floorY: floorY,
@@ -26858,7 +27067,11 @@ function drawShrimpShape(r, color, accent, pattern, time, seed) {
   var streak = 0;
   var bestStreak = 0;
   var timeLeft = GAME_SECONDS;
-  var best = loadNum(STORE_BEST);
+  var lives = 0;
+  var shotsLeft = 0;
+  var wind = 0;
+  var shotLimitReached = false;
+  var best = loadNum(MODES[modeId].bestKey);
   var soundOn = loadBool(STORE_SOUND, true);
 
   var aimAngle = 0.82;
@@ -26868,9 +27081,16 @@ function drawShrimpShape(r, color, accent, pattern, time, seed) {
   var hudTime = '';
 
   function currentRimY() {
-    if (makes < 5) return geo.baseRimY;
-    var amp = Math.min(8 + (makes - 5) * 3, 30);
-    return geo.baseRimY + Math.sin(elapsed * 1.7) * amp;
+    if (!mode.movingRim && makes < 5) return geo.baseRimY;
+    var amp, speed;
+    if (mode.movingRim) {
+      amp = Math.min(18 + makes * 2.2, 38);
+      speed = 2.1;
+    } else {
+      amp = Math.min(8 + (makes - 5) * 3, 30);
+      speed = 1.7;
+    }
+    return geo.baseRimY + Math.sin(elapsed * speed) * amp;
   }
 
   function resize() {
@@ -26889,7 +27109,14 @@ function drawShrimpShape(r, color, accent, pattern, time, seed) {
     }
   }
 
+  function pickWind() {
+    var w = Math.random() * 2 - 1;
+    if (Math.abs(w) < 0.28) w = (w < 0 ? -1 : 1) * (0.28 + Math.random() * 0.22);
+    return clamp(w, -1, 1);
+  }
+
   function spawnBall() {
+    if (phase === 'playing' && shotLimitReached) { endGame(); return; }
     ball.x = geo.startX;
     ball.y = geo.startY;
     ball.vx = 0;
@@ -26902,6 +27129,10 @@ function drawShrimpShape(r, color, accent, pattern, time, seed) {
     ball.flight = 0;
     ball.resetT = 0;
     trail.length = 0;
+    if (mode.wind) {
+      wind = pickWind();
+      updateHud();
+    }
   }
 
   function shotVelocity(angle, power) {
@@ -26927,6 +27158,10 @@ function drawShrimpShape(r, color, accent, pattern, time, seed) {
     aiming = false;
     trail.length = 0;
     shots += 1;
+    if (mode.shots > 0) {
+      shotsLeft = Math.max(0, shotsLeft - 1);
+      updateTimeHud();
+    }
     playSound('shoot');
   }
 
@@ -27061,13 +27296,34 @@ function drawShrimpShape(r, color, accent, pattern, time, seed) {
 
   /* ---------- 比赛流程 ---------- */
 
+  function heartStr(n) {
+    var s = '', i;
+    for (i = 0; i < mode.lives; i++) s += i < n ? '♥' : '♡';
+    return s;
+  }
+  function windStr() {
+    if (!mode.wind) return '无风';
+    if (Math.abs(wind) < 0.05) return '无风';
+    return (wind > 0 ? '→ ' : '← ') + Math.abs(wind).toFixed(1);
+  }
+
   function updateHud() {
     scoreEl.textContent = String(score);
     streakEl.textContent = String(streak);
     bestEl.textContent = String(Math.max(best, score));
+    livesEl.textContent = heartStr(lives);
+    windEl.textContent = windStr();
   }
 
   function updateTimeHud() {
+    if (mode.shots > 0) {
+      var s = String(Math.max(0, shotsLeft));
+      if (s !== hudTime) {
+        hudTime = s;
+        timeEl.textContent = s;
+      }
+      return;
+    }
     var t = Math.max(0, timeLeft).toFixed(1);
     if (t !== hudTime) {
       hudTime = t;
@@ -27075,14 +27331,105 @@ function drawShrimpShape(r, color, accent, pattern, time, seed) {
     }
   }
 
-  function startGame() {
+  function applyModeUi() {
+    modePill.textContent = mode.name;
+    timeLabel.textContent = mode.shots > 0 ? '剩余球' : '时间';
+    livesStat.hidden = !mode.lives;
+    windStat.hidden = !mode.wind;
+    endEyebrow.textContent = '比赛结束 · ' + mode.name;
+    hudTime = '';
+    computeGeometry();
+    if (!ball.flying) {
+      ball.x = geo.startX;
+      ball.y = geo.startY;
+    }
+  }
+
+  function renderModeCards() {
+    modeGrid.innerHTML = '';
+    MODE_ORDER.forEach(function (id) {
+      var m = MODES[id];
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'mode-card' + (id === selectedMode ? ' selected' : '');
+      btn.setAttribute('role', 'radio');
+      btn.setAttribute('aria-checked', id === selectedMode ? 'true' : 'false');
+      btn.setAttribute('data-mode', id);
+
+      var name = document.createElement('span');
+      name.className = 'mode-name';
+      name.textContent = m.name;
+      var desc = document.createElement('span');
+      desc.className = 'mode-desc';
+      desc.textContent = m.desc;
+      var bestTag = document.createElement('span');
+      bestTag.className = 'mode-best';
+      bestTag.textContent = '最佳 ' + loadNum(m.bestKey);
+
+      btn.appendChild(name);
+      btn.appendChild(desc);
+      btn.appendChild(bestTag);
+      btn.addEventListener('click', function () { selectMode(id); });
+      modeGrid.appendChild(btn);
+    });
+  }
+
+  function selectMode(id) {
+    if (!MODES[id]) return;
+    selectedMode = id;
+    modeId = id;
+    mode = MODES[id];
+    saveMode(id);
+    var cards = modeGrid.querySelectorAll('.mode-card');
+    for (var i = 0; i < cards.length; i++) {
+      var on = cards[i].getAttribute('data-mode') === id;
+      cards[i].classList.toggle('selected', on);
+      cards[i].setAttribute('aria-checked', on ? 'true' : 'false');
+    }
+    modeRules.innerHTML = '';
+    for (var j = 0; j < mode.rules.length; j++) {
+      var li = document.createElement('li');
+      li.textContent = mode.rules[j];
+      modeRules.appendChild(li);
+    }
+    startBtn.textContent = '开始 · ' + mode.name;
+    best = loadNum(mode.bestKey);
+    if (phase !== 'playing') {
+      score = 0;
+      makes = 0;
+      shots = 0;
+      streak = 0;
+      bestStreak = 0;
+      lives = mode.lives || 0;
+      shotsLeft = mode.shots || 0;
+      timeLeft = mode.seconds || 0;
+      wind = mode.wind ? pickWind() : 0;
+      applyModeUi();
+      updateHud();
+      updateTimeHud();
+    }
+  }
+
+  function startGame(id) {
+    if (id && MODES[id]) {
+      modeId = id;
+      mode = MODES[id];
+    }
+    selectedMode = modeId;
+    saveMode(modeId);
+    best = loadNum(mode.bestKey);
     phase = 'playing';
     score = 0;
     makes = 0;
     shots = 0;
     streak = 0;
     bestStreak = 0;
-    timeLeft = GAME_SECONDS;
+    lives = mode.lives || 0;
+    shotsLeft = mode.shots || 0;
+    shotLimitReached = false;
+    wind = 0;
+    timeLeft = mode.seconds || 0;
+    hudTime = '';
     particles.length = 0;
     popups.length = 0;
     netSway = 0;
@@ -27091,6 +27438,7 @@ function drawShrimpShape(r, color, accent, pattern, time, seed) {
     aiming = false;
     startOverlay.classList.remove('open');
     endOverlay.classList.remove('open');
+    applyModeUi();
     spawnBall();
     updateHud();
     updateTimeHud();
@@ -27099,6 +27447,7 @@ function drawShrimpShape(r, color, accent, pattern, time, seed) {
   }
 
   function endGame() {
+    if (phase !== 'playing') return;
     phase = 'over';
     aiming = false;
     timeLeft = 0;
@@ -27106,14 +27455,16 @@ function drawShrimpShape(r, color, accent, pattern, time, seed) {
     playSound('over');
     if (score > best) {
       best = score;
-      saveNum(STORE_BEST, best);
+      saveNum(mode.bestKey, best);
     }
     finalScore.textContent = String(score);
     finalLine.textContent = '命中 ' + makes + ' / ' + shots + ' 次出手';
     finalAcc.textContent = shots ? Math.round((makes / shots) * 100) + '%' : '0%';
     finalStreak.textContent = String(bestStreak);
     finalBest.textContent = String(best);
+    endEyebrow.textContent = '比赛结束 · ' + mode.name;
     updateHud();
+    renderModeCards();
     endOverlay.classList.add('open');
     againBtn.focus();
   }
@@ -27123,10 +27474,13 @@ function drawShrimpShape(r, color, accent, pattern, time, seed) {
     makes += 1;
     streak += 1;
     if (streak > bestStreak) bestStreak = streak;
-    timeLeft = Math.min(99, timeLeft + 2);
+    if (mode.extend > 0 && mode.seconds > 0) {
+      timeLeft = Math.min(99, timeLeft + mode.extend);
+    }
+    if (mode.shots > 0 && shotsLeft <= 0) shotLimitReached = true;
     if (score > best) {
       best = score;
-      saveNum(STORE_BEST, best);
+      saveNum(mode.bestKey, best);
     }
 
     var rimY = currentRimY();
@@ -27148,6 +27502,11 @@ function drawShrimpShape(r, color, accent, pattern, time, seed) {
 
   function registerMiss() {
     streak = 0;
+    if (mode.lives > 0) {
+      lives = Math.max(0, lives - 1);
+      if (lives <= 0) shotLimitReached = true;
+    }
+    if (mode.shots > 0 && shotsLeft <= 0) shotLimitReached = true;
     updateHud();
   }
 
@@ -27201,6 +27560,7 @@ function drawShrimpShape(r, color, accent, pattern, time, seed) {
     var rimY = currentRimY();
 
     ball.vy += GRAVITY * h;
+    if (mode.wind) ball.vx += wind * WIND_ACCEL * h;
     ball.x += ball.vx * h;
     ball.y += ball.vy * h;
     ball.rot += (ball.vx / Math.max(6, geo.ballR)) * h;
@@ -27211,7 +27571,7 @@ function drawShrimpShape(r, color, accent, pattern, time, seed) {
       ball.scored = true;
       var swish = !ball.touchedRim && !ball.touchedBoard;
       var combo = streak + 1 >= 3;
-      var pts = 2 + (swish ? 1 : 0) + (combo ? 1 : 0);
+      var pts = 2 + (swish ? mode.swishBonus : 0) + (combo ? mode.streakBonus : 0);
       addScore(pts, swish, combo);
     }
 
@@ -27567,6 +27927,38 @@ function drawShrimpShape(r, color, accent, pattern, time, seed) {
     ctx.textAlign = 'left';
   }
 
+  function drawWind() {
+    if (!mode.wind || phase !== 'playing') return;
+    var label = (wind >= 0 ? '→ ' : '← ') + Math.abs(wind).toFixed(1);
+    var cx = W * 0.5, cy = 26;
+    ctx.save();
+    ctx.font = '600 12px "Segoe UI","Microsoft YaHei",system-ui,sans-serif';
+    ctx.textAlign = 'center';
+    var tw = ctx.measureText(label).width;
+    var w = tw + 26, h = 24;
+    ctx.fillStyle = 'rgba(6,11,21,.7)';
+    ctx.strokeStyle = 'rgba(74,214,255,.4)';
+    ctx.lineWidth = 1;
+    if (ctx.roundRect) {
+      ctx.beginPath();
+      ctx.roundRect(cx - w / 2, cy - h / 2, w, h, 12);
+    } else {
+      ctx.beginPath();
+      ctx.rect(cx - w / 2, cy - h / 2, w, h);
+    }
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = pal.cyan;
+    ctx.fillText(label, cx, cy + 4);
+    var barW = 30 * Math.abs(wind);
+    ctx.globalAlpha = 0.3;
+    ctx.fillRect(cx - 30, cy + h / 2 + 4, 60, 2);
+    ctx.globalAlpha = 0.95;
+    if (wind >= 0) ctx.fillRect(cx, cy + h / 2 + 3, barW, 4);
+    else ctx.fillRect(cx - barW, cy + h / 2 + 3, barW, 4);
+    ctx.restore();
+  }
+
   function draw() {
     drawCourt();
     drawHoop();
@@ -27574,6 +27966,7 @@ function drawShrimpShape(r, color, accent, pattern, time, seed) {
     drawBall();
     drawNet();
     drawEffects();
+    drawWind();
   }
 
   /* ---------- 主循环 ---------- */
@@ -27584,10 +27977,14 @@ function drawShrimpShape(r, color, accent, pattern, time, seed) {
     last = now;
 
     if (phase === 'playing') {
-      timeLeft = Math.max(0, timeLeft - dt);
-      updateTimeHud();
-      if (timeLeft <= 0) {
-        endGame();
+      if (mode.seconds > 0) {
+        timeLeft = Math.max(0, timeLeft - dt);
+        updateTimeHud();
+        if (timeLeft <= 0) {
+          endGame();
+        } else if (ball.flying) {
+          updateBall(dt);
+        }
       } else if (ball.flying) {
         updateBall(dt);
       }
@@ -27600,10 +27997,17 @@ function drawShrimpShape(r, color, accent, pattern, time, seed) {
 
   /* ---------- 绑定 ---------- */
 
-  startBtn.addEventListener('click', startGame);
-  againBtn.addEventListener('click', startGame);
+  startBtn.addEventListener('click', function () { startGame(selectedMode); });
+  againBtn.addEventListener('click', function () { startGame(modeId); });
   restartBtn.addEventListener('click', function () {
-    startGame();
+    startGame(modeId);
+  });
+  changeModeBtn.addEventListener('click', function () {
+    endOverlay.classList.remove('open');
+    renderModeCards();
+    selectMode(modeId);
+    startOverlay.classList.add('open');
+    startBtn.focus();
   });
 
   soundBtn.addEventListener('click', function () {
@@ -27622,11 +28026,17 @@ function drawShrimpShape(r, color, accent, pattern, time, seed) {
   function init() {
     pal = readPalette();
     resize();
+    modeId = loadMode();
+    mode = MODES[modeId];
+    selectedMode = modeId;
+    best = loadNum(mode.bestKey);
+    renderModeCards();
+    selectMode(modeId);
     spawnBall();
-    bestEl.textContent = String(best);
+    updateHud();
+    updateTimeHud();
     soundBtn.textContent = soundOn ? '音效：开' : '音效：关';
     soundBtn.setAttribute('aria-pressed', soundOn ? 'true' : 'false');
-    updateTimeHud();
     requestAnimationFrame(frame);
   }
 
