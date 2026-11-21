@@ -1197,7 +1197,7 @@
   /* 追加：同类型原创小游戏（完整内嵌，离线可玩） */
   GAMES.push({
     id:'ballarena', name:'星团吞噬', icon:'🪐',
-    desc:'在远大于屏幕的星海里游走，吃掉更小的星团、躲开猎手和大小不一的红刺球；体型越大越慢，任何大球撞刺都会被扎掉体积。',
+    desc:'在远大于屏幕的星海里游走，吃掉更小的星团、躲开猎手和大小不一的红刺球；体型越大越慢，任何大球撞刺都会被扎掉体积。带名字的电脑玩家会抢食、互相吞噬。',
     keys:['鼠标 / 手指 移动'],
     sid:'src-ballarena'
   });
@@ -3810,6 +3810,9 @@
   .hud b{color:#7ee0ff;font-size:16px;font-weight:600;margin-left:4px}
   .hud .best b{color:#ffd479}
   .hint{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);font-size:12px;color:#6b82a0;pointer-events:none;white-space:nowrap}
+  @media (max-width:560px){
+    .hint{white-space:normal;width:calc(100% - 36px);text-align:center;line-height:1.5;font-size:11px;bottom:8px}
+  }
   .overlay{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(4,8,16,.84);z-index:3;text-align:center;padding:24px}
   .overlay.hide{display:none}
   .overlay h1{margin:0 0 8px;font-size:30px;letter-spacing:.08em;color:#c9f2ff}
@@ -3826,10 +3829,10 @@
   <span>排名<b id="rank">-</b></span>
   <span class="best">最高<b id="best">0</b></span>
 </div>
-<div class="hint">移动鼠标 / 手指：吃小星团，躲大猎手和红刺球；大球撞刺会被扎小</div>
+<div class="hint">移动鼠标 / 手指：吃小星团，躲大猎手和红刺球；带名字的电脑玩家会抢食、互相吞噬</div>
 <div class="overlay" id="over">
   <h1 id="ovTitle">星团吞噬</h1>
-  <p id="ovSub">吃掉小星团来长大，躲开比你大的猎手。<br>红色刺球会扎掉比它大的任何星球——你和猎手越大越要绕开；比刺球小时可以贴着它躲。</p>
+  <p id="ovSub">吃掉小星团来长大，躲开比你大的猎手。<br>红色刺球会扎掉比它大的任何星球——你和猎手越大越要绕开；比刺球小时可以贴着它躲。<br>带名字的电脑玩家会抢食、互相吞噬，也会追捕更小的目标；开局 5 秒安全期。</p>
   <button id="start" type="button">开始游戏</button>
   <div class="keys" style="margin-top:16px;font-size:11.5px;line-height:1.9;color:#5f7693">鼠标 / 手指移动 · 接触即吞噬 · 大地图自动跟随</div>
 </div>
@@ -3860,11 +3863,14 @@
   var last = 0;
   var t0 = 0;
   var danger = 0;
+  var calm = 0;
   var aiSpikeHits = 0;
   var shake = 0;
   var flash = 0;
   var MAX_R = 110, EAT_RATIO = 1.06;
   var BLOB_TARGET = 32, FOOD_TARGET = 240, SPIKE_TARGET = 18;
+  var BOT_COUNT = 6;
+  var BOT_NAMES = ['游猎者', '星盗', '深空客', '掠食者', '潮汐客', '陨星'];
   var BEST_KEY = 'tx_ballarena_best_v1';
   var best = 0;
   try { best = parseInt(localStorage.getItem(BEST_KEY), 10) || 0; } catch (e) { best = 0; }
@@ -3909,13 +3915,15 @@
     return { x: bx, y: by, r: r, rot: rand(0, 6.2832), spin: rand(-0.45, 0.45) };
   }
 
-  function makeBlob(big){
+  function makeBlob(big, botName){
     var pr = player ? player.r : 12;
     var r, lo, hi, roll = Math.random();
     if (big){
       lo = Math.max(24, pr * 0.85);
       hi = Math.max(lo + 6, pr * 1.45);
       r = Math.min(118, rand(lo, hi));
+    } else if (botName){
+      r = rand(14, 24);
     } else if (roll < 0.34){
       r = rand(5, 10);
     } else if (roll < 0.78){
@@ -3935,9 +3943,15 @@
       vx: Math.cos(dir) * spd,
       vy: Math.sin(dir) * spd,
       spd: spd,
-      iframes: 0
+      iframes: 0,
+      bot: !!botName,
+      name: botName || '',
+      wander: 0,
+      wx: Math.cos(dir),
+      wy: Math.sin(dir)
     };
     var minD = Math.min(r + pr + 110, Math.max(140, Math.min(worldW, worldH) * 0.34));
+    if (botName) minD = Math.max(minD, 380);
     var bx = 0, by = 0, far = -1;
     for (var tries = 0; tries < 16; tries++){
       var tx = worldW > r * 2 ? rand(r, worldW - r) : worldW / 2;
@@ -3966,7 +3980,7 @@
     cam.y = Math.max(0, Math.min(worldH - H, player.y - H / 2));
 
     blobs = [];
-    for (var i = 0; i < BLOB_TARGET; i++) blobs.push(makeBlob(i < 4));
+    for (var i = 0; i < BLOB_TARGET; i++) blobs.push(makeBlob(i < 4, i < BOT_COUNT ? BOT_NAMES[i] : ''));
     food = [];
     for (var j = 0; j < FOOD_TARGET; j++) food.push(spawnFood());
     spikes = [];
@@ -3975,6 +3989,7 @@
     parts = [];
     floaters = [];
     danger = 0;
+    calm = 5;
     shake = 0;
     flash = 0;
     running = true;
@@ -4097,6 +4112,7 @@
     }
 
     danger = 0;
+    if (calm > 0) calm = Math.max(0, calm - dt);
     for (var k = 0; k < blobs.length; k++){
       var b = blobs[k];
       if (b.iframes > 0) b.iframes = Math.max(0, b.iframes - dt);
@@ -4105,13 +4121,74 @@
       var hunter = b.r > player.r * EAT_RATIO;
       var prey = b.r * EAT_RATIO < player.r;
       var dvx = b.vx, dvy = b.vy;
-      if (bd < 280 && (hunter || prey)){
+
+      if (b.bot){
+        /* 电脑玩家：先躲威胁，再追猎物，再避刺，最后找食物 */
+        var threatD = 1e9, threatX = 0, threatY = 0;
+        var preyD = 1e9, preyX = 0, preyY = 0;
+        var avoidD = 1e9, avoidX = 0, avoidY = 0;
+        if (calm <= 0 && hunter && bd < 360){ threatD = bd; threatX = player.x; threatY = player.y; }
+        else if (calm <= 0 && prey && bd < 420){ preyD = bd; preyX = player.x; preyY = player.y; }
+        for (var m = 0; m < blobs.length; m++){
+          if (m === k) continue;
+          var ob = blobs[m];
+          var od = Math.hypot(ob.x - b.x, ob.y - b.y);
+          if (ob.r > b.r * EAT_RATIO){
+            if (od < 360 && od < threatD){ threatD = od; threatX = ob.x; threatY = ob.y; }
+          } else if (ob.r * EAT_RATIO < b.r){
+            if (od < 420 && od < preyD){ preyD = od; preyX = ob.x; preyY = ob.y; }
+          }
+        }
+        if (b.r > 14){
+          for (var si = 0; si < spikes.length; si++){
+            var sp0 = spikes[si];
+            if (b.r <= sp0.r * 1.06) continue;
+            var sd0 = Math.hypot(sp0.x - b.x, sp0.y - b.y);
+            if (sd0 < 170 && sd0 < avoidD){ avoidD = sd0; avoidX = sp0.x; avoidY = sp0.y; }
+          }
+        }
+        var foodD = 1e9, foodX = 0, foodY = 0;
+        for (var fi = 0; fi < food.length; fi++){
+          var ff = food[fi];
+          var fdx = ff.x - b.x, fdy = ff.y - b.y;
+          var fd2 = fdx * fdx + fdy * fdy;
+          if (fd2 < 160000 && fd2 < foodD * foodD){ foodD = Math.sqrt(fd2); foodX = ff.x; foodY = ff.y; }
+        }
+        var baseSpd = Math.max(56, 176 - Math.min(112, Math.max(0, b.r - 10) * 1.3));
+        threatD = Math.max(1, threatD);
+        preyD = Math.max(1, preyD);
+        avoidD = Math.max(1, avoidD);
+        foodD = Math.max(1, foodD);
+        if (threatD < 320){
+          dvx = (b.x - threatX) / threatD * baseSpd * 1.35;
+          dvy = (b.y - threatY) / threatD * baseSpd * 1.35;
+        } else if (preyD < 400){
+          dvx = (preyX - b.x) / preyD * baseSpd * 1.15;
+          dvy = (preyY - b.y) / preyD * baseSpd * 1.15;
+        } else if (avoidD < 170){
+          dvx = (b.x - avoidX) / avoidD * baseSpd * 1.2;
+          dvy = (b.y - avoidY) / avoidD * baseSpd * 1.2;
+        } else if (foodD < 400){
+          dvx = (foodX - b.x) / foodD * baseSpd * 0.85;
+          dvy = (foodY - b.y) / foodD * baseSpd * 0.85;
+        } else {
+          b.wander -= dt;
+          if (b.wander <= 0){
+            b.wander = rand(1.4, 3.4);
+            var wa = rand(0, 6.2832);
+            b.wx = Math.cos(wa); b.wy = Math.sin(wa);
+          }
+          dvx = b.wx * baseSpd * 0.5;
+          dvy = b.wy * baseSpd * 0.5;
+        }
+      } else if (bd < 280 && (hunter || prey)){
         var pull = hunter ? 1 : -1;
         var urgency = 1 - bd / 280;
         var sp = b.spd * (0.9 + urgency * 1.8);
         dvx = bdx / bd * sp * pull;
         dvy = bdy / bd * sp * pull;
       }
+
       var blend = Math.min(1, dt * 2.4);
       b.vx += (dvx - b.vx) * blend;
       b.vy += (dvy - b.vy) * blend;
@@ -4120,6 +4197,17 @@
       if (b.x < b.r || b.x > worldW - b.r){ b.vx *= -1; b.x = Math.max(b.r, Math.min(worldW - b.r, b.x)); }
       if (b.y < b.r || b.y > worldH - b.r){ b.vy *= -1; b.y = Math.max(b.r, Math.min(worldH - b.r, b.y)); }
 
+      // 电脑玩家顺手吃掉碰到的食物
+      if (b.bot){
+        for (var fj = food.length - 1; fj >= 0; fj--){
+          var f2 = food[fj];
+          if (Math.hypot(f2.x - b.x, f2.y - b.y) < b.r + (f2.r || 1.6) + 2){
+            b.r = Math.min(MAX_R, Math.sqrt(b.r * b.r + 1.1));
+            food[fj] = spawnFood();
+          }
+        }
+      }
+
       bdx = player.x - b.x;
       bdy = player.y - b.y;
       bd = Math.hypot(bdx, bdy);
@@ -4127,19 +4215,39 @@
       if (player.r > b.r * EAT_RATIO && bd < player.r - b.r * 0.45){
         var gain = b.r * b.r * 0.5;
         player.r = Math.min(MAX_R, Math.sqrt(player.r * player.r + gain));
-        player.score += Math.round(b.r * 1.6);
+        var bonus = b.bot ? 2.1 : 1.6;
+        player.score += Math.round(b.r * bonus);
         player.pulse = 1;
         burst(b.x, b.y, b.hue, Math.min(24, 6 + Math.round(b.r / 2)), 70 + b.r * 2.2);
-        floaters.push({ x: b.x, y: b.y, txt: '+' + Math.round(b.r * 1.6), life: 1, hue: b.hue });
-        blobs[k] = makeBlob(false);
-      } else if (b.r > player.r * EAT_RATIO && bd < b.r - player.r * 0.45){
+        floaters.push({ x: b.x, y: b.y, txt: (b.bot ? '吞噬 ' + b.name + ' +' : '+') + Math.round(b.r * bonus), life: 1, hue: b.hue });
+        blobs[k] = makeBlob(false, b.bot ? b.name : '');
+      } else if (calm <= 0 && b.r > player.r * EAT_RATIO && bd < b.r - player.r * 0.45){
         gameOver();
         return;
       }
 
-      if (hunter && bd < 340){
+      if (calm <= 0 && hunter && bd < 340){
         var dn = 1 - bd / 340;
         if (dn > danger) danger = dn;
+      }
+    }
+
+    // 大球吃小球：电脑玩家与野生球都参与，被吃的球在远处重生
+    for (var a = 0; a < blobs.length; a++){
+      var A = blobs[a];
+      if (!A) continue;
+      for (var c = a + 1; c < blobs.length; c++){
+        var B = blobs[c];
+        if (!B) continue;
+        var dd = Math.hypot(A.x - B.x, A.y - B.y);
+        var eater = null, eaten = null, eatenIdx = -1;
+        if (A.r > B.r * EAT_RATIO && dd < A.r - B.r * 0.45){ eater = A; eaten = B; eatenIdx = c; }
+        else if (B.r > A.r * EAT_RATIO && dd < B.r - A.r * 0.45){ eater = B; eaten = A; eatenIdx = a; }
+        if (!eater) continue;
+        eater.r = Math.min(MAX_R, Math.sqrt(eater.r * eater.r + eaten.r * eaten.r * 0.5));
+        burst(eaten.x, eaten.y, eaten.hue, Math.min(18, 5 + Math.round(eaten.r / 2)), 60 + eaten.r * 1.8);
+        blobs[eatenIdx] = makeBlob(false, eaten.bot ? eaten.name : '');
+        if (eatenIdx === a){ A = blobs[a]; c = blobs.length; }
       }
     }
 
@@ -4288,6 +4396,20 @@
       ctx.arc(b.x, b.y, b.r, 0, 6.2832);
       ctx.fill();
       ctx.shadowBlur = 0;
+      if (b.bot){
+        ctx.save();
+        ctx.strokeStyle = 'hsla(' + b.hue + ',95%,82%,.6)';
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.r + 4, 0, 6.2832);
+        ctx.stroke();
+        ctx.restore();
+        ctx.font = '600 10.5px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = 'rgba(228,244,255,.78)';
+        ctx.fillText(b.name, b.x, b.y - b.r - 8);
+        ctx.textAlign = 'start';
+      }
       if (player && b.r > player.r * EAT_RATIO){
         ctx.save();
         ctx.strokeStyle = 'rgba(255,105,115,.5)';
@@ -4371,6 +4493,10 @@
         running: running,
         playerR: player ? player.r : 0,
         blobs: blobs.map(function (b) { return b.r; }),
+        bots: blobs.filter(function (b) { return b.bot; }).map(function (b) {
+          return { name: b.name, r: b.r, x: b.x, y: b.y };
+        }),
+        botCount: blobs.filter(function (b) { return b.bot; }).length,
         spikes: spikes.length,
         aiSpikeHits: aiSpikeHits
       };
