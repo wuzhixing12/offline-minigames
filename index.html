@@ -1948,6 +1948,356 @@
   } catch (e) {}
 })();
 </script>
+<script>
+/* ================= 云同步 · Supabase =================
+   离线优先：不登录、断网都能正常玩；登录后可选上传/下载整包存档。
+   只依赖原生 fetch，不引入任何 CDN。会话与同步元信息用 tx_acct_ 前缀，
+   因而不会被本地账号快照（TXAccount.capture）打包上传。 */
+(function () {
+  'use strict';
+  var BASE = 'https://rjzxmppviuutkwvjwvui.supabase.co';
+  var KEY  = 'sb_publishable_qSDaZS7OzhsJctZtnUg83w_IvMerKdM';
+  var SESS_KEY = 'tx_acct_cloud_sess_v1';
+  var META_KEY = 'tx_acct_cloud_meta_v1';
+
+  function rd(k, d) { try { var s = localStorage.getItem(k); return s ? JSON.parse(s) : d; } catch (e) { return d; } }
+  function wr(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
+  function rm(k) { try { localStorage.removeItem(k); } catch (e) {} }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+  function fmt(ts) {
+    if (!ts) return '从未';
+    var d = new Date(ts), diff = Date.now() - d.getTime();
+    if (isNaN(diff)) return '从未';
+    if (diff < 60000) return '刚刚';
+    if (diff < 3600000) return Math.floor(diff / 60000) + ' 分钟前';
+    if (diff < 86400000) return Math.floor(diff / 3600000) + ' 小时前';
+    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+  }
+  function decodeJwt(t) {
+    try {
+      var p = String(t).split('.')[1]; if (!p) return null;
+      p = p.replace(/-/g, '+').replace(/_/g, '/');
+      while (p.length % 4) p += '=';
+      return JSON.parse(decodeURIComponent(escape(atob(p))));
+    } catch (e) { return null; }
+  }
+
+  function normalizeSession(s) {
+    if (!s || !s.access_token) return null;
+    if (!s.user || !s.user.id) {
+      var p = decodeJwt(s.access_token);
+      if (p && p.sub) s.user = { id: p.sub, email: p.email || '' };
+    }
+    if (!s.expires_at && s.expires_in) s.expires_at = Date.now() + (parseInt(s.expires_in, 10) || 3600) * 1000;
+    return s;
+  }
+
+  var session = normalizeSession(rd(SESS_KEY, null));
+  var justLoggedIn = false;
+  var authError = '';
+
+  /* 魔法链接回跳：token 在 #hash 里，取出来立刻从地址栏抹掉，避免被当成游戏路由 */
+  try {
+    var h = location.hash || '';
+    if (h.indexOf('access_token=') >= 0) {
+      var q = {};
+      h.replace(/^#/, '').split('&').forEach(function (kv) {
+        var i = kv.indexOf('=');
+        if (i > 0) q[decodeURIComponent(kv.slice(0, i))] = decodeURIComponent(kv.slice(i + 1));
+      });
+      if (q.access_token) {
+        session = normalizeSession({
+          access_token: q.access_token,
+          refresh_token: q.refresh_token || '',
+          expires_at: q.expires_in ? Date.now() + (parseInt(q.expires_in, 10) || 3600) * 1000 : 0,
+          token_type: q.token_type || 'bearer'
+        });
+        if (session) wr(SESS_KEY, session);
+        justLoggedIn = !!session;
+      }
+      try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { try { location.hash = ''; } catch (e2) {} }
+    } else if (h.indexOf('error_description=') >= 0 || h.indexOf('error=') >= 0) {
+      var m = /error_description=([^&]+)/.exec(h);
+      authError = m ? decodeURIComponent(m[1].replace(/\+/g, ' ')) : '登录链接无效或已过期';
+      try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+    }
+  } catch (e) {}
+
+  function authHeaders() { return { 'apikey': KEY, 'Content-Type': 'application/json' }; }
+  function restHeaders(tok) {
+    var h = { 'apikey': KEY, 'Content-Type': 'application/json', 'Accept': 'application/json' };
+    if (tok) h['Authorization'] = 'Bearer ' + tok;
+    return h;
+  }
+
+  function ensureSession() {
+    if (!session) return Promise.resolve(null);
+    if (!session.expires_at || session.expires_at - Date.now() > 60000) return Promise.resolve(session);
+    if (!session.refresh_token) return Promise.resolve(null);
+    return fetch(BASE + '/auth/v1/token?grant_type=refresh_token', {
+      method: 'POST', headers: authHeaders(),
+      body: JSON.stringify({ refresh_token: session.refresh_token })
+    }).then(function (r) {
+      return r.json().then(function (j) { if (!r.ok) throw new Error(j.error_description || j.msg || '刷新登录失败'); return j; });
+    }).then(function (j) {
+      session = normalizeSession({
+        access_token: j.access_token, refresh_token: j.refresh_token,
+        expires_at: Date.now() + ((j.expires_in || 3600) * 1000), token_type: j.token_type || 'bearer'
+      });
+      wr(SESS_KEY, session);
+      return session;
+    }).catch(function () { return null; });
+  }
+
+  function signIn(email) {
+    return fetch(BASE + '/auth/v1/otp', {
+      method: 'POST', headers: authHeaders(),
+      body: JSON.stringify({
+        email: email, create_user: true, gotrue_meta_security: {},
+        email_redirect_to: location.origin + location.pathname,
+        redirect_to: location.origin + location.pathname
+      })
+    }).then(function (r) {
+      return r.json().then(function (j) {
+        if (!r.ok) throw new Error(j.error_description || j.msg || j.message || ('HTTP ' + r.status));
+        return j;
+      });
+    });
+  }
+
+  function signOut() {
+    var tok = session && session.access_token;
+    session = null;
+    rm(SESS_KEY);
+    if (tok) { try { fetch(BASE + '/auth/v1/logout', { method: 'POST', headers: restHeaders(tok), body: '{}' }); } catch (e) {} }
+  }
+
+  function api(path, opts) {
+    if (!session) return Promise.reject(new Error('请先登录'));
+    return ensureSession().then(function (s) {
+      if (!s) throw new Error('登录已过期，请退出后重新登录');
+      opts = opts || {};
+      var h = restHeaders(s.access_token);
+      if (opts.headers) for (var k in opts.headers) h[k] = opts.headers[k];
+      opts.headers = h;
+      if (opts.body && typeof opts.body !== 'string') opts.body = JSON.stringify(opts.body);
+      return fetch(BASE + '/rest/v1/' + path, opts).then(function (r) {
+        return r.text().then(function (txt) {
+          var j = null; try { j = txt ? JSON.parse(txt) : null; } catch (e) {}
+          if (!r.ok) throw new Error((j && (j.message || j.error_description || j.error)) || ('HTTP ' + r.status));
+          return j;
+        });
+      });
+    });
+  }
+
+  function uid() { return session && session.user ? session.user.id : ''; }
+  function readMeta() { var m = rd(META_KEY, {}) || {}; return m[uid()] || {}; }
+  function writeMeta(o) { var m = rd(META_KEY, {}) || {}; m[uid()] = o; wr(META_KEY, m); }
+
+  function trackPlay(gameId) {
+    var id = String(gameId || '').slice(0, 64);
+    if (!id) return;
+    try {
+      fetch(BASE + '/rest/v1/mini_play_events', {
+        method: 'POST', keepalive: true,
+        headers: { 'apikey': KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ game_id: id })
+      }).catch(function () {});
+    } catch (e) {}
+  }
+
+  /* ---------- 弹窗 ---------- */
+  var dlg = null, busy = false, msg = '', msgType = '';
+
+  try {
+    var st = document.createElement('style');
+    st.textContent =
+      '.acct-cloudc{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px}' +
+      '.cloud-tag{font-size:11px;color:#5eead4}' +
+      '.cloud-msg{font-size:12px;line-height:1.65;color:#9aabc5;margin:10px 0 0}' +
+      '.cloud-msg.ok{color:#5eead4}.cloud-msg.err{color:#fb7185}' +
+      '.cloud-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}' +
+      '.cloud-who{font-size:12.5px;color:#9aabc5;margin-top:6px;word-break:break-all}' +
+      '.cloud-who b{color:#e9eefb}';
+    (document.head || document.documentElement).appendChild(st);
+  } catch (e) {}
+
+  function ensureDialog() {
+    if (dlg) return dlg;
+    dlg = document.createElement('dialog');
+    dlg.className = 'sheet';
+    dlg.id = 'cloud-modal';
+    dlg.setAttribute('aria-labelledby', 'cloud-title');
+    dlg.innerHTML =
+      '<div class="sheet-panel" role="document">' +
+        '<div class="sheet-head"><div>' +
+          '<h2 id="cloud-title">☁ 云同步</h2>' +
+          '<p>登录后可在不同设备同步存档；不登录也能正常玩，数据只留在本机。</p>' +
+        '</div><button class="sheet-close" id="cloud-close" type="button" aria-label="关闭云同步">×</button></div>' +
+        '<div class="sheet-body" id="cloud-body"></div>' +
+      '</div>';
+    document.body.appendChild(dlg);
+    dlg.querySelector('#cloud-close').addEventListener('click', closeDialog);
+    dlg.addEventListener('cancel', function (e) { e.preventDefault(); closeDialog(); });
+    return dlg;
+  }
+  function cloudBody() { return document.getElementById('cloud-body'); }
+
+  function renderCloud() {
+    var b = cloudBody(); if (!b) return;
+    var who = session && session.user ? session.user : null;
+    var cls = msgType === 'err' ? 'err' : msgType === 'ok' ? 'ok' : '';
+    var html = '';
+    if (who) {
+      var m = readMeta();
+      html += '<div class="cloud-who">已登录：<b>' + esc(who.email || '（已登录）') + '</b></div>';
+      html += '<div class="cloud-who">上次同步：' + esc(fmt(m.updated_at)) + '</div>';
+      html += '<p class="cloud-msg ' + cls + '">' + esc(msg || '') + '</p>';
+      html += '<div class="cloud-acts">' +
+        '<button class="btn primary" id="cloud-push" type="button" style="padding:9px 16px;font-size:13px"' + (busy ? ' disabled' : '') + '>⬆ 上传本机存档</button>' +
+        '<button class="btn ghost" id="cloud-pull" type="button" style="padding:9px 16px;font-size:13px"' + (busy ? ' disabled' : '') + '>⬇ 从云端下载</button>' +
+        '<button class="data-btn" id="cloud-out" type="button"' + (busy ? ' disabled' : '') + '>退出登录</button>' +
+      '</div>';
+      html += '<p class="cloud-msg">上传：把本机当前进度存到云端（会覆盖云端旧版本）。下载：把云端进度恢复到本机（会覆盖本机数据，完成后自动刷新）。存档覆盖整个合集：成绩、收藏、成就和游戏内进度。</p>';
+    } else {
+      html += '<form class="acct-form" id="cloud-form" autocomplete="on">' +
+        '<label>邮箱<input id="cloud-email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" spellcheck="false"></label>' +
+        '<p class="cloud-msg ' + cls + '" id="cloud-hint">' + esc(msg || '输入邮箱后点「发送登录链接」，去邮箱里点开链接就会回到本页并自动登录。') + '</p>' +
+        '<div class="cloud-acts"><button class="btn primary" type="submit" style="padding:9px 16px;font-size:13px"' + (busy ? ' disabled' : '') + '>发送登录链接</button></div>' +
+      '</form>';
+      html += '<p class="cloud-msg">只用邮箱登录，不设密码。不登录也能正常玩，只是数据只留在本机；登录后可跨设备同步。</p>';
+    }
+    b.innerHTML = html;
+
+    var ob = document.getElementById('cloud-out');
+    if (ob) ob.addEventListener('click', function () {
+      if (!confirm('退出云同步登录？本机存档不受影响。')) return;
+      signOut(); msg = '已退出登录'; msgType = ''; renderCloud();
+    });
+    var pb = document.getElementById('cloud-push'); if (pb) pb.addEventListener('click', doPush);
+    var lb = document.getElementById('cloud-pull'); if (lb) lb.addEventListener('click', doPull);
+    var fm = document.getElementById('cloud-form');
+    if (fm) fm.addEventListener('submit', function (e) { e.preventDefault(); doSend(); });
+  }
+
+  function doSend() {
+    var inp = document.getElementById('cloud-email');
+    var email = ((inp && inp.value) || '').trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { msg = '请输入有效的邮箱地址'; msgType = 'err'; renderCloud(); return; }
+    busy = true; msg = '正在发送…'; msgType = ''; renderCloud();
+    signIn(email).then(function () {
+      busy = false; msg = '邮件已发送，请到邮箱点开登录链接（留意垃圾箱）。'; msgType = 'ok'; renderCloud();
+    }).catch(function (err) {
+      busy = false; msg = '发送失败：' + ((err && err.message) || '网络错误'); msgType = 'err'; renderCloud();
+    });
+  }
+
+  function doPush() {
+    busy = true; msg = '正在上传…'; msgType = ''; renderCloud();
+    api('mini_saves?select=revision,updated_at&user_id=eq.' + encodeURIComponent(uid())).then(function (rows) {
+      var remote = rows && rows[0];
+      var meta = readMeta();
+      if (remote && remote.updated_at && meta.updated_at &&
+          new Date(remote.updated_at).getTime() > new Date(meta.updated_at).getTime() + 1500) {
+        if (!confirm('云端存档比本机上次同步更新（可能来自另一台设备）。继续上传会用本机数据覆盖云端，确定吗？')) {
+          throw { cancelled: true };
+        }
+      }
+      var rev = remote ? ((remote.revision || 0) + 1) : 1;
+      var payload = window.TXAccount ? TXAccount.capture() : {};
+      return api('mini_saves?on_conflict=user_id', {
+        method: 'POST',
+        headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
+        body: [{ user_id: uid(), payload: payload, revision: rev }]
+      }).then(function (res) {
+        var row = res && res[0];
+        writeMeta({ updated_at: (row && row.updated_at) || new Date().toISOString(), revision: (row && row.revision) || rev });
+        busy = false;
+        msg = '已上传（' + Object.keys(payload).length + ' 项，版本 ' + ((row && row.revision) || rev) + '）。';
+        msgType = 'ok'; renderCloud();
+      });
+    }).catch(function (err) {
+      busy = false;
+      if (err && err.cancelled) { msg = '已取消上传'; msgType = ''; }
+      else { msg = '上传失败：' + ((err && err.message) || '网络错误'); msgType = 'err'; }
+      renderCloud();
+    });
+  }
+
+  function doPull() {
+    busy = true; msg = '正在读取云端…'; msgType = ''; renderCloud();
+    api('mini_saves?select=payload,revision,updated_at&user_id=eq.' + encodeURIComponent(uid())).then(function (rows) {
+      var row = rows && rows[0];
+      if (!row || !row.payload || !Object.keys(row.payload).length) {
+        busy = false; msg = '云端还没有存档，先在本机玩一会儿再上传吧。'; msgType = ''; renderCloud(); return;
+      }
+      if (!confirm('下载会用云端存档覆盖本机当前数据（成绩、收藏、进度等），确定吗？')) {
+        busy = false; msg = '已取消下载'; msgType = ''; renderCloud(); return;
+      }
+      if (window.TXAccount) TXAccount.restore(row.payload);
+      try {
+        var reg = TXAccount.readReg(), slot = reg.current || TXAccount.GUEST;
+        var data = TXAccount.readData(); data[slot] = TXAccount.capture(); TXAccount.writeData(data);
+      } catch (e) {}
+      writeMeta({ updated_at: row.updated_at, revision: row.revision });
+      busy = false; msg = '已下载，正在刷新…'; msgType = 'ok'; renderCloud();
+      setTimeout(function () { location.reload(); }, 700);
+    }).catch(function (err) {
+      busy = false; msg = '下载失败：' + ((err && err.message) || '网络错误'); msgType = 'err'; renderCloud();
+    });
+  }
+
+  function openDialog() {
+    ensureDialog();
+    if (!dlg.open) { try { dlg.showModal(); } catch (e) { dlg.setAttribute('open', ''); } }
+    if (!busy) { msg = authError ? '登录失败：' + authError : ''; msgType = authError ? 'err' : ''; }
+    authError = '';
+    if (justLoggedIn) { msg = '登录成功，可以上传或下载存档了。'; msgType = 'ok'; justLoggedIn = false; }
+    renderCloud();
+    setTimeout(function () {
+      var i = document.getElementById('cloud-email');
+      if (i) { try { i.focus({ preventScroll: true }); } catch (e) { i.focus(); } }
+    }, 40);
+  }
+  function closeDialog() {
+    if (!dlg) return;
+    if (dlg.close) { try { dlg.close(); } catch (e) {} } else dlg.removeAttribute('open');
+    var acct = document.getElementById('acct-modal');
+    document.body.style.overflow = (acct && acct.open) ? 'hidden' : '';
+  }
+
+  window.TXCloud = {
+    trackPlay: trackPlay,
+    signIn: signIn,
+    signOut: signOut,
+    push: doPush,
+    pull: doPull,
+    currentUser: function () { return session && session.user ? session.user : null; },
+    isLoggedIn: function () { return !!session; },
+    config: { url: BASE, key: KEY }
+  };
+  window.TXCloudUI = { open: openDialog, close: closeDialog };
+
+  /* 从魔法链接回来：等进入密码解锁后，自动弹出云同步面板确认登录结果 */
+  if (justLoggedIn || authError) {
+    var tries = 0;
+    var timer = setInterval(function () {
+      tries++;
+      if (!document.body.classList.contains('gate-locked') && window.TXCloudUI) {
+        clearInterval(timer);
+        try { window.TXCloudUI.open(); } catch (e) {}
+      }
+      if (tries > 120) clearInterval(timer);
+    }, 400);
+  }
+})();
+</script>
 <a class="skip-link" href="#collection">跳到游戏列表</a>
 <div class="orb a"></div>
 <div class="orb b"></div>
@@ -5617,6 +5967,7 @@ var FUN_LABEL = { S:'强烈推荐', A:'很值得玩', B:'值得一试', C:'一�
     noteDailyPlay(id);
     renderWeekly();
     checkAch(false);
+    if (window.TXCloud && TXCloud.trackPlay) { try { TXCloud.trackPlay(id); } catch (e) {} }
   }
 
   /* ---------- 游玩时长 ---------- */
@@ -8124,6 +8475,8 @@ var FUN_LABEL = { S:'强烈推荐', A:'很值得玩', B:'值得一试', C:'一�
     var cur = API.current();
     var data = API.readData();
     var html = '';
+    var cs = (window.TXCloud && TXCloud.currentUser) ? TXCloud.currentUser() : null;
+    html += '<div class="acct-cloudc"><button class="data-btn" id="acct-cloud" type="button">☁ 云同步（跨设备）</button><span class="cloud-tag">' + (cs ? esc(cs.email || '已登录') : '未登录') + '</span></div>';
 
     if (cur) {
       var cnt = summarize(data[cur.id]);
@@ -8220,7 +8573,7 @@ var FUN_LABEL = { S:'强烈推荐', A:'很值得玩', B:'值得一试', C:'一�
       html += '<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">' +
         '<button class="btn primary" id="acct-new" type="button" style="padding:9px 16px;font-size:13px">＋ 新建账号</button>' +
       '</div>';
-      html += '<p class="acct-note">账号只存在这台电脑的这个浏览器里，不会同步到别处；密码也只在本地校验，忘记后无法找回，只能删号重建。想换设备请用页脚的「导出存档」。</p>';
+      html += '<p class="acct-note">本地账号只存在这台电脑的这个浏览器里；想换设备请在右上角用「☁ 云同步」登录邮箱同步，或用页脚的「导出存档」。密码只在本机校验，忘记后无法找回，只能删号重建。</p>';
     }
 
     body.innerHTML = html;
@@ -8234,6 +8587,9 @@ var FUN_LABEL = { S:'强烈推荐', A:'很值得玩', B:'值得一试', C:'一�
 
   function bind() {
     var cur = API.current();
+
+    var clb = document.getElementById('acct-cloud');
+    if (clb) clb.addEventListener('click', function () { if (window.TXCloudUI) window.TXCloudUI.open(); });
 
     var nb = document.getElementById('acct-new');
     if (nb) nb.addEventListener('click', function () { mode = 'create'; render(); focusFirst(); });
