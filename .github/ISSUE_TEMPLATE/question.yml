@@ -1,0 +1,25 @@
+name: ❓ 问题 / 讨论
+description: 不确定是 bug 还是 feature？或者想聊别的
+labels: question
+assignees: ''
+
+body:
+  - type: input
+    id: title
+    attributes:
+      label: 标题
+      placeholder: 关于合集 xxx 的一些疑问…
+    validations:
+      required: true
+
+  - type: textarea
+    id: body
+    attributes:
+      label: 内容
+      description: 随便说，想聊什么聊什么
+      placeholder: |
+        我想知道 xxx 是怎么实现的？
+        为什么 xxx 游戏…
+        有没有计划…
+    validations:
+      required: true

@@ -1,0 +1,84 @@
+name: 🐛 Bug 报告
+description: 游戏打不开、崩溃、行为不对、存档异常等
+labels: bug
+assignees: ''
+
+body:
+  - type: input
+    id: game
+    attributes:
+      label: 哪款游戏有问题？
+      description: 菜单里的名字，例如「俄罗斯方块」或「深海食链」
+      placeholder: 俄罗斯方块
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: 严重程度
+      options:
+        - 崩溃（页面直接挂掉）
+        - 打不开（点开始没反应）
+        - 数据丢失（存档被清 / 进度没保存）
+        - 游戏内 bug（得分、判定、行为不对）
+        - UI / 布局问题（显示错位、按钮点不到）
+        - 轻微体验问题
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: 复现步骤
+      description: 从打开合集到触发问题的具体操作序列
+      placeholder: |
+        1. 打开 index.html
+        2. 点「俄罗斯方块」
+        3. 进入马拉松模式，消到第 5 行
+        4. 游戏卡住不动了
+    validations:
+      required: true
+
+  - type: textarea
+    id: expect
+    attributes:
+      label: 期望行为是什么？
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际发生了什么？（截图也可以）
+
+  - type: input
+    id: browser
+    attributes:
+      label: 浏览器 & 版本
+      placeholder: Chrome 131 / Firefox 132 / Safari 18 / 手机版微信内置 …
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: 你玩的是哪个版本？
+      description: 合集标题里的 v1.xx.x，或 Git commit hash
+      placeholder: v1.50.5
+
+  - type: textarea
+    id: console
+    attributes:
+      label: 浏览器控制台报错（如果有的话）
+      description: F12 → Console 里红色的那几行
+
+  - type: checkboxes
+    id: storage
+    attributes:
+      label: 存档相关的问题？
+      options:
+        - label: 清 localStorage 后问题消失（还是会复现）
+        - label: 清 localStorage 后问题消失（暂时不再出现）
+        - label: 清 localStorage 后还是复现
+        - label: 和存档无关

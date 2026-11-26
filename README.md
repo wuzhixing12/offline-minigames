@@ -298,6 +298,67 @@
 - **数字华容道** 支持鼠标拖拽移动方块（原来只能点）
 - **扫雷 / 坦克对战** 细节调整
 
+## 开发
+
+### 目录职责
+
+| 路径 | 说明 |
+| --- | --- |
+| `index.html` | **80 款完整合集，单个 7.7 MB 文件**。25 款老游戏（breakout / snake / tetris …）的代码已打散内联进主文档；其他 55 款游戏的代码以完整 HTML 形式在 `games/` 目录里独立维护 |
+| `games/*.html` | 早期 25 款的独立源码 + 未来新增游戏的源文件 |
+| `screenshots/` | README 和仓库主页要用的截图 |
+| `build.py` | 构建辅助脚本（漂移检测 / 内联同步 / 新游戏骨架） |
+| `.buildignore` | 声明哪些 `games/*.html` 是独立维护、不要求在 `index.html` 里出现的 |
+| `.github/workflows/pages.yml` | GitHub Pages 自动部署 |
+
+### 本地调试
+
+合集本身是纯静态文件，双击 `index.html` 就能玩。如果要本地起个 server（需要深链 / iframe 加载时更稳）：
+
+```bash
+cd offline-minigames
+python3 -m http.server 8000
+# 浏览器打开 http://localhost:8000
+```
+
+单独调试某款老游戏：直接双击 `games/tetris.html`。
+
+### 修改老游戏（breakout / snake / tetris …）
+
+这 25 款的代码已经打散内联在 `index.html` 里，**直接改 `index.html` 对应位置**即可。改完本地预览一下，确认没问题就提交。`games/*.html` 里的同文件是历史快照，改 `index.html` 时可以同步更新一下独立源码（方便以后对比）。
+
+### 新增一款游戏
+
+```bash
+# 1) 用 build.py 生成骨架（会同时创建 games/<name>.html 并在 index.html 末尾占位）
+python3 build.py new  mycoolgame
+
+# 2) 编辑 games/mycoolgame.html 写游戏逻辑
+#    （index.html 里已经有一段 <!-- INLINE: mycoolgame --> ... <!-- /INLINE: mycoolgame -->）
+
+# 3) 跑 inline 同步（如果 games/mycoolgame.html 后续还有改动）
+python3 build.py inline
+
+# 4) 把 index.html 末尾的菜单占位注释替换为真实菜单项
+#    - 分类（11 类）
+#    - 难度（轻松 / 适中 / 困难 / 大师）
+#    - 时长（如 3–10 分钟）
+#    - 评级（S / A / B / C / D）
+#    - README 里「80 款游戏」章节也加一行
+```
+
+### 漂移检测
+
+```bash
+python3 build.py check
+```
+
+输出 `games/*.html` 与 `index.html` 的漂移（哪些文件在 `games/` 里但 `index.html` 里完全找不到）。白名单写在 `.buildignore` 里——那些是有意独立维护、不要求合进合集的。
+
+### 打包成 Windows 桌面程序
+
+README 里提到用 Tauri / Neu 打包：`neu build --release` 会产出 `exe + resources.neu`，放在同一目录即可运行。`tools/`、`neu/` 已在 `.gitignore` 里，不会被提交。
+
 ## 说明
 
 - 所有游戏都是纯代码绘制，没有外部图片与音频，因此体积很小、也能完全离线

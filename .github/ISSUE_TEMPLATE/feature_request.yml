@@ -1,0 +1,60 @@
+name: ✨ 新游戏 / 功能建议
+description: 想加一款新游戏、新玩法、新分类、新功能
+labels: enhancement
+assignees: ''
+
+body:
+  - type: input
+    id: name
+    attributes:
+      label: 想加什么？
+      description: 游戏名或功能名，例如「2048 挑战模式」或「成就系统加 10 个新成就」
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: 属于哪一类？
+      options:
+        - 🕹️街机动作
+        - 🧠烧脑挑战
+        - 🀄棋牌
+        - 🌴休闲养成
+        - ⚽球类游戏
+        - 🎵音乐节奏
+        - 👥双人游戏
+        - 📚英语词汇
+        - 🧩图形解谜
+        - 📖文字语言
+        - 🔢数字益智
+        - 合集级新功能（菜单 / 存档 / 部署）
+    validations:
+      required: true
+
+  - type: textarea
+    id: idea
+    attributes:
+      label: 描述一下这个想法
+      description: 玩法 / 核心机制 / 视觉风格 / 有没有参考
+      placeholder: |
+        我想加一款「xxx」，核心玩法是 xxx。可以参考 xxx 或 xxx 里的那个模块。
+        视觉上想走 xxx 风格，和现有的 xxx 类似但更 xxx。
+    validations:
+      required: true
+
+  - type: textarea
+    id: refs
+    attributes:
+      label: 参考链接（可选）
+      description: 有没有参考项目、视频、截图、wiki 之类的？
+
+  - type: checkboxes
+    id: todo
+    attributes:
+      label: 如果我想自己动手做，需要准备哪些？
+      options:
+        - label: 我会自己开 PR 实现它
+        - label: 我能提供设计稿 / 原型图
+        - label: 我没有时间写代码，但可以帮着测试
+        - label: 纯 idea，等着有人来实现
