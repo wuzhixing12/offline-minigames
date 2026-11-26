@@ -1,0 +1,70 @@
+name: CI · 检查与漂移检测
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'games/**'
+      - 'build.py'
+      - '.buildignore'
+      - 'README.md'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Python 环境
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 漂移检测（games/*.html vs index.html）
+        run: python3 build.py check
+
+      - name: index.html 文件完整性
+        run: |
+          python3 <<'PY'
+          import os
+          idx = 'index.html'
+          size = os.path.getsize(idx)
+          assert size >= 1_000_000, f"✗ index.html 只有 {size} 字节，远低于 1MB，可能被误删或写坏"
+          print(f"✓ index.html {size} 字节（≥ 1MB）")
+
+          content = open(idx, encoding='utf-8', errors='replace').read()
+          # 顶层有且只有一个 <!DOCTYPE html>
+          assert content.lower().count('<!doctype html>') >= 1, "✗ index.html 缺少 DOCTYPE"
+          # <title> 存在且包含「离线小游戏」
+          import re
+          m = re.search(r'<title>(.*?)</title>', content, re.DOTALL | re.IGNORECASE)
+          assert m, "✗ index.html 缺少 <title>"
+          assert '离线小游戏' in m.group(1), f"✗ <title> 内容异常: {m.group(1)}"
+          print(f"✓ title: {m.group(1).strip()}")
+          # 有 viewport meta
+          assert 'viewport' in content.lower(), "✗ index.html 缺少 viewport meta"
+          print("✓ viewport meta 存在")
+          # 有 og:description
+          assert 'og:description' in content.lower(), "✗ 缺少 og:description"
+          print("✓ og:description 存在")
+          print("→ index.html 结构检查通过")
+          PY
+
+      - name: 老游戏独立源码 sanity（games/*.html）
+        run: |
+          python3 <<'PY'
+          import os, re
+          dirs = [d for d in os.listdir('games') if d.endswith('.html')]
+          print(f"共 {len(dirs)} 个 games/*.html")
+          for fn in sorted(dirs):
+              p = os.path.join('games', fn)
+              with open(p, encoding='utf-8', errors='replace') as f:
+                  txt = f.read()
+              assert txt.lower().startswith('<!doctype html>'), f"✗ {fn} 不是合法 HTML 开头"
+              assert '</html>' in txt.lower(), f"✗ {fn} 缺少 </html>"
+              assert '<title>' in txt.lower(), f"✗ {fn} 缺少 <title>"
+          print(f"→ {len(dirs)} 个老游戏源码全部通过 sanity 检查")
+          PY
