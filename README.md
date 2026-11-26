@@ -14,8 +14,23 @@
 - **有存档**：最高分、关卡进度、做题记录都写 `localStorage`，全部包了 try/catch，存储被禁也不影响玩
 - **有菜单**：搜索、11 大分类、难度筛选、S/A/B/C/D 评级筛选、排序、随机来一局、最近玩过、收藏
 - **三列网格**：桌面端固定 3 列，窄屏自动降列，不会挤成一条
-- **结构清晰**：根目录 `index.html` 是完整合集；`games/` 保留早期 25 款的独立源码，方便单独修改
+- **结构清晰**：根目录 `index.html` 是完整合集；`games/` 保留早期 24 款的独立源码，方便单独修改
 - **持续更新**：分享成绩卡、成绩册可视化、进度标记与最近更新栏，玩过的进度和最佳成绩都留在本机
+
+## 截图
+
+| | |
+| --- | --- |
+| ![深海食链](screenshots/abyssfoodchain.png) | ![符卡夜行](screenshots/danmaku.png) |
+| 深海食链 · 12 段体型进化 | 符卡夜行 · 东方风弹幕 |
+| ![牌炉](screenshots/deckforge.png) | ![棱镜防线](screenshots/towerdefense.png) |
+| 牌炉 · 肉鸽卡牌构筑 | 棱镜防线 · 塔防 |
+| ![桃源乡](screenshots/taoyuan.png) | ![象棋工坊](screenshots/xiangqi.png) |
+| 桃源乡 · 四季田园经营 | 象棋工坊 · 标准 / 揭棋 / 盲棋 |
+| ![四键脉冲](screenshots/rhythm.png) | ![暗潮幸存者](screenshots/survivor.png) |
+| 四键脉冲 · 四键下落音游 | 暗潮幸存者 · 自动攻击生存 |
+
+更多截图见 [screenshots/](screenshots)：星团吞噬、雨夜疑云、背包乱斗、第七个房间、此生来世、黑八台球等。
 
 ## 80 款游戏
 
@@ -170,11 +185,16 @@
 ```
 .
 ├── index.html          # 单文件版：80 款全在里面，Pages 就是用它
-├── games/              # 早期 25 款的独立源码（新增游戏目前只在 index.html 内）
+├── games/              # 24 款老游戏的独立源码（新增游戏走 build.py new）
 │   ├── tetris.html
 │   ├── sokoban.html
 │   └── ...
-├── screenshots/        # 预览图
+├── screenshots/        # README 与仓库主页用的截图
+├── build.py            # 漂移检测 / 内联同步 / 新游戏骨架
+├── .buildignore        # 独立维护、不要求合进合集的白名单
+├── CONTRIBUTING.md     # 贡献指南
+├── SECURITY.md         # 安全说明
+├── .github/            # Pages 部署、CI 检查、Issue/PR 模板
 └── README.md
 ```
 
@@ -304,8 +324,8 @@
 
 | 路径 | 说明 |
 | --- | --- |
-| `index.html` | **80 款完整合集，单个 7.7 MB 文件**。25 款老游戏（breakout / snake / tetris …）的代码已打散内联进主文档；其他 55 款游戏的代码以完整 HTML 形式在 `games/` 目录里独立维护 |
-| `games/*.html` | 早期 25 款的独立源码 + 未来新增游戏的源文件 |
+| `index.html` | **80 款完整合集，单个 7.7 MB 文件**。24 款老游戏（breakout / snake / tetris …）的代码已打散内联进主文档；其余游戏以完整 HTML 形式在 `games/` 目录里独立维护 |
+| `games/*.html` | 早期 24 款的独立源码 + 未来新增游戏的源文件 |
 | `screenshots/` | README 和仓库主页要用的截图 |
 | `build.py` | 构建辅助脚本（漂移检测 / 内联同步 / 新游戏骨架） |
 | `.buildignore` | 声明哪些 `games/*.html` 是独立维护、不要求在 `index.html` 里出现的 |
@@ -325,7 +345,7 @@ python3 -m http.server 8000
 
 ### 修改老游戏（breakout / snake / tetris …）
 
-这 25 款的代码已经打散内联在 `index.html` 里，**直接改 `index.html` 对应位置**即可。改完本地预览一下，确认没问题就提交。`games/*.html` 里的同文件是历史快照，改 `index.html` 时可以同步更新一下独立源码（方便以后对比）。
+这 24 款的代码已经打散内联在 `index.html` 里，**直接改 `index.html` 对应位置**即可。改完本地预览一下，确认没问题就提交。`games/*.html` 里的同文件是历史快照，改 `index.html` 时可以同步更新一下独立源码（方便以后对比）。
 
 ### 新增一款游戏
 
