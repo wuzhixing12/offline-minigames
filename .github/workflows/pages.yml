@@ -21,7 +21,7 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: 确保 Pages 站点存在（workflow 模式）
         continue-on-error: true
@@ -35,12 +35,12 @@ jobs:
             "https://api.github.com/repos/${{ github.repository }}/pages" \
             -d '{"build_type":"workflow"}' || true
 
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v6
         continue-on-error: true
 
-      - uses: actions/upload-pages-artifact@v4
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: .
 
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
