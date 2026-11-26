@@ -3,7 +3,12 @@ updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: weekly
+      interval: monthly
+    # 汇总成一个 PR，避免一次开一堆分支
+    groups:
+      github-actions:
+        patterns:
+          - "*"
     commit-message:
       prefix: "ci"
     labels:
