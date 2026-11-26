@@ -1,0 +1,3 @@
+# 独立维护的老游戏源码，不要求在 index.html 里出现
+# 每行一个 games/ 下的 basename（不含 .html）
+g2048m
