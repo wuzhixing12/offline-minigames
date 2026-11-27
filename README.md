@@ -42,7 +42,7 @@
 | ![四键脉冲](screenshots/rhythm.png) | ![暗潮幸存者](screenshots/survivor.png) |
 | 四键脉冲 · 四键下落音游 | 暗潮幸存者 · 自动攻击生存 |
 
-更多截图见 [screenshots/](screenshots)：星团吞噬、雨夜疑云、背包乱斗、第七个房间、此生来世、黑八台球等。
+**全部 80 款都有截图**，按游戏 id 命名保存在 [screenshots/](screenshots)（如 `snake.png`、`xiangqi.png`），选中任意一款即可查找。
 
 ## 80 款游戏
 
