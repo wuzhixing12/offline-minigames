@@ -1959,6 +1959,10 @@
   var KEY  = 'sb_publishable_qSDaZS7OzhsJctZtnUg83w_IvMerKdM';
   var SESS_KEY = 'tx_acct_cloud_sess_v1';
   var META_KEY = 'tx_acct_cloud_meta_v1';
+  /* 云同步入口开关：邮件服务未就绪，先下线 UI；匿名统计不受影响。
+     拿到可用 SMTP / OAuth 后改回 true 即可恢复。 */
+  var CLOUD_ON = false;
+  window.TXCloudEnabled = CLOUD_ON;
 
   function rd(k, d) { try { var s = localStorage.getItem(k); return s ? JSON.parse(s) : d; } catch (e) { return d; } }
   function wr(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
@@ -2285,7 +2289,7 @@
   window.TXCloudUI = { open: openDialog, close: closeDialog };
 
   /* 从魔法链接回来：等进入密码解锁后，自动弹出云同步面板确认登录结果 */
-  if (justLoggedIn || authError) {
+  if (CLOUD_ON && (justLoggedIn || authError)) {
     var tries = 0;
     var timer = setInterval(function () {
       tries++;
@@ -8476,7 +8480,9 @@ var FUN_LABEL = { S:'强烈推荐', A:'很值得玩', B:'值得一试', C:'一�
     var data = API.readData();
     var html = '';
     var cs = (window.TXCloud && TXCloud.currentUser) ? TXCloud.currentUser() : null;
-    html += '<div class="acct-cloudc"><button class="data-btn" id="acct-cloud" type="button">☁ 云同步（跨设备）</button><span class="cloud-tag">' + (cs ? esc(cs.email || '已登录') : '未登录') + '</span></div>';
+    if (window.TXCloudEnabled) {
+      html += '<div class="acct-cloudc"><button class="data-btn" id="acct-cloud" type="button">☁ 云同步（跨设备）</button><span class="cloud-tag">' + (cs ? esc(cs.email || '已登录') : '未登录') + '</span></div>';
+    }
 
     if (cur) {
       var cnt = summarize(data[cur.id]);
