@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>纸牌接龙 · Solitaire</title>
+<style>
+  :root{
+    --bg:#05101a;
+    --felt:#0a2233;
+    --ink:#eaf6ff;
+    --muted:#8aa9c2;
+    --line:rgba(126,196,255,.16);
+    --gold:#fbbf24;
+    --aqua:#5eead4;
+    --cw:76px;
+    --gap:10px;
+    --radius:calc(var(--cw)*.09);
+    --cardh:calc(var(--cw)*1.4);
+    --mono:ui-monospace,"SF Mono","Cascadia Mono",Consolas,monospace;
+    --body:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{
+    --g1:rgba(56,189,248,.16);--g2:rgba(167,139,250,.12);--g3:rgba(94,234,212,.10);
+    background:
+      radial-gradient(900px 600px at 12% -10%,var(--g1),transparent 60%),
+      radial-gradient(800px 600px at 92% 6%,var(--g2),transparent 62%),
+      radial-gradient(900px 700px at 50% 118%,var(--g3),transparent 60%),
+      var(--bg);
+    color:var(--ink);font-family:var(--body);overflow:hidden;
+    -webkit-tap-highlight-color:transparent;user-select:none;
+  }
+  body[data-theme="midnight"]{--bg:#080615;--g1:rgba(139,92,246,.2);--g2:rgba(236,72,153,.13);--g3:rgba(59,130,246,.1)}
+  body[data-theme="jade"]{--bg:#04140f;--g1:rgba(16,185,129,.18);--g2:rgba(94,234,212,.1);--g3:rgba(251,191,36,.055)}
+  body[data-theme="dune"]{--bg:#1a1206;--g1:rgba(251,146,60,.16);--g2:rgba(251,191,36,.09);--g3:rgba(244,114,182,.07)}
+  #app{height:100%;display:flex;flex-direction:column;padding:10px 12px 8px;max-width:1240px;margin:0 auto}
+  header.bar{
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 14px;border-radius:13px;
+    border:1px solid var(--line);
+    background:linear-gradient(180deg,rgba(16,35,56,.85),rgba(7,19,32,.85));
+    box-shadow:0 10px 30px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.05);
+  }
+  .brand{display:flex;align-items:baseline;gap:8px;white-space:nowrap}
+  .brand b{font-size:16px;letter-spacing:.14em;font-weight:800;
+    background:linear-gradient(92deg,#bae6fd,#5eead4 55%,#c4b5fd);
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .brand span{font-size:9.5px;letter-spacing:.26em;color:#62849d}
+  .stats{display:flex;gap:5px;flex-wrap:wrap;margin-left:auto;align-items:center}
+  .stat{display:flex;gap:5px;align-items:baseline;padding:4px 9px;border-radius:8px;
+    background:rgba(6,20,34,.66);border:1px solid rgba(126,196,255,.1);font-size:10.5px;color:#7e9db5}
+  .stat b{font-family:var(--mono);font-size:12px;color:#eaf6ff;font-variant-numeric:tabular-nums}
+  .acts{display:flex;gap:5px;flex-wrap:wrap}
+  .btn{
+    border:1px solid rgba(126,196,255,.22);background:rgba(14,34,54,.8);color:#d7edff;
+    padding:6px 10px;border-radius:8px;font-size:11.5px;cursor:pointer;font-family:var(--body);
+    transition:.15s;
+  }
+  .btn:hover{border-color:rgba(126,196,255,.5);background:rgba(22,48,76,.92)}
+  .btn:active{transform:translateY(1px)}
+  .btn.on{border-color:rgba(94,234,212,.6);color:#a7f3e4;background:rgba(12,60,62,.72)}
+  .btn:disabled{opacity:.35;cursor:not-allowed}
+  main#board{
+    flex:1;min-height:0;position:relative;display:flex;flex-direction:column;
+    justify-content:flex-start;padding:12px 4px 4px;
+  }
+  .toprow,.tableau{
+    display:grid;grid-template-columns:repeat(7,var(--cw));gap:var(--gap);
+    justify-content:center;width:100%;
+  }
+  .toprow{margin-bottom:14px;align-items:start}
+  .slot{position:relative;height:var(--cardh);width:var(--cw);border-radius:var(--radius)}
+  .slot.empty{border:1px dashed rgba(140,190,225,.22);background:rgba(10,28,44,.35);
+    display:flex;align-items:center;justify-content:center;color:rgba(140,190,225,.35);font-size:calc(var(--cw)*.34)}
+  #stock{grid-column:1}
+  #waste{grid-column:2}
+  .f1{grid-column:4}.f2{grid-column:5}.f3{grid-column:6}.f4{grid-column:7}
+  .tableau{align-items:start;flex:1}
+  .col{position:relative;min-height:calc(var(--cardh) + var(--cw)*1.6);border-radius:var(--radius)}
+  .col:after{
+    content:"";position:absolute;inset:0;border-radius:var(--radius);
+    border:1px dashed transparent;transition:.15s;pointer-events:none;
+  }
+  .col.hot:after{border-color:rgba(94,234,212,.75);background:rgba(94,234,212,.07)}
+  .card{
+    position:absolute;left:0;top:0;width:var(--cw);height:var(--cardh);
+    border-radius:var(--radius);overflow:hidden;cursor:pointer;
+    background:linear-gradient(158deg,#fffef9 0%,#f4f7fb 55%,#e3eaf3 100%);
+    box-shadow:0 3px 9px rgba(0,0,0,.34),inset 0 0 0 1px rgba(15,32,48,.16);
+    color:#101a28;transition:box-shadow .15s,transform .12s;
+    will-change:transform;
+  }
+  .card.fu:hover{transform:translateY(-2px);box-shadow:0 7px 16px rgba(0,0,0,.4),inset 0 0 0 1px rgba(15,32,48,.16)}
+  .card.sel{box-shadow:0 0 0 2px var(--aqua),0 8px 22px rgba(45,212,191,.34);transform:translateY(-3px)}
+  .card.red{color:#c0263d}
+  .card .corner{position:absolute;font-weight:800;line-height:1;display:flex;flex-direction:row;align-items:center;gap:calc(var(--cw)*.035);
+    font-size:calc(var(--cw)*.235)}
+  .card .corner i{font-style:normal;font-size:calc(var(--cw)*.2);line-height:1}
+  .card .corner.tl{left:calc(var(--cw)*.055);top:calc(var(--cw)*.055)}
+  .card .corner.br{right:calc(var(--cw)*.055);bottom:calc(var(--cw)*.055);transform:rotate(180deg)}
+  .card .mid{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-size:calc(var(--cw)*.5);opacity:.92;line-height:1;
+  }
+  .card.face .mid{font-size:calc(var(--cw)*.56)}
+  .card .sheen{
+    position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(120deg,rgba(255,255,255,.55),rgba(255,255,255,0) 42%);
+    opacity:.5;
+  }
+  .card.back{
+    background:
+      repeating-linear-gradient(45deg,rgba(120,190,255,.13) 0 5px,rgba(120,190,255,0) 5px 10px),
+      radial-gradient(circle at 50% 32%,rgba(94,234,212,.3),transparent 58%),
+      linear-gradient(150deg,#123a5e,#0a2340 55%,#071a30);
+    box-shadow:0 3px 9px rgba(0,0,0,.4),inset 0 0 0 1px rgba(150,215,255,.28),inset 0 0 18px rgba(0,0,0,.5);
+  }
+  .card.back:after{
+    content:"";position:absolute;inset:calc(var(--cw)*.075);border-radius:calc(var(--radius)*.7);
+    border:1px solid rgba(160,220,255,.16);
+  }
+  .card.back .em{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-size:calc(var(--cw)*.34);color:rgba(150,215,255,.4);
+  }
+  .card.deal{animation:dealin .3s cubic-bezier(.2,.9,.3,1.2) both}
+  @keyframes dealin{from{opacity:0;transform:translateY(-16px) scale(.94)}to{opacity:1;transform:none}}
+  #ghost{position:fixed;z-index:900;pointer-events:none;filter:drop-shadow(0 16px 22px rgba(0,0,0,.45));
+    transform:translate(-50%,-30%)}
+  #ghost .card{transform:none!important}
+  .toast{
+    position:fixed;left:50%;top:14%;transform:translate(-50%,-8px);z-index:60;
+    padding:8px 18px;border-radius:99px;font-size:12.5px;letter-spacing:.1em;
+    background:rgba(8,26,42,.9);border:1px solid rgba(94,234,212,.4);color:#a7f3e4;
+    opacity:0;transition:.25s;pointer-events:none;white-space:nowrap;
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+  .overlay{
+    position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:20px;z-index:50;
+    background:radial-gradient(900px 600px at 50% 40%,rgba(6,20,34,.72),rgba(2,6,12,.93));
+    backdrop-filter:blur(9px);
+  }
+  .overlay.hide{display:none}
+  .panel{
+    width:min(460px,94vw);padding:28px 28px 24px;border-radius:20px;text-align:center;
+    background:linear-gradient(180deg,rgba(14,34,54,.98),rgba(6,17,29,.98));
+    border:1px solid rgba(126,196,255,.24);
+    box-shadow:0 36px 80px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  .panel h1{margin:0 0 3px;font-size:32px;letter-spacing:.14em;
+    background:linear-gradient(100deg,#bae6fd,#5eead4 52%,#c4b5fd);
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .panel .sub{font-size:10px;letter-spacing:.34em;color:#6b90a9;margin-bottom:18px}
+  .panel .desc{font-size:12.5px;line-height:1.9;color:#a9c3d7;text-align:left;margin:0 0 18px}
+  .panel .desc b{color:#7ff0dc;font-weight:600}
+  .res{display:flex;gap:9px;justify-content:center;margin:2px 0 20px;flex-wrap:wrap}
+  .res div{padding:8px 14px;border-radius:10px;background:rgba(8,22,36,.8);border:1px solid rgba(126,196,255,.12);
+    font-size:10.5px;color:#7e9db5}
+  .res b{display:block;font-family:var(--mono);font-size:18px;color:#eaf7ff;margin-top:2px}
+  .panel .btns{display:flex;gap:9px;justify-content:center;flex-wrap:wrap}
+  .panel .btn{padding:10px 20px;font-size:13px;border-radius:10px}
+  .panel .btn.primary{border-color:rgba(94,234,212,.6);background:linear-gradient(180deg,#1a8f86,#0d5c5a);color:#e9fffb;font-weight:700}
+  .help{
+    font-size:10px;color:#55748b;letter-spacing:.03em;text-align:center;padding:2px 0 0;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .tableau.spider{grid-template-columns:repeat(10,var(--cw));gap:calc(var(--gap)*.55)}
+  .toprow.spider{display:flex;align-items:center;justify-content:center;gap:10px}
+  .toprow.spider #waste,.toprow.spider .f1,.toprow.spider .f2,.toprow.spider .f3,.toprow.spider .f4{display:none}
+  .spider-info{display:flex;align-items:center;gap:9px;height:var(--cardh);padding:0 15px;border-radius:calc(var(--radius)*1.4);
+    border:1px solid rgba(126,196,255,.16);background:rgba(8,24,40,.48);font-size:10.5px;color:#8daec6}
+  .spider-info b{font-family:var(--mono);font-size:15px;color:#eaf6ff;font-variant-numeric:tabular-nums}
+  .spider-info .sets{display:flex;gap:3px;margin:0 2px}
+  .spider-info .set{width:8px;height:8px;border-radius:2px;background:rgba(255,255,255,.1);transition:.2s}
+  .spider-info .set.on{background:linear-gradient(180deg,#fde68a,#f59e0b);box-shadow:0 0 7px rgba(251,191,36,.55)}
+  .spider-info.hide{display:none}
+  .card.hint{box-shadow:0 0 0 2px var(--gold),0 9px 20px rgba(251,191,36,.34);transform:translateY(-2px)}
+  .col.hint:after{border-color:rgba(251,191,36,.72);background:rgba(251,191,36,.055)}
+  .slot.hint{outline:2px solid rgba(251,191,36,.7);outline-offset:-2px;border-radius:var(--radius)}
+  .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 16px;text-align:left}
+  .stats-card{padding:10px 12px;border-radius:11px;background:rgba(8,22,36,.7);border:1px solid rgba(126,196,255,.12)}
+  .stats-card h4{margin:0 0 6px;font-size:10.5px;letter-spacing:.18em;color:#7ff0dc;font-weight:700}
+  .stats-card p{margin:2px 0;font-size:10.5px;color:#8aa9c2;display:flex;justify-content:space-between}
+  .stats-card p b{font-family:var(--mono);color:#eaf6ff;font-weight:500}
+  .themebar{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;margin:0 0 18px}
+  .theme{display:flex;align-items:center;gap:6px;padding:7px 11px;border-radius:9px;cursor:pointer;
+    border:1px solid rgba(126,196,255,.16);background:rgba(10,26,42,.75);color:#9dbdd6;font-size:10.5px;font-family:var(--body)}
+  .theme i{width:9px;height:9px;border-radius:50%;font-style:normal;box-shadow:0 0 8px currentColor}
+  .theme.on{border-color:rgba(94,234,212,.55);color:#eaf6ff;background:rgba(12,52,50,.6)}
+  .newtag{display:inline-block;margin-left:5px;padding:1px 5px;border-radius:99px;font-size:8px;letter-spacing:.1em;
+    background:linear-gradient(90deg,#fbbf24,#5eead4);color:#071a1a;font-weight:800;vertical-align:middle}
+  .confetti{position:fixed;top:-24px;width:9px;height:14px;border-radius:2px;z-index:70;pointer-events:none;
+    animation:confettiFall linear forwards}
+  @keyframes confettiFall{to{transform:translateY(112vh) rotate(760deg);opacity:.15}}
+  @media (max-width:720px){
+    #app{padding:7px 7px 5px}
+    header.bar{padding:6px 9px;gap:6px}
+    .brand span{display:none}
+    .brand b{font-size:14px}
+    .stat{padding:3px 7px;font-size:9.5px}
+    .stat b{font-size:11px}
+    .btn{padding:5px 8px;font-size:10.5px}
+    .toprow{margin-bottom:9px}
+    .help{display:none}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="bar">
+    <div class="brand"><b>纸牌接龙</b><span id="brand-sub">KLONDIKE</span></div>
+    <div class="stats">
+      <div class="stat">时间 <b id="s-time">00:00</b></div>
+      <div class="stat">步数 <b id="s-moves">0</b></div>
+      <div class="stat">分数 <b id="s-score">0</b></div>
+      <div class="stat">最佳 <b id="s-best">—</b></div>
+    </div>
+    <div class="acts">
+      <button class="btn" id="btn-mode" title="切换玩法">经典</button>
+      <button class="btn" id="btn-daily" title="每日固定牌局">每日</button>
+      <button class="btn" id="btn-hint" title="提示 (H)">提示</button>
+      <button class="btn" id="btn-draw" title="切换翻牌数量">翻 1 张</button>
+      <button class="btn" id="btn-undo" title="撤销 (U)">撤销</button>
+      <button class="btn" id="btn-auto" title="自动收牌">自动完成</button>
+      <button class="btn" id="btn-stats" title="统计与主题">统计</button>
+      <button class="btn" id="btn-new" title="新牌局 (N)">新牌局</button>
+    </div>
+  </header>
+
+  <main id="board">
+    <div class="toprow" id="toprow">
+      <div class="slot empty" id="stock" data-zone="stock">↻</div>
+      <div class="slot" id="waste" data-zone="waste"></div>
+      <div class="slot empty f1" data-found="0">♠</div>
+      <div class="slot empty f2" data-found="1">♥</div>
+      <div class="slot empty f3" data-found="2">♦</div>
+      <div class="slot empty f4" data-found="3">♣</div>
+      <div class="spider-info hide" id="spider-info">
+        <span>已完成</span><b id="sp-completed">0</b><span>/8</span>
+        <span class="sets" id="sp-sets"></span>
+        <span>剩余发牌 <b id="sp-deals">5</b></span>
+      </div>
+    </div>
+    <div class="tableau" id="tableau"></div>
+    <div class="help" id="help">双击卡牌自动收至上方 · 拖动或点选移动 · 空格翻牌 · U 撤销</div>
+  </main>
+</div>
+
+<div class="overlay hide" id="ov-win">
+  <div class="panel">
+    <h1>接龙完成</h1>
+    <div class="sub">YOU WIN</div>
+    <div class="res">
+      <div>用时<b id="w-time">00:00</b></div>
+      <div>步数<b id="w-moves">0</b></div>
+      <div>分数<b id="w-score">0</b></div>
+      <div>模式<b id="w-mode">经典</b></div>
+    </div>
+    <div class="btns">
+      <button class="btn primary" id="w-again">再来一局</button>
+      <button class="btn" id="w-close">看看牌面</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hide" id="ov-stats">
+  <div class="panel" style="width:min(520px,94vw)">
+    <h1>统计</h1>
+    <div class="sub">STATISTICS</div>
+    <div class="stats-grid" id="stats-grid"></div>
+    <div class="themebar" id="themebar"></div>
+    <div class="btns">
+      <button class="btn primary" id="st-close">返回牌桌</button>
+      <button class="btn" id="st-reset">重置统计</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+var SUITS = [
+  { ch:'♠', red:false }, { ch:'♥', red:true }, { ch:'♦', red:true }, { ch:'♣', red:false }
+];
+var RANKS = ['','A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+
+var root = document.documentElement;
+var board = document.getElementById('board');
+var tableauEl = document.getElementById('tableau');
+var toprowEl = document.getElementById('toprow');
+var stockEl = document.getElementById('stock');
+var wasteEl = document.getElementById('waste');
+var foundEls = [].slice.call(document.querySelectorAll('[data-found]'));
+var spiderInfoEl = document.getElementById('spider-info');
+var spiderSetsEl = document.getElementById('sp-sets');
+
+var state = null;
+var undoStack = [];
+var selection = null;      // {zone, col, idx, cards}
+var drag = null;
+var suppressClick = false;
+var timerId = null;
+var autoId = null;
+var best = loadBest();
+var bestSpider = loadBestSpider();
+var stats = loadStats();
+var hint = null;
+var hintTimer = null;
+var theme = loadTheme();
+var dealAnim = true;
+
+/* ---------- 工具 ---------- */
+function shuffle(a, rand){
+  var rnd = rand || Math.random;
+  for(var i=a.length-1;i>0;i--){ var j=Math.floor(rnd()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; }
+  return a;
+}
+function mulberry32(a){
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    var t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function loadBest(){
+  try{ var v = localStorage.getItem('tx-solitaire-best'); return v ? JSON.parse(v) : null; }
+  catch(e){ return null; }
+}
+function saveBest(v){
+  try{ localStorage.setItem('tx-solitaire-best', JSON.stringify(v)); }catch(e){}
+}
+function loadBestSpider(){
+  try{ var v = localStorage.getItem('tx-solitaire-spider-best'); return v ? JSON.parse(v) : null; }
+  catch(e){ return null; }
+}
+function saveBestSpider(v){
+  try{ localStorage.setItem('tx-solitaire-spider-best', JSON.stringify(v)); }catch(e){}
+}
+function loadStats(){
+  var d = {
+    klondike:{ played:0, wins:0, bestTime:0, bestScore:0 },
+    spider:{ played:0, wins:0, bestTime:0, bestScore:0 }
+  };
+  try{
+    var o = JSON.parse(localStorage.getItem('tx-solitaire-stats') || '{}');
+    ['klondike','spider'].forEach(function(k){
+      if(o[k]){
+        d[k].played = o[k].played || 0;
+        d[k].wins = o[k].wins || 0;
+        d[k].bestTime = o[k].bestTime || 0;
+        d[k].bestScore = o[k].bestScore || 0;
+      }
+    });
+  }catch(e){}
+  return d;
+}
+function saveStats(){
+  try{ localStorage.setItem('tx-solitaire-stats', JSON.stringify(stats)); }catch(e){}
+}
+function loadDaily(){
+  try{
+    var o = JSON.parse(localStorage.getItem('tx-solitaire-daily') || '{}');
+    return { lastDate:o.lastDate || '', streak:o.streak || 0, wins:o.wins || 0, records:o.records || {} };
+  }catch(e){ return { lastDate:'', streak:0, wins:0, records:{} }; }
+}
+function saveDaily(d){
+  try{ localStorage.setItem('tx-solitaire-daily', JSON.stringify(d)); }catch(e){}
+}
+function loadTheme(){
+  try{ return localStorage.getItem('tx-solitaire-theme') || 'abyss'; }catch(e){ return 'abyss'; }
+}
+function saveTheme(v){
+  try{ localStorage.setItem('tx-solitaire-theme', v); }catch(e){}
+}
+function pad2(n){ return (n<10?'0':'') + n; }
+function dayKey(d){
+  d = d || new Date();
+  return d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate());
+}
+function yesterdayKey(){
+  return dayKey(new Date(Date.now() - 86400000));
+}
+function daySeed(offset){
+  return (parseInt(dayKey().replace(/-/g,''),10) % 2147483000) + (offset || 0);
+}
+function fmt(sec){
+  sec = Math.max(0, Math.floor(sec));
+  var m = Math.floor(sec/60), s = sec%60;
+  return (m<10?'0':'') + m + ':' + (s<10?'0':'') + s;
+}
+function toast(msg){
+  var el = document.querySelector('.toast');
+  if(!el){ el = document.createElement('div'); el.className = 'toast'; document.body.appendChild(el); }
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(el._t); el._t = setTimeout(function(){ el.classList.remove('show'); }, 1500);
+}
+
+/* ---------- 发牌 ---------- */
+function newGame(opts){
+  opts = opts || {};
+  stopAuto();
+  clearInterval(timerId); timerId = null;
+  var mode = opts.mode || (state ? state.mode : 'klondike');
+  var rng = (typeof opts.seed === 'number') ? mulberry32(opts.seed) : null;
+  var daily = !!opts.daily;
+  var draw = (state && state.mode === 'klondike' && state.draw) ? state.draw : 1;
+  if(opts.draw) draw = opts.draw;
+
+  if(mode === 'spider'){
+    var sdeck = [];
+    for(var set=0;set<8;set++) for(var sr=1;sr<=13;sr++) sdeck.push({ r:sr, s:0, up:false });
+    shuffle(sdeck, rng);
+    var stab = [];
+    for(var sc=0;sc<10;sc++){
+      var scol = [];
+      var sn = sc < 4 ? 6 : 5;
+      for(var sj=0;sj<sn;sj++){
+        var scard = sdeck.pop();
+        scard.up = (sj === sn-1);
+        scol.push(scard);
+      }
+      stab.push(scol);
+    }
+    state = {
+      mode:'spider', stock:sdeck, waste:[], tableau:stab, found:[[],[],[],[]],
+      completed:0, deals:5, moves:0, score:500, startAt:0, draw:1,
+      won:false, auto:false, daily:daily, seed:(typeof opts.seed==='number'?opts.seed:0), counted:false
+    };
+  } else {
+    var deck = [];
+    for(var s=0;s<4;s++) for(var r=1;r<=13;r++) deck.push({ r:r, s:s, up:false });
+    shuffle(deck, rng);
+    var tableau = [];
+    for(var c=0;c<7;c++){
+      var col = [];
+      for(var j=0;j<=c;j++){
+        var card = deck.pop();
+        card.up = (j === c);
+        col.push(card);
+      }
+      tableau.push(col);
+    }
+    state = {
+      mode:'klondike', stock:deck, waste:[], tableau:tableau, found:[[],[],[],[]],
+      moves:0, score:0, startAt:0, draw:draw, won:false, auto:false,
+      daily:daily, seed:(typeof opts.seed==='number'?opts.seed:0), counted:false
+    };
+  }
+
+  undoStack = [];
+  selection = null;
+  hint = null;
+  dealAnim = true;
+  layout();
+  document.getElementById('ov-win').classList.add('hide');
+}
+
+function startTimer(){
+  if(timerId || state.won) return;
+  state.startAt = Date.now();
+  if(!state.counted){
+    state.counted = true;
+    if(!state.daily){ stats[state.mode].played++; saveStats(); }
+  }
+  timerId = setInterval(function(){
+    if(!state || state.won) return;
+    document.getElementById('s-time').textContent = fmt((Date.now()-state.startAt)/1000);
+  }, 1000);
+}
+function elapsed(){
+  if(!state) return 0;
+  if(!state.startAt) return 0;
+  return (Date.now() - state.startAt)/1000;
+}
+
+/* ---------- 渲染 ---------- */
+function layout(){
+  var w = board.clientWidth || window.innerWidth;
+  var h = board.clientHeight || window.innerHeight;
+  var spider = state && state.mode === 'spider';
+  var cols = spider ? 10 : 7;
+  var gap = Math.max(5, Math.min(16, w*0.013));
+  var tgap = spider ? gap*0.55 : gap;
+  var cw = Math.min((w - tgap*(cols-1) - 14) / cols, h*(spider ? 0.118 : 0.148), spider ? 90 : 104);
+  cw = Math.max(spider ? 33 : 36, cw);
+  root.style.setProperty('--cw', cw.toFixed(2) + 'px');
+  root.style.setProperty('--gap', gap.toFixed(2) + 'px');
+  if(state) render();
+}
+
+function cardEl(card, opts){
+  opts = opts || {};
+  var el = document.createElement('div');
+  if(!card.up){
+    el.className = 'card back';
+    if(opts.deal) el.classList.add('deal');
+    var em = document.createElement('div'); em.className = 'em'; em.textContent = '◈';
+    el.appendChild(em);
+    return el;
+  }
+  var suit = SUITS[card.s];
+  el.className = 'card fu' + (suit.red ? ' red' : '');
+  if(opts.deal) el.classList.add('deal');
+  var tl = document.createElement('div'); tl.className = 'corner tl';
+  tl.innerHTML = '<span>' + RANKS[card.r] + '</span><i>' + suit.ch + '</i>';
+  var mid = document.createElement('div'); mid.className = 'mid';
+  mid.textContent = suit.ch;
+  if(card.r > 10){ el.classList.add('face'); mid.textContent = RANKS[card.r]; mid.style.fontSize = 'calc(var(--cw)*.46)'; }
+  var br = document.createElement('div'); br.className = 'corner br';
+  br.innerHTML = '<span>' + RANKS[card.r] + '</span><i>' + suit.ch + '</i>';
+  var sheen = document.createElement('div'); sheen.className = 'sheen';
+  el.appendChild(tl); el.appendChild(mid); el.appendChild(br); el.appendChild(sheen);
+  return el;
+}
+
+function updateSpiderInfo(){
+  if(!state || state.mode !== 'spider') return;
+  document.getElementById('sp-completed').textContent = state.completed;
+  document.getElementById('sp-deals').textContent = Math.ceil(state.stock.length / 10);
+  var dots = '';
+  for(var i=0;i<8;i++) dots += '<span class="set' + (i < state.completed ? ' on' : '') + '"></span>';
+  spiderSetsEl.innerHTML = dots;
+}
+
+function render(){
+  if(!state) return;
+  var cw = parseFloat(getComputedStyle(root).getPropertyValue('--cw')) || 60;
+  var spider = state.mode === 'spider';
+
+  toprowEl.classList.toggle('spider', spider);
+  tableauEl.classList.toggle('spider', spider);
+  spiderInfoEl.classList.toggle('hide', !spider);
+
+  // stock
+  stockEl.innerHTML = '';
+  stockEl.classList.remove('empty');
+  stockEl.classList.toggle('hint', !!(hint && hint.to && hint.to.zone === 'stock'));
+  if(state.stock.length){
+    var bk = document.createElement('div'); bk.className = 'card back';
+    var em = document.createElement('div'); em.className = 'em'; em.textContent = '◈';
+    bk.appendChild(em);
+    bk.style.position = 'absolute';
+    stockEl.appendChild(bk);
+    if(state.stock.length > 1){
+      var shadow = document.createElement('div'); shadow.className = 'card back';
+      shadow.style.position = 'absolute'; shadow.style.transform = 'translate(3px,2px)';
+      shadow.style.zIndex = '-1'; shadow.style.opacity = '.55';
+      stockEl.appendChild(shadow);
+    }
+  } else {
+    stockEl.classList.add('empty');
+    stockEl.textContent = spider ? '—' : '↻';
+  }
+
+  // waste
+  wasteEl.innerHTML = '';
+  if(!spider && state.waste.length){
+    var n = state.draw === 3 ? Math.min(3, state.waste.length) : 1;
+    var start = state.waste.length - n;
+    var fan = Math.min(cw*0.26, 22);
+    for(var i=0;i<n;i++){
+      var c = state.waste[start+i];
+      var el = cardEl(c, { deal:false });
+      el.style.position = 'absolute';
+      el.style.left = (i*fan) + 'px';
+      el.style.top = '0';
+      el.style.zIndex = String(i+1);
+      if(i === n-1 && selection && selection.zone === 'waste') el.classList.add('sel');
+      if(i === n-1 && hint && hint.from && hint.from.zone === 'waste') el.classList.add('hint');
+      if(i === n-1){
+        el.dataset.zone = 'waste';
+        el.dataset.idx = String(start+i);
+      }
+      wasteEl.appendChild(el);
+    }
+  }
+
+  // foundations / spider progress
+  if(spider){
+    updateSpiderInfo();
+    for(var f0=0;f0<4;f0++) foundEls[f0].innerHTML = '';
+  } else {
+    for(var f=0;f<4;f++){
+      var slot = foundEls[f];
+      slot.innerHTML = '';
+      slot.classList.add('empty');
+      slot.textContent = SUITS[f].ch;
+      slot.classList.toggle('hint', !!(hint && hint.to && hint.to.zone === 'found' && hint.to.f === f));
+      var pile = state.found[f];
+      if(pile.length){
+        slot.classList.remove('empty');
+        slot.textContent = '';
+        var top = pile[pile.length-1];
+        var fe = cardEl(top, { deal:false });
+        fe.style.position = 'absolute';
+        if(selection && selection.zone === 'found' && selection.f === f) fe.classList.add('sel');
+        slot.appendChild(fe);
+      }
+    }
+  }
+
+  // tableau
+  tableauEl.innerHTML = '';
+  var downOff = Math.round(cw*(spider ? 0.15 : 0.155));
+  var upOff = Math.round(cw*(spider ? 0.24 : 0.275));
+  var nCols = spider ? 10 : 7;
+  for(var col=0; col<nCols; col++){
+    var colEl = document.createElement('div');
+    colEl.className = 'col';
+    colEl.dataset.col = String(col);
+    var cards = state.tableau[col];
+    var top = 0;
+    for(var j=0;j<cards.length;j++){
+      var cd = cards[j];
+      var ce = cardEl(cd, { deal: dealAnim && j === cards.length-1 && state.moves === 0 });
+      ce.style.top = top + 'px';
+      ce.style.zIndex = String(j+1);
+      if(cd.up){
+        ce.dataset.zone = 'tableau';
+        ce.dataset.col = String(col);
+        ce.dataset.idx = String(j);
+        if(selection && selection.zone === 'tableau' && selection.col === col && j >= selection.idx) ce.classList.add('sel');
+        if(hint && hint.from && hint.from.zone === 'tableau' && hint.from.col === col && j >= hint.from.idx) ce.classList.add('hint');
+      }
+      colEl.appendChild(ce);
+      top += cd.up ? upOff : downOff;
+    }
+    if(selection && selection.zone === 'tableau' && selection.col === col){
+      colEl.classList.add('hot');
+    }
+    if(hint && hint.to && hint.to.zone === 'tableau' && hint.to.col === col){
+      colEl.classList.add('hint');
+    }
+    tableauEl.appendChild(colEl);
+  }
+  dealAnim = false;
+  updateHud();
+}
+
+function updateHud(){
+  if(!state) return;
+  var spider = state.mode === 'spider';
+  document.getElementById('s-moves').textContent = state.moves;
+  document.getElementById('s-score').textContent = state.score;
+  document.getElementById('s-time').textContent = fmt(elapsed());
+  document.getElementById('brand-sub').textContent = spider ? 'SPIDER' : 'KLONDIKE';
+  var b = spider ? bestSpider : best;
+  document.getElementById('s-best').textContent = b ? fmt(b.time) : '—';
+  document.getElementById('btn-undo').disabled = undoStack.length === 0;
+  document.getElementById('btn-auto').disabled = !canAuto();
+  document.getElementById('btn-mode').textContent = spider ? '蜘蛛' : '经典';
+  document.getElementById('btn-mode').classList.toggle('on', spider);
+  document.getElementById('btn-daily').classList.toggle('on', !!state.daily);
+  document.getElementById('help').textContent = spider
+    ? '拖动或点选移动 · 点击牌堆发一轮 · H 提示 · U 撤销'
+    : '双击卡牌自动收至上方 · 拖动或点选移动 · 空格翻牌 · H 提示 · U 撤销';
+  var drawBtn = document.getElementById('btn-draw');
+  if(spider){
+    var deals = Math.ceil(state.stock.length / 10);
+    drawBtn.textContent = '发牌 ' + deals;
+    drawBtn.classList.toggle('on', state.stock.length > 0);
+    drawBtn.disabled = state.stock.length === 0;
+  } else {
+    drawBtn.textContent = '翻 ' + state.draw + ' 张';
+    drawBtn.classList.toggle('on', state.draw === 3);
+    drawBtn.disabled = false;
+  }
+}
+
+/* ---------- 规则 ---------- */
+function topOf(col){ var c = state.tableau[col]; return c.length ? c[c.length-1] : null; }
+function canStack(card, onto){
+  if(state && state.mode === 'spider'){
+    if(!onto) return true;
+    return card.r === onto.r - 1;
+  }
+  if(!onto) return card.r === 13;
+  return card.r === onto.r - 1 && SUITS[card.s].red !== SUITS[onto.s].red;
+}
+function canFound(card, f){
+  if(state && state.mode === 'spider') return false;
+  var pile = state.found[f];
+  if(!pile.length) return card.r === 1;
+  var top = pile[pile.length-1];
+  return card.s === top.s && card.r === top.r + 1;
+}
+function spiderRun(col, idx){
+  var cards = state.tableau[col];
+  if(idx < 0 || idx >= cards.length) return null;
+  if(!cards[idx].up) return null;
+  for(var i=idx+1;i<cards.length;i++){
+    if(!cards[i].up) return null;
+    if(cards[i].r !== cards[i-1].r - 1) return null;
+  }
+  return cards.slice(idx);
+}
+function movableRun(col, idx){
+  if(state && state.mode === 'spider') return spiderRun(col, idx);
+  var cards = state.tableau[col];
+  if(idx < 0 || idx >= cards.length) return null;
+  if(!cards[idx].up) return null;
+  for(var i=idx;i<cards.length;i++){
+    if(!cards[i].up) return null;
+    if(i>idx){
+      var prev = cards[i-1], cur = cards[i];
+      if(cur.r !== prev.r - 1 || SUITS[cur.s].red === SUITS[prev.s].red) return null;
+    }
+  }
+  return cards.slice(idx);
+}
+
+/* ---------- 操作 ---------- */
+function snapshot(){
+  undoStack.push(JSON.stringify({
+    mode: state.mode, stock: state.stock, waste: state.waste, tableau: state.tableau,
+    found: state.found, moves: state.moves, score: state.score, draw: state.draw,
+    completed: state.completed || 0, deals: state.deals || 0
+  }));
+  if(undoStack.length > 200) undoStack.shift();
+}
+function restore(str){
+  var o = JSON.parse(str);
+  state.mode = o.mode || 'klondike';
+  state.stock = o.stock; state.waste = o.waste; state.tableau = o.tableau;
+  state.found = o.found; state.moves = o.moves; state.score = o.score; state.draw = o.draw;
+  state.completed = o.completed || 0; state.deals = o.deals || 0;
+  selection = null; hint = null;
+  render();
+}
+
+function drawStock(){
+  if(state.won) return;
+  if(state.mode === 'spider'){ spiderDeal(); return; }
+  if(!state.stock.length && !state.waste.length) return;
+  hint = null;
+  startTimer();
+  snapshot();
+  if(state.stock.length){
+    var n = Math.min(state.draw, state.stock.length);
+    for(var i=0;i<n;i++){
+      var c = state.stock.pop();
+      c.up = true;
+      state.waste.push(c);
+    }
+  } else {
+    var w = state.waste;
+    state.waste = [];
+    for(var j=w.length-1;j>=0;j--){
+      w[j].up = false;
+      state.stock.push(w[j]);
+    }
+    state.score = Math.max(0, state.score - 20);
+  }
+  state.moves++;
+  selection = null;
+  render();
+}
+
+function spiderDeal(){
+  if(!state || state.mode !== 'spider' || state.won) return;
+  if(!state.stock.length){ toast('没有牌可以发了'); return; }
+  for(var c=0;c<10;c++){
+    if(!state.tableau[c].length){ toast('有空列时不能发牌，先把空列填上'); return; }
+  }
+  startTimer();
+  snapshot();
+  hint = null;
+  for(var c2=0;c2<10;c2++){
+    var card = state.stock.pop();
+    card.up = true;
+    state.tableau[c2].push(card);
+  }
+  state.deals = Math.ceil(state.stock.length/10);
+  state.moves++;
+  state.score = Math.max(0, state.score - 1);
+  selection = null;
+  collectSpiderSets();
+  render();
+}
+
+function collectSpiderSets(silent){
+  if(!state || state.mode !== 'spider') return false;
+  var got = false;
+  for(var c=0;c<10;c++){
+    var col = state.tableau[c];
+    if(col.length < 13) continue;
+    var ok = true;
+    for(var k=0;k<13;k++){
+      var card = col[col.length-13+k];
+      if(!card.up || card.r !== 13-k){ ok = false; break; }
+    }
+    if(!ok) continue;
+    col.splice(col.length-13, 13);
+    state.completed++;
+    state.score += 100;
+    got = true;
+    if(!silent) toast('完成一组 K→A，第 ' + state.completed + ' 组');
+    if(col.length && !col[col.length-1].up){ col[col.length-1].up = true; state.score += 0; }
+  }
+  if(got) checkWin();
+  return got;
+}
+
+function hasCompleteSpiderRun(){
+  if(!state || state.mode !== 'spider') return false;
+  for(var c=0;c<10;c++){
+    var col = state.tableau[c];
+    if(col.length < 13) continue;
+    var ok = true;
+    for(var k=0;k<13;k++){
+      var card = col[col.length-13+k];
+      if(!card.up || card.r !== 13-k){ ok = false; break; }
+    }
+    if(ok) return true;
+  }
+  return false;
+}
+
+function select(sel){
+  selection = sel;
+  render();
+}
+function clearSel(){ selection = null; render(); }
+
+function moveToTableau(from, to){
+  var cards, src;
+  if(from.zone === 'waste'){ cards = [state.waste[state.waste.length-1]]; src = 'waste'; }
+  else if(from.zone === 'tableau'){ cards = movableRun(from.col, from.idx); src = 'tableau'; }
+  else if(from.zone === 'found'){
+    var pile = state.found[from.f]; if(!pile.length) return false;
+    cards = [pile[pile.length-1]]; src = 'found';
+  }
+  if(!cards || !cards.length) return false;
+  var dest = topOf(to);
+  if(!canStack(cards[0], dest)) return false;
+
+  snapshot();
+  hint = null;
+  if(src === 'waste') state.waste.pop();
+  else if(src === 'found') state.found[from.f].pop();
+  else state.tableau[from.col].splice(from.idx, cards.length);
+
+  var col = state.tableau[to];
+  for(var i=0;i<cards.length;i++) col.push(cards[i]);
+
+  if(src === 'tableau'){
+    var sc = state.tableau[from.col];
+    if(sc.length && !sc[sc.length-1].up){
+      sc[sc.length-1].up = true;
+      if(state.mode !== 'spider') state.score += 5;
+    }
+  }
+  state.moves++;
+  if(state.mode === 'spider') state.score = Math.max(0, state.score - 1);
+  else if(src === 'waste' || src === 'found') state.score = Math.max(0, state.score);
+  selection = null;
+  if(state.mode === 'spider') collectSpiderSets();
+  render();
+  checkWin();
+  return true;
+}
+
+function moveToFoundation(from, f){
+  if(state.mode === 'spider') return false;
+  var card, src;
+  if(from.zone === 'waste'){ card = state.waste[state.waste.length-1]; src = 'waste'; }
+  else if(from.zone === 'tableau'){
+    card = topOf(from.col);
+    if(from.idx !== state.tableau[from.col].length-1) return false;
+    src = 'tableau';
+  } else if(from.zone === 'found'){
+    var pile = state.found[from.f];
+    if(!pile.length) return false;
+    card = pile[pile.length-1]; src = 'found';
+  }
+  if(!card || !canFound(card, f)) return false;
+
+  snapshot();
+  hint = null;
+  if(src === 'waste') state.waste.pop();
+  else if(src === 'found') state.found[from.f].pop();
+  else {
+    state.tableau[from.col].pop();
+    var sc = state.tableau[from.col];
+    if(sc.length && !sc[sc.length-1].up){ sc[sc.length-1].up = true; state.score += 5; }
+  }
+  state.found[f].push(card);
+  state.score += 10;
+  state.moves++;
+  selection = null;
+  render();
+  checkWin();
+  return true;
+}
+
+function autoMoveToFoundation(from){
+  for(var f=0;f<4;f++){
+    if(canFound(topCard(from), f)){
+      return moveToFoundation(from, f);
+    }
+  }
+  return false;
+}
+function topCard(from){
+  if(from.zone === 'waste') return state.waste[state.waste.length-1];
+  if(from.zone === 'tableau') return topOf(from.col);
+  if(from.zone === 'found'){
+    var p = state.found[from.f]; return p[p.length-1];
+  }
+  return null;
+}
+
+function undo(){
+  if(!undoStack.length) return;
+  stopAuto();
+  restore(undoStack.pop());
+  state.won = false;
+  document.getElementById('ov-win').classList.add('hide');
+  state.score = Math.max(0, state.score - 2);
+  updateHud();
+}
+
+function canAuto(){
+  if(!state || state.won) return false;
+  if(state.mode === 'spider') return hasCompleteSpiderRun();
+  if(state.stock.length || state.waste.length) return false;
+  for(var c=0;c<7;c++){
+    var col = state.tableau[c];
+    for(var i=0;i<col.length;i++) if(!col[i].up) return false;
+  }
+  for(var f=0;f<4;f++) if(state.found[f].length < 13) return true;
+  return false;
+}
+function autoComplete(){
+  if(!canAuto()) return;
+  state.auto = true;
+  startTimer();
+  stopAuto();
+  if(state.mode === 'spider'){
+    autoId = setInterval(function(){
+      if(!collectSpiderSets(true)){ stopAuto(); render(); return; }
+      render();
+      if(state.won) stopAuto();
+    }, 180);
+    return;
+  }
+  autoId = setInterval(function(){
+    var did = false;
+    for(var c=0;c<7 && !did;c++){
+      if(!state.tableau[c].length) continue;
+      var card = topOf(c);
+      for(var f=0;f<4;f++){
+        if(canFound(card, f)){ moveToFoundation({zone:'tableau',col:c,idx:state.tableau[c].length-1}, f); did = true; break; }
+      }
+    }
+    if(!did){ stopAuto(); }
+    else if(state.won){ stopAuto(); }
+  }, 130);
+}
+function stopAuto(){
+  if(autoId){ clearInterval(autoId); autoId = null; }
+  if(state) state.auto = false;
+}
+
+function checkWin(){
+  if(!state || state.won) return false;
+  if(state.mode === 'spider'){
+    if(state.completed < 8) return false;
+  } else {
+    for(var f=0;f<4;f++) if(state.found[f].length !== 13) return false;
+  }
+  state.won = true;
+  clearInterval(timerId); timerId = null;
+  stopAuto();
+  var t = elapsed();
+  if(state.mode === 'spider'){
+    if(!bestSpider || t < bestSpider.time){ bestSpider = { time:t, moves:state.moves, score:state.score }; saveBestSpider(bestSpider); }
+  } else {
+    if(!best || t < best.time){ best = { time:t, moves:state.moves, score:state.score }; saveBest(best); }
+  }
+
+  if(!state.daily){
+    var st = stats[state.mode];
+    st.wins++;
+    if(!st.bestTime || t < st.bestTime) st.bestTime = t;
+    if(!st.bestScore || state.score > st.bestScore) st.bestScore = state.score;
+    saveStats();
+  } else {
+    var d = loadDaily();
+    var key = dayKey() + ':' + state.mode;
+    if(!d.records[key]){ d.records[key] = { time:t, moves:state.moves, score:state.score }; d.wins++; }
+    if(d.lastDate !== dayKey()){
+      d.streak = (d.lastDate === yesterdayKey()) ? (d.streak || 0) + 1 : 1;
+      d.lastDate = dayKey();
+    }
+    saveDaily(d);
+  }
+
+  document.getElementById('w-time').textContent = fmt(t);
+  document.getElementById('w-moves').textContent = state.moves;
+  document.getElementById('w-score').textContent = state.score;
+  document.getElementById('w-mode').textContent = state.mode === 'spider' ? '蜘蛛' : '经典';
+  document.getElementById('ov-win').classList.remove('hide');
+  celebrate();
+  updateHud();
+  return true;
+}
+
+function celebrate(){
+  var colors = ['#fbbf24','#5eead4','#7dd3fc','#c4b5fd','#fb7185','#ffffff'];
+  for(var i=0;i<54;i++){
+    var el = document.createElement('i');
+    el.className = 'confetti';
+    el.style.left = (Math.random()*100) + 'vw';
+    el.style.background = colors[Math.floor(Math.random()*colors.length)];
+    el.style.animationDuration = (1.6 + Math.random()*1.8) + 's';
+    el.style.animationDelay = (Math.random()*.5) + 's';
+    el.style.transform = 'rotate(' + (Math.random()*180) + 'deg)';
+    el.style.width = (5 + Math.random()*6) + 'px';
+    el.style.height = (9 + Math.random()*8) + 'px';
+    document.body.appendChild(el);
+    (function(node){ setTimeout(function(){ if(node.parentNode) node.parentNode.removeChild(node); }, 4200); })(el);
+  }
+}
+
+/* ---------- 提示 ---------- */
+function cardName(c){ return c ? RANKS[c.r] + SUITS[c.s].ch : ''; }
+
+function findKlondikeHint(){
+  var w = state.waste[state.waste.length-1];
+  if(w){
+    for(var f=0;f<4;f++) if(canFound(w,f)) return { from:{zone:'waste'}, to:{zone:'found',f:f}, msg:'把 ' + cardName(w) + ' 收到上方收集区' };
+    for(var c=0;c<7;c++){
+      if(canStack(w, topOf(c))) return { from:{zone:'waste'}, to:{zone:'tableau',col:c}, msg:'把 ' + cardName(w) + ' 拖到第 ' + (c+1) + ' 列' };
+    }
+  }
+  for(var c2=0;c2<7;c2++){
+    var top = topOf(c2);
+    if(!top) continue;
+    for(var f2=0;f2<4;f2++){
+      if(canFound(top,f2)) return { from:{zone:'tableau',col:c2,idx:state.tableau[c2].length-1}, to:{zone:'found',f:f2}, msg:'把 ' + cardName(top) + ' 收到上方' };
+    }
+  }
+  for(var c3=0;c3<7;c3++){
+    var col = state.tableau[c3];
+    for(var i=0;i<col.length;i++){
+      if(!col[i].up) continue;
+      var run = movableRun(c3, i);
+      if(!run) continue;
+      for(var c4=0;c4<7;c4++){
+        if(c4 === c3) continue;
+        if(canStack(run[0], topOf(c4))) return { from:{zone:'tableau',col:c3,idx:i}, to:{zone:'tableau',col:c4}, msg:'试试把 ' + cardName(run[0]) + ' 移到第 ' + (c4+1) + ' 列' };
+      }
+    }
+  }
+  if(state.stock.length || state.waste.length) return { from:null, to:{zone:'stock'}, msg:'翻开牌堆，寻找新的机会' };
+  return null;
+}
+
+function findSpiderHint(){
+  var foundMove = null;
+  for(var c=0;c<10;c++){
+    var col = state.tableau[c];
+    for(var i=0;i<col.length;i++){
+      if(!col[i].up) continue;
+      var run = movableRun(c, i);
+      if(!run) continue;
+      for(var c2=0;c2<10;c2++){
+        if(c2 === c) continue;
+        var dest = topOf(c2);
+        if(!canStack(run[0], dest)) continue;
+        if(!dest && i === 0) continue;
+        var candidate = { from:{zone:'tableau',col:c,idx:i}, to:{zone:'tableau',col:c2}, msg:'把 ' + cardName(run[0]) + ' 移到第 ' + (c2+1) + ' 列' };
+        if(i > 0 && !col[i-1].up) return candidate;
+        if(!foundMove) foundMove = candidate;
+      }
+    }
+  }
+  if(foundMove) return foundMove;
+  for(var c3=0;c3<10;c3++){
+    if(!state.tableau[c3].length) return { from:null, to:null, msg:'空列需要先填上，才能继续发牌' };
+  }
+  if(state.stock.length) return { from:null, to:{zone:'stock'}, msg:'没有可移动的牌，发一轮新牌' };
+  return null;
+}
+
+function showHint(){
+  if(!state || state.won) return;
+  var h = state.mode === 'spider' ? findSpiderHint() : findKlondikeHint();
+  if(!h){ toast('暂时没有找到可走的牌，可以撤销或开新局'); return; }
+  hint = h;
+  render();
+  if(h.msg) toast(h.msg);
+  clearTimeout(hintTimer);
+  hintTimer = setTimeout(function(){ hint = null; render(); }, 2800);
+}
+
+/* ---------- 交互 ---------- */
+function fromDataset(el){
+  var zone = el.dataset.zone;
+  if(zone === 'tableau') return { zone:'tableau', col:+el.dataset.col, idx:+el.dataset.idx };
+  if(zone === 'waste') return { zone:'waste' };
+  var fo = el.closest('[data-found]');
+  if(fo) return { zone:'found', f:+fo.dataset.found };
+  return null;
+}
+
+board.addEventListener('click', function(ev){
+  if(suppressClick){ suppressClick = false; return; }
+  var target = ev.target;
+  var stock = target.closest('#stock');
+  if(stock){ drawStock(); return; }
+  var card = target.closest('.card');
+  var colEl = target.closest('[data-col]');
+  var foundEl = target.closest('[data-found]');
+
+  // 1) 已有选择 → 尝试落到目标
+  if(selection){
+    if(foundEl){
+      if(moveToFoundation(selection, +foundEl.dataset.found)) return;
+      if(selection.zone === 'found' && selection.f === +foundEl.dataset.found){ clearSel(); return; }
+      clearSel(); return;
+    }
+    if(colEl){
+      var toCol = +colEl.dataset.col;
+      if(selection.zone === 'tableau' && selection.col === toCol){
+        if(card){
+          var idx = +card.dataset.idx;
+          if(!isNaN(idx) && card.dataset.zone === 'tableau'){ select({ zone:'tableau', col:toCol, idx:idx }); return; }
+        }
+        clearSel(); return;
+      }
+      if(moveToTableau(selection, toCol)) return;
+      clearSel();
+      if(card && card.dataset.zone === 'tableau'){
+        var run = movableRun(+card.dataset.col, +card.dataset.idx);
+        if(run) select({ zone:'tableau', col:+card.dataset.col, idx:+card.dataset.idx });
+      }
+      return;
+    }
+    clearSel();
+    return;
+  }
+
+  // 2) 无选择 → 选中
+  if(card){
+    if(card.dataset.zone === 'waste'){
+      select({ zone:'waste' });
+      return;
+    }
+    if(card.dataset.zone === 'tableau'){
+      var run = movableRun(+card.dataset.col, +card.dataset.idx);
+      if(run) select({ zone:'tableau', col:+card.dataset.col, idx:+card.dataset.idx });
+      else toast('这组牌不能整体移动');
+      return;
+    }
+    if(foundEl){
+      var fp = state.found[+foundEl.dataset.found];
+      if(fp.length) select({ zone:'found', f:+foundEl.dataset.found });
+      return;
+    }
+  }
+  if(foundEl){
+    var fp2 = state.found[+foundEl.dataset.found];
+    if(fp2.length) select({ zone:'found', f:+foundEl.dataset.found });
+  }
+});
+
+// 双击自动收牌
+board.addEventListener('dblclick', function(ev){
+  var card = ev.target.closest('.card');
+  if(!card || !card.dataset.zone) return;
+  var from = fromDataset(card);
+  if(!from) return;
+  if(from.zone === 'tableau'){
+    var cards = state.tableau[from.col];
+    if(from.idx !== cards.length-1) return;
+  }
+  if(from.zone === 'found') return;
+  autoMoveToFoundation(from);
+});
+
+// 拖拽
+var ghost = null, dragStart = null, dragMoved = false;
+board.addEventListener('pointerdown', function(ev){
+  if(ev.button !== undefined && ev.button !== 0) return;
+  var card = ev.target.closest('.card');
+  if(!card || !card.dataset.zone) return;
+  if(card.dataset.zone === 'waste' && +card.dataset.idx !== state.waste.length-1) return;
+  var from = fromDataset(card);
+  if(!from) return;
+  var cards = null;
+  if(from.zone === 'tableau') cards = movableRun(from.col, from.idx);
+  else cards = [topCard(from)];
+  if(!cards || !cards.length) return;
+  dragStart = { x:ev.clientX, y:ev.clientY, from:from, cards:cards, el:card };
+  dragMoved = false;
+}, { passive:true });
+
+board.addEventListener('pointermove', function(ev){
+  if(!dragStart) return;
+  var dx = ev.clientX - dragStart.x, dy = ev.clientY - dragStart.y;
+  if(!dragMoved && Math.hypot(dx,dy) < 7) return;
+  if(!dragMoved){
+    dragMoved = true;
+    selection = null;
+    makeGhost(dragStart.cards, ev.clientX, ev.clientY);
+  }
+  if(ghost){
+    ghost.style.left = ev.clientX + 'px';
+    ghost.style.top = ev.clientY + 'px';
+  }
+  highlightAt(ev.clientX, ev.clientY);
+  ev.preventDefault();
+}, { passive:false });
+
+board.addEventListener('pointerup', function(ev){
+  if(!dragStart) return;
+  var result = null;
+  if(dragMoved){
+    suppressClick = true;
+    setTimeout(function(){ suppressClick = false; }, 80);
+    var el = document.elementFromPoint(ev.clientX, ev.clientY);
+    var colEl = el && el.closest ? el.closest('[data-col]') : null;
+    var foundEl = el && el.closest ? el.closest('[data-found]') : null;
+    if(foundEl && dragStart.cards.length === 1){
+      var f = +foundEl.dataset.found;
+      if(moveToFoundation(dragStart.from, f)) result = true;
+    } else if(colEl){
+      if(moveToTableau(dragStart.from, +colEl.dataset.col)) result = true;
+    }
+    if(!result) render();
+  }
+  cleanupDrag();
+  dragStart = null;
+  dragMoved = false;
+});
+board.addEventListener('pointercancel', function(){
+  cleanupDrag(); dragStart = null; dragMoved = false; render();
+});
+
+function makeGhost(cards, x, y){
+  cleanupDrag();
+  ghost = document.createElement('div');
+  ghost.id = 'ghost';
+  ghost.style.left = x + 'px';
+  ghost.style.top = y + 'px';
+  var cw = parseFloat(getComputedStyle(root).getPropertyValue('--cw')) || 60;
+  var off = Math.round(cw*0.275);
+  cards.forEach(function(c, i){
+    var e = cardEl(c, { deal:false });
+    e.style.position = 'absolute';
+    e.style.top = (i*off) + 'px';
+    e.style.zIndex = String(i+1);
+    ghost.appendChild(e);
+  });
+  ghost.style.width = cw + 'px';
+  ghost.style.height = (cw*1.4 + (cards.length-1)*off) + 'px';
+  document.body.appendChild(ghost);
+}
+function cleanupDrag(){
+  if(ghost){ ghost.parentNode && ghost.parentNode.removeChild(ghost); ghost = null; }
+  clearHot();
+}
+function clearHot(){
+  var hots = document.querySelectorAll('.col.hot');
+  for(var i=0;i<hots.length;i++) hots[i].classList.remove('hot');
+}
+function highlightAt(x,y){
+  clearHot();
+  var el = document.elementFromPoint(x,y);
+  var colEl = el && el.closest ? el.closest('[data-col]') : null;
+  if(colEl) colEl.classList.add('hot');
+}
+
+/* ---------- 统计 / 主题 ---------- */
+var THEMES = [
+  { id:'abyss', name:'深海', color:'#38bdf8' },
+  { id:'midnight', name:'午夜', color:'#a78bfa' },
+  { id:'jade', name:'翡翠', color:'#34d399' },
+  { id:'dune', name:'沙丘', color:'#fbbf24' }
+];
+function buildThemeBar(){
+  var wrap = document.getElementById('themebar');
+  wrap.innerHTML = '';
+  THEMES.forEach(function(t){
+    var b = document.createElement('button');
+    b.className = 'theme' + (theme === t.id ? ' on' : '');
+    b.innerHTML = '<i style="color:' + t.color + ';background:' + t.color + '"></i>' + t.name;
+    b.addEventListener('click', function(){ applyTheme(t.id); });
+    wrap.appendChild(b);
+  });
+}
+function applyTheme(id){
+  theme = id;
+  document.body.dataset.theme = id;
+  saveTheme(id);
+  buildThemeBar();
+}
+function buildStats(){
+  var d = loadDaily();
+  var today = dayKey();
+  var doneToday = !!(d.records[today + ':klondike'] || d.records[today + ':spider']);
+  var k = stats.klondike, s = stats.spider;
+  document.getElementById('stats-grid').innerHTML =
+    '<div class="stats-card"><h4>经典接龙</h4>' +
+      '<p><span>开局</span><b>' + k.played + '</b></p>' +
+      '<p><span>胜利</span><b>' + k.wins + '</b></p>' +
+      '<p><span>最佳用时</span><b>' + (k.bestTime ? fmt(k.bestTime) : '—') + '</b></p>' +
+      '<p><span>最高分</span><b>' + (k.bestScore || '—') + '</b></p></div>' +
+    '<div class="stats-card"><h4>蜘蛛纸牌</h4>' +
+      '<p><span>开局</span><b>' + s.played + '</b></p>' +
+      '<p><span>胜利</span><b>' + s.wins + '</b></p>' +
+      '<p><span>最佳用时</span><b>' + (s.bestTime ? fmt(s.bestTime) : '—') + '</b></p>' +
+      '<p><span>最高分</span><b>' + (s.bestScore || '—') + '</b></p></div>' +
+    '<div class="stats-card"><h4>每日挑战</h4>' +
+      '<p><span>完成次数</span><b>' + d.wins + '</b></p>' +
+      '<p><span>连续天数</span><b>' + d.streak + '</b></p>' +
+      '<p><span>今日状态</span><b>' + (doneToday ? '已完成' : '未完成') + '</b></p></div>' +
+    '<div class="stats-card"><h4>今日牌局</h4>' +
+      '<p><span>日期</span><b>' + today + '</b></p>' +
+      '<p><span>玩法</span><b>经典 / 蜘蛛</b></p>' +
+      '<p><span>固定种子</span><b>' + daySeed(0) + '</b></p></div>';
+  buildThemeBar();
+}
+function openStats(){
+  buildStats();
+  document.getElementById('ov-stats').classList.remove('hide');
+}
+function closeStats(){
+  document.getElementById('ov-stats').classList.add('hide');
+}
+function startDaily(){
+  var mode = state ? state.mode : 'klondike';
+  newGame({ mode:mode, seed:daySeed(mode === 'spider' ? 7777 : 0), daily:true });
+  toast('每日挑战 · ' + dayKey() + ' · ' + (mode === 'spider' ? '蜘蛛' : '经典'));
+}
+
+/* ---------- 按钮 ---------- */
+document.getElementById('btn-draw').addEventListener('click', function(){
+  if(!state) return;
+  if(state.mode === 'spider'){ spiderDeal(); return; }
+  state.draw = state.draw === 1 ? 3 : 1;
+  render();
+  toast('已切换为翻 ' + state.draw + ' 张');
+});
+document.getElementById('btn-undo').addEventListener('click', undo);
+document.getElementById('btn-new').addEventListener('click', function(){
+  newGame({ mode:state.mode, draw:state.draw });
+});
+document.getElementById('btn-auto').addEventListener('click', autoComplete);
+document.getElementById('btn-mode').addEventListener('click', function(){
+  newGame({ mode: state.mode === 'spider' ? 'klondike' : 'spider' });
+});
+document.getElementById('btn-daily').addEventListener('click', startDaily);
+document.getElementById('btn-hint').addEventListener('click', showHint);
+document.getElementById('btn-stats').addEventListener('click', openStats);
+document.getElementById('st-close').addEventListener('click', closeStats);
+document.getElementById('st-reset').addEventListener('click', function(){
+  if(!this._armed){
+    this._armed = true;
+    this.textContent = '再点一次确认';
+    var self = this;
+    setTimeout(function(){ self._armed = false; self.textContent = '重置统计'; }, 2500);
+    return;
+  }
+  stats = {
+    klondike:{ played:0, wins:0, bestTime:0, bestScore:0 },
+    spider:{ played:0, wins:0, bestTime:0, bestScore:0 }
+  };
+  saveStats();
+  this._armed = false;
+  this.textContent = '重置统计';
+  buildStats();
+  toast('统计已重置');
+});
+document.getElementById('w-again').addEventListener('click', function(){
+  newGame({ mode:state.mode, seed:(state.seed || null), daily:state.daily });
+});
+document.getElementById('w-close').addEventListener('click', function(){ document.getElementById('ov-win').classList.add('hide'); });
+
+document.addEventListener('keydown', function(ev){
+  var statsOpen = !document.getElementById('ov-stats').classList.contains('hide');
+  if(statsOpen){
+    if(ev.key === 'Escape') closeStats();
+    return;
+  }
+  if(ev.key === 'u' || ev.key === 'U'){ undo(); }
+  else if(ev.key === 'n' || ev.key === 'N'){ newGame({ mode:state.mode, draw:state.draw }); }
+  else if(ev.key === 'h' || ev.key === 'H'){ showHint(); }
+  else if(ev.key === ' '){ ev.preventDefault(); drawStock(); }
+  else if(ev.key === 'Escape'){ clearSel(); }
+});
+
+/* ---------- 启动 ---------- */
+var ro = null;
+if(window.ResizeObserver){ ro = new ResizeObserver(function(){ layout(); }); ro.observe(board); }
+window.addEventListener('resize', layout);
+document.body.dataset.theme = theme;
+newGame({ mode:'klondike' });
+layout();
+setTimeout(layout, 60);
+})();
+</script>
+</body>
+</html>

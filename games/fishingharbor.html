@@ -1,0 +1,2007 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>潮汐垂钓</title>
+<style>
+  *{box-sizing:border-box}
+  [hidden],.hide{display:none!important}
+  html,body{margin:0;height:100%;overflow:hidden;background:#05101c;color:#e8f4ff;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;color-scheme:dark}
+  body{display:flex;flex-direction:column;--accent:#7ee0ff;--accent2:#fbbf24}
+  .top{display:flex;align-items:center;gap:10px;padding:8px 12px;font-size:12px;color:#8fa9c6;background:#071523;border-bottom:1px solid rgba(126,224,255,.1);overflow-x:auto;white-space:nowrap}
+  .top .stat{display:flex;align-items:baseline;gap:3px;flex:none}
+  .top b{color:var(--accent);font-size:14px;margin-left:2px}
+  .tide{display:flex;align-items:center;gap:5px;flex:none;margin-left:auto;padding:3px 9px;border-radius:999px;border:1px solid rgba(126,224,255,.22);background:rgba(126,224,255,.07);color:#c9ecff}
+  .tide b{font-size:12px;color:#e6f8ff}
+  .tide em{font-style:normal;font-size:11px;color:#7d9bb8}
+  .sound{flex:none;width:28px;height:26px;padding:0;border-radius:8px;font-size:12px;line-height:1}
+  .scene{position:relative;flex:1;min-height:190px;overflow:hidden;cursor:pointer;touch-action:manipulation;background:linear-gradient(180deg,#0a2440 0%,#0d3a5e 38%,#0b567f 62%,#063a5c 100%)}
+  .scene:after{content:"";position:absolute;inset:0;pointer-events:none;z-index:1;background:repeating-linear-gradient(0deg,rgba(255,255,255,.03) 0 2px,transparent 2px 9px)}
+  .sky-glow{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 80% 55% at 50% 0%,rgba(126,224,255,.10),transparent 68%)}
+  .sun{display:none;position:absolute;left:70%;top:8%;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(255,214,150,.55),rgba(255,214,150,0) 68%);filter:blur(2px);animation:sunpulse 7s ease-in-out infinite alternate}
+  @keyframes sunpulse{from{transform:scale(.96);opacity:.82}to{transform:scale(1.06);opacity:1}}
+  .aurora,.stars,.coral,.ice,.vent{position:absolute;inset:0;pointer-events:none;display:none}
+  .aurora{top:0;height:48%;background:
+    radial-gradient(ellipse 52% 30% at 30% 22%,rgba(94,234,212,.28),transparent 68%),
+    radial-gradient(ellipse 46% 26% at 70% 12%,rgba(192,132,252,.22),transparent 66%),
+    linear-gradient(100deg,transparent 10%,rgba(126,224,255,.12) 32%,transparent 52%,rgba(192,132,252,.12) 74%,transparent 90%);
+    filter:blur(6px);animation:auroraMove 9s ease-in-out infinite alternate}
+  @keyframes auroraMove{from{transform:translateX(-3%) scaleY(.96);opacity:.7}to{transform:translateX(3%) scaleY(1.06);opacity:1}}
+  .stars{background-image:
+    radial-gradient(1.6px 1.6px at 8% 14%,rgba(255,255,255,.85),transparent 60%),
+    radial-gradient(1.3px 1.3px at 18% 8%,rgba(210,240,255,.75),transparent 60%),
+    radial-gradient(1.2px 1.2px at 27% 22%,rgba(255,255,255,.65),transparent 60%),
+    radial-gradient(1.5px 1.5px at 36% 11%,rgba(200,235,255,.7),transparent 60%),
+    radial-gradient(1.2px 1.2px at 46% 19%,rgba(255,255,255,.6),transparent 60%),
+    radial-gradient(1.6px 1.6px at 57% 7%,rgba(220,245,255,.8),transparent 60%),
+    radial-gradient(1.3px 1.3px at 66% 16%,rgba(255,255,255,.6),transparent 60%),
+    radial-gradient(1.2px 1.2px at 78% 9%,rgba(210,240,255,.7),transparent 60%),
+    radial-gradient(1.5px 1.5px at 88% 21%,rgba(255,255,255,.65),transparent 60%),
+    radial-gradient(1.2px 1.2px at 94% 6%,rgba(220,245,255,.7),transparent 60%);
+    animation:twinkle 5.5s ease-in-out infinite alternate}
+  @keyframes twinkle{from{opacity:.35}to{opacity:.9}}
+  .coral{bottom:0;top:auto;height:30%;background:
+    radial-gradient(ellipse 8% 70% at 12% 100%,rgba(248,113,113,.35),transparent 70%),
+    radial-gradient(ellipse 6% 52% at 22% 100%,rgba(251,191,36,.28),transparent 70%),
+    radial-gradient(ellipse 10% 62% at 34% 100%,rgba(192,132,252,.26),transparent 72%),
+    radial-gradient(ellipse 7% 48% at 52% 100%,rgba(94,234,212,.3),transparent 70%),
+    radial-gradient(ellipse 9% 66% at 68% 100%,rgba(248,113,113,.28),transparent 72%),
+    radial-gradient(ellipse 6% 44% at 82% 100%,rgba(251,191,36,.24),transparent 70%),
+    radial-gradient(ellipse 10% 58% at 94% 100%,rgba(192,132,252,.24),transparent 72%);
+    filter:blur(1px);opacity:.8}
+  .ice{bottom:0;top:auto;height:18%;background:linear-gradient(180deg,rgba(190,240,255,.16),rgba(190,240,255,.03));clip-path:polygon(0 100%,0 46%,7% 70%,14% 38%,22% 66%,31% 30%,39% 62%,49% 26%,58% 60%,67% 34%,75% 64%,84% 40%,92% 68%,100% 44%,100% 100%)}
+  .vent{top:auto;bottom:0;height:55%;background:
+    radial-gradient(ellipse 18% 46% at 22% 100%,rgba(192,132,252,.18),transparent 70%),
+    radial-gradient(ellipse 14% 38% at 74% 100%,rgba(56,189,248,.16),transparent 70%),
+    radial-gradient(ellipse 8% 22% at 48% 100%,rgba(251,191,36,.1),transparent 72%);
+    filter:blur(4px)}
+  .boat{display:none;position:absolute;left:13%;top:36%;width:62px;height:16px;pointer-events:none;opacity:.6;background:linear-gradient(180deg,#1d5069,#082033);border-radius:0 0 55% 55% / 0 0 100% 100%;box-shadow:0 8px 14px rgba(0,0,0,.35),inset 0 1px 0 rgba(180,235,255,.22);animation:boatfloat 7s ease-in-out infinite;z-index:2}
+  .boat:before{content:"";position:absolute;left:29px;bottom:100%;width:2px;height:44px;background:linear-gradient(180deg,rgba(200,240,255,.6),rgba(200,240,255,.06))}
+  .boat:after{content:"";position:absolute;left:31px;bottom:100%;width:0;height:0;border-left:22px solid rgba(180,228,255,.34);border-top:14px solid transparent;border-bottom:14px solid transparent;transform:translateY(-30px)}
+  @keyframes boatfloat{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-4px) rotate(1deg)}}
+  .waves{position:absolute;left:-10%;right:-10%;bottom:-8%;height:54%;pointer-events:none;z-index:2;
+    background:
+      radial-gradient(ellipse 80% 58% at 50% 100%,rgba(126,224,255,.18),transparent 68%),
+      repeating-linear-gradient(0deg,rgba(150,230,255,.055) 0 2px,transparent 2px 22px);
+    -webkit-mask-image:linear-gradient(to top,#000 10%,rgba(0,0,0,.4) 52%,transparent 92%);
+    mask-image:linear-gradient(to top,#000 10%,rgba(0,0,0,.4) 52%,transparent 92%);
+    transform-origin:50% 100%;animation:tide 9s ease-in-out infinite alternate}
+  @keyframes tide{from{transform:translateX(-1.6%) scaleY(.95)}to{transform:translateX(1.6%) scaleY(1.06)}}
+  .bubbles{position:absolute;inset:0;pointer-events:none;z-index:2;opacity:.45;background:
+    radial-gradient(3px 3px at 24% 78%,rgba(200,245,255,.5),transparent 70%),
+    radial-gradient(2px 2px at 38% 86%,rgba(200,245,255,.4),transparent 70%),
+    radial-gradient(3px 3px at 58% 74%,rgba(200,245,255,.45),transparent 70%),
+    radial-gradient(2px 2px at 72% 88%,rgba(200,245,255,.35),transparent 70%),
+    radial-gradient(2px 2px at 84% 80%,rgba(200,245,255,.4),transparent 70%);
+    animation:bubbleUp 6s linear infinite}
+  @keyframes bubbleUp{from{transform:translateY(12px);opacity:.25}to{transform:translateY(-18px);opacity:.6}}
+  .scene.school{box-shadow:inset 0 0 90px rgba(251,191,36,.14)}
+  .scene.school .bubbles{animation-duration:1.6s;opacity:.85}
+  .line{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:4;opacity:0;transition:opacity .2s}
+  .line.on{opacity:1}
+  .line path{fill:none;stroke:rgba(205,240,255,.55);stroke-width:.22}
+  .rodtip{position:absolute;left:14%;top:36%;width:5px;height:5px;margin:-2px 0 0 -2px;border-radius:50%;z-index:5;pointer-events:none;background:#e6fbff;box-shadow:0 0 10px rgba(126,224,255,.95),0 0 22px rgba(126,224,255,.45)}
+  .rodtip:before{content:"";position:absolute;right:3px;top:2px;width:30px;height:1px;background:linear-gradient(90deg,rgba(200,240,255,0),rgba(200,240,255,.45));transform:rotate(38deg);transform-origin:right center}
+  .rodtip:after{content:"";position:absolute;left:1px;top:4px;width:1px;height:32px;background:linear-gradient(180deg,rgba(200,240,255,.5),rgba(200,240,255,.04));transform:rotate(-14deg);transform-origin:top center}
+  .bobber{position:absolute;left:30%;bottom:28%;width:15px;height:15px;border-radius:50%;z-index:5;
+    background:radial-gradient(circle at 35% 30%,#fff,#fb7185 55%,#7f1d1d);
+    box-shadow:0 0 14px rgba(251,113,133,.8);transition:left .35s ease;animation:bob 2.4s ease-in-out infinite}
+  .bobber.bite{animation:bite .22s ease-in-out infinite;box-shadow:0 0 22px rgba(251,191,36,.95)}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+  @keyframes bite{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(6px) scale(1.18)}}
+  .deco-fish{position:absolute;left:0;width:34px;height:12px;border-radius:50%;z-index:2;pointer-events:none;background:rgba(170,225,255,.09);filter:blur(.6px);animation:drift 22s linear infinite}
+  .deco-fish:after{content:"";position:absolute;left:-8px;top:2px;width:0;height:0;border-right:9px solid rgba(170,225,255,.09);border-top:4px solid transparent;border-bottom:4px solid transparent}
+  .deco-fish.f1{top:57%;animation-duration:26s;animation-delay:-5s}
+  .deco-fish.f2{top:46%;width:24px;height:9px;animation-duration:34s;animation-delay:-18s;opacity:.7}
+  .deco-fish.f3{top:69%;width:42px;height:14px;animation-duration:30s;animation-delay:-24s;opacity:.55}
+  @keyframes drift{from{transform:translateX(-16vw)}to{transform:translateX(116vw)}}
+  .fish-shadow{position:absolute;left:34%;bottom:19%;width:70px;height:18px;border-radius:50%;z-index:3;pointer-events:none;
+    background:radial-gradient(ellipse at 50% 50%,rgba(3,20,34,.55),rgba(3,20,34,0) 72%);filter:blur(2px);
+    animation:swim 3.4s ease-in-out infinite}
+  @keyframes swim{0%,100%{transform:translateX(-14px) scaleX(1)}50%{transform:translateX(18px) scaleX(1.08)}}
+  .fish-shadow.bite{animation:biteShadow .4s ease-in-out infinite}
+  @keyframes biteShadow{0%,100%{transform:translateX(-6px) scale(1)}50%{transform:translateX(8px) scale(1.18)}}
+  .spot-badge{position:absolute;left:14px;top:12px;z-index:6;display:flex;flex-direction:column;gap:1px;padding:6px 12px;border-radius:10px;background:rgba(4,14,25,.52);border:1px solid rgba(126,224,255,.16);backdrop-filter:blur(4px);pointer-events:none}
+  .spot-badge b{font-size:14px;letter-spacing:.06em;color:#eaf9ff}
+  .spot-badge span{font-size:10.5px;color:#8fb4cf;max-width:min(62vw,320px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .event{position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:7;padding:5px 13px;border-radius:999px;font-size:12px;color:#ffe6b0;background:rgba(120,72,10,.62);border:1px solid rgba(251,191,36,.45);box-shadow:0 0 22px rgba(251,191,36,.22);white-space:nowrap;pointer-events:none;animation:eventPulse 1.4s ease-in-out infinite alternate}
+  @keyframes eventPulse{from{transform:translateX(-50%) scale(.98)}to{transform:translateX(-50%) scale(1.03)}}
+  .msg{position:absolute;left:50%;top:21%;transform:translateX(-50%);z-index:6;font-size:13px;color:#bfe6ff;
+    background:rgba(5,16,28,.58);border:1px solid rgba(126,224,255,.18);padding:6px 14px;border-radius:999px;white-space:nowrap;pointer-events:none;max-width:92%;overflow:hidden;text-overflow:ellipsis}
+  .catch-pop{position:absolute;left:50%;top:30%;transform:translateX(-50%);z-index:9;display:flex;flex-direction:column;align-items:center;gap:2px;
+    padding:10px 22px;border-radius:14px;background:rgba(6,22,38,.88);border:1px solid rgba(126,224,255,.32);box-shadow:0 18px 50px rgba(0,0,0,.45);pointer-events:none;animation:popIn .3s ease}
+  .catch-pop b{font-size:17px;color:#eafaff;letter-spacing:.04em}
+  .catch-pop span{font-size:11.5px;color:#9fc2da}
+  .catch-pop em{font-style:normal;font-size:15px;color:#fbbf24;font-weight:700}
+  .catch-pop.rare{border-color:rgba(192,132,252,.55);box-shadow:0 0 40px rgba(192,132,252,.25),0 18px 50px rgba(0,0,0,.45)}
+  .catch-pop.legend{border-color:rgba(251,191,36,.6);box-shadow:0 0 46px rgba(251,191,36,.3),0 18px 50px rgba(0,0,0,.45)}
+  @keyframes popIn{from{opacity:0;transform:translate(-50%,10px) scale(.92)}to{opacity:1;transform:translate(-50%,0) scale(1)}}
+  .note{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);z-index:10;padding:5px 14px;border-radius:999px;font-size:11.5px;color:#ffe6b0;background:rgba(8,24,40,.9);border:1px solid rgba(251,191,36,.32);white-space:nowrap;pointer-events:none;animation:noteIn .25s ease}
+  @keyframes noteIn{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
+  .panel{background:#08192a;border-top:1px solid rgba(126,224,255,.12);padding:10px 14px 12px;display:flex;flex-direction:column;gap:8px;z-index:12}
+  .meter,.prog,.linehp{display:none;height:12px;border-radius:8px;background:rgba(126,224,255,.09);overflow:hidden;position:relative}
+  .meter.on{display:block}
+  .meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,#38bdf8,#fbbf24,#fb7185);transition:width .05s linear}
+  .bars{display:none;gap:6px;flex-direction:column}
+  .bars.on{display:flex}
+  .prog,.linehp{display:block}
+  .prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,#22d3ee,#4ade80);transition:width .08s linear}
+  .linehp{height:7px}
+  .linehp i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#4ade80,#fbbf24);transition:width .08s linear}
+  .linehp i.low{background:linear-gradient(90deg,#fb7185,#ef4444)}
+  .tension{display:none;position:relative;height:18px;border-radius:9px;background:rgba(126,224,255,.09);overflow:hidden}
+  .tension.on{display:block}
+  .zone{position:absolute;top:0;bottom:0;background:rgba(94,234,212,.3);border:1px solid rgba(94,234,212,.75);border-radius:9px}
+  .marker{position:absolute;top:-3px;bottom:-3px;width:4px;background:#fff;border-radius:2px;box-shadow:0 0 10px #fff}
+  .row{display:flex;gap:8px}
+  .row button{flex:1;padding:10px 8px;border-radius:12px;border:1px solid rgba(126,224,255,.32);background:rgba(126,224,255,.1);color:#d5f2ff;font-size:14px;cursor:pointer;font-family:inherit}
+  .row button:active{transform:scale(.98)}
+  .row button:disabled{opacity:.45;cursor:default}
+  #castBtn,#hookBtn{flex:1.35;font-weight:600;border-color:rgba(126,224,255,.45);background:linear-gradient(180deg,rgba(126,224,255,.22),rgba(126,224,255,.08))}
+  .mini{flex:.62!important;display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 4px!important;position:relative}
+  .mini span{font-size:11px;color:#8fb4cf}
+  .mini b{font-size:11px;color:#d5f2ff;font-weight:600}
+  .dot{position:absolute;right:7px;top:6px;width:6px;height:6px;border-radius:50%;background:#fbbf24;box-shadow:0 0 6px #fbbf24}
+  .log{font-size:11px;color:#7d97b5;min-height:15px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sheet{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;padding:12px;background:rgba(2,8,15,.72);backdrop-filter:blur(4px)}
+  .sheet-card{width:min(700px,96vw);max-height:88vh;display:flex;flex-direction:column;border-radius:16px;border:1px solid rgba(126,224,255,.22);background:linear-gradient(180deg,#0a1f33,#061320);box-shadow:0 30px 80px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.06);overflow:hidden}
+  .sheet-head{display:flex;align-items:flex-start;gap:10px;padding:12px 14px 8px;border-bottom:1px solid rgba(126,224,255,.1)}
+  .sheet-head h2{margin:0;font-size:16px;letter-spacing:.08em;color:#eafaff}
+  .sheet-head p{margin:2px 0 0;font-size:10.5px;color:#7d9bb8}
+  .sheet-head button{margin-left:auto;flex:none;padding:6px 12px;border-radius:9px;font-size:11px}
+  .tabs{display:flex;gap:5px;padding:8px 12px;overflow-x:auto;border-bottom:1px solid rgba(126,224,255,.08);flex:none}
+  .tabs button{flex:none;padding:5px 11px;border-radius:8px;font-size:11.5px;border:1px solid transparent;background:rgba(126,224,255,.05);color:#8fb4cf}
+  .tabs button.on{border-color:rgba(126,224,255,.35);background:rgba(126,224,255,.16);color:#eafaff}
+  .tab-body{flex:1;min-height:0;overflow-y:auto;padding:12px 14px 16px;scrollbar-width:thin;scrollbar-color:rgba(126,224,255,.34) rgba(8,25,42,.55)}
+  .tab-body::-webkit-scrollbar{width:6px}
+  .tab-body::-webkit-scrollbar-thumb{background:rgba(126,224,255,.24);border-radius:99px}
+  .up-grid{display:flex;flex-direction:column;gap:8px}
+  .up-card{padding:10px 12px;border-radius:11px;border:1px solid rgba(126,224,255,.14);background:rgba(126,224,255,.045)}
+  .up-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .up-head b{font-size:13.5px;color:#eafaff}
+  .up-head span{font-size:11px;color:#7ee0ff}
+  .up-card p{margin:3px 0;font-size:11px;color:#8fb4cf;line-height:1.5}
+  .up-card p.next{color:#cfeaff}
+  .up-card button{margin-top:5px;width:100%;padding:7px;border-radius:8px;font-size:12px;border-color:rgba(251,191,36,.33);background:rgba(251,191,36,.1);color:#ffe6b0}
+  .up-card button:disabled{border-color:rgba(126,224,255,.14);background:rgba(126,224,255,.05);color:#607d96}
+  .stat-line{margin-top:10px;padding:9px 11px;border-radius:10px;border:1px dashed rgba(126,224,255,.16);font-size:11px;color:#8fb4cf;line-height:1.7}
+  .stat-line b{color:#d5f2ff}
+  .spot-card{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:10px 12px;margin-bottom:7px;border-radius:11px;border:1px solid rgba(126,224,255,.14);background:rgba(126,224,255,.045);color:#d5f2ff;cursor:pointer}
+  .spot-card.on{border-color:var(--accent);background:rgba(126,224,255,.13);box-shadow:0 0 0 1px rgba(126,224,255,.12) inset}
+  .spot-card:disabled{opacity:.5;cursor:default}
+  .spot-card .s-ico{font-size:20px;flex:none}
+  .spot-card .s-main{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+  .spot-card .s-main b{font-size:13px}
+  .spot-card .s-main span{font-size:10.5px;color:#8fb4cf;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .spot-card .s-tag{flex:none;font-size:10px;padding:2px 7px;border-radius:999px;border:1px solid rgba(126,224,255,.24);color:#9fd8f2}
+  .spot-card .s-tag.cur{color:#ffe6b0;border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.1)}
+  .bait-card{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:10px 12px;margin-bottom:7px;border-radius:11px;border:1px solid rgba(126,224,255,.14);background:rgba(126,224,255,.045);color:#d5f2ff;cursor:pointer}
+  .bait-card.on{border-color:#fbbf24;background:rgba(251,191,36,.09)}
+  .bait-card:disabled{opacity:.48;cursor:default}
+  .bait-card .b-ico{font-size:19px;flex:none}
+  .bait-card .b-main{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+  .bait-card .b-main b{font-size:13px}
+  .bait-card .b-main span{font-size:10.5px;color:#8fb4cf}
+  .bait-card .s-tag{flex:none;font-size:10px;padding:2px 7px;border-radius:999px;border:1px solid rgba(251,191,36,.3);color:#ffe6b0}
+  .dex-top{display:flex;flex-direction:column;gap:5px;margin-bottom:10px;font-size:11.5px;color:#9fc2da}
+  .dex-top .bar{height:8px;border-radius:99px;background:rgba(126,224,255,.1);overflow:hidden}
+  .dex-top .bar i{display:block;height:100%;background:linear-gradient(90deg,#22d3ee,#4ade80)}
+  .dex-group{margin-bottom:12px}
+  .dex-group h3{display:flex;align-items:center;justify-content:space-between;margin:0 0 5px;font-size:12px;color:#cfeaff;font-weight:600}
+  .dex-group h3 span{font-size:10.5px;color:#7d9bb8;font-weight:400}
+  .fish-row{display:flex;align-items:center;gap:7px;padding:4px 2px;border-bottom:1px solid rgba(126,224,255,.06);font-size:11.5px}
+  .fish-row:last-child{border-bottom:0}
+  .fish-dot{width:7px;height:7px;border-radius:50%;flex:none;box-shadow:0 0 7px currentColor}
+  .fish-row b{font-size:11.5px;color:#e2f4ff;font-weight:500;min-width:4.6em}
+  .fish-row em{font-style:normal;color:#7d9bb8;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fish-row .fv{color:#fbbf24;font-size:10.5px;flex:none}
+  .fish-row.unknown b{color:#55718a}
+  button.fish-row{width:100%;background:transparent;border:0;border-bottom:1px solid rgba(126,224,255,.06);border-radius:7px;color:inherit;font-family:inherit;text-align:left;cursor:pointer;min-height:27px}
+  button.fish-row:hover{background:rgba(126,224,255,.07)}
+  button.fish-row:active{transform:none;background:rgba(126,224,255,.12)}
+  .fish-row .chev{flex:none;color:#446d89;font-size:14px;line-height:1;margin-left:1px}
+  button.fish-row:hover .chev{color:#7ee0ff}
+  .fish-row.unknown .chev{color:#2f4c64}
+  .fish-detail{display:flex;flex-direction:column;gap:9px}
+  .fd-hero{--fc:#7ee0ff;display:flex;align-items:center;gap:13px;padding:13px;border-radius:13px;border:1px solid rgba(126,224,255,.16);background:radial-gradient(120% 140% at 12% 0%,rgba(126,224,255,.12),transparent 62%),rgba(126,224,255,.04)}
+  .fd-badge{position:relative;flex:none;width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1px solid var(--fc);background:radial-gradient(circle at 34% 28%,rgba(255,255,255,.18),transparent 62%),rgba(3,14,24,.55);box-shadow:0 0 24px -6px var(--fc)}
+  .fd-fish{position:relative;display:block;width:30px;height:19px;border-radius:52% 62% 62% 52%;background:linear-gradient(135deg,rgba(255,255,255,.55),var(--fc) 55%);box-shadow:inset -3px -2px 0 rgba(0,0,0,.16)}
+  .fd-fish:before{content:"";position:absolute;left:-10px;top:50%;transform:translateY(-50%);width:0;height:0;border-right:12px solid var(--fc);border-top:7px solid transparent;border-bottom:7px solid transparent;opacity:.85}
+  .fd-fish:after{content:"";position:absolute;right:6px;top:5px;width:3px;height:3px;border-radius:50%;background:#04121e}
+  .fd-badge.unknown{border-color:rgba(126,224,255,.22);box-shadow:none}
+  .fd-badge.unknown .fd-fish{background:linear-gradient(135deg,rgba(126,224,255,.18),rgba(51,80,106,.65));box-shadow:none}
+  .fd-badge.unknown .fd-fish:before{border-right-color:rgba(51,80,106,.8)}
+  .fd-badge.unknown:after{content:"?";position:absolute;right:3px;bottom:1px;font-size:11px;color:#7d9bb8}
+  .fd-title{display:flex;flex-direction:column;gap:3px;min-width:0}
+  .fd-title em{font-style:normal;font-size:10px;color:#7d9bb8;letter-spacing:.05em}
+  .fd-title b{font-size:19px;color:#eafaff;letter-spacing:.03em;line-height:1.1}
+  .fd-title .fd-rar{align-self:flex-start;font-size:10px;padding:1px 8px;border-radius:999px;border:1px solid}
+  .fd-stats{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  .fd-stat{padding:7px 10px;border-radius:9px;border:1px solid rgba(126,224,255,.1);background:rgba(126,224,255,.035)}
+  .fd-stat span{display:block;font-size:9.5px;color:#7d9bb8;margin-bottom:1px}
+  .fd-stat b{font-size:12px;color:#d5f2ff;font-weight:500}
+  .fd-desc{font-size:11.5px;line-height:1.75;color:#9fc2da;padding:10px 12px;border-radius:10px;background:rgba(126,224,255,.045);border:1px solid rgba(126,224,255,.08)}
+  .fd-note{font-size:10.5px;line-height:1.6;color:#8fb4cf;padding:8px 10px;border-radius:9px;border:1px dashed rgba(126,224,255,.16)}
+  .fd-back{width:100%;padding:9px;border-radius:10px;font-size:12px;border-color:rgba(126,224,255,.3);background:rgba(126,224,255,.1);color:#d5f2ff;cursor:pointer}
+  .fd-back:hover{background:rgba(126,224,255,.16)}
+  .q-card{padding:10px 12px;margin-bottom:8px;border-radius:11px;border:1px solid rgba(126,224,255,.14);background:rgba(126,224,255,.045)}
+  .q-card.done{border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.07)}
+  .q-head{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+  .q-head b{font-size:12.5px;color:#eafaff;flex:1}
+  .q-head span{font-size:10.5px;color:#fbbf24}
+  .q-card p{margin:0 0 5px;font-size:11px;color:#9fc2da;line-height:1.5}
+  .q-bar{height:6px;border-radius:99px;background:rgba(126,224,255,.1);overflow:hidden;margin-bottom:6px}
+  .q-bar i{display:block;height:100%;background:linear-gradient(90deg,#22d3ee,#4ade80)}
+  .q-card button{width:100%;padding:6px;border-radius:8px;font-size:11.5px;border-color:rgba(251,191,36,.36);background:rgba(251,191,36,.11);color:#ffe6b0}
+  .q-card button:disabled{border-color:rgba(126,224,255,.12);background:rgba(126,224,255,.04);color:#607d96}
+  .ach-row{display:flex;align-items:center;gap:9px;padding:7px 2px;border-bottom:1px solid rgba(126,224,255,.07);font-size:11.5px}
+  .ach-row:last-child{border-bottom:0}
+  .ach-row .a-mark{width:18px;height:18px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:10px;border:1px solid rgba(126,224,255,.2);color:#607d96;background:rgba(126,224,255,.05)}
+  .ach-row.done .a-mark{border-color:rgba(74,222,128,.5);background:rgba(74,222,128,.16);color:#86efac}
+  .ach-row .a-main{display:flex;flex-direction:column;gap:1px;flex:1;min-width:0}
+  .ach-row .a-main b{font-size:11.5px;color:#e2f4ff;font-weight:500}
+  .ach-row .a-main span{font-size:10px;color:#7d9bb8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ach-row .a-coin{font-size:10.5px;color:#fbbf24;flex:none}
+  .ach-row.done .a-coin{color:#4ade80}
+  .empty{padding:18px;text-align:center;font-size:11.5px;color:#7d9bb8}
+  @media (max-width:560px){
+    .top{gap:8px;padding:7px 9px;font-size:11px}
+    .top b{font-size:12.5px}
+    .tide{padding:2px 7px}
+    .tide b{font-size:11px}
+    .spot-badge{padding:5px 9px}
+    .spot-badge b{font-size:12.5px}
+    .msg{font-size:11.5px;top:22%}
+    .panel{padding:8px 10px 10px;gap:7px}
+    .row button{font-size:12.5px;padding:9px 5px}
+    .mini span{font-size:10px}
+    .mini b{font-size:10px}
+    .log{font-size:10px}
+    .sheet{padding:6px}
+    .sheet-card{max-height:92vh;width:100%}
+    .tab-body{padding:10px 10px 14px}
+  }
+</style>
+<style id="tx-aurora-skin">
+/* tx-aurora-skin:fishingharbor */
+:root{--tx-a1:#38bdf8;--tx-a2:#fbbf24;}
+html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+::selection{background:rgba(56,189,248,0.38);color:#fff}
+*::-webkit-scrollbar{width:8px;height:8px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:rgba(56,189,248,0.26);border-radius:99px;border:2px solid transparent;background-clip:content-box}
+*::-webkit-scrollbar-thumb:hover{background:rgba(56,189,248,0.46);background-clip:content-box}
+body{background-color:#05101c!important;background-image:radial-gradient(1100px 640px at 6% -12%, rgba(56,189,248,0.16), transparent 62%), radial-gradient(900px 680px at 104% 112%, rgba(251,191,36,0.12), transparent 62%)!important}
+button{transition:transform .14s ease,filter .16s ease,box-shadow .2s ease,border-color .16s ease,background-color .16s ease}
+button:hover{filter:brightness(1.07)}
+button:active{transform:translateY(1px) scale(.995)}
+button:focus-visible{outline:2px solid rgba(56,189,248,0.72);outline-offset:2px}
+.overlay,.modal,.dialog,.sheet,#levels,#loading{background-image:radial-gradient(900px 520px at 50% 0%,rgba(56,189,248,0.15),transparent 62%),radial-gradient(720px 520px at 50% 100%,rgba(251,191,36,0.08),transparent 60%)!important}
+.overlay,.modal,.dialog,.sheet{backdrop-filter:blur(9px) saturate(1.1)}
+.overlay h1,.modal h1,.screen h1,.overlay-card h1,.win-card h1,.result-card h1,.bcard .btitle,.loadcard .ltitle{text-shadow:0 2px 30px rgba(56,189,248,0.45)}
+.overlay .screen,.overlay .panel,.overlay-card,.modal .panel,.win-card,.result-card,.bcard,.loadcard,.rules-dialog,.panel{box-shadow:0 38px 96px -34px rgba(0,0,0,.95), inset 0 1px 0 rgba(255,255,255,.07)!important}
+.bcard,.loadcard{border-color:rgba(56,189,248,0.34)!important}
+.overlay .panel,.overlay-card,.win-card,.result-card,.modal .panel{backdrop-filter:blur(10px) saturate(1.08);border-color:rgba(56,189,248,0.26)!important}
+.top{background:linear-gradient(180deg,rgba(10,27,43,.96),rgba(7,21,35,.88));border-bottom-color:rgba(126,224,255,.16);box-shadow:0 8px 26px -18px #000}
+.scene{background:linear-gradient(180deg,#061a30 0%,#0a2e4d 30%,#0d4468 52%,#0b5b85 64%,#063a5c 100%)}
+.scene:before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.7;
+  background-image:
+    radial-gradient(1.6px 1.6px at 8% 14%,rgba(255,255,255,.85),transparent 60%),
+    radial-gradient(1.4px 1.4px at 18% 8%,rgba(210,240,255,.75),transparent 60%),
+    radial-gradient(1.2px 1.2px at 27% 22%,rgba(255,255,255,.65),transparent 60%),
+    radial-gradient(1.5px 1.5px at 36% 11%,rgba(200,235,255,.7),transparent 60%),
+    radial-gradient(1.2px 1.2px at 46% 19%,rgba(255,255,255,.6),transparent 60%),
+    radial-gradient(1.6px 1.6px at 57% 7%,rgba(220,245,255,.8),transparent 60%),
+    radial-gradient(1.3px 1.3px at 66% 16%,rgba(255,255,255,.6),transparent 60%),
+    radial-gradient(1.2px 1.2px at 78% 9%,rgba(210,240,255,.7),transparent 60%),
+    radial-gradient(1.5px 1.5px at 88% 21%,rgba(255,255,255,.65),transparent 60%),
+    radial-gradient(1.2px 1.2px at 94% 6%,rgba(220,245,255,.7),transparent 60%);
+  animation:twinkle 5.5s ease-in-out infinite alternate}
+@keyframes twinkle{from{opacity:.4}to{opacity:.85}}
+.sun{width:130px;height:130px;background:radial-gradient(circle,rgba(255,226,175,.62),rgba(255,190,120,.18) 42%,rgba(255,190,120,0) 70%);filter:blur(1px);animation:sunpulse 7s ease-in-out infinite alternate}
+.boat{position:absolute;left:14%;top:37%;width:62px;height:16px;pointer-events:none;opacity:.62;
+  background:linear-gradient(180deg,#1d5069,#082033);
+  border-radius:0 0 55% 55% / 0 0 100% 100%;
+  box-shadow:0 8px 14px rgba(0,0,0,.35),inset 0 1px 0 rgba(180,235,255,.22);
+  animation:boatfloat 7s ease-in-out infinite}
+.boat:before{content:"";position:absolute;left:29px;bottom:100%;width:2px;height:46px;
+  background:linear-gradient(180deg,rgba(200,240,255,.6),rgba(200,240,255,.06))}
+.boat:after{content:"";position:absolute;left:31px;bottom:100%;width:0;height:0;
+  border-left:22px solid rgba(180,228,255,.34);border-top:14px solid transparent;border-bottom:14px solid transparent;
+  transform:translateY(-32px)}
+@keyframes boatfloat{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-4px) rotate(1deg)}}
+.waves{position:absolute;left:-10%;right:-10%;bottom:-8%;height:54%;pointer-events:none;
+  background:
+    radial-gradient(ellipse 80% 58% at 50% 100%,rgba(126,224,255,.18),transparent 68%),
+    repeating-linear-gradient(0deg,rgba(150,230,255,.055) 0 2px,transparent 2px 22px);
+  -webkit-mask-image:linear-gradient(to top,#000 10%,rgba(0,0,0,.4) 52%,transparent 92%);
+  mask-image:linear-gradient(to top,#000 10%,rgba(0,0,0,.4) 52%,transparent 92%);
+  transform-origin:50% 100%;animation:tide 9s ease-in-out infinite alternate}
+@keyframes tide{from{transform:translateX(-1.6%) scaleY(.95)}to{transform:translateX(1.6%) scaleY(1.06)}}
+.panel{background:linear-gradient(180deg,#0a1d30,#071523);border-top-color:rgba(126,224,255,.16);box-shadow:0 -12px 34px -22px #000,inset 0 1px 0 rgba(255,255,255,.05)}
+button{background:linear-gradient(180deg,rgba(126,224,255,.16),rgba(126,224,255,.07));box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+#upBtn{background:linear-gradient(180deg,rgba(251,191,36,.18),rgba(251,191,36,.07));box-shadow:inset 0 1px 0 rgba(255,255,255,.09)}
+</style>
+<style>
+  /* 各海域背景（放在皮肤样式之后，用更高特异性覆盖） */
+  body[data-spot="dock"] .scene{background:radial-gradient(ellipse 70% 50% at 72% 14%,rgba(255,206,140,.22),transparent 66%),linear-gradient(180deg,#0a2440 0%,#0d3a5e 34%,#0b567f 58%,#063a5c 100%)}
+  body[data-spot="reef"] .scene{background:radial-gradient(ellipse 80% 55% at 50% 8%,rgba(94,234,212,.16),transparent 66%),linear-gradient(180deg,#062b3f 0%,#0a5068 34%,#0f7a86 62%,#07495e 100%)}
+  body[data-spot="trench"] .scene{background:radial-gradient(ellipse 60% 40% at 46% 26%,rgba(56,189,248,.08),transparent 64%),linear-gradient(180deg,#020a16 0%,#04182b 34%,#052a44 62%,#02101d 100%)}
+  body[data-spot="aurora"] .scene{background:radial-gradient(ellipse 80% 42% at 60% 6%,rgba(94,234,212,.2),transparent 62%),radial-gradient(ellipse 60% 30% at 28% 14%,rgba(192,132,252,.16),transparent 66%),linear-gradient(180deg,#03101f 0%,#06283f 38%,#0a4a63 64%,#031725 100%)}
+  body[data-spot="abyss"] .scene{background:radial-gradient(ellipse 70% 50% at 50% 42%,rgba(99,102,241,.16),transparent 66%),radial-gradient(ellipse 40% 26% at 22% 70%,rgba(192,132,252,.1),transparent 70%),linear-gradient(180deg,#01030a 0%,#030b18 38%,#061426 66%,#01030a 100%)}
+  body[data-spot="dock"] .sun,body[data-spot="reef"] .sun{display:block}
+  body[data-spot="dock"] .boat{display:block}
+  body[data-spot="reef"] .coral{display:block}
+  body[data-spot="aurora"] .ice,body[data-spot="aurora"] .aurora{display:block}
+  body[data-spot="abyss"] .vent,body[data-spot="abyss"] .aurora{display:block}
+  body[data-spot="trench"] .stars,body[data-spot="aurora"] .stars,body[data-spot="abyss"] .stars{display:block}
+  body[data-spot="dock"] .wave-tint{background:rgba(126,224,255,.05)}
+  body[data-spot="reef"]{--accent:#5eead4;--accent2:#fbbf24}
+  body[data-spot="trench"]{--accent:#38bdf8;--accent2:#c084fc}
+  body[data-spot="aurora"]{--accent:#a7f3d0;--accent2:#c084fc}
+  body[data-spot="abyss"]{--accent:#c084fc;--accent2:#fbbf24}
+</style>
+<style>
+  /* ============ 美术增强层 ============ */
+  .horizon,.clouds,.sunpath,.rays,.reflection,.pier,.gulls,.snowfall,.plankton{position:absolute;pointer-events:none}
+  .horizon{left:0;right:0;top:40.5%;height:2px;display:none;z-index:1;
+    background:linear-gradient(90deg,transparent,rgba(255,224,170,.4) 16%,rgba(255,242,210,.92) 48%,rgba(255,224,170,.4) 84%,transparent);
+    box-shadow:0 5px 28px rgba(255,206,150,.4)}
+  .clouds{left:-10%;right:-10%;top:4%;height:34%;display:none;z-index:1;filter:blur(2px);
+    background:
+      radial-gradient(ellipse 22% 26% at 16% 36%,rgba(232,246,255,.16),transparent 70%),
+      radial-gradient(ellipse 15% 19% at 30% 22%,rgba(232,246,255,.12),transparent 70%),
+      radial-gradient(ellipse 18% 17% at 67% 16%,rgba(255,238,208,.14),transparent 72%),
+      radial-gradient(ellipse 26% 20% at 84% 38%,rgba(232,246,255,.1),transparent 72%);
+    animation:cloudDrift 28s ease-in-out infinite alternate}
+  @keyframes cloudDrift{from{transform:translateX(-2%)}to{transform:translateX(2%)}}
+  .sunpath{left:56%;top:41%;width:28%;height:40%;display:none;z-index:1;opacity:.65;filter:blur(2.5px);
+    background:
+      repeating-linear-gradient(180deg,transparent 0 7px,rgba(255,228,175,.15) 7px 9px,transparent 9px 18px),
+      radial-gradient(ellipse 58% 72% at 50% 0%,rgba(255,220,160,.42),transparent 74%);
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 96%);mask-image:linear-gradient(180deg,#000,transparent 96%);
+    animation:sunpathShimmer 5.5s ease-in-out infinite alternate}
+  @keyframes sunpathShimmer{from{opacity:.48;transform:scaleY(.96)}to{opacity:.9;transform:scaleY(1.05)}}
+  .rays{left:-8%;top:-10%;width:62%;height:92%;display:none;z-index:1;opacity:.65;
+    background:
+      linear-gradient(108deg,transparent 33%,rgba(160,242,255,.14) 39%,rgba(160,242,255,.02) 47%,transparent 53%),
+      linear-gradient(100deg,transparent 51%,rgba(190,250,255,.1) 58%,transparent 66%),
+      linear-gradient(96deg,transparent 63%,rgba(160,242,255,.07) 70%,transparent 77%);
+    -webkit-mask-image:linear-gradient(180deg,#000,rgba(0,0,0,.35) 62%,transparent 92%);
+    mask-image:linear-gradient(180deg,#000,rgba(0,0,0,.35) 62%,transparent 92%);
+    transform-origin:top left;animation:raySway 11s ease-in-out infinite alternate}
+  @keyframes raySway{from{transform:translateX(-2%) skewX(-1deg);opacity:.45}to{transform:translateX(2%) skewX(1deg);opacity:.85}}
+  .reflection{left:4%;right:4%;bottom:3%;height:27%;display:none;z-index:1;opacity:.7;
+    background:
+      radial-gradient(ellipse at 50% 94%,rgba(126,224,255,.2),transparent 68%),
+      repeating-linear-gradient(90deg,transparent 0 46px,rgba(200,245,255,.055) 46px 49px,transparent 49px 96px);
+    -webkit-mask-image:linear-gradient(180deg,transparent,#000 58%);mask-image:linear-gradient(180deg,transparent,#000 58%);
+    animation:reflectionPulse 6.5s ease-in-out infinite alternate}
+  @keyframes reflectionPulse{from{opacity:.5}to{opacity:.85}}
+  .pier{left:0;bottom:13%;width:32%;height:26%;display:none;z-index:3;
+    background:
+      linear-gradient(180deg,rgba(150,222,248,.2) 0 1px,transparent 9px),
+      repeating-linear-gradient(90deg,transparent 0 38px,rgba(126,200,230,.07) 38px 40px,transparent 40px 84px),
+      repeating-linear-gradient(0deg,rgba(5,20,32,.94) 0 3px,rgba(18,47,64,.94) 3px 7px);
+    border-top:2px solid rgba(200,240,255,.26);border-radius:0 6px 0 0;
+    transform:perspective(560px) rotateY(9deg);transform-origin:left bottom;
+    box-shadow:0 -2px 22px rgba(126,224,255,.14),0 16px 32px rgba(0,0,0,.45)}
+  .pier:before,.pier:after{content:"";position:absolute;top:100%;width:7px;height:46%;
+    background:linear-gradient(180deg,#194257,#04121d);box-shadow:0 8px 16px rgba(0,0,0,.45)}
+  .pier:before{left:17%}
+  .pier:after{left:64%}
+  .pier i{position:absolute;left:4%;right:7%;top:-15px;height:14px;
+    border-top:2px solid rgba(198,238,255,.3);border-bottom:1px solid rgba(126,180,210,.14)}
+  .pier i:before,.pier i:after{content:"";position:absolute;top:0;width:3px;height:15px;
+    background:rgba(168,218,240,.32);box-shadow:0 0 6px rgba(126,224,255,.16)}
+  .pier i:before{left:13%}
+  .pier i:after{right:19%}
+  .pier b{position:absolute;right:8%;bottom:100%;width:3px;height:24px;
+    background:linear-gradient(180deg,rgba(200,238,255,.4),rgba(160,210,235,.16))}
+  .pier b:after{content:"";position:absolute;left:-5px;top:-7px;width:13px;height:13px;border-radius:50%;
+    background:radial-gradient(circle,#fff3cf 0 26%,rgba(255,208,120,.55) 46%,rgba(255,190,90,.08) 72%);
+    box-shadow:0 0 18px rgba(255,206,120,.72);animation:lampGlow 3.4s ease-in-out infinite alternate}
+  @keyframes lampGlow{from{opacity:.75;transform:scale(.94)}to{opacity:1;transform:scale(1.06)}}
+  .gulls{left:24%;top:16%;width:130px;height:44px;display:none;z-index:2;
+    animation:gullDrift 18s ease-in-out infinite alternate}
+  .gulls i{position:absolute;width:15px;height:7px;border-top:2px solid rgba(236,250,255,.66);
+    border-radius:50% 50% 0 0/100% 100% 0 0;transform:rotate(-4deg)}
+  .gulls i:after{content:"";position:absolute;left:11px;top:-2px;width:15px;height:7px;
+    border-top:2px solid rgba(236,250,255,.56);border-radius:50% 50% 0 0/100% 100% 0 0;transform:rotate(8deg) scaleX(1.06)}
+  .gulls i:nth-child(1){left:0;top:14px}
+  .gulls i:nth-child(2){left:44px;top:0;transform:scale(.82) rotate(-6deg)}
+  .gulls i:nth-child(3){left:82px;top:22px;transform:scale(.64) rotate(4deg)}
+  @keyframes gullDrift{from{transform:translate(-8px,0)}to{transform:translate(18px,-5px)}}
+  .snowfall{inset:-12% 0 0;display:none;z-index:2;opacity:.8;
+    background-image:
+      radial-gradient(2px 2px at 12% 18%,rgba(238,252,255,.9),transparent 60%),
+      radial-gradient(1.5px 1.5px at 38% 62%,rgba(238,252,255,.72),transparent 60%),
+      radial-gradient(2px 2px at 64% 34%,rgba(238,252,255,.82),transparent 60%),
+      radial-gradient(1.5px 1.5px at 86% 76%,rgba(238,252,255,.62),transparent 60%);
+    background-size:220px 220px,170px 170px,260px 260px,190px 190px;
+    animation:snowFall 13s linear infinite}
+  @keyframes snowFall{from{transform:translateY(-24px)}to{transform:translateY(210px)}}
+  .plankton{inset:-6% 0 0;display:none;z-index:2;opacity:.7;
+    background-image:
+      radial-gradient(2px 2px at 18% 24%,rgba(216,180,254,.8),transparent 65%),
+      radial-gradient(1.5px 1.5px at 42% 58%,rgba(147,197,253,.7),transparent 65%),
+      radial-gradient(2.5px 2.5px at 66% 32%,rgba(216,180,254,.65),transparent 65%),
+      radial-gradient(1.5px 1.5px at 84% 70%,rgba(147,197,253,.75),transparent 65%);
+    background-size:300px 300px,240px 240px,340px 340px,260px 260px;
+    animation:planktonDrift 17s ease-in-out infinite alternate}
+  @keyframes planktonDrift{from{transform:translate3d(-12px,10px,0);opacity:.4}to{transform:translate3d(16px,-14px,0);opacity:.85}}
+  body[data-spot="dock"] .horizon,body[data-spot="dock"] .clouds,body[data-spot="dock"] .sunpath,
+  body[data-spot="dock"] .pier,body[data-spot="dock"] .gulls{display:block}
+  body[data-spot="reef"] .rays,body[data-spot="reef"] .reflection{display:block}
+  body[data-spot="trench"] .rays{display:block;opacity:.4}
+  body[data-spot="aurora"] .rays,body[data-spot="aurora"] .reflection,body[data-spot="aurora"] .snowfall{display:block}
+  body[data-spot="aurora"] .rays{opacity:.45}
+  body[data-spot="abyss"] .reflection,body[data-spot="abyss"] .plankton{display:block}
+
+  /* 场景光照微调 */
+  body[data-spot="dock"] .scene{background:
+    radial-gradient(ellipse 64% 44% at 70% 6%,rgba(255,214,150,.3),transparent 62%),
+    radial-gradient(ellipse 90% 40% at 50% 44%,rgba(255,196,130,.08),transparent 70%),
+    linear-gradient(180deg,#081f37 0%,#0c3556 32%,#0a4d72 55%,#063a5c 100%)}
+  body[data-spot="reef"] .scene{background:
+    radial-gradient(ellipse 74% 42% at 50% 4%,rgba(120,255,230,.2),transparent 64%),
+    radial-gradient(ellipse 60% 40% at 22% 62%,rgba(45,212,191,.1),transparent 70%),
+    linear-gradient(180deg,#04283c 0%,#08485f 34%,#0d6f7d 62%,#053c50 100%)}
+  body[data-spot="trench"] .scene{background:
+    radial-gradient(ellipse 46% 34% at 52% 10%,rgba(56,189,248,.13),transparent 66%),
+    radial-gradient(ellipse 80% 50% at 50% 80%,rgba(2,8,20,.65),transparent 80%),
+    linear-gradient(180deg,#01060f 0%,#031527 36%,#04263d 64%,#010c17 100%)}
+  body[data-spot="aurora"] .scene{background:
+    radial-gradient(ellipse 82% 40% at 58% 4%,rgba(94,234,212,.22),transparent 62%),
+    radial-gradient(ellipse 58% 28% at 26% 12%,rgba(192,132,252,.18),transparent 66%),
+    linear-gradient(180deg,#020c18 0%,#052338 36%,#083f57 64%,#02101c 100%)}
+  body[data-spot="abyss"] .scene{background:
+    radial-gradient(ellipse 58% 42% at 50% 40%,rgba(129,140,248,.18),transparent 66%),
+    radial-gradient(ellipse 36% 24% at 20% 68%,rgba(192,132,252,.12),transparent 70%),
+    radial-gradient(ellipse 30% 20% at 78% 24%,rgba(56,189,248,.08),transparent 72%),
+    linear-gradient(180deg,#010208 0%,#020814 38%,#050f20 66%,#010208 100%)}
+
+  /* 太阳与船 */
+  .sun{width:176px;height:176px;filter:blur(.5px);
+    background:radial-gradient(circle,rgba(255,251,238,.96) 0 6%,rgba(255,233,188,.72) 12%,rgba(255,214,150,.32) 28%,rgba(255,199,128,.1) 48%,transparent 70%)}
+  .boat{width:78px;height:20px;left:12%;top:34.5%;opacity:.94;
+    background:linear-gradient(180deg,#3d819b 0%,#1b4f68 36%,#08202f 100%);
+    border-radius:3px 3px 62% 62%/4px 4px 100% 100%;
+    box-shadow:0 10px 18px rgba(0,0,0,.42),inset 0 1px 0 rgba(212,246,255,.45)}
+  .boat:before{left:44px;width:2px;height:55px;background:linear-gradient(180deg,rgba(224,250,255,.78),rgba(180,230,255,.1))}
+  .boat:after{left:45px;bottom:calc(100% + 3px);width:31px;height:46px;border:0;
+    background:linear-gradient(152deg,rgba(232,251,255,.58),rgba(160,215,245,.14) 78%);
+    clip-path:polygon(0 0,100% 88%,0 100%);transform:none;
+    filter:drop-shadow(0 5px 8px rgba(0,0,0,.25))}
+  .boat b{position:absolute;left:30px;bottom:3px;width:19px;height:8px;border-radius:2px 2px 0 0;
+    background:linear-gradient(180deg,rgba(208,246,255,.38),rgba(35,82,105,.45));
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
+  .boat b:after{content:"";position:absolute;left:7px;top:-7px;width:4px;height:4px;border-radius:50%;
+    background:#ffe7ab;box-shadow:0 0 8px #ffd88a}
+
+  /* 水面与鱼影 */
+  .waves{background:
+    radial-gradient(ellipse 82% 58% at 50% 100%,rgba(126,224,255,.2),transparent 68%),
+    repeating-linear-gradient(0deg,rgba(150,230,255,.06) 0 2px,transparent 2px 20px),
+    repeating-linear-gradient(90deg,rgba(180,240,255,.035) 0 36px,transparent 36px 92px)}
+  .deco-fish{background:linear-gradient(180deg,rgba(205,246,255,.22),rgba(88,160,205,.08));
+    border-radius:52% 58% 58% 52%;filter:blur(.45px);box-shadow:0 4px 10px -4px rgba(0,0,0,.4)}
+  .deco-fish:before{content:"";position:absolute;right:30%;top:30%;width:2px;height:2px;border-radius:50%;
+    background:rgba(242,253,255,.55);box-shadow:0 0 4px rgba(242,253,255,.45)}
+  .deco-fish:after{border-right-color:rgba(205,246,255,.13)}
+  .deco-fish.f1{width:40px;height:14px}
+  .deco-fish.f2{width:26px;height:9px}
+  .deco-fish.f3{width:48px;height:16px}
+  .fish-shadow:after{content:"";position:absolute;right:100%;top:2px;width:0;height:0;
+    border-right:20px solid rgba(3,20,34,.4);border-top:8px solid transparent;border-bottom:8px solid transparent;filter:blur(1px)}
+
+  /* 浮漂与张力条 */
+  .bobber{width:16px;height:16px;box-shadow:0 2px 8px rgba(0,0,0,.32),0 0 16px rgba(251,113,133,.85),inset 0 1px 1px rgba(255,255,255,.8);
+    background:linear-gradient(180deg,#fff 0 42%,#fb7185 42% 72%,#991b1b 100%)}
+  .bobber:after{content:"";position:absolute;left:50%;top:50%;width:26px;height:10px;margin:-2px 0 0 -13px;
+    border-radius:50%;border:1px solid rgba(200,245,255,.26);animation:ripple 2.4s ease-out infinite;pointer-events:none}
+  .bobber.bite:after{animation-duration:.5s;border-color:rgba(251,191,36,.55)}
+  @keyframes ripple{0%{transform:scale(.55);opacity:.7}100%{transform:scale(1.6);opacity:0}}
+  .meter,.prog,.linehp,.tension{box-shadow:inset 0 2px 4px rgba(0,0,0,.35),0 1px 0 rgba(255,255,255,.04)}
+  .zone{box-shadow:0 0 14px rgba(94,234,212,.45),inset 0 0 10px rgba(94,234,212,.2)}
+  .marker{box-shadow:0 0 12px #fff,0 0 22px rgba(126,224,255,.65)}
+
+  /* 顶栏与操作区 */
+  .top{position:relative;background:linear-gradient(180deg,#0a2033,#061421);box-shadow:0 8px 24px -18px #000}
+  .top:after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(126,224,255,.42),transparent)}
+  .top b{text-shadow:0 0 12px rgba(126,224,255,.35)}
+  .tide{background:linear-gradient(180deg,rgba(126,224,255,.13),rgba(126,224,255,.04));
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 18px -10px var(--accent)}
+  .sound{background:linear-gradient(180deg,rgba(126,224,255,.16),rgba(126,224,255,.05))}
+  .panel{background:linear-gradient(180deg,#0a2033,#071421);
+    box-shadow:0 -14px 36px -24px #000,inset 0 1px 0 rgba(255,255,255,.06)}
+  .row button{border-radius:13px;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 4px 12px -8px #000}
+  .row button:hover{background:rgba(126,224,255,.16)}
+  #castBtn,#hookBtn{background:linear-gradient(180deg,rgba(94,234,212,.28),rgba(56,189,248,.1));
+    border-color:rgba(126,224,255,.5);box-shadow:0 0 22px -8px rgba(94,234,212,.75),inset 0 1px 0 rgba(255,255,255,.18)}
+  .spot-badge{background:linear-gradient(135deg,rgba(4,14,25,.68),rgba(4,14,25,.4));
+    border-color:rgba(126,224,255,.22);box-shadow:0 6px 20px -12px #000}
+  .msg{background:linear-gradient(180deg,rgba(8,24,40,.72),rgba(5,16,28,.62));
+    box-shadow:0 6px 22px -12px #000}
+
+  /* 手册与图鉴档案 */
+  .sheet-card{border-color:rgba(126,224,255,.28);background:linear-gradient(180deg,#0b2338,#051220);
+    box-shadow:0 44px 100px -36px #000,inset 0 1px 0 rgba(255,255,255,.09)}
+  .sheet-head{background:linear-gradient(180deg,rgba(126,224,255,.07),transparent)}
+  .tabs{background:linear-gradient(180deg,rgba(4,14,24,.35),transparent)}
+  .tab-body{background:radial-gradient(ellipse 70% 40% at 50% 0%,rgba(126,224,255,.05),transparent 70%)}
+  .fd-hero{background:radial-gradient(120% 140% at 12% 0%,rgba(126,224,255,.16),transparent 60%),
+    linear-gradient(135deg,rgba(126,224,255,.07),rgba(126,224,255,.02));border-color:rgba(126,224,255,.22)}
+  .fd-badge{width:76px;height:76px}
+  .fd-fish{width:38px;height:24px}
+  .fd-fish:before{left:-12px;border-right-width:14px;border-top-width:8px;border-bottom-width:8px}
+  .fd-title b{font-size:20px}
+  .fish-dot{width:13px;height:8px;border-radius:50% 58% 58% 50%;background:currentColor!important;
+    position:relative;box-shadow:0 0 8px currentColor;opacity:.95}
+  .fish-dot:before{content:"";position:absolute;left:-5px;top:2px;width:0;height:0;
+    border-right:6px solid currentColor;border-top:3px solid transparent;border-bottom:3px solid transparent;opacity:.85}
+
+  /* 海域细节 */
+  .scene:after{background:repeating-linear-gradient(0deg,rgba(255,255,255,.016) 0 1px,transparent 1px 11px)}
+  .coral{height:34%;opacity:1;filter:none;
+    -webkit-clip-path:polygon(0 100%,0 62%,3% 74%,5% 54%,7% 68%,10% 46%,12% 62%,15% 52%,18% 70%,21% 48%,24% 64%,27% 56%,30% 72%,33% 50%,36% 66%,39% 58%,42% 74%,45% 52%,48% 68%,51% 60%,54% 76%,57% 54%,60% 68%,63% 50%,66% 66%,69% 58%,72% 74%,75% 52%,78% 68%,81% 60%,84% 76%,87% 54%,90% 68%,93% 50%,96% 66%,100% 56%,100% 100%);
+    clip-path:polygon(0 100%,0 62%,3% 74%,5% 54%,7% 68%,10% 46%,12% 62%,15% 52%,18% 70%,21% 48%,24% 64%,27% 56%,30% 72%,33% 50%,36% 66%,39% 58%,42% 74%,45% 52%,48% 68%,51% 60%,54% 76%,57% 54%,60% 68%,63% 50%,66% 66%,69% 58%,72% 74%,75% 52%,78% 68%,81% 60%,84% 76%,87% 54%,90% 68%,93% 50%,96% 66%,100% 56%,100% 100%);
+    background:
+      linear-gradient(180deg,rgba(94,234,212,.24) 0 2px,transparent 10px),
+      linear-gradient(180deg,rgba(8,38,50,.94),rgba(3,13,21,.98) 72%)}
+  .coral:before,.coral:after{content:"";position:absolute;bottom:0;filter:blur(2px);mix-blend-mode:screen}
+  .coral:before{left:0;width:58%;height:88%;background:
+    radial-gradient(ellipse 9% 42% at 16% 100%,rgba(255,140,120,.5),transparent 70%),
+    radial-gradient(ellipse 7% 30% at 32% 100%,rgba(120,255,225,.42),transparent 70%),
+    radial-gradient(ellipse 11% 48% at 52% 100%,rgba(200,150,255,.4),transparent 72%),
+    radial-gradient(ellipse 8% 34% at 72% 100%,rgba(251,191,36,.38),transparent 72%),
+    radial-gradient(ellipse 10% 44% at 90% 100%,rgba(248,113,113,.42),transparent 72%)}
+  .coral:after{right:0;width:52%;height:96%;background:
+    radial-gradient(ellipse 9% 38% at 14% 100%,rgba(251,191,36,.42),transparent 72%),
+    radial-gradient(ellipse 11% 48% at 38% 100%,rgba(248,113,113,.46),transparent 72%),
+    radial-gradient(ellipse 7% 30% at 62% 100%,rgba(94,234,212,.4),transparent 70%),
+    radial-gradient(ellipse 9% 42% at 84% 100%,rgba(192,132,252,.42),transparent 72%)}
+  .reef-art{position:absolute;left:0;right:0;bottom:0;width:100%;height:31%;display:none;z-index:3;pointer-events:none;opacity:.96}
+  body[data-spot="reef"] .reef-art{display:block}
+  body[data-spot="reef"] .coral{display:none!important}
+  .ice{height:22%;opacity:1;filter:drop-shadow(0 -8px 18px rgba(190,240,255,.2));
+    background:
+      linear-gradient(180deg,rgba(240,255,255,.55) 0 2px,rgba(218,249,255,.36) 3px,rgba(150,220,245,.13) 42%,rgba(70,150,190,.06)),
+      repeating-linear-gradient(112deg,transparent 0 32px,rgba(235,252,255,.1) 32px 34px,transparent 34px 66px)}
+  .aurora{filter:blur(3px)}
+  .aurora:before,.aurora:after{content:"";position:absolute;border-radius:50%;filter:blur(9px);mix-blend-mode:screen}
+  .aurora:before{left:4%;top:15%;width:56%;height:30%;
+    background:linear-gradient(180deg,rgba(94,234,212,.48),rgba(94,234,212,0) 76%);
+    transform:rotate(-10deg);animation:auroraBand 10s ease-in-out infinite alternate}
+  .aurora:after{right:2%;top:5%;width:48%;height:27%;
+    background:linear-gradient(180deg,rgba(192,132,252,.42),rgba(126,224,255,0) 78%);
+    transform:rotate(7deg);animation:auroraBand 13s ease-in-out infinite alternate-reverse}
+  @keyframes auroraBand{from{transform:translateX(-3%) rotate(-10deg) scaleY(.92);opacity:.65}to{transform:translateX(3%) rotate(-7deg) scaleY(1.1);opacity:1}}
+  .vent{height:58%;filter:blur(5px);background:
+    radial-gradient(ellipse 18% 50% at 20% 100%,rgba(192,132,252,.34),transparent 70%),
+    radial-gradient(ellipse 13% 40% at 73% 100%,rgba(56,189,248,.3),transparent 70%),
+    radial-gradient(ellipse 8% 24% at 47% 100%,rgba(251,191,36,.2),transparent 72%),
+    radial-gradient(ellipse 30% 70% at 50% 100%,rgba(99,102,241,.16),transparent 76%)}
+  .deco-fish{background:linear-gradient(180deg,rgba(210,248,255,.16),rgba(90,165,210,.05));opacity:.55}
+  .deco-fish.f2{opacity:.4}
+  .deco-fish.f3{opacity:.32}
+  body[data-spot="trench"] .deco-fish{background:linear-gradient(180deg,rgba(147,197,253,.2),rgba(56,120,180,.05))}
+  body[data-spot="trench"] .deco-fish:after{border-right-color:rgba(147,197,253,.16)}
+  body[data-spot="aurora"] .deco-fish{background:linear-gradient(180deg,rgba(210,255,250,.26),rgba(120,200,230,.06))}
+  body[data-spot="aurora"] .deco-fish:after{border-right-color:rgba(210,255,250,.2)}
+  body[data-spot="abyss"] .deco-fish{background:linear-gradient(180deg,rgba(216,180,254,.28),rgba(129,140,248,.07))}
+  body[data-spot="abyss"] .deco-fish:after{border-right-color:rgba(216,180,254,.2)}
+  body[data-spot="trench"] .plankton{display:block;opacity:.52}
+  body[data-spot="abyss"] .plankton{display:block;opacity:.85}
+  body[data-spot="aurora"] .snowfall{opacity:1}
+  body[data-spot="reef"] .rays{opacity:1}
+  body[data-spot="trench"] .rays{opacity:.62}
+  body[data-spot="trench"] .vent{display:block;opacity:.6}
+  body[data-spot="abyss"] .vent{opacity:1}
+  body[data-spot="reef"] .deco-fish{background:linear-gradient(180deg,rgba(255,196,150,.42),rgba(255,120,80,.12))}
+  body[data-spot="reef"] .deco-fish:after{border-right-color:rgba(255,170,120,.34)}
+  body[data-spot="abyss"] .aurora{filter:blur(9px);opacity:.5}
+  body[data-spot="abyss"] .aurora:before{background:linear-gradient(180deg,rgba(129,140,248,.34),rgba(129,140,248,0) 76%)}
+  body[data-spot="abyss"] .aurora:after{background:linear-gradient(180deg,rgba(192,132,252,.3),rgba(56,189,248,0) 78%)}
+  .leviathan{position:absolute;left:38%;top:56%;width:172px;height:38px;display:none;z-index:2;pointer-events:none;
+    border-radius:50% 58% 56% 50%;filter:blur(3px);
+    background:radial-gradient(ellipse at 44% 50%,rgba(1,8,14,.62),rgba(1,8,14,.26) 62%,transparent 80%);
+    animation:leviathan 26s ease-in-out infinite alternate}
+  .leviathan:before{content:"";position:absolute;right:86%;top:6px;width:0;height:0;
+    border-right:30px solid rgba(1,8,14,.5);border-top:12px solid transparent;border-bottom:12px solid transparent;filter:blur(1px)}
+  @keyframes leviathan{from{transform:translate(-20px,6px) scale(.96)}to{transform:translate(26px,-8px) scale(1.04)}}
+  body[data-spot="trench"] .leviathan{display:block;opacity:.45}
+  body[data-spot="abyss"] .leviathan{display:block;opacity:.58;left:50%;top:62%;width:206px;height:44px}
+  @media (prefers-reduced-motion:reduce){
+    .clouds,.sunpath,.rays,.reflection,.gulls,.snowfall,.plankton,.bubbles,.deco-fish,.bobber,.waves,.aurora,.aurora:before,.aurora:after,.leviathan,.pier b:after{animation:none}
+  }
+</style>
+</head>
+<body data-spot="dock">
+<div class="top">
+  <span class="stat">金币<b id="coin">0</b></span>
+  <span class="stat">鱼竿<b id="rodLv">1</b></span>
+  <span class="stat">图鉴<b id="dexN">0</b>/<b id="dexTotal">47</b></span>
+  <div class="tide" id="tideChip"><i id="tideIco">🌊</i><b id="tideName">平潮</b><em id="tideT">50s</em></div>
+  <button class="sound" id="soundBtn" type="button" title="音效开关">♪</button>
+</div>
+<div class="scene" id="scene">
+  <div class="sky-glow"></div>
+  <div class="horizon"></div>
+  <div class="sun"></div>
+  <div class="aurora"></div>
+  <div class="stars"></div>
+  <div class="clouds"></div>
+  <div class="sunpath"></div>
+  <div class="rays"></div>
+  <div class="boat"><b></b></div>
+  <div class="coral"></div>
+  <svg class="reef-art" viewBox="0 0 800 200" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+    <defs>
+      <linearGradient id="reefRock" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#0e4a5d"/>
+        <stop offset=".58" stop-color="#072634"/>
+        <stop offset="1" stop-color="#020a12"/>
+      </linearGradient>
+      <filter id="reefBlur" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2"/></filter>
+    </defs>
+    <path d="M0,200 L0,148 C18,146 30,138 44,142 C58,132 68,136 80,146 C92,120 110,124 122,144 C138,132 152,118 166,132 C182,112 198,118 210,136 C226,126 240,108 254,124 C270,116 284,122 296,138 C314,124 328,102 344,120 C358,132 372,120 386,134 C402,110 418,116 432,134 C448,124 462,102 478,118 C494,130 508,118 522,132 C540,108 556,114 570,132 C586,122 600,100 616,116 C632,128 646,116 660,130 C676,106 692,112 706,132 C724,120 738,110 752,128 C768,118 784,126 800,140 L800,200 Z" fill="url(#reefRock)"/>
+    <path d="M0,148 C18,146 30,138 44,142 C58,132 68,136 80,146 C92,120 110,124 122,144 C138,132 152,118 166,132 C182,112 198,118 210,136 C226,126 240,108 254,124 C270,116 284,122 296,138 C314,124 328,102 344,120 C358,132 372,120 386,134 C402,110 418,116 432,134 C448,124 462,102 478,118 C494,130 508,118 522,132 C540,108 556,114 570,132 C586,122 600,100 616,116 C632,128 646,116 660,130 C676,106 692,112 706,132 C724,120 738,110 752,128 C768,118 784,126 800,140" fill="none" stroke="rgba(126,224,255,.22)" stroke-width="2"/>
+    <g fill="none" stroke-linecap="round" opacity=".9">
+      <path d="M70,152 L70,104 M70,126 L54,108 M70,134 L88,110 M70,144 L60,132" stroke="#f472b6" stroke-width="6"/>
+      <path d="M180,148 L180,112 M180,130 L166,114 M180,138 L196,118" stroke="#fbbf24" stroke-width="5"/>
+      <path d="M300,148 L300,100 M300,124 L284,106 M300,132 L318,110" stroke="#c084fc" stroke-width="6"/>
+      <path d="M430,146 L430,108 M430,128 L414,110 M430,136 L448,116" stroke="#5eead4" stroke-width="5"/>
+      <path d="M560,152 L560,106 M560,128 L542,110 M560,138 L580,114" stroke="#f472b6" stroke-width="6"/>
+      <path d="M690,150 L690,110 M690,130 L674,114 M690,140 L708,118" stroke="#fbbf24" stroke-width="5"/>
+      <path d="M120,200 C112,170 128,154 120,132 C116,120 124,114 126,106" stroke="#34d399" stroke-width="4" opacity=".55"/>
+      <path d="M352,200 C344,174 360,158 352,136 C348,124 356,118 358,110" stroke="#34d399" stroke-width="3" opacity=".45"/>
+      <path d="M620,200 C612,178 626,160 618,142" stroke="#2dd4bf" stroke-width="4" opacity=".5"/>
+      <path d="M478,150 C460,132 462,112 478,102 C494,112 496,132 478,150" stroke="#f9a8d4" stroke-width="2.5" opacity=".6"/>
+      <path d="M478,150 L478,106 M478,124 L466,112 M478,132 L490,118" stroke="#f9a8d4" stroke-width="1.6" opacity=".5"/>
+      <path d="M742,146 C728,132 730,116 742,108 C754,116 756,132 742,146" stroke="#a7f3d0" stroke-width="2" opacity=".5"/>
+    </g>
+    <g filter="url(#reefBlur)" opacity=".55">
+      <circle cx="54" cy="108" r="4" fill="#f9a8d4"/>
+      <circle cx="88" cy="110" r="3.4" fill="#fbcfe8"/>
+      <circle cx="166" cy="114" r="3.4" fill="#fcd34d"/>
+      <circle cx="196" cy="118" r="3" fill="#fde68a"/>
+      <circle cx="284" cy="106" r="4" fill="#d8b4fe"/>
+      <circle cx="318" cy="110" r="3.4" fill="#e9d5ff"/>
+      <circle cx="414" cy="110" r="3.4" fill="#99f6e4"/>
+      <circle cx="448" cy="116" r="3" fill="#ccfbf1"/>
+      <circle cx="542" cy="110" r="4" fill="#f9a8d4"/>
+      <circle cx="580" cy="114" r="3.4" fill="#fbcfe8"/>
+      <circle cx="674" cy="114" r="3.4" fill="#fcd34d"/>
+      <circle cx="708" cy="118" r="3" fill="#fde68a"/>
+      <circle cx="478" cy="102" r="3.2" fill="#fbcfe8"/>
+      <circle cx="742" cy="108" r="3" fill="#a7f3d0"/>
+    </g>
+  </svg>
+  <div class="ice"></div>
+  <div class="vent"></div>
+  <div class="pier"><i></i><b></b></div>
+  <div class="gulls"><i></i><i></i><i></i></div>
+  <div class="snowfall"></div>
+  <div class="plankton"></div>
+  <div class="leviathan"></div>
+  <div class="waves"></div>
+  <div class="bubbles" id="bubbles"></div>
+  <div class="deco-fish f1"></div>
+  <div class="deco-fish f2"></div>
+  <div class="deco-fish f3"></div>
+  <div class="fish-shadow hide" id="fishShadow"></div>
+  <svg class="line" id="line" viewBox="0 0 100 100" preserveAspectRatio="none"><path id="linePath" d=""></path></svg>
+  <div class="rodtip" aria-hidden="true"></div>
+  <div class="bobber hide" id="bobber"></div>
+  <div class="spot-badge"><b id="spotName">晨雾码头</b><span id="spotSub">入门海域</span></div>
+  <div class="event hide" id="eventBanner">鱼群来袭</div>
+  <div class="msg" id="msg">点击「抛竿」开始</div>
+  <div class="catch-pop hide" id="catchPop"><b id="catchName"></b><span id="catchInfo"></span><em id="catchCoin"></em></div>
+  <div class="note hide" id="note"></div>
+</div>
+<div class="panel">
+  <div class="meter" id="powerMeter"><i id="powerFill"></i></div>
+  <div class="tension" id="tension"><div class="zone" id="zone"></div><div class="marker" id="marker"></div></div>
+  <div class="bars" id="bars">
+    <div class="prog" id="prog"><i id="progBar"></i></div>
+    <div class="linehp" id="lineHp"><i id="lineHpBar"></i></div>
+  </div>
+  <div class="row">
+    <button id="castBtn" type="button">抛竿</button>
+    <button id="hookBtn" type="button" hidden>收线</button>
+    <button id="baitBtn" class="mini" type="button"><span>饵</span><b id="baitName">沙虫</b></button>
+    <button id="bookBtn" class="mini" type="button"><span>册</span><b>手册</b><i class="dot" id="bookDot" hidden></i></button>
+  </div>
+  <div class="log" id="log">抛竿 → 等咬钩 → 按住收线，把白色指针保持在绿色区间</div>
+</div>
+<div class="sheet" id="sheet" hidden>
+  <div class="sheet-card">
+    <div class="sheet-head">
+      <div><h2 id="sheetTitle">航海手册</h2><p id="sheetSub">升级装备、切换海域与查看收集进度</p></div>
+      <button id="sheetClose" type="button">关闭</button>
+    </div>
+    <div class="tabs" id="tabs">
+      <button data-tab="upgrade" class="on" type="button">升级</button>
+      <button data-tab="spots" type="button">海域</button>
+      <button data-tab="bait" type="button">鱼饵</button>
+      <button data-tab="dex" type="button">图鉴</button>
+      <button data-tab="quests" type="button">委托</button>
+      <button data-tab="ach" type="button">成就</button>
+    </div>
+    <div class="tab-body" id="tabBody"></div>
+  </div>
+</div>
+<script>
+(function(){
+  'use strict';
+
+  var KEY = 'tx_fishing_v2';
+  var OLD_KEY = 'tx_fishing_v1';
+  var TIDE_MS = 50000;
+  var RARITY = [
+    { n:'普通', c:'#9fb6cc' },
+    { n:'稀有', c:'#5ad4ff' },
+    { n:'史诗', c:'#c084fc' },
+    { n:'传说', c:'#fbbf24' }
+  ];
+  var SPOTS = [
+    {
+      id:'dock', name:'晨雾码头', sub:'入门海域', req:1, icon:'⚓',
+      desc:'晨雾里的木栈桥，鱼群密集，适合练手。',
+      fishes:[
+        { id:'silver',   name:'小银鱼',   v:6,   s:0.16, r:0, len:[8,14] },
+        { id:'sardine',  name:'沙丁鱼',   v:10,  s:0.20, r:0, len:[12,20] },
+        { id:'mackerel', name:'鲭鱼',     v:16,  s:0.26, r:0, len:[20,32] },
+        { id:'seabass',  name:'海鲈',     v:24,  s:0.32, r:0, len:[28,45] },
+        { id:'yellowfin',name:'黄鳍鲷',   v:34,  s:0.38, r:1, len:[25,40] },
+        { id:'grouper',  name:'石斑',     v:46,  s:0.46, r:1, len:[35,60] },
+        { id:'dockeel',  name:'码头鳗',   v:62,  s:0.54, r:2, len:[45,80] },
+        { id:'silverking',name:'银鳞王鲷',v:90,  s:0.62, r:2, len:[40,65] },
+        { id:'mistking', name:'晨雾王鲈', v:150, s:0.72, r:3, len:[60,95] }
+      ]
+    },
+    {
+      id:'reef', name:'珊瑚浅滩', sub:'暖流海域', req:2, icon:'🪸',
+      desc:'暖流经过的浅滩，珊瑚间藏着稀有鱼。',
+      fishes:[
+        { id:'damselfish', name:'雀鲷',     v:22, s:0.26, r:0, len:[10,18] },
+        { id:'butterfly',  name:'蝴蝶鱼',   v:30, s:0.30, r:0, len:[12,20] },
+        { id:'parrot',     name:'鹦嘴鱼',   v:42, s:0.38, r:0, len:[25,45] },
+        { id:'coralbream', name:'珊瑚鲷',   v:58, s:0.46, r:1, len:[30,50] },
+        { id:'lionfish',   name:'狮子鱼',   v:76, s:0.52, r:1, len:[20,35] },
+        { id:'wrasse',     name:'隆头鱼',   v:96, s:0.58, r:2, len:[40,70] },
+        { id:'octopus',    name:'蓝环章鱼', v:130,s:0.64, r:2, len:[30,50] },
+        { id:'coraldragon',name:'珊瑚龙',   v:180,s:0.72, r:3, len:[50,90] },
+        { id:'coralqueen', name:'琉璃珊瑚王',v:260,s:0.80, r:3, len:[60,100] }
+      ]
+    },
+    {
+      id:'trench', name:'深蓝海沟', sub:'幽暗海域', req:4, icon:'🌀',
+      desc:'光线到不了的海沟，生物会自己发光。',
+      fishes:[
+        { id:'lantern',   name:'灯笼鱼',   v:55,  s:0.40, r:0, len:[8,16] },
+        { id:'viper',     name:'蝰鱼',     v:72,  s:0.48, r:0, len:[20,40] },
+        { id:'sailfish',  name:'帆蜥鱼',   v:95,  s:0.56, r:1, len:[60,110] },
+        { id:'hatchet',   name:'银斧鱼',   v:120, s:0.62, r:1, len:[10,20] },
+        { id:'deepeel',   name:'深海鳗',   v:155, s:0.68, r:1, len:[70,130] },
+        { id:'gulper',    name:'吞噬鳗',   v:200, s:0.74, r:2, len:[80,150] },
+        { id:'ghostshark',name:'幽灵鲨',   v:270, s:0.80, r:2, len:[120,200] },
+        { id:'angler',    name:'深渊鮟鱇', v:360, s:0.86, r:3, len:[60,120] },
+        { id:'bluefintuna',name:'蓝鳍巨鲔',v:470, s:0.90, r:3, len:[150,260] },
+        { id:'trenchking',name:'海沟帝王', v:650, s:0.96, r:3, len:[200,320] }
+      ]
+    },
+    {
+      id:'aurora', name:'极光冰海', sub:'寒流海域', req:6, icon:'❄️',
+      desc:'冰海与极光交界，巨物在浮冰下游弋。',
+      fishes:[
+        { id:'icekrill',   name:'冰虾',     v:120, s:0.50, r:0, len:[8,15] },
+        { id:'polarcod',   name:'极地鳕',   v:160, s:0.56, r:0, len:[35,70] },
+        { id:'icesalmon',  name:'冰海鲑',   v:210, s:0.62, r:1, len:[50,90] },
+        { id:'snowflake',  name:'雪原鲽',   v:270, s:0.68, r:1, len:[40,75] },
+        { id:'auroraray',  name:'极光鳐',   v:350, s:0.74, r:2, len:[90,160] },
+        { id:'iceeel',     name:'冰晶鳗',   v:450, s:0.80, r:2, len:[100,180] },
+        { id:'frostshark', name:'霜牙鲨',   v:580, s:0.86, r:2, len:[150,240] },
+        { id:'nightwhale', name:'极夜鲸鲨', v:760, s:0.92, r:3, len:[250,420] },
+        { id:'auroradragon',name:'极光龙鱼',v:1000,s:0.98, r:3, len:[180,300] }
+      ]
+    },
+    {
+      id:'abyss', name:'星海深渊', sub:'传说海域', req:8, icon:'🌌',
+      desc:'星海最深处，传说级的影子在水下游动。',
+      fishes:[
+        { id:'stardustjelly',name:'星尘水母',v:260, s:0.60, r:0, len:[20,45] },
+        { id:'starfin',      name:'星鳍鱼',  v:340, s:0.66, r:0, len:[30,55] },
+        { id:'meteorbream',  name:'陨光鲷',  v:450, s:0.72, r:1, len:[45,75] },
+        { id:'voideel',      name:'虚空鳗',  v:590, s:0.78, r:1, len:[90,150] },
+        { id:'starcore',     name:'星核鲟',  v:760, s:0.84, r:2, len:[120,200] },
+        { id:'galaxyray',    name:'银河鳐',  v:980, s:0.88, r:2, len:[140,220] },
+        { id:'gravityshark', name:'引力鲨',  v:1260,s:0.92, r:2, len:[180,280] },
+        { id:'deepoar',      name:'深空皇带鱼',v:1650,s:0.96,r:3,len:[300,500] },
+        { id:'starking',     name:'星海龙王',v:2200,s:1.00, r:3, len:[350,600] },
+        { id:'tideancestor', name:'潮汐之祖',v:3200,s:1.00, r:3, len:[500,800] }
+      ]
+    }
+  ];
+  var BAITS = [
+    { id:'worm',   name:'沙虫',   ico:'🪱', req:0,  wait:1.00, rare:1.00, zone:0,     desc:'均衡，咬钩稳定' },
+    { id:'shrimp', name:'活虾',   ico:'🦐', req:8,  wait:0.78, rare:0.92, zone:0.020, desc:'小鱼咬钩更快，收线区略宽' },
+    { id:'glow',   name:'发光饵', ico:'💡', req:16, wait:1.08, rare:1.70, zone:0,     desc:'稀有鱼出现率明显提升' },
+    { id:'star',   name:'星屑饵', ico:'✨', req:28, wait:1.38, rare:3.20, zone:0.010, desc:'传说鱼概率大幅提升，等待更久' }
+  ];
+  var TIDES = [
+    { id:'calm',  name:'平潮', ico:'🌊', wait:1.00, rare:1.00, size:1.00 },
+    { id:'rise',  name:'涨潮', ico:'🌔', wait:0.82, rare:1.15, size:1.04 },
+    { id:'full',  name:'满潮', ico:'🌕', wait:1.08, rare:1.50, size:1.14 },
+    { id:'fall',  name:'落潮', ico:'🌗', wait:1.20, rare:0.95, size:1.08 }
+  ];
+  var SPOT_BONUS = { dock:200, reef:420, trench:800, aurora:1300, abyss:2200 };
+  var ROD_COST = { 1:60, 2:140, 3:280, 4:480, 5:760, 6:1150, 7:1650, 8:2300, 9:3200 };
+  var LINE_COST = { 1:80, 2:180, 3:360, 4:600, 5:950 };
+  var REEL_COST = { 1:90, 2:200, 3:400, 4:680, 5:1050 };
+  var MAX_ROD = 10, MAX_LINE = 6, MAX_REEL = 6;
+  var LEGACY = {
+    '小银鱼':'silver', '沙丁鱼':'sardine', '海鲈':'seabass', '金枪鱼':'bluefintuna',
+    '珊瑚鲷':'coralbream', '月光鳗':'deepeel', '蓝鳍鲔':'bluefintuna', '星斑':'starfin',
+    '潮汐鲤':'tideancestor', '极光鳐':'auroraray', '深海皇带鱼':'deepoar', '星海龙王':'starking'
+  };
+  var ACHS = [
+    { id:'first',   name:'第一竿',   desc:'钓到第一条鱼',                 reward:30,  test:function(s){ return s.stats.catch >= 1; } },
+    { id:'catch10', name:'渐入佳境', desc:'累计钓到 10 条鱼',             reward:60,  test:function(s){ return s.stats.catch >= 10; } },
+    { id:'catch50', name:'老练钓手', desc:'累计钓到 50 条鱼',             reward:160, test:function(s){ return s.stats.catch >= 50; } },
+    { id:'catch150',name:'潮汐常客', desc:'累计钓到 150 条鱼',            reward:420, test:function(s){ return s.stats.catch >= 150; } },
+    { id:'dex10',   name:'初识鱼群', desc:'图鉴收录 10 种鱼',              reward:100, test:function(s){ return dexCount() >= 10; } },
+    { id:'dex20',   name:'海域通',   desc:'图鉴收录 20 种鱼',              reward:220, test:function(s){ return dexCount() >= 20; } },
+    { id:'dex30',   name:'博物学家', desc:'图鉴收录 30 种鱼',              reward:400, test:function(s){ return dexCount() >= 30; } },
+    { id:'dex40',   name:'深海名录', desc:'图鉴收录 40 种鱼',              reward:760, test:function(s){ return dexCount() >= 40; } },
+    { id:'rod5',    name:'称手渔具', desc:'鱼竿升到 Lv.5',                 reward:150, test:function(s){ return s.rod >= 5; } },
+    { id:'rod8',    name:'远洋装备', desc:'鱼竿升到 Lv.8',                 reward:320, test:function(s){ return s.rod >= 8; } },
+    { id:'perfect10',name:'完美手眼',desc:'完美收线 10 次',                reward:240, test:function(s){ return s.stats.perfect >= 10; } },
+    { id:'legend',  name:'传说之影', desc:'钓到一条传说鱼',                reward:300, test:function(s){ return s.stats.legend >= 1; } },
+    { id:'allspots',name:'五海通行', desc:'解锁全部五个海域',              reward:500, test:function(s){ return s.rod >= 8; } },
+    { id:'allfish', name:'潮汐图鉴', desc:'收录全部 47 种鱼',              reward:1500,test:function(s){ return dexCount() >= FISH_TOTAL; } }
+  ];
+  var ALL_FISH = [], FISH = {}, FISH_TOTAL = 0;
+  SPOTS.forEach(function(sp){
+    sp.fishes.forEach(function(f){
+      f.spot = sp.id;
+      ALL_FISH.push(f);
+      FISH[f.id] = f;
+    });
+  });
+  FISH_TOTAL = ALL_FISH.length;
+  var FISH_TEXT = {
+    silver:'成群结队的小型银鱼，退潮时在栈桥阴影里打转。',
+    sardine:'银蓝色的小鱼，总是一大群一起行动，咬钩很积极。',
+    mackerel:'背上有虎纹的快速游鱼，靠近水面追捕浮游生物。',
+    seabass:'码头常客，喜欢在木桩和缆绳附近伏击小鱼。',
+    yellowfin:'鳍条带金黄色光泽，警觉性高，咬钩前会反复试探。',
+    grouper:'体型厚重的底栖鱼，中钩后第一时间往礁石缝里钻。',
+    dockeel:'夜里沿着栈桥缝隙游动的长鳗，力气比外形看起来大。',
+    silverking:'鳞片像打磨过的银片，是码头一带少见的大家伙。',
+    mistking:'只在晨雾最浓时现身，传闻它守着整片码头的鱼群。',
+    damselfish:'色彩鲜艳的小型珊瑚鱼，领地意识极强。',
+    butterfly:'侧扁的碟形身体，在珊瑚枝之间灵活穿梭。',
+    parrot:'用喙状牙齿啃食珊瑚，游动时带起细碎沙粒。',
+    coralbream:'粉橙色身体，常在珊瑚阴影中成群觅食。',
+    lionfish:'张开的长鳍像羽扇，漂亮但需要小心处理。',
+    wrasse:'体色随光线变化，喜欢在礁石边缘巡游。',
+    octopus:'遇到危险会亮起蓝色圆环，触手力量很足。',
+    coraldragon:'鳍膜像珊瑚枝一样展开，是浅滩的顶级掠食者。',
+    coralqueen:'鳞片透出琉璃般的蓝紫色，只在暖流最强时出现。',
+    lantern:'腹部有发光器，在黑暗中像一盏移动的小灯。',
+    viper:'长牙外露的深水猎手，会主动追咬发光的鱼饵。',
+    sailfish:'背鳍高耸如帆，游速快，常在水层间突袭。',
+    hatchet:'身体薄如斧刃，靠反光在深水中隐藏自己。',
+    deepeel:'细长的身体在压力下依然灵活，挣扎时间很长。',
+    gulper:'能张开巨大的嘴，吞下比自己更大的猎物。',
+    ghostshark:'灰白色的深海鲨，行动安静，靠近时几乎无声。',
+    angler:'头顶挂着发光诱饵，在漆黑海沟里耐心等待。',
+    bluefintuna:'爆发力惊人的远洋巨鱼，中钩后会持续冲刺。',
+    trenchking:'海沟深处的统治者，体型和力量都远超同域鱼类。',
+    icekrill:'半透明的寒流小虾，是冰海食物链的起点。',
+    polarcod:'耐寒的底层鱼，在浮冰下方缓慢巡游。',
+    icesalmon:'银粉色的冷水鲑鱼，逆流时速度极快。',
+    snowflake:'扁平的身体贴着海床，花纹像落雪。',
+    auroraray:'翼展宽大的鳐鱼，游过时像一片流动的极光。',
+    iceeel:'体表覆着细密冰晶，触感冰凉，力气绵长。',
+    frostshark:'在浮冰边缘狩猎的鲨鱼，牙齿像霜一样白。',
+    nightwhale:'极夜中才浮上来的巨型鲸鲨，吞饵时会拖走整条鱼线。',
+    auroradragon:'鳞光随极光变色，是冰海最神秘的传说鱼。',
+    stardustjelly:'伞盖里浮着细碎光点，像一小片星云。',
+    starfin:'鳍条末端发亮，游动时在身后留下光痕。',
+    meteorbream:'鳞片带陨石般的暗金光斑，被星光吸引。',
+    voideel:'身体几乎吸收所有光线，只能看到轮廓。',
+    starcore:'背脊上有一道稳定的星光，像移动的星核。',
+    galaxyray:'翼面布满星点，展开时像一条银河。',
+    gravityshark:'靠近时周围的水流会变重，收线格外吃力。',
+    deepoar:'极长的带状身体，在深渊里缓缓摆动。',
+    starking:'星海传说的中心，鳞片映出整片星空。',
+    tideancestor:'传说它一摆尾就能改变潮汐，极少有人亲眼见过。'
+  };
+
+  function defaultState(){
+    return {
+      v: 2, coin: 0, rod: 1, line: 1, reel: 1, bait: 'worm', spot: 'dock',
+      dex: {}, ach: {}, bonus: {}, quests: [], qid: 0,
+      stats: { cast: 0, catch: 0, perfect: 0, legend: 0, coins: 0, best: 0 },
+      sound: true
+    };
+  }
+  var S = defaultState();
+  var state = 'idle';
+  var powerVal = 0, dir = 1;
+  var waitTimer = 0, biteTimer = 0, popTimer = 0, noteTimer = 0;
+  var fish = null, fishSize = 0, progress = 0, marker = 0, zoneW = 0, zoneC = 0;
+  var zonePhase = 0, lineHp = 1, lineMax = 1, reeling = false;
+  var fightT = 0, zoneTime = 0, surgeT = 2.5, surgeLeft = 0, surgeShown = false;
+  var tideIdx = -1, started = false, currentTab = 'upgrade', last = 0;
+  var ev = { on:false, until:0, next:Date.now() + 75000 };
+
+  var scene = document.getElementById('scene');
+  var bobber = document.getElementById('bobber');
+  var fishShadow = document.getElementById('fishShadow');
+  var lineEl = document.getElementById('line');
+  var linePath = document.getElementById('linePath');
+  var msgEl = document.getElementById('msg');
+  var coinEl = document.getElementById('coin');
+  var rodEl = document.getElementById('rodLv');
+  var dexEl = document.getElementById('dexN');
+  var dexTotalEl = document.getElementById('dexTotal');
+  var logEl = document.getElementById('log');
+  var powerMeter = document.getElementById('powerMeter');
+  var powerFill = document.getElementById('powerFill');
+  var tensionEl = document.getElementById('tension');
+  var zoneEl = document.getElementById('zone');
+  var markerEl = document.getElementById('marker');
+  var barsEl = document.getElementById('bars');
+  var progBar = document.getElementById('progBar');
+  var lineHpBar = document.getElementById('lineHpBar');
+  var castBtn = document.getElementById('castBtn');
+  var hookBtn = document.getElementById('hookBtn');
+  var baitBtn = document.getElementById('baitBtn');
+  var baitName = document.getElementById('baitName');
+  var bookBtn = document.getElementById('bookBtn');
+  var bookDot = document.getElementById('bookDot');
+  var soundBtn = document.getElementById('soundBtn');
+  var spotName = document.getElementById('spotName');
+  var spotSub = document.getElementById('spotSub');
+  var eventBanner = document.getElementById('eventBanner');
+  var catchPop = document.getElementById('catchPop');
+  var catchName = document.getElementById('catchName');
+  var catchInfo = document.getElementById('catchInfo');
+  var catchCoin = document.getElementById('catchCoin');
+  var noteEl = document.getElementById('note');
+  var tideName = document.getElementById('tideName');
+  var tideIco = document.getElementById('tideIco');
+  var tideT = document.getElementById('tideT');
+  var sheet = document.getElementById('sheet');
+  var sheetTitle = document.getElementById('sheetTitle');
+  var sheetSub = document.getElementById('sheetSub');
+  var sheetClose = document.getElementById('sheetClose');
+  var tabs = document.getElementById('tabs');
+  var tabBody = document.getElementById('tabBody');
+
+  function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+  function dexCount(){
+    var n = 0;
+    for (var k in S.dex) if (S.dex.hasOwnProperty(k) && FISH[k]) n++;
+    return n;
+  }
+  function spotById(id){
+    for (var i = 0; i < SPOTS.length; i++) if (SPOTS[i].id === id) return SPOTS[i];
+    return SPOTS[0];
+  }
+  function baitById(id){
+    for (var i = 0; i < BAITS.length; i++) if (BAITS[i].id === id) return BAITS[i];
+    return BAITS[0];
+  }
+  function fishById(id){ return FISH[id] || null; }
+  function lineMaxNow(){ return 1 + (S.line - 1) * 0.22; }
+  function reelSpeedNow(){ return 0.70 + (S.reel - 1) * 0.045; }
+  function zoneBaseNow(){ return 0.30 + (S.rod - 1) * 0.010 + (S.reel - 1) * 0.004; }
+  function spotDexCount(sp){
+    var n = 0;
+    for (var i = 0; i < sp.fishes.length; i++) if (S.dex[sp.fishes[i].id]) n++;
+    return n;
+  }
+  function unlockedBaitCount(){
+    var n = 0;
+    for (var i = 0; i < BAITS.length; i++) if (dexCount() >= BAITS[i].req) n++;
+    return n;
+  }
+  function esc(t){
+    return String(t).replace(/[&<>"]/g, function(c){
+      return { '&':'&', '<':'<', '>':'>', '"':'"' }[c];
+    });
+  }
+
+  function save(){
+    try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){}
+  }
+  function load(){
+    var raw = null;
+    try { raw = localStorage.getItem(KEY); } catch(e){}
+    if (raw){
+      try { mergeState(JSON.parse(raw)); return; } catch(e){}
+    }
+    try {
+      var old = JSON.parse(localStorage.getItem(OLD_KEY) || 'null');
+      if (old) migrateOld(old);
+    } catch(e){}
+  }
+  function mergeState(d){
+    if (!d || typeof d !== 'object') return;
+    if (typeof d.coin === 'number') S.coin = Math.max(0, Math.floor(d.coin));
+    if (typeof d.rod === 'number') S.rod = clamp(Math.floor(d.rod), 1, MAX_ROD);
+    if (typeof d.line === 'number') S.line = clamp(Math.floor(d.line), 1, MAX_LINE);
+    if (typeof d.reel === 'number') S.reel = clamp(Math.floor(d.reel), 1, MAX_REEL);
+    if (typeof d.bait === 'string' && baitById(d.bait).id === d.bait) S.bait = d.bait;
+    if (typeof d.spot === 'string' && spotById(d.spot).id === d.spot) S.spot = d.spot;
+    if (d.dex && typeof d.dex === 'object'){
+      for (var id in d.dex){
+        if (!d.dex.hasOwnProperty(id) || !FISH[id]) continue;
+        var r = d.dex[id];
+        var n = (r && typeof r.n === 'number') ? Math.max(1, Math.floor(r.n)) : 1;
+        var best = (r && typeof r.best === 'number') ? r.best : (FISH[id].len[0] + FISH[id].len[1]) / 2;
+        S.dex[id] = { n: n, best: best };
+      }
+    }
+    if (d.ach && typeof d.ach === 'object') S.ach = d.ach;
+    if (d.bonus && typeof d.bonus === 'object') S.bonus = d.bonus;
+    if (Array.isArray(d.quests)) S.quests = d.quests;
+    if (typeof d.qid === 'number') S.qid = d.qid;
+    if (d.stats && typeof d.stats === 'object'){
+      S.stats.cast = Math.max(0, Math.floor(d.stats.cast || 0));
+      S.stats.catch = Math.max(0, Math.floor(d.stats.catch || 0));
+      S.stats.perfect = Math.max(0, Math.floor(d.stats.perfect || 0));
+      S.stats.legend = Math.max(0, Math.floor(d.stats.legend || 0));
+      S.stats.coins = Math.max(0, Math.floor(d.stats.coins || 0));
+      S.stats.best = Math.max(0, Number(d.stats.best) || 0);
+    }
+    if (typeof d.sound === 'boolean') S.sound = d.sound;
+    if (S.rod < spotById(S.spot).req) S.spot = 'dock';
+    if (dexCount() < baitById(S.bait).req) S.bait = 'worm';
+  }
+  function migrateOld(old){
+    if (typeof old.coin === 'number') S.coin = Math.max(0, Math.floor(old.coin));
+    if (typeof old.rod === 'number') S.rod = clamp(Math.floor(old.rod), 1, MAX_ROD);
+    var total = 0;
+    if (old.dex && typeof old.dex === 'object'){
+      for (var name in old.dex){
+        if (!old.dex.hasOwnProperty(name)) continue;
+        var id = LEGACY[name] || null;
+        if (!id || !FISH[id]) continue;
+        var f = FISH[id];
+        S.dex[id] = { n: 1, best: (f.len[0] + f.len[1]) / 2 };
+        total++;
+      }
+    }
+    S.stats.catch = total;
+    S.stats.cast = total;
+  }
+
+  function makeQuest(){
+    if (!Array.isArray(S.quests)) S.quests = [];
+    var used = {};
+    S.quests.forEach(function(q){ if (q) used[q.type] = 1; });
+    var pool = ['count', 'coins', 'rarity', 'size', 'spot'].filter(function(t){ return !used[t]; });
+    if (!pool.length) pool = ['count', 'coins', 'rarity', 'size', 'spot'];
+    var type = pool[Math.floor(Math.random() * pool.length)];
+    var rod = S.rod;
+    var q = { id:'q' + (++S.qid) + '_' + Date.now().toString(36), type:type, cur:0, done:false, claimed:false };
+    if (type === 'count'){
+      q.need = 5 + rod * 2;
+      q.reward = 70 + rod * 34;
+    } else if (type === 'coins'){
+      q.need = 180 + rod * 90;
+      q.reward = 90 + rod * 38;
+    } else if (type === 'rarity'){
+      q.r = rod < 3 ? 1 : (rod < 7 ? 2 : 3);
+      q.need = 1;
+      q.reward = 120 + rod * 48;
+    } else if (type === 'size'){
+      var spots = SPOTS.filter(function(s){ return S.rod >= s.req; });
+      var sp = spots[Math.floor(Math.random() * spots.length)] || SPOTS[0];
+      var f = sp.fishes[Math.min(3, sp.fishes.length - 1)];
+      q.size = Math.round((f.len[0] + (f.len[1] - f.len[0]) * 0.70) * 10) / 10;
+      q.need = 1;
+      q.reward = 110 + rod * 44;
+    } else {
+      var usp = SPOTS.filter(function(s){ return S.rod >= s.req; });
+      var s2 = usp[Math.floor(Math.random() * usp.length)] || SPOTS[0];
+      q.spot = s2.id;
+      q.need = 3 + Math.floor(rod / 3);
+      q.reward = 80 + rod * 36;
+    }
+    return q;
+  }
+  function ensureQuests(){
+    if (!Array.isArray(S.quests)) S.quests = [];
+    S.quests = S.quests.filter(function(q){ return q && q.id && !q.claimed; }).slice(0, 3);
+    while (S.quests.length < 3) S.quests.push(makeQuest());
+  }
+  function questText(q){
+    if (q.type === 'count') return '钓上 ' + q.need + ' 条鱼';
+    if (q.type === 'coins') return '累计赚取 ' + q.need + ' 金币';
+    if (q.type === 'rarity') return '钓到 ' + q.need + ' 条' + RARITY[q.r].n + '鱼';
+    if (q.type === 'size') return '钓到一条 ≥ ' + q.size + ' cm 的鱼';
+    if (q.type === 'spot') return '在' + spotById(q.spot).name + '钓上 ' + q.need + ' 条鱼';
+    return '完成委托';
+  }
+  function questTitle(q){
+    if (q.type === 'count') return '渔获委托';
+    if (q.type === 'coins') return '鱼市订单';
+    if (q.type === 'rarity') return RARITY[q.r].n + '鱼委托';
+    if (q.type === 'size') return '巨物委托';
+    return '海域委托';
+  }
+  function questCatch(f, size, reward){
+    S.quests.forEach(function(q){
+      if (!q || q.done) return;
+      var inc = 0;
+      if (q.type === 'count') inc = 1;
+      else if (q.type === 'coins') inc = reward;
+      else if (q.type === 'rarity' && f.r >= q.r) inc = 1;
+      else if (q.type === 'size' && size >= q.size) inc = 1;
+      else if (q.type === 'spot' && f.spot === q.spot) inc = 1;
+      if (inc > 0){
+        q.cur = Math.min(q.need, q.cur + inc);
+        if (q.cur >= q.need) q.done = true;
+      }
+    });
+  }
+
+  function checkAch(){
+    var got = [];
+    ACHS.forEach(function(a){
+      if (S.ach[a.id]) return;
+      if (a.test(S)){
+        S.ach[a.id] = 1;
+        S.coin += a.reward;
+        S.stats.coins += a.reward;
+        got.push(a);
+      }
+    });
+    if (got.length){
+      save();
+      sync();
+      showNote('成就 · ' + got[got.length - 1].name + ' +' + got[got.length - 1].reward + ' 金币');
+      sfx('quest');
+    }
+    return got;
+  }
+
+  function sync(){
+    coinEl.textContent = S.coin;
+    rodEl.textContent = S.rod;
+    dexEl.textContent = dexCount();
+    dexTotalEl.textContent = FISH_TOTAL;
+    baitName.textContent = baitById(S.bait).name;
+    soundBtn.textContent = S.sound ? '♪' : '×';
+    soundBtn.title = S.sound ? '音效已开启' : '音效已关闭';
+    var ready = false;
+    for (var i = 0; i < S.quests.length; i++){
+      if (S.quests[i] && S.quests[i].done && !S.quests[i].claimed) ready = true;
+    }
+    bookDot.hidden = !ready;
+    if (started) rodEl.textContent = S.rod;
+  }
+
+  function setMsg(t){ msgEl.textContent = t; }
+  function showNote(t){
+    noteEl.textContent = t;
+    noteEl.classList.remove('hide');
+    clearTimeout(noteTimer);
+    noteTimer = setTimeout(function(){ noteEl.classList.add('hide'); }, 2400);
+  }
+  function applySpot(){
+    var sp = spotById(S.spot);
+    document.body.dataset.spot = sp.id;
+    spotName.textContent = sp.name;
+    spotSub.textContent = sp.sub;
+    if (state === 'idle'){
+      bobber.classList.add('hide');
+      fishShadow.classList.add('hide');
+      lineEl.classList.remove('on');
+    }
+  }
+
+  var AC = null;
+  function initAudio(){
+    if (AC) return;
+    try {
+      var C = window.AudioContext || window.webkitAudioContext;
+      if (C) AC = new C();
+    } catch(e){ AC = null; }
+  }
+  function beep(freq, dur, delay, type, vol){
+    if (!S.sound || !AC) return;
+    try {
+      if (AC.state === 'suspended') AC.resume();
+      var t0 = AC.currentTime + (delay || 0);
+      var o = AC.createOscillator();
+      var g = AC.createGain();
+      o.type = type || 'sine';
+      o.frequency.setValueAtTime(freq, t0);
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.linearRampToValueAtTime(vol == null ? 0.045 : vol, t0 + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      o.connect(g);
+      g.connect(AC.destination);
+      o.start(t0);
+      o.stop(t0 + dur + 0.03);
+    } catch(e){}
+  }
+  function sfx(kind){
+    if (!S.sound) return;
+    if (!AC) initAudio();
+    if (!AC) return;
+    if (kind === 'cast'){
+      beep(520, .12, 0, 'triangle', .04);
+      beep(330, .16, .08, 'triangle', .035);
+    } else if (kind === 'bite'){
+      beep(880, .09, 0, 'square', .035);
+      beep(1180, .12, .1, 'square', .035);
+    } else if (kind === 'catch'){
+      beep(523, .13, 0, 'sine', .05);
+      beep(659, .14, .1, 'sine', .05);
+      beep(784, .2, .2, 'sine', .05);
+    } else if (kind === 'fail'){
+      beep(220, .18, 0, 'sawtooth', .03);
+      beep(150, .26, .1, 'sawtooth', .03);
+    } else if (kind === 'upgrade'){
+      beep(660, .12, 0, 'triangle', .045);
+      beep(880, .18, .1, 'triangle', .045);
+    } else if (kind === 'quest'){
+      beep(784, .12, 0, 'sine', .045);
+      beep(988, .12, .09, 'sine', .045);
+      beep(1175, .2, .18, 'sine', .045);
+    } else if (kind === 'event'){
+      beep(392, .14, 0, 'square', .03);
+      beep(523, .14, .12, 'square', .03);
+      beep(784, .2, .24, 'square', .03);
+    }
+  }
+
+  function tideInfo(){
+    var now = Date.now();
+    var idx = Math.floor(now / TIDE_MS) % TIDES.length;
+    return { idx: idx, left: TIDE_MS - (now % TIDE_MS) };
+  }
+  function tickTide(){
+    var ti = tideInfo();
+    var t = TIDES[ti.idx];
+    tideName.textContent = t.name;
+    tideIco.textContent = t.ico;
+    tideT.textContent = Math.ceil(ti.left / 1000) + 's';
+    if (ti.idx !== tideIdx){
+      var was = tideIdx;
+      tideIdx = ti.idx;
+      document.body.dataset.tide = t.id;
+      if (was >= 0 && started) showNote('潮汐转为' + t.name + ' · ' + (t.id === 'full' ? '稀有鱼更活跃' : (t.id === 'rise' ? '咬钩更快' : (t.id === 'fall' ? '巨物更多' : '鱼情平稳'))));
+      if (was >= 0 && state === 'wait') scheduleBite();
+    }
+  }
+  function updateLine(left){
+    var x1 = 14, y1 = 36, x2 = left, y2 = 72;
+    var cx = (x1 + x2) / 2 + 3;
+    var cy = y1 + 16 + powerVal * 5;
+    linePath.setAttribute('d', 'M' + x1 + ' ' + y1 + ' Q' + cx + ' ' + cy + ' ' + x2 + ' ' + y2);
+  }
+  function fishShadowAt(left){
+    fishShadow.style.left = (left - 5) + '%';
+    fishShadow.classList.remove('hide');
+  }
+
+  function tickEvent(){
+    var now = Date.now();
+    if (ev.on){
+      if (now >= ev.until){
+        ev.on = false;
+        scene.classList.remove('school');
+        eventBanner.classList.add('hide');
+        setMsg('鱼群散去，潮水恢复平静');
+      } else {
+        var left = Math.ceil((ev.until - now) / 1000);
+        eventBanner.textContent = '鱼群来袭 · 稀有鱼活跃 ' + left + 's';
+      }
+    } else if (now >= ev.next){
+      ev.on = true;
+      ev.until = now + 18000;
+      ev.next = now + 110000 + Math.random() * 60000;
+      eventBanner.classList.remove('hide');
+      eventBanner.textContent = '鱼群来袭 · 稀有鱼活跃 18s';
+      scene.classList.add('school');
+      setMsg('鱼群来袭！稀有鱼更活跃');
+      showNote('鱼群来袭 · 18 秒');
+      sfx('event');
+      if (state === 'wait') scheduleBite();
+    }
+  }
+
+  function startPower(){
+    if (state !== 'idle') return;
+    initAudio();
+    started = true;
+    state = 'power';
+    powerVal = 0;
+    dir = 1;
+    powerMeter.classList.add('on');
+    castBtn.textContent = '停下';
+    bobber.classList.remove('hide');
+    bobber.classList.remove('bite');
+    bobber.style.left = '24%';
+    updateLine(24);
+    lineEl.classList.add('on');
+    setMsg('点击停下，决定抛竿距离');
+    sfx('cast');
+  }
+  function lockPower(){
+    if (state !== 'power') return;
+    state = 'wait';
+    S.stats.cast++;
+    save();
+    powerMeter.classList.remove('on');
+    castBtn.hidden = true;
+    hookBtn.hidden = true;
+    var left = 24 + powerVal * 52;
+    bobber.style.left = left + '%';
+    updateLine(left);
+    fishShadowAt(left);
+    setMsg('抛竿 ' + Math.round(6 + powerVal * 42) + ' 米，等待咬钩…');
+    scheduleBite();
+  }
+  function waitMul(){
+    var t = TIDES[tideIdx < 0 ? tideInfo().idx : tideIdx];
+    var b = baitById(S.bait);
+    return t.wait * b.wait * (ev.on ? 0.35 : 1);
+  }
+  function scheduleBite(){
+    clearTimeout(waitTimer);
+    waitTimer = setTimeout(beginBite, (800 + Math.random() * 1900) * waitMul());
+  }
+  function beginBite(){
+    if (state !== 'wait') return;
+    state = 'bite';
+    bobber.classList.add('bite');
+    fishShadow.classList.add('bite');
+    setMsg('咬钩了！点水面或按「收线」');
+    hookBtn.hidden = false;
+    hookBtn.textContent = '收线！';
+    clearTimeout(biteTimer);
+    biteTimer = setTimeout(function(){
+      if (state === 'bite'){
+        state = 'idle';
+        resetUI();
+        setMsg('鱼跑了，再抛一次');
+        logEl.textContent = '咬钩只有 1.5 秒，看到浮漂下沉就立刻收线';
+        sfx('fail');
+      }
+    }, 1500);
+    sfx('bite');
+  }
+  function pickFish(){
+    var sp = spotById(S.spot);
+    var t = TIDES[tideIdx < 0 ? tideInfo().idx : tideIdx];
+    var b = baitById(S.bait);
+    var weights = [];
+    var total = 0;
+    sp.fishes.forEach(function(f){
+      var w = [100, 24, 6, 1.2][f.r];
+      w *= Math.pow(b.rare, f.r);
+      w *= Math.pow(t.rare, f.r);
+      if (ev.on) w *= Math.pow(1.7, f.r);
+      weights.push(w);
+      total += w;
+    });
+    var roll = Math.random() * total;
+    var acc = 0;
+    for (var i = 0; i < sp.fishes.length; i++){
+      acc += weights[i];
+      if (roll <= acc) return sp.fishes[i];
+    }
+    return sp.fishes[sp.fishes.length - 1];
+  }
+  function startFight(){
+    if (state !== 'bite') return;
+    clearTimeout(biteTimer);
+    started = true;
+    state = 'fight';
+    fish = pickFish();
+    var t = TIDES[tideIdx < 0 ? tideInfo().idx : tideIdx];
+    var ratio = Math.pow(Math.random(), 1 / t.size);
+    fishSize = fish.len[0] + (fish.len[1] - fish.len[0]) * ratio;
+    progress = 0.35;
+    marker = 0.5;
+    reeling = false;
+    zoneW = clamp(zoneBaseNow() + (baitById(S.bait).zone || 0) - fish.s * 0.09, 0.15, 0.50);
+    zonePhase = Math.random() * 6.28;
+    lineMax = lineMaxNow();
+    lineHp = lineMax;
+    fightT = 0;
+    zoneTime = 0;
+    surgeT = 2.0 + Math.random() * 1.6;
+    surgeLeft = 0;
+    surgeShown = false;
+    bobber.classList.remove('bite');
+    fishShadow.classList.add('hide');
+    tensionEl.classList.add('on');
+    barsEl.classList.add('on');
+    lineHpBar.classList.remove('low');
+    hookBtn.hidden = false;
+    hookBtn.textContent = '按住收线';
+    setMsg('上钩：' + fish.name + ' · ' + RARITY[fish.r].n + '，稳住张力');
+    logEl.textContent = '按住收线提升进度；指针在绿区时别松手';
+  }
+  function resetUI(){
+    castBtn.hidden = false;
+    castBtn.textContent = '抛竿';
+    hookBtn.hidden = true;
+    powerMeter.classList.remove('on');
+    tensionEl.classList.remove('on');
+    barsEl.classList.remove('on');
+    bobber.classList.add('hide');
+    bobber.classList.remove('bite');
+    fishShadow.classList.add('hide');
+    fishShadow.classList.remove('bite');
+    lineEl.classList.remove('on');
+    reeling = false;
+  }
+  function awardCatch(f, size, perfect){
+    var ratio = clamp((size - f.len[0]) / Math.max(0.1, f.len[1] - f.len[0]), 0, 1);
+    var mul = 0.85 + ratio * 0.40;
+    if (perfect) mul *= 1.25;
+    var reward = Math.max(1, Math.round(f.v * mul));
+    var rec = S.dex[f.id];
+    var isNew = !rec;
+    var prevBest = rec ? rec.best : 0;
+    S.dex[f.id] = { n: rec ? rec.n + 1 : 1, best: Math.max(prevBest, size) };
+    S.coin += reward;
+    S.stats.catch++;
+    S.stats.coins += reward;
+    if (perfect) S.stats.perfect++;
+    if (f.r >= 3) S.stats.legend++;
+    if (size > S.stats.best) S.stats.best = size;
+    questCatch(f, size, reward);
+    var bonus = null;
+    var sp = spotById(f.spot);
+    if (spotDexCount(sp) >= sp.fishes.length && !S.bonus[sp.id]){
+      S.bonus[sp.id] = 1;
+      S.coin += SPOT_BONUS[sp.id];
+      S.stats.coins += SPOT_BONUS[sp.id];
+      bonus = { name: sp.name, reward: SPOT_BONUS[sp.id] };
+    }
+    checkAch();
+    save();
+    sync();
+    return { reward:reward, isNew:isNew, prevBest:prevBest, perfect:perfect, ratio:ratio, bonus:bonus };
+  }
+  function showCatch(f, size, res){
+    catchName.textContent = (res.isNew ? '新图鉴 · ' : '') + f.name;
+    var tags = RARITY[f.r].n + ' · ' + size.toFixed(1) + ' cm';
+    if (res.perfect) tags += ' · 完美收线';
+    if (res.ratio >= 0.88) tags += ' · 巨物';
+    catchInfo.textContent = tags;
+    catchCoin.textContent = '+' + res.reward + ' 金币';
+    catchPop.className = 'catch-pop ' + (f.r >= 3 ? 'legend' : (f.r >= 2 ? 'rare' : ''));
+    clearTimeout(popTimer);
+    popTimer = setTimeout(function(){ catchPop.classList.add('hide'); }, 1900);
+    if (res.bonus) showNote(res.bonus.name + '图鉴完成 +' + res.bonus.reward + ' 金币');
+    logEl.textContent = (res.isNew ? '新图鉴：' : '') + f.name + ' · ' + size.toFixed(1) + ' cm · +' + res.reward + ' 金币';
+  }
+  function endFight(win, reason){
+    if (state !== 'fight') return;
+    state = 'idle';
+    var f = fish;
+    var size = fishSize;
+    var perfect = fightT > 0.5 && zoneTime / fightT >= 0.72;
+    var res = null;
+    if (win){
+      res = awardCatch(f, size, perfect);
+      setMsg((res.isNew ? '新图鉴！' : '') + '钓到 ' + f.name + '！');
+      sfx('catch');
+    } else {
+      setMsg(reason === 'line' ? '线被拉断了，鱼跑了' : '线松了，鱼跑掉了');
+      logEl.textContent = reason === 'line' ? '指针离开绿区会磨损鱼线，升级鱼线能多扛几次' : '收线时白色指针要保持在绿色区间内';
+      sfx('fail');
+    }
+    fish = null;
+    resetUI();
+    if (res) showCatch(f, size, res);
+    if (!win && f) logEl.textContent += '（' + f.name + ' ' + size.toFixed(1) + ' cm）';
+  }
+  function castClick(){
+    initAudio();
+    if (state === 'idle') startPower();
+    else if (state === 'power') lockPower();
+  }
+
+  function updateFight(dt, now){
+    var t = TIDES[tideIdx < 0 ? tideInfo().idx : tideIdx];
+    var speed = 0.85 + fish.s * 0.75 + (surgeLeft > 0 ? 1.25 : 0);
+    zonePhase += dt * speed;
+    zoneC = 0.5 + 0.30 * Math.sin(zonePhase);
+    var zl = Math.max(0, zoneC - zoneW / 2);
+    var zr = Math.min(1, zoneC + zoneW / 2);
+    if (zr - zl < 0.08) zr = Math.min(1, zl + 0.08);
+
+    surgeT -= dt;
+    if (surgeT <= 0){
+      surgeT = 2.0 + Math.random() * 1.7;
+      surgeLeft = 0.85;
+      surgeShown = false;
+    }
+    if (surgeLeft > 0){
+      surgeLeft -= dt;
+      if (!surgeShown && state === 'fight'){
+        surgeShown = true;
+        setMsg('猛拉！' + fish.name + '在挣扎，稳住');
+      }
+    }
+
+    if (reeling) marker += reelSpeedNow() * dt;
+    else marker -= (0.58 + fish.s * 0.10) * dt;
+    if (surgeLeft > 0) marker -= (reeling ? 0.18 : 0.42) * dt;
+    marker = clamp(marker, 0, 1);
+
+    var inside = marker >= zl && marker <= zr;
+    if (inside){
+      progress += (0.30 + (S.line - 1) * 0.012 - fish.s * 0.08) * dt;
+      lineHp = Math.min(lineMax, lineHp + 0.035 * dt);
+      zoneTime += dt;
+    } else {
+      progress -= (0.16 + fish.s * 0.09) * dt;
+      lineHp -= (0.10 + fish.s * 0.085) * dt;
+    }
+    fightT += dt;
+    progress = clamp(progress, 0, 1);
+    lineHp = Math.max(0, lineHp);
+
+    zoneEl.style.left = (zl * 100) + '%';
+    zoneEl.style.width = ((zr - zl) * 100) + '%';
+    markerEl.style.left = 'calc(' + (marker * 100) + '% - 2px)';
+    progBar.style.width = (progress * 100) + '%';
+    lineHpBar.style.width = ((lineHp / lineMax) * 100) + '%';
+    lineHpBar.classList.toggle('low', lineHp / lineMax < 0.30);
+
+    if (progress >= 1) endFight(true, 'catch');
+    else if (lineHp <= 0) endFight(false, 'line');
+    else if (progress <= 0) endFight(false, 'slip');
+  }
+
+  function loop(t){
+    if (!last) last = t;
+    var dt = Math.min(0.05, (t - last) / 1000);
+    last = t;
+    if (state === 'power'){
+      powerVal += dir * 1.25 * dt;
+      if (powerVal > 1){ powerVal = 1; dir = -1; }
+      if (powerVal < 0){ powerVal = 0; dir = 1; }
+      powerFill.style.width = (powerVal * 100) + '%';
+      updateLine(24 + powerVal * 52);
+      bobber.style.left = (24 + powerVal * 52) + '%';
+    } else if (state === 'fight' && fish){
+      updateFight(dt, t);
+    }
+    requestAnimationFrame(loop);
+  }
+
+  function addCoins(n){
+    n = Math.max(0, Math.floor(n || 0));
+    S.coin += n;
+    S.stats.coins += n;
+    sync();
+  }
+  function buyUpgrade(kind){
+    var lv, max, cost, label;
+    if (kind === 'rod'){ lv = S.rod; max = MAX_ROD; cost = ROD_COST[lv]; label = '鱼竿'; }
+    else if (kind === 'line'){ lv = S.line; max = MAX_LINE; cost = LINE_COST[lv]; label = '鱼线'; }
+    else if (kind === 'reel'){ lv = S.reel; max = MAX_REEL; cost = REEL_COST[lv]; label = '卷线器'; }
+    else return { ok:false, reason:'bad' };
+    if (lv >= max) return { ok:false, reason:'max' };
+    if (S.coin < cost) return { ok:false, reason:'poor', need: cost - S.coin };
+    S.coin -= cost;
+    if (kind === 'rod') S.rod++;
+    else if (kind === 'line') S.line++;
+    else S.reel++;
+    var newLv = kind === 'rod' ? S.rod : (kind === 'line' ? S.line : S.reel);
+    var unlockedSpot = null;
+    if (kind === 'rod'){
+      for (var si = 0; si < SPOTS.length; si++){
+        if (SPOTS[si].req === S.rod) unlockedSpot = SPOTS[si];
+      }
+    }
+    checkAch();
+    save();
+    sync();
+    renderBook('upgrade');
+    sfx('upgrade');
+    showNote(unlockedSpot ? ('新海域解锁 · ' + unlockedSpot.name) : (label + '升级到 Lv.' + newLv));
+    return { ok:true, kind:kind, level:newLv, cost:cost, unlockedSpot: unlockedSpot ? unlockedSpot.id : null };
+  }
+  function selectSpot(id){
+    var sp = spotById(id);
+    if (!sp || sp.id !== id) return { ok:false, reason:'bad' };
+    if (S.rod < sp.req) return { ok:false, reason:'locked', req:sp.req };
+    if (state !== 'idle'){ showNote('收线结束再换海域'); return { ok:false, reason:'busy' }; }
+    S.spot = id;
+    save();
+    applySpot();
+    renderBook('spots');
+    setMsg('来到 ' + sp.name);
+    sfx('click');
+    return { ok:true, spot:id };
+  }
+  function selectBait(id){
+    var b = baitById(id);
+    if (!b || b.id !== id) return { ok:false, reason:'bad' };
+    if (dexCount() < b.req) return { ok:false, reason:'locked', req:b.req };
+    if (state !== 'idle'){ showNote('收线结束再换鱼饵'); return { ok:false, reason:'busy' }; }
+    S.bait = id;
+    save();
+    sync();
+    renderBook('bait');
+    setMsg('换上 ' + b.name);
+    sfx('click');
+    return { ok:true, bait:id };
+  }
+  function claimQuest(id){
+    for (var i = 0; i < S.quests.length; i++){
+      var q = S.quests[i];
+      if (q && q.id === id){
+        if (!q.done || q.claimed) return { ok:false, reason:'not-done' };
+        q.claimed = true;
+        var reward = q.reward;
+        S.coin += reward;
+        S.stats.coins += reward;
+        S.quests.splice(i, 1);
+        S.quests.push(makeQuest());
+        save();
+        sync();
+        renderBook('quests');
+        sfx('quest');
+        showNote('委托完成 +' + reward + ' 金币');
+        return { ok:true, reward:reward };
+      }
+    }
+    return { ok:false, reason:'missing' };
+  }
+
+  function upCard(kind, label, lv, max, effect, next, cost){
+    var maxed = lv >= max;
+    var poor = !maxed && S.coin < cost;
+    return '<div class="up-card"><div class="up-head"><b>' + label + '</b><span>Lv.' + lv + ' / ' + max + '</span></div>' +
+      '<p>' + effect + '</p>' +
+      '<p class="next">' + (maxed ? '已经满级' : '下一级：' + next) + '</p>' +
+      '<button type="button" data-act="buy-' + kind + '" ' + (maxed || poor ? 'disabled' : '') + '>' +
+      (maxed ? '已满级' : (poor ? '金币不足 · 还差 ' + (cost - S.coin) : '升级 · ' + cost + ' 金币')) + '</button></div>';
+  }
+  function buildUpgrade(){
+    return '<div class="up-grid">' +
+      upCard('rod', '鱼竿', S.rod, MAX_ROD,
+        '收线区 ' + (zoneBaseNow() * 100).toFixed(0) + '% · 决定可前往的海域',
+        '收线区 +1%，' + (S.rod + 1 >= 8 ? '深海更稳' : '海域更宽'), ROD_COST[S.rod] || 0) +
+      upCard('line', '鱼线', S.line, MAX_LINE,
+        '线耐久 ' + lineMaxNow().toFixed(2) + ' · 离开绿区时更耐拉',
+        '线耐久 ' + (1 + S.line * 0.22).toFixed(2), LINE_COST[S.line] || 0) +
+      upCard('reel', '卷线器', S.reel, MAX_REEL,
+        '收线速度 ' + reelSpeedNow().toFixed(2) + ' · 指针上升更快',
+        '收线速度 ' + (0.70 + S.reel * 0.045).toFixed(2) + '，收线区略宽', REEL_COST[S.reel] || 0) +
+      '</div>' +
+      '<div class="stat-line">累计抛竿 <b>' + S.stats.cast + '</b> · 钓获 <b>' + S.stats.catch + '</b> · 完美收线 <b>' + S.stats.perfect + '</b> · 传说鱼 <b>' + S.stats.legend + '</b><br>最大体长 <b>' + (S.stats.best ? S.stats.best.toFixed(1) + ' cm' : '—') + '</b> · 累计收入 <b>' + S.stats.coins + '</b> 金币</div>';
+  }
+  function buildSpots(){
+    return SPOTS.map(function(sp){
+      var unlocked = S.rod >= sp.req;
+      var d = spotDexCount(sp);
+      var bonus = S.bonus[sp.id] ? '已领取' : '全收集 +' + SPOT_BONUS[sp.id] + ' 金币';
+      var tag = S.spot === sp.id ? '<span class="s-tag cur">当前</span>' : (unlocked ? '<span class="s-tag">可前往</span>' : '<span class="s-tag">Lv.' + sp.req + ' 解锁</span>');
+      return '<button class="spot-card' + (S.spot === sp.id ? ' on' : '') + '" type="button" data-act="spot-' + sp.id + '" ' + (unlocked ? '' : 'disabled') + '>' +
+        '<span class="s-ico">' + sp.icon + '</span>' +
+        '<span class="s-main"><b>' + sp.name + '</b><span>' + sp.sub + ' · 图鉴 ' + d + '/' + sp.fishes.length + ' · ' + bonus + '</span></span>' +
+        tag + '</button>';
+    }).join('');
+  }
+  function buildBait(){
+    var n = dexCount();
+    return BAITS.map(function(b){
+      var unlocked = n >= b.req;
+      var tag = S.bait === b.id ? '<span class="s-tag">使用中</span>' : (unlocked ? '<span class="s-tag">可选择</span>' : '<span class="s-tag">图鉴 ' + b.req + ' 种解锁</span>');
+      return '<button class="bait-card' + (S.bait === b.id ? ' on' : '') + '" type="button" data-act="bait-' + b.id + '" ' + (unlocked ? '' : 'disabled') + '>' +
+        '<span class="b-ico">' + b.ico + '</span>' +
+        '<span class="b-main"><b>' + b.name + '</b><span>' + b.desc + '</span></span>' + tag + '</button>';
+    }).join('') +
+      '<div class="stat-line">鱼饵在钓上鱼后不会消耗，解锁后可以随时切换。图鉴每收录 8 / 16 / 28 种鱼都会解锁新鱼饵。</div>';
+  }
+  function buildDex(){
+    var n = dexCount();
+    var html = '<div class="dex-top"><span>总图鉴 ' + n + ' / ' + FISH_TOTAL + '</span><div class="bar"><i style="width:' + (n / FISH_TOTAL * 100) + '%"></i></div></div>';
+    SPOTS.forEach(function(sp){
+      var d = spotDexCount(sp);
+      html += '<div class="dex-group"><h3>' + sp.name + '<span>' + d + ' / ' + sp.fishes.length + ' · 全收集 +' + SPOT_BONUS[sp.id] + '</span></h3>';
+      sp.fishes.forEach(function(f){
+        var rec = S.dex[f.id];
+        if (!rec){
+          html += '<button type="button" class="fish-row unknown" data-act="fish-' + f.id + '"><span class="fish-dot" style="background:#334155;color:#334155"></span><b>???</b><em>未发现 · ' + RARITY[f.r].n + '</em><span class="fv">—</span><span class="chev">›</span></button>';
+        } else {
+          html += '<button type="button" class="fish-row" data-act="fish-' + f.id + '"><span class="fish-dot" style="background:' + RARITY[f.r].c + ';color:' + RARITY[f.r].c + '"></span><b>' + f.name + '</b><em>' + RARITY[f.r].n + ' · ' + rec.n + ' 条 · 最大 ' + rec.best.toFixed(1) + ' cm</em><span class="fv">' + f.v + '</span><span class="chev">›</span></button>';
+        }
+      });
+      html += '</div>';
+    });
+    html += '<div class="stat-line">点击任意鱼种可查看详细档案：海域、售价、体长、挣扎强度与最大记录。</div>';
+    return html;
+  }
+  function fdStat(label, value){
+    return '<div class="fd-stat"><span>' + label + '</span><b>' + value + '</b></div>';
+  }
+  function buildFishDetail(id){
+    var f = FISH[id];
+    if (!f) return '<div class="empty">没有找到这条鱼</div>';
+    var rec = S.dex[f.id];
+    var sp = SPOTS[0];
+    for (var i = 0; i < SPOTS.length; i++){ if (SPOTS[i].id === f.spot){ sp = SPOTS[i]; break; } }
+    var rc = RARITY[f.r];
+    var idx = ALL_FISH.indexOf(f) + 1;
+    var no = (idx < 10 ? '0' : '') + idx;
+    var known = !!rec;
+    var rareWord = ['常见', '少见', '罕见', '极稀有'][f.r];
+    var html = '<div class="fish-detail">' +
+      '<div class="fd-hero" style="--fc:' + rc.c + '">' +
+        '<span class="fd-badge' + (known ? '' : ' unknown') + '"><span class="fd-fish"></span></span>' +
+        '<span class="fd-title"><em>No.' + no + ' · ' + sp.name + '</em><b>' + (known ? f.name : '???') + '</b>' +
+        '<span class="fd-rar" style="color:' + rc.c + ';border-color:' + rc.c + '66;background:' + rc.c + '14">' + rc.n + '</span></span>' +
+      '</div>' +
+      '<div class="fd-stats">' +
+        fdStat('海域', sp.name) +
+        fdStat('稀有度', rc.n + ' · ' + rareWord) +
+        fdStat('售价', f.v + ' 金币') +
+        fdStat('体长范围', f.len[0] + '–' + f.len[1] + ' cm') +
+        fdStat('挣扎强度', Math.round(f.s * 100) + ' / 100') +
+        fdStat('已钓获', known ? rec.n + ' 条' : '未记录') +
+        fdStat('最大体长', known ? rec.best.toFixed(1) + ' cm' : '—') +
+        fdStat('图鉴编号', 'No.' + no + ' / ' + FISH_TOTAL) +
+      '</div>' +
+      '<div class="fd-desc">' + (known ? FISH_TEXT[f.id] : '这条鱼还没有被记录。' + sp.name + '的' + rc.n + '鱼群中可能藏着它的身影，换用更合适的鱼饵、在合适的潮汐下多试几竿。') + '</div>' +
+      '<div class="fd-note">' + (known
+        ? ('最大记录 ' + rec.best.toFixed(1) + ' cm · 单条售价 ' + f.v + ' 金币' + (rec.best >= f.len[1] * 0.9 ? ' · 已接近该鱼种极限体型' : ''))
+        : ('提示：' + (sp.req > 1 ? '鱼竿 Lv.' + sp.req + ' 解锁该海域。' : '晨雾码头是起点海域。') + '稀有鱼在满潮和鱼群出现时更容易咬钩。')
+      ) + '</div>' +
+      '<button class="fd-back" type="button" data-act="dexback">← 返回图鉴</button>' +
+    '</div>';
+    return html;
+  }
+  function showFishDetail(id){
+    var f = FISH[id];
+    if (!f) return;
+    tabBody.innerHTML = buildFishDetail(id);
+    tabBody.scrollTop = 0;
+    sheetSub.textContent = '鱼类档案 · ' + (S.dex[f.id] ? f.name : '未发现') + ' · No.' + ((ALL_FISH.indexOf(f) + 1) < 10 ? '0' : '') + (ALL_FISH.indexOf(f) + 1);
+  }
+  function buildQuests(){
+    if (!S.quests.length) return '<div class="empty">暂时没有委托</div>';
+    return S.quests.map(function(q){
+      var pct = q.need ? Math.min(100, q.cur / q.need * 100) : 0;
+      return '<div class="q-card' + (q.done ? ' done' : '') + '"><div class="q-head"><b>' + questTitle(q) + '</b><span>+' + q.reward + ' 金币</span></div>' +
+        '<p>' + questText(q) + '</p>' +
+        '<div class="q-bar"><i style="width:' + pct + '%"></i></div>' +
+        '<button type="button" data-act="claim-' + q.id + '" ' + (q.done ? '' : 'disabled') + '>' +
+        (q.done ? '领取奖励 +' + q.reward : '进度 ' + q.cur + ' / ' + q.need) + '</button></div>';
+    }).join('') +
+      '<div class="stat-line">委托会随鱼竿等级提高要求与奖励，完成并领取后立刻刷新下一单。</div>';
+  }
+  function buildAch(){
+    var done = Object.keys(S.ach).length;
+    return '<div class="stat-line" style="margin:0 0 8px">成就 <b>' + done + ' / ' + ACHS.length + '</b> · 完成后自动发放金币</div>' +
+      ACHS.map(function(a){
+        var ok = !!S.ach[a.id];
+        return '<div class="ach-row' + (ok ? ' done' : '') + '"><span class="a-mark">' + (ok ? '✓' : '·') + '</span><span class="a-main"><b>' + a.name + '</b><span>' + a.desc + '</span></span><span class="a-coin">' + (ok ? '已领取' : '+' + a.reward) + '</span></div>';
+      }).join('');
+  }
+  function renderBook(tab){
+    if (!tab) tab = currentTab;
+    currentTab = tab;
+    var tabsList = tabs.querySelectorAll('button');
+    for (var i = 0; i < tabsList.length; i++){
+      tabsList[i].classList.toggle('on', tabsList[i].getAttribute('data-tab') === tab);
+    }
+    var subs = {
+      upgrade: '装备三系升级，决定能走多远',
+      spots: '五个海域，越深越值钱',
+      bait: '不同鱼饵改变咬钩速度与稀有度',
+      dex: '每种鱼都记录捕获数与最大体长',
+      quests: '完成委托换取额外金币',
+      ach: '长期目标，完成后自动发奖'
+    };
+    sheetTitle.textContent = '航海手册';
+    sheetSub.textContent = subs[tab] || '';
+    if (tab === 'upgrade') tabBody.innerHTML = buildUpgrade();
+    else if (tab === 'spots') tabBody.innerHTML = buildSpots();
+    else if (tab === 'bait') tabBody.innerHTML = buildBait();
+    else if (tab === 'dex') tabBody.innerHTML = buildDex();
+    else if (tab === 'quests') tabBody.innerHTML = buildQuests();
+    else tabBody.innerHTML = buildAch();
+  }
+  function openBook(tab){
+    if (state !== 'idle'){
+      showNote('收线结束后再看手册');
+      return;
+    }
+    sheet.hidden = false;
+    renderBook(tab || currentTab);
+  }
+  function closeBook(){ sheet.hidden = true; }
+
+  castBtn.addEventListener('click', function(e){ e.stopPropagation(); castClick(); });
+  baitBtn.addEventListener('click', function(e){ e.stopPropagation(); openBook('bait'); });
+  bookBtn.addEventListener('click', function(e){ e.stopPropagation(); openBook('upgrade'); });
+  bookBtn.addEventListener('pointerdown', function(e){ e.stopPropagation(); });
+  soundBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    S.sound = !S.sound;
+    if (S.sound){ initAudio(); sfx('click'); }
+    save();
+    sync();
+  });
+  scene.addEventListener('click', function(){
+    if (state === 'power') lockPower();
+    else if (state === 'bite') startFight();
+  });
+  hookBtn.addEventListener('pointerdown', function(e){
+    e.preventDefault();
+    e.stopPropagation();
+    initAudio();
+    if (state === 'fight'){
+      reeling = true;
+      if (hookBtn.setPointerCapture){
+        try { hookBtn.setPointerCapture(e.pointerId); } catch(err){}
+      }
+    } else if (state === 'bite'){
+      startFight();
+      reeling = true;
+    }
+  });
+  window.addEventListener('pointerup', function(){ reeling = false; });
+  window.addEventListener('pointercancel', function(){ reeling = false; });
+  hookBtn.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+
+  window.addEventListener('keydown', function(e){
+    if (e.code === 'Space'){
+      e.preventDefault();
+      initAudio();
+      if (state === 'fight') reeling = true;
+      else if (state === 'bite') startFight();
+      else castClick();
+    }
+  });
+  window.addEventListener('keyup', function(e){ if (e.code === 'Space') reeling = false; });
+
+  sheetClose.addEventListener('click', closeBook);
+  sheet.addEventListener('click', function(e){ if (e.target === sheet) closeBook(); });
+  tabs.addEventListener('click', function(e){
+    var b = e.target.closest ? e.target.closest('button[data-tab]') : null;
+    if (b) renderBook(b.getAttribute('data-tab'));
+  });
+  tabBody.addEventListener('click', function(e){
+    var el = e.target.closest ? e.target.closest('[data-act]') : null;
+    if (!el) return;
+    var act = el.getAttribute('data-act');
+    if (act.indexOf('buy-') === 0) buyUpgrade(act.slice(4));
+    else if (act.indexOf('spot-') === 0) selectSpot(act.slice(5));
+    else if (act.indexOf('bait-') === 0) selectBait(act.slice(5));
+    else if (act.indexOf('claim-') === 0) claimQuest(act.slice(6));
+    else if (act.indexOf('fish-') === 0) showFishDetail(act.slice(5));
+    else if (act === 'dexback') renderBook('dex');
+  });
+
+  load();
+  ensureQuests();
+  applySpot();
+  sync();
+  tickTide();
+  applySpot();
+  setInterval(function(){ tickTide(); tickEvent(); }, 400);
+  setInterval(function(){
+    if (S.quests.some(function(q){ return q && q.done && !q.claimed; })) bookDot.hidden = false;
+  }, 1000);
+  requestAnimationFrame(loop);
+  setMsg('点击「抛竿」开始');
+
+  window.__fishDebug = {
+    info: function(){
+      return {
+        state: state,
+        coin: S.coin,
+        rod: S.rod, line: S.line, reel: S.reel,
+        bait: S.bait, spot: S.spot,
+        dex: dexCount(), total: FISH_TOTAL,
+        catches: S.stats.catch, perfect: S.stats.perfect,
+        legend: S.stats.legend, best: S.stats.best,
+        quests: S.quests.map(function(q){ return { id:q.id, type:q.type, text:questText(q), cur:q.cur, need:q.need, done:q.done, reward:q.reward }; }),
+        questReady: S.quests.some(function(q){ return q.done && !q.claimed; }),
+        ach: Object.keys(S.ach).length,
+        achTotal: ACHS.length,
+        spots: SPOTS.map(function(sp){ return { id:sp.id, name:sp.name, req:sp.req, unlocked:S.rod >= sp.req, dex:spotDexCount(sp), total:sp.fishes.length }; }),
+        tide: TIDES[tideIdx < 0 ? 0 : tideIdx].name,
+        event: ev.on,
+        baitUnlocked: unlockedBaitCount(),
+        sheetOpen: !sheet.hidden,
+        reeling: reeling,
+        progress: progress,
+        lineHp: lineHp,
+        zone: { c:zoneC, w:zoneW, marker:marker },
+        fish: fish ? { id:fish.id, name:fish.name, size:fishSize } : null
+      };
+    },
+    profile: function(){ return S; },
+    setCoins: function(n){ S.coin = Math.max(0, Math.floor(n)); save(); sync(); return S.coin; },
+    addCoins: function(n){ addCoins(n); save(); return S.coin; },
+    buy: function(kind){ return buyUpgrade(kind); },
+    setSpot: function(id){ return selectSpot(id); },
+    setBait: function(id){ return selectBait(id); },
+    setRod: function(n){ S.rod = clamp(Math.floor(n), 1, MAX_ROD); save(); sync(); return S.rod; },
+    setLine: function(n){ S.line = clamp(Math.floor(n), 1, MAX_LINE); save(); sync(); return S.line; },
+    setReel: function(n){ S.reel = clamp(Math.floor(n), 1, MAX_REEL); save(); sync(); return S.reel; },
+    openBook: openBook,
+    closeBook: closeBook,
+    renderBook: renderBook,
+    showFishDetail: showFishDetail,
+    buildFishDetail: buildFishDetail,
+    fishTextCount: Object.keys(FISH_TEXT).length,
+    claimQuest: claimQuest,
+    catchNow: function(idOrName, size){
+      var f = FISH[idOrName] || null;
+      if (!f){
+        for (var i = 0; i < ALL_FISH.length; i++){ if (ALL_FISH[i].name === idOrName){ f = ALL_FISH[i]; break; } }
+      }
+      if (!f) return { ok:false, reason:'unknown' };
+      var sz = typeof size === 'number' ? size : (f.len[0] + f.len[1]) / 2;
+      var res = awardCatch(f, sz, true);
+      showCatch(f, sz, res);
+      return { ok:true, id:f.id, name:f.name, reward:res.reward, isNew:res.isNew, coin:S.coin, dex:dexCount() };
+    },
+    dexAll: function(){
+      SPOTS.forEach(function(sp){
+        sp.fishes.forEach(function(f){
+          if (!S.dex[f.id]) S.dex[f.id] = { n:1, best:(f.len[0] + f.len[1]) / 2 };
+        });
+      });
+      checkAch(); save(); sync(); return dexCount();
+    },
+    unlockAll: function(){
+      S.rod = MAX_ROD; S.line = MAX_LINE; S.reel = MAX_REEL;
+      checkAch(); save(); sync(); return { rod:S.rod, line:S.line, reel:S.reel };
+    },
+    reset: function(){
+      S = defaultState();
+      ensureQuests();
+      applySpot();
+      sync();
+      save();
+      return true;
+    },
+    forceBite: function(){
+      if (state !== 'wait') return false;
+      clearTimeout(waitTimer);
+      beginBite();
+      return true;
+    },
+    startFight: function(){
+      if (state !== 'bite') return false;
+      startFight();
+      return true;
+    },
+    finish: function(win){ endFight(!!win, win ? 'catch' : 'slip'); return state; },
+    setReeling: function(v){ if (state === 'fight') reeling = !!v; return reeling; },
+    tick: function(){ tickTide(); tickEvent(); },
+    tideInfo: tideInfo,
+    constants: { spots:SPOTS, baits:BAITS, tides:TIDES, ach:ACHS, rodCost:ROD_COST, lineCost:LINE_COST, reelCost:REEL_COST, spotBonus:SPOT_BONUS }
+  };
+})();
+</script>
+</body>
+</html>

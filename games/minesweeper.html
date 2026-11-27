@@ -5,7 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>扫雷 · 经典单机版</title>
 <style>
-  :root { --cell: 34px; }
+  :root {
+    --cell: 34px;
+    --sky: #5ecbff;
+    --violet: #a78bfa;
+    --mint: #5ef0a8;
+    --rose: #ff7a8a;
+    --amber: #ffc266;
+    --text: #e8f1fb;
+    --muted: #8296b0;
+    --line: rgba(132, 186, 240, 0.16);
+    --panel: rgba(11, 21, 36, 0.86);
+  }
 
   * { box-sizing: border-box; }
 
@@ -18,22 +29,66 @@
     align-items: flex-start;
     padding: 28px 12px 44px;
     background:
-      radial-gradient(1200px 600px at 12% -10%, #ffffff 0%, rgba(255, 255, 255, 0) 62%),
-      linear-gradient(160deg, #eef3fb 0%, #dfe7f4 58%, #d2dcec 100%);
+      radial-gradient(900px 560px at 8% -6%, rgba(56, 189, 248, 0.17), transparent 62%),
+      radial-gradient(820px 560px at 98% 104%, rgba(139, 92, 246, 0.16), transparent 64%),
+      radial-gradient(700px 700px at 50% 46%, rgba(14, 165, 233, 0.055), transparent 72%),
+      linear-gradient(160deg, #071019 0%, #050b13 56%, #070d18 100%);
+    background-attachment: fixed;
     font-family: "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", "Segoe UI", sans-serif;
-    color: #243146;
+    color: var(--text);
     -webkit-user-select: none;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(rgba(140, 190, 245, 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(140, 190, 245, 0.035) 1px, transparent 1px);
+    background-size: 38px 38px;
+    -webkit-mask-image: radial-gradient(circle at 50% 42%, #000 0%, transparent 82%);
+    mask-image: radial-gradient(circle at 50% 42%, #000 0%, transparent 82%);
+  }
+
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: radial-gradient(circle at 50% 45%, transparent 42%, rgba(2, 6, 12, 0.55) 100%);
   }
 
   .game {
+    position: relative;
+    z-index: 1;
     max-width: calc(100vw - 24px);
-    padding: 20px 20px 16px;
-    background: #fbfcfe;
-    border: 1px solid #e4eaf3;
-    border-radius: 20px;
-    box-shadow: 0 24px 48px rgba(40, 58, 88, 0.16), 0 3px 8px rgba(40, 58, 88, 0.06);
+    padding: 22px 22px 16px;
+    background: linear-gradient(168deg, rgba(16, 29, 47, 0.92) 0%, rgba(8, 16, 28, 0.95) 60%, rgba(9, 17, 30, 0.96) 100%);
+    border: 1px solid rgba(132, 186, 240, 0.17);
+    border-radius: 22px;
+    box-shadow:
+      0 34px 80px rgba(0, 0, 0, 0.58),
+      0 0 46px rgba(33, 150, 243, 0.06),
+      0 1px 0 rgba(190, 226, 255, 0.10) inset,
+      0 -30px 60px rgba(56, 189, 248, 0.035) inset;
+  }
+
+  .game::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 12%;
+    right: 12%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(94, 203, 255, 0.55), rgba(167, 139, 250, 0.4), transparent);
+    pointer-events: none;
   }
 
   .title-row {
@@ -41,21 +96,25 @@
     align-items: baseline;
     justify-content: space-between;
     gap: 16px;
-    margin-bottom: 14px;
+    margin-bottom: 15px;
   }
 
   h1 {
     margin: 0;
-    font-size: 22px;
+    font-size: 23px;
     font-weight: 800;
-    letter-spacing: 6px;
-    color: #1f2e47;
+    letter-spacing: 7px;
+    background: linear-gradient(120deg, #f2f9ff 0%, #7dd3fc 52%, #a78bfa 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 0 18px rgba(94, 203, 255, 0.28));
   }
 
   .sub {
-    font-size: 12px;
-    color: #8b98ac;
-    letter-spacing: 1px;
+    font-size: 11px;
+    color: #6f829b;
+    letter-spacing: 0.18em;
     white-space: nowrap;
   }
 
@@ -70,24 +129,76 @@
     flex: 1 1 0;
     min-width: 92px;
     padding: 8px 6px;
-    border: 1px solid #d8e1ee;
-    border-radius: 10px;
-    background: #f2f6fc;
-    color: #43546f;
+    border: 1px solid rgba(132, 186, 240, 0.16);
+    border-radius: 11px;
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.018));
+    color: #a9bdd6;
     font-family: inherit;
-    font-size: 13px;
+    font-size: 12.5px;
     cursor: pointer;
     white-space: nowrap;
-    transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
   }
 
-  .diff-btn:hover { background: #e9f0fa; }
+  .diff-btn:hover {
+    background: rgba(94, 203, 255, 0.09);
+    border-color: rgba(94, 203, 255, 0.35);
+    transform: translateY(-1px);
+  }
 
   .diff-btn.active {
-    background: linear-gradient(180deg, #4a7fd6, #2f63be);
-    border-color: #2f63be;
-    color: #ffffff;
-    box-shadow: 0 4px 10px rgba(47, 99, 190, 0.28);
+    background: linear-gradient(135deg, #2ed3f0 0%, #3b82f6 100%);
+    border-color: rgba(125, 211, 252, 0.75);
+    color: #04121f;
+    font-weight: 700;
+    box-shadow:
+      0 6px 18px rgba(34, 211, 238, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  }
+
+  .modes {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+
+  .mode-btn {
+    flex: 1 1 0;
+    min-width: 72px;
+    padding: 7px 10px;
+    border: 1px solid rgba(132, 186, 240, 0.14);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.032);
+    color: #8497b0;
+    font-family: inherit;
+    font-size: 12.5px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .mode-btn:hover {
+    background: rgba(94, 203, 255, 0.08);
+    border-color: rgba(94, 203, 255, 0.28);
+    color: #b9d6f2;
+  }
+
+  .mode-btn.active {
+    background: linear-gradient(180deg, rgba(34, 211, 238, 0.20), rgba(59, 130, 246, 0.14));
+    border-color: rgba(94, 203, 255, 0.55);
+    color: #bdf0ff;
+    font-weight: 700;
+    box-shadow: inset 0 0 0 1px rgba(125, 211, 252, 0.16), 0 0 16px rgba(56, 189, 248, 0.12);
+  }
+
+  .mode-desc {
+    margin: 0 0 12px;
+    padding-left: 2px;
+    font-size: 12px;
+    line-height: 1.6;
+    color: #73869f;
   }
 
   .panel {
@@ -95,31 +206,34 @@
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-    padding: 8px 12px;
+    padding: 9px 13px;
     margin-bottom: 12px;
-    background: #eff4fb;
-    border: 1px solid #e0e8f4;
-    border-radius: 12px;
+    background: linear-gradient(180deg, rgba(12, 23, 39, 0.92), rgba(8, 16, 28, 0.92));
+    border: 1px solid rgba(132, 186, 240, 0.13);
+    border-radius: 13px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045), 0 8px 20px rgba(0, 0, 0, 0.18);
   }
 
   .stat {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 7px;
     font-size: 13px;
-    color: #5a6a83;
+    color: #8ba0ba;
   }
 
   .stat b {
-    min-width: 46px;
-    padding: 2px 8px;
-    background: #ffffff;
-    border: 1px solid #dbe4f0;
+    min-width: 52px;
+    padding: 3px 9px;
+    background: rgba(5, 11, 20, 0.9);
+    border: 1px solid rgba(94, 203, 255, 0.18);
     border-radius: 8px;
     text-align: center;
     font-family: Consolas, "Courier New", monospace;
     font-size: 17px;
-    color: #22304a;
+    color: #9ee9ff;
+    text-shadow: 0 0 12px rgba(94, 203, 255, 0.35);
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5);
   }
 
   .message {
@@ -127,28 +241,54 @@
     justify-content: center;
     min-width: 0;
     text-align: center;
-    color: #45566f;
-    font-size: 13px;
+    color: #a7bad2;
+    font-size: 12.5px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
-  .message.win { color: #0e7a43; font-weight: 700; }
-  .message.lose { color: #c33333; font-weight: 700; }
+  .message.win {
+    color: #5ef0a8;
+    font-weight: 700;
+    text-shadow: 0 0 14px rgba(94, 240, 168, 0.35);
+  }
+
+  .message.lose {
+    color: #ff8b98;
+    font-weight: 700;
+    text-shadow: 0 0 14px rgba(255, 107, 129, 0.32);
+  }
 
   .board-scroll {
     width: fit-content;
     max-width: 100%;
     max-height: 66vh;
     margin: 0 auto;
-    padding: 6px;
+    padding: 7px;
     overflow: auto;
     overscroll-behavior: contain;
-    background: #b8c5d6;
-    border-radius: 12px;
-    box-shadow: inset 0 2px 6px rgba(40, 58, 88, 0.18), inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+    background:
+      radial-gradient(120% 90% at 50% 0%, rgba(56, 189, 248, 0.09), transparent 62%),
+      linear-gradient(160deg, #0a1626 0%, #07111d 100%);
+    border: 1px solid rgba(90, 160, 230, 0.18);
+    border-radius: 13px;
+    box-shadow:
+      inset 0 2px 10px rgba(0, 0, 0, 0.55),
+      inset 0 0 0 1px rgba(160, 210, 255, 0.04),
+      0 0 28px rgba(34, 211, 238, 0.07);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(94, 203, 255, 0.35) transparent;
     -webkit-overflow-scrolling: touch;
+  }
+
+  .board-scroll::-webkit-scrollbar { width: 10px; height: 10px; }
+  .board-scroll::-webkit-scrollbar-track { background: transparent; }
+  .board-scroll::-webkit-scrollbar-thumb {
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background: rgba(94, 203, 255, 0.32);
+    background-clip: content-box;
   }
 
   .board {
@@ -165,74 +305,107 @@
     justify-content: center;
     width: var(--cell);
     height: var(--cell);
-    border-radius: 4px;
-    background: linear-gradient(150deg, #eef3fa 0%, #cdd9e8 55%, #b7c6da 100%);
+    border-radius: 5px;
+    background: linear-gradient(148deg, #20354f 0%, #162a41 52%, #0f1e30 100%);
     box-shadow:
-      inset 2px 2px 0 rgba(255, 255, 255, 0.95),
-      inset -2px -2px 0 rgba(83, 104, 134, 0.5),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.16);
-    color: #22304a;
+      inset 0 1px 0 rgba(178, 222, 255, 0.24),
+      inset 0 -2px 0 rgba(0, 0, 0, 0.38),
+      inset 0 0 0 1px rgba(120, 180, 240, 0.10),
+      0 1px 2px rgba(0, 0, 0, 0.42);
+    color: #dcecff;
     font-family: "Segoe UI", Arial, sans-serif;
     font-size: calc(var(--cell) * 0.52);
     font-weight: 800;
     line-height: 1;
     cursor: pointer;
+    transition: transform 0.12s ease, filter 0.12s ease, box-shadow 0.16s ease;
   }
 
   .board.over .cell { cursor: default; }
 
-  .cell:not(.revealed):hover { filter: brightness(1.05); }
-  .board.over .cell:not(.revealed):hover { filter: none; }
+  .cell:not(.revealed):hover {
+    transform: translateY(-1px);
+    filter: brightness(1.18);
+    box-shadow:
+      inset 0 1px 0 rgba(198, 236, 255, 0.34),
+      inset 0 -2px 0 rgba(0, 0, 0, 0.38),
+      inset 0 0 0 1px rgba(94, 203, 255, 0.24),
+      0 0 12px rgba(56, 189, 248, 0.22);
+  }
+
+  .board.over .cell:not(.revealed):hover {
+    transform: none;
+    filter: none;
+    box-shadow:
+      inset 0 1px 0 rgba(178, 222, 255, 0.24),
+      inset 0 -2px 0 rgba(0, 0, 0, 0.38),
+      inset 0 0 0 1px rgba(120, 180, 240, 0.10),
+      0 1px 2px rgba(0, 0, 0, 0.42);
+  }
 
   .cell.revealed {
-    background: #e9eef6;
-    box-shadow: inset 0 0 0 1px #d3dceb;
+    background: linear-gradient(158deg, #0b1728 0%, #08121f 100%);
+    box-shadow:
+      inset 0 0 0 1px rgba(90, 150, 220, 0.11),
+      inset 0 2px 7px rgba(0, 0, 0, 0.5);
     cursor: default;
   }
 
-  .n1 { color: #1e5bd6; }
-  .n2 { color: #1f8a3d; }
-  .n3 { color: #d63a34; }
-  .n4 { color: #173a8a; }
-  .n5 { color: #8a3a12; }
-  .n6 { color: #0d7f86; }
-  .n7 { color: #26303d; }
-  .n8 { color: #7c8798; }
+  .cell.revealed.n1, .cell.revealed.n2, .cell.revealed.n3, .cell.revealed.n4,
+  .cell.revealed.n5, .cell.revealed.n6, .cell.revealed.n7, .cell.revealed.n8 {
+    text-shadow: 0 0 10px currentColor;
+  }
+
+  .n1 { color: #5ecbff; }
+  .n2 { color: #5ef0a8; }
+  .n3 { color: #ff7a8a; }
+  .n4 { color: #b18cff; }
+  .n5 { color: #ffb86b; }
+  .n6 { color: #4fe3d0; }
+  .n7 { color: #f0a6ff; }
+  .n8 { color: #9fb2c9; }
 
   .cell.mine {
-    background: #ece0de;
-    box-shadow: inset 0 0 0 1px #d8bfbd;
+    background: radial-gradient(circle at 50% 42%, #3a1b23 0%, #241019 68%, #160a10 100%);
+    box-shadow: inset 0 0 0 1px rgba(255, 107, 129, 0.2), inset 0 0 14px rgba(255, 60, 90, 0.12);
   }
 
   .cell.mine-hit {
-    background: radial-gradient(circle at 50% 45%, #ff8a84, #e8443f 70%);
-    box-shadow: inset 0 0 0 1px #c22f2b;
+    background: radial-gradient(circle at 50% 45%, #ffb3a3 0%, #ff6b60 38%, #d92f3c 74%, #8c1622 100%);
+    box-shadow:
+      0 0 0 1px rgba(255, 179, 163, 0.8),
+      0 0 22px rgba(255, 76, 90, 0.65),
+      inset 0 0 18px rgba(255, 235, 220, 0.5);
+    animation: mine-blast 0.46s cubic-bezier(0.2, 0.9, 0.3, 1);
   }
 
   .cell-mine {
     font-size: calc(var(--cell) * 0.55);
     pointer-events: none;
+    filter: drop-shadow(0 0 8px rgba(255, 92, 112, 0.55));
   }
 
   .cell.flagged {
-    background: linear-gradient(150deg, #fff3ef, #f7d9d1);
+    background: linear-gradient(148deg, #3a2c1c 0%, #2a2015 55%, #1d1610 100%);
     box-shadow:
-      inset 2px 2px 0 rgba(255, 255, 255, 0.95),
-      inset -2px -2px 0 rgba(190, 120, 110, 0.4),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+      inset 0 1px 0 rgba(255, 226, 176, 0.26),
+      inset 0 -2px 0 rgba(0, 0, 0, 0.38),
+      inset 0 0 0 1px rgba(255, 194, 102, 0.22),
+      0 0 12px rgba(255, 184, 92, 0.10);
   }
 
   .cell-flag {
     font-size: calc(var(--cell) * 0.52);
     pointer-events: none;
+    filter: drop-shadow(0 0 7px rgba(255, 194, 102, 0.45));
   }
 
   .cell.wrong-flag {
-    background: #ffe6e6;
-    box-shadow: inset 0 0 0 1px #eba3a3;
+    background: linear-gradient(148deg, #3a1c24 0%, #2a131a 60%, #1d0d12 100%);
+    box-shadow: inset 0 0 0 1px rgba(255, 122, 148, 0.35), inset 0 0 12px rgba(255, 70, 100, 0.12);
   }
 
-  .cell.wrong-flag .cell-flag { opacity: 0.55; }
+  .cell.wrong-flag .cell-flag { opacity: 0.45; }
 
   .cell.wrong-flag::after {
     content: "✕";
@@ -244,9 +417,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #d62929;
+    color: #ff7a8a;
     font-size: calc(var(--cell) * 0.62);
     font-weight: 900;
+    text-shadow: 0 0 10px rgba(255, 107, 129, 0.55);
     pointer-events: none;
   }
 
@@ -254,43 +428,68 @@
     display: flex;
     align-items: center;
     gap: 14px;
-    margin-top: 12px;
+    margin-top: 13px;
     flex-wrap: wrap;
   }
 
   .restart {
-    padding: 9px 20px;
-    border: 0;
-    border-radius: 10px;
-    background: linear-gradient(180deg, #4f86dd, #2c61bd);
-    color: #ffffff;
+    padding: 10px 21px;
+    border: 1px solid rgba(125, 211, 252, 0.55);
+    border-radius: 11px;
+    background: linear-gradient(135deg, #38d9f5 0%, #3b82f6 100%);
+    color: #04121f;
     font-family: inherit;
     font-size: 14px;
-    font-weight: 700;
+    font-weight: 800;
+    letter-spacing: 0.04em;
     cursor: pointer;
-    box-shadow: 0 5px 12px rgba(47, 99, 190, 0.32);
-    transition: transform 0.12s ease, box-shadow 0.12s ease;
+    box-shadow: 0 8px 22px rgba(34, 211, 238, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
   }
 
-  .restart:hover { transform: translateY(-1px); }
+  .restart:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.06);
+    box-shadow: 0 11px 28px rgba(34, 211, 238, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  }
+
   .restart:active { transform: translateY(1px); }
+
+  .restart:focus-visible,
+  .diff-btn:focus-visible,
+  .mode-btn:focus-visible {
+    outline: 2px solid #7dd3fc;
+    outline-offset: 2px;
+  }
 
   .help {
     margin: 0;
     flex: 1 1 220px;
     font-size: 12px;
     line-height: 1.7;
-    color: #8794a8;
+    color: #74889f;
+  }
+
+  @keyframes mine-blast {
+    0% { transform: scale(1); filter: brightness(1); }
+    35% { transform: scale(1.14); filter: brightness(1.5); }
+    100% { transform: scale(1); filter: brightness(1); }
   }
 
   @media (max-width: 560px) {
     body { padding: 14px 8px 30px; }
-    .game { padding: 14px 12px 12px; border-radius: 16px; }
+    .game { padding: 15px 12px 13px; border-radius: 17px; }
     h1 { font-size: 19px; letter-spacing: 4px; }
     .sub { display: none; }
-    .diff-btn { font-size: 12px; min-width: 84px; }
+    .diff-btn { font-size: 11.5px; min-width: 84px; }
     .status, .message { font-size: 12px; }
     .help { font-size: 11px; }
+    .panel { padding: 8px 10px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cell, .diff-btn, .mode-btn, .restart { transition-duration: 0.01ms; }
+    .cell.mine-hit { animation-duration: 0.01ms; }
   }
 </style>
 </head>
@@ -298,7 +497,7 @@
   <div class="game" id="game">
     <div class="title-row">
       <h1>扫雷</h1>
-      <span class="sub">经典 · 完全离线</span>
+      <span class="sub">四种玩法 · 完全离线</span>
     </div>
 
     <div class="diffs" id="diffs">
@@ -308,6 +507,14 @@
       <button class="diff-btn" data-diff="expert" type="button">高级 16×30 · 99雷</button>
       <button class="diff-btn" data-diff="nightmare" type="button">地狱 20×30 · 145雷</button>
     </div>
+
+    <div class="modes" id="modes">
+      <button class="mode-btn active" data-mode="classic" type="button">经典</button>
+      <button class="mode-btn" data-mode="wrap" type="button">环形边界</button>
+      <button class="mode-btn" data-mode="timed" type="button">限时挑战</button>
+      <button class="mode-btn" data-mode="noflag" type="button">无旗模式</button>
+    </div>
+    <p class="mode-desc" id="modeDesc">经典规则：左键翻开，右键插旗，双击数字格快速展开。</p>
 
     <div class="panel">
       <div class="stat"><span>💣</span><b id="mineLeft">10</b></div>
@@ -321,7 +528,7 @@
 
     <div class="footer">
       <button class="restart" id="restart" type="button">重新开始</button>
-      <p class="help">左键翻开 · 右键插旗 · 双击或中键数字格快速展开 · 手机长按可插旗 · 纯本地运行，不联网</p>
+      <p class="help" id="help">左键翻开 · 右键插旗 · 双击或中键数字格快速展开 · 手机长按可插旗 · 纯本地运行，不联网</p>
     </div>
   </div>
 
@@ -337,6 +544,27 @@
     nightmare: { rows: 20, cols: 30, mines: 145, cell: 26 }
   };
 
+  var MODES = {
+    classic: {
+      desc: '经典规则：左键翻开，右键插旗，双击数字格快速展开。',
+      help: '左键翻开 · 右键插旗 · 双击或中键数字格快速展开 · 手机长按可插旗 · 纯本地运行，不联网'
+    },
+    wrap: {
+      desc: '环形边界：上下、左右互通，角落会和对边相邻，算雷时要绕一圈。',
+      help: '左键翻开 · 右键插旗 · 四边互通，角落与对边相邻 · 双击数字格可快速展开'
+    },
+    timed: {
+      desc: '限时挑战：倒计时归零即失败，扫完所有安全格才算赢。',
+      help: '左键翻开 · 右键插旗 · 倒计时结束即失败 · 双击数字格可快速展开'
+    },
+    noflag: {
+      desc: '无旗模式：不能插旗，只能靠数字推理翻开所有安全格。',
+      help: '只能左键翻开 · 不能插旗 · 双击不会展开 · 首点仍然安全'
+    }
+  };
+
+  var TIMED = { mini: 60, beginner: 120, intermediate: 240, expert: 420, nightmare: 600 };
+
   var boardEl = document.getElementById('board');
   var gameEl = document.getElementById('game');
   var mineLeftEl = document.getElementById('mineLeft');
@@ -344,6 +572,9 @@
   var statusEl = document.getElementById('status');
   var restartBtn = document.getElementById('restart');
   var diffBtns = document.querySelectorAll('.diff-btn');
+  var modeBtns = document.querySelectorAll('.mode-btn');
+  var modeDescEl = document.getElementById('modeDesc');
+  var helpEl = document.getElementById('help');
 
   var state = {
     diff: 'beginner',
@@ -358,6 +589,8 @@
     totalSafe: 71,
     flags: 0,
     seconds: 0,
+    timeLeft: 0,
+    mode: 'classic',
     timerId: null
   };
 
@@ -376,15 +609,26 @@
     return r >= 0 && r < state.rows && c >= 0 && c < state.cols;
   }
 
+  function wrapIndex(v, max) {
+    v = v % max;
+    return v < 0 ? v + max : v;
+  }
+
   function neighbors(d) {
     var out = [];
-    var dr, dc;
+    var dr, dc, nr, nc;
     for (dr = -1; dr <= 1; dr++) {
       for (dc = -1; dc <= 1; dc++) {
         if (dr === 0 && dc === 0) { continue; }
-        if (inBounds(d.r + dr, d.c + dc)) {
-          out.push(state.board[d.r + dr][d.c + dc]);
+        nr = d.r + dr;
+        nc = d.c + dc;
+        if (state.mode === 'wrap') {
+          nr = wrapIndex(nr, state.rows);
+          nc = wrapIndex(nc, state.cols);
+        } else if (!inBounds(nr, nc)) {
+          continue;
         }
+        out.push(state.board[nr][nc]);
       }
     }
     return out;
@@ -434,7 +678,16 @@
     if (state.timerId !== null) { return; }
     state.timerId = setInterval(function () {
       state.seconds++;
-      timerEl.textContent = pad3(state.seconds);
+      if (state.mode === 'timed') {
+        state.timeLeft = Math.max(0, state.timeLeft - 1);
+        timerEl.textContent = pad3(state.timeLeft);
+        if (state.timeLeft <= 0) {
+          stopTimer();
+          loseGame(null, 'timeout');
+        }
+      } else {
+        timerEl.textContent = pad3(state.seconds);
+      }
     }, 1000);
   }
 
@@ -448,6 +701,7 @@
 
   function buildBoard(diffKey) {
     if (!DIFFS[diffKey]) { diffKey = 'beginner'; }
+    if (!MODES[state.mode]) { state.mode = 'classic'; }
     var cfg = DIFFS[diffKey];
     var i, r, c, el, d;
     stopTimer();
@@ -463,11 +717,15 @@
     state.totalSafe = cfg.rows * cfg.cols - cfg.mines;
     state.flags = 0;
     state.seconds = 0;
+    state.timeLeft = TIMED[diffKey] || 120;
     state.timerId = null;
-    timerEl.textContent = '000';
+    timerEl.textContent = state.mode === 'timed' ? pad3(state.timeLeft) : '000';
     mineLeftEl.textContent = String(cfg.mines);
-    setStatus('左键翻开第一格开始（首点必安全）');
+    setStatus(state.mode === 'noflag' ? '无旗模式：左键翻开第一格开始（首点必安全）' : '左键翻开第一格开始（首点必安全）');
+    modeDescEl.textContent = MODES[state.mode].desc;
+    helpEl.textContent = MODES[state.mode].help;
     boardEl.classList.remove('over');
+    boardEl.classList.toggle('wrap-mode', state.mode === 'wrap');
     boardEl.innerHTML = '';
     boardEl.style.gridTemplateColumns = 'repeat(' + cfg.cols + ', var(--cell))';
     boardEl.style.gridTemplateRows = 'repeat(' + cfg.rows + ', var(--cell))';
@@ -501,6 +759,9 @@
     for (i = 0; i < diffBtns.length; i++) {
       diffBtns[i].classList.toggle('active', diffBtns[i].getAttribute('data-diff') === diffKey);
     }
+    for (i = 0; i < modeBtns.length; i++) {
+      modeBtns[i].classList.toggle('active', modeBtns[i].getAttribute('data-mode') === state.mode);
+    }
   }
 
   function shuffle(arr) {
@@ -514,12 +775,22 @@
     return arr;
   }
 
+  function inSafeZone(r, c, safeR, safeC) {
+    var dr = Math.abs(r - safeR);
+    var dc = Math.abs(c - safeC);
+    if (state.mode === 'wrap') {
+      dr = Math.min(dr, state.rows - dr);
+      dc = Math.min(dc, state.cols - dc);
+    }
+    return dr <= 1 && dc <= 1;
+  }
+
   function placeMines(safeR, safeC) {
     var pool = [];
-    var r, c, dr, dc, i;
+    var r, c, i;
     for (r = 0; r < state.rows; r++) {
       for (c = 0; c < state.cols; c++) {
-        if (Math.abs(r - safeR) <= 1 && Math.abs(c - safeC) <= 1) { continue; }
+        if (inSafeZone(r, c, safeR, safeC)) { continue; }
         pool.push([r, c]);
       }
     }
@@ -535,14 +806,10 @@
           d.adj = 0;
           continue;
         }
+        var nbs = neighbors(d);
         var count = 0;
-        for (dr = -1; dr <= 1; dr++) {
-          for (dc = -1; dc <= 1; dc++) {
-            if (dr === 0 && dc === 0) { continue; }
-            var nr = r + dr;
-            var nc = c + dc;
-            if (inBounds(nr, nc) && state.board[nr][nc].mine) { count++; }
-          }
+        for (i = 0; i < nbs.length; i++) {
+          if (nbs[i].mine) { count++; }
         }
         d.adj = count;
       }
@@ -571,14 +838,17 @@
     }
   }
 
-  function loseGame(hit) {
+  function loseGame(hit, reason) {
+    if (state.over) { return; }
     state.over = true;
     state.win = false;
     stopTimer();
     boardEl.classList.add('over');
-    hit.hit = true;
-    hit.revealed = true;
-    updateCell(hit);
+    if (hit) {
+      hit.hit = true;
+      hit.revealed = true;
+      updateCell(hit);
+    }
     var r, c;
     for (r = 0; r < state.rows; r++) {
       for (c = 0; c < state.cols; c++) {
@@ -594,7 +864,11 @@
         }
       }
     }
-    setStatus('💥 踩到雷了！点「重新开始」再来一局', 'lose');
+    if (reason === 'timeout') {
+      setStatus('⏰ 时间到！点「重新开始」再来一局', 'lose');
+    } else {
+      setStatus('💥 踩到雷了！点「重新开始」再来一局', 'lose');
+    }
   }
 
   function winGame() {
@@ -607,14 +881,19 @@
       for (c = 0; c < state.cols; c++) {
         var d = state.board[r][c];
         if (d.mine && !d.flagged) {
-          d.flagged = true;
-          state.flags++;
+          if (state.mode === 'noflag') {
+            d.revealed = true;
+          } else {
+            d.flagged = true;
+            state.flags++;
+          }
           updateCell(d);
         }
       }
     }
     mineLeftEl.textContent = '0';
-    setStatus('🎉 扫雷成功！用时 ' + state.seconds + ' 秒', 'win');
+    setStatus('🎉 扫雷成功！用时 ' + state.seconds + ' 秒' +
+      (state.mode === 'timed' ? ' · 剩余 ' + state.timeLeft + ' 秒' : ''), 'win');
   }
 
   function checkWin() {
@@ -638,7 +917,7 @@
   }
 
   function toggleFlag(d) {
-    if (state.over || d.revealed) { return; }
+    if (state.over || d.revealed || state.mode === 'noflag') { return; }
     d.flagged = !d.flagged;
     state.flags += d.flagged ? 1 : -1;
     updateCell(d);
@@ -646,7 +925,7 @@
   }
 
   function chord(d) {
-    if (state.over || !d.revealed || d.mine || d.adj <= 0) { return; }
+    if (state.over || state.mode === 'noflag' || !d.revealed || d.mine || d.adj <= 0) { return; }
     var nbs = neighbors(d);
     var flags = 0;
     var i;
@@ -715,7 +994,7 @@
   }
 
   boardEl.addEventListener('touchstart', function (e) {
-    if (state.over || e.touches.length !== 1) { return; }
+    if (state.over || state.mode === 'noflag' || e.touches.length !== 1) { return; }
     var d = cellFromEvent(e);
     if (!d || d.revealed) { return; }
     var t = e.touches[0];
@@ -758,6 +1037,109 @@
       });
     })(diffBtns[bi]);
   }
+
+  var mi;
+  for (mi = 0; mi < modeBtns.length; mi++) {
+    (function (btn) {
+      btn.addEventListener('click', function () {
+        var m = btn.getAttribute('data-mode');
+        if (!MODES[m]) { return; }
+        state.mode = m;
+        buildBoard(state.diff);
+      });
+    })(modeBtns[mi]);
+  }
+
+  window.addEventListener('keydown', function (e) {
+    if (e.repeat) { return; }
+    var k = e.key;
+    var modeKeys = ['classic', 'wrap', 'timed', 'noflag'];
+    if (k >= '1' && k <= '4') {
+      state.mode = modeKeys[parseInt(k, 10) - 1];
+      buildBoard(state.diff);
+      e.preventDefault();
+    } else if (k === 'r' || k === 'R') {
+      buildBoard(state.diff);
+      e.preventDefault();
+    }
+  });
+
+  window.__minesDebug = {
+    mode: function () { return state.mode; },
+    diff: function () { return state.diff; },
+    info: function () {
+      return {
+        mode: state.mode,
+        diff: state.diff,
+        rows: state.rows,
+        cols: state.cols,
+        mines: state.mines,
+        started: state.started,
+        over: state.over,
+        win: state.win,
+        seconds: state.seconds,
+        timeLeft: state.timeLeft,
+        flags: state.flags,
+        revealedSafe: state.revealedSafe,
+        totalSafe: state.totalSafe
+      };
+    },
+    build: function (d, m) {
+      if (m && MODES[m]) { state.mode = m; }
+      buildBoard(d || 'beginner');
+      return this.info();
+    },
+    click: function (r, c) {
+      var row = state.board[r];
+      if (row && row[c]) { primaryClick(row[c]); }
+      return this.info();
+    },
+    flag: function (r, c) {
+      var row = state.board[r];
+      if (row && row[c]) { toggleFlag(row[c]); }
+      return this.info();
+    },
+    tick: function (n) {
+      var i;
+      for (i = 0; i < (n || 1); i++) {
+        state.seconds++;
+        if (state.mode === 'timed') {
+          state.timeLeft = Math.max(0, state.timeLeft - 1);
+          timerEl.textContent = pad3(state.timeLeft);
+          if (state.timeLeft <= 0) {
+            stopTimer();
+            loseGame(null, 'timeout');
+            break;
+          }
+        } else {
+          timerEl.textContent = pad3(state.seconds);
+        }
+      }
+      return this.info();
+    },
+    neighbors: function (r, c) {
+      var row = state.board[r];
+      var d = row && row[c];
+      if (!d) { return []; }
+      return neighbors(d).map(function (n) { return [n.r, n.c]; });
+    },
+    cell: function (r, c) {
+      var row = state.board[r];
+      var d = row && row[c];
+      if (!d) { return null; }
+      return { r: d.r, c: d.c, mine: d.mine, adj: d.adj, revealed: d.revealed, flagged: d.flagged };
+    },
+    finish: function () {
+      if (!state.started) {
+        state.started = true;
+        placeMines(0, 0);
+        startTimer();
+      }
+      state.revealedSafe = state.totalSafe;
+      winGame();
+      return this.info();
+    }
+  };
 
   window.addEventListener('resize', applyCellSize);
 

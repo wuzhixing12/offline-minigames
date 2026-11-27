@@ -17,7 +17,7 @@
     --violet: #a78bfa;
     --rose: #fb7185;
     --amber: #fbbf24;
-    --board-width: clamp(216px, 40vh, 330px);
+    --board-width: clamp(216px, 45vh, 460px);
   }
 
   * {
@@ -445,8 +445,10 @@
 
   .side-panel {
     width: 292px;
+    align-self: stretch;
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
     gap: 10px;
   }
 
@@ -827,7 +829,7 @@
 
   .touch-controls {
     display: none;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: 6px;
     transition: opacity 0.18s ease;
   }
@@ -890,6 +892,13 @@
     .brand {
       justify-content: center;
     }
+  }
+
+  @media (max-width: 780px) and (max-height: 660px) {
+    body { padding-top: 8px; padding-bottom: 16px; }
+    .play-area { width: min(65vw, 260px); }
+    .touch-controls { gap: 4px; }
+    .touch-btn { height: 42px; }
   }
 
   @media (max-height: 700px) and (min-width: 781px) {
@@ -959,7 +968,7 @@
               <div class="overlay-score" id="overlayScore"></div>
               <button class="overlay-btn" id="overlayBtn" type="button">开始游戏</button>
               <button class="overlay-btn overlay-btn-ghost" id="overlayBtn2" type="button" hidden>换个模式</button>
-              <p class="overlay-hint" id="overlayHint">按空格或回车开始</p>
+              <p class="overlay-hint" id="overlayHint">手机用下方按钮操作 · 电脑按空格 / 回车开始</p>
             </div>
           </div>
         </div>
@@ -972,6 +981,7 @@
         <button class="touch-btn" type="button" data-touch="soft" aria-label="软降">软降</button>
         <button class="touch-btn" type="button" data-touch="drop" aria-label="硬降">硬降</button>
         <button class="touch-btn" type="button" data-touch="hold" aria-label="暂存">暂存</button>
+        <button class="touch-btn" id="touchPause" type="button" aria-label="暂停">暂停</button>
       </div>
     </section>
 
@@ -1233,6 +1243,7 @@
   var holdCanvas = document.getElementById('holdCanvas');
   var holdEmpty = document.getElementById('holdEmpty');
   var touchControls = document.getElementById('touchControls');
+  var touchPause = document.getElementById('touchPause');
   var nextCanvases = [
     document.getElementById('next0'),
     document.getElementById('next1'),
@@ -2399,6 +2410,10 @@
     }
     pauseBtn.disabled = !(phase === 'playing' || phase === 'paused');
     pauseBtn.textContent = phase === 'paused' ? '继续' : '暂停';
+    if (touchPause) {
+      touchPause.disabled = pauseBtn.disabled;
+      touchPause.textContent = phase === 'paused' ? '继续' : '暂停';
+    }
     touchControls.classList.toggle('is-muted', phase !== 'playing');
     refreshModeUI();
   }
@@ -2417,7 +2432,7 @@
       overlayText.textContent = '方块已经停下，准备好再继续。';
       overlayScore.textContent = '';
       overlayBtn.textContent = '继续游戏';
-      overlayHint.textContent = '按 P 或回车继续';
+      overlayHint.textContent = '点「继续游戏」或按 P / 回车继续';
     } else if (view === 'over') {
       if (endKind === 'win') {
         overlayTag.textContent = '通关';
@@ -2428,7 +2443,7 @@
           '\n个人最好 ' + formatClockPrecise(currentRecord().time) +
           ' · ' + formatNumber(best) + ' 分';
         overlayBtn.textContent = '再来一次';
-        overlayHint.textContent = '按空格或回车再来一次';
+        overlayHint.textContent = '点按钮或按空格 / 回车再来一次';
       } else if (endKind === 'timeup') {
         overlayTag.textContent = '时间到';
         overlayTitle.textContent = '2 分钟结束';
@@ -2437,7 +2452,7 @@
           ' · 消行 ' + formatNumber(lineCount) +
           '\n该模式最高分 ' + formatNumber(best);
         overlayBtn.textContent = '再来一次';
-        overlayHint.textContent = '按空格或回车再来一次';
+        overlayHint.textContent = '点按钮或按空格 / 回车再来一次';
       } else {
         overlayTag.textContent = '游戏结束';
         overlayTitle.textContent = '堆到顶了';
@@ -2446,7 +2461,7 @@
           ' · 行数 ' + formatNumber(lineCount) +
           '\n该模式最高分 ' + formatNumber(best);
         overlayBtn.textContent = '再来一局';
-        overlayHint.textContent = '按空格或回车重新开始';
+        overlayHint.textContent = '点按钮或按空格 / 回车重新开始';
       }
     } else {
       overlayTag.textContent = '准备开始';
@@ -2454,7 +2469,7 @@
       overlayText.textContent = MODES[mode].ready;
       overlayScore.textContent = readyScoreText();
       overlayBtn.textContent = '开始游戏';
-      overlayHint.textContent = '按空格或回车开始 · 方向键操作';
+      overlayHint.textContent = '手机用下方按钮操作 · 电脑按空格 / 回车开始';
     }
   }
 
@@ -2646,6 +2661,12 @@
   pauseBtn.addEventListener('click', function () {
     togglePause();
   });
+
+  if (touchPause) {
+    touchPause.addEventListener('click', function () {
+      togglePause();
+    });
+  }
 
   restartBtn.addEventListener('click', function () {
     startGame();

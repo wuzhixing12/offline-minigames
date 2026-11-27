@@ -12,7 +12,7 @@
 
 1. Fork 本仓库，开一个描述性的分支，比如 `add-2048-mobile` 或 `fix-tetris-rotation`
 2. 在本地跑 `python3 build.py check` 确保没有漂移
-3. **老游戏**（breakout / snake / tetris 等 24 款）直接改 `index.html` 对应位置
+3. **已有游戏**直接改 `index.html` 里对应的 `<textarea id="src-*">`，再同步一份到 `games/<id>.html`
 4. **新游戏** 用 `python3 build.py new <name>`，写好后跑 `python3 build.py inline` 同步
 5. 提交前双击打开 `index.html` 本地预览一下，确保游戏能正常跑
 6. 开 PR，描述里写清楚改了什么 / 为什么改
@@ -40,4 +40,4 @@ python3 build.py check   # 每次改完跑一下漂移检测
 
 - 引入外部依赖（CDN、npm、字体、图标库）
 - 加埋点 / 统计 / 任何联网请求（除了用户主动触发的）
-- 把 24 款老游戏从 index.html 里拆出去（它们已经是历史内联结构）
+- 把游戏源码从 `index.html` 里移除（合集必须保持单文件可玩；`games/` 只是副本）

@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="theme-color" content="#05070f">
+<title>吃豆人 · 迷宫追逃</title>
+<style>
+  :root{
+    --bg:#05070f; --panel:#0b1222; --line:rgba(148,163,184,.16);
+    --text:#eaf2ff; --muted:#8ea2c0; --amber:#ffd84d; --sky:#38bdf8;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    margin:0;background:
+      radial-gradient(circle at 15% 0%,rgba(56,189,248,.10),transparent 42%),
+      radial-gradient(circle at 90% 100%,rgba(255,216,77,.07),transparent 46%),
+      var(--bg);
+    color:var(--text);font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;
+    overflow:hidden;display:flex;justify-content:center;
+    user-select:none;touch-action:none;
+  }
+  #wrap{width:100%;max-width:720px;height:100%;display:flex;flex-direction:column;padding:10px 12px 8px;position:relative;}
+  header{display:flex;align-items:center;gap:10px;flex:0 0 auto;}
+  .brand{font-weight:800;font-size:16px;letter-spacing:.06em;white-space:nowrap;}
+  .brand b{color:var(--amber);}
+  .brand small{display:block;font-size:10px;color:var(--muted);font-weight:500;letter-spacing:.18em;}
+  .hud{margin-left:auto;display:flex;align-items:center;gap:10px;font-variant-numeric:tabular-nums;}
+  .stat{display:flex;flex-direction:column;align-items:flex-end;line-height:1.15;}
+  .stat span{font-size:9px;color:var(--muted);letter-spacing:.12em;}
+  .stat b{font-size:14px;}
+  #lives{display:flex;gap:4px;align-items:center;height:16px;}
+  .life{width:14px;height:14px;border-radius:50%;background:var(--amber);
+        clip-path:polygon(100% 28%,50% 50%,100% 72%,100% 100%,0 100%,0 0,100% 0);}
+  #soundBtn{border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--muted);
+    width:32px;height:32px;border-radius:9px;font-size:14px;cursor:pointer;}
+  #soundBtn.on{color:var(--amber);border-color:rgba(255,216,77,.35);}
+  #stage{position:relative;flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center;margin-top:4px;}
+  canvas{display:block;border-radius:14px;background:#04060d;box-shadow:0 0 0 1px rgba(56,189,248,.14),0 22px 50px -24px #000;}
+  #hint{flex:0 0 auto;text-align:center;font-size:11px;color:#64748b;padding:6px 0 2px;letter-spacing:.04em;}
+  .overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+    background:rgba(3,5,11,.78);backdrop-filter:blur(6px);border-radius:14px;z-index:5;padding:14px;}
+  .overlay.show{display:flex;}
+  .panel{width:min(340px,92%);text-align:center;background:linear-gradient(180deg,rgba(17,26,46,.96),rgba(8,13,24,.98));
+    border:1px solid rgba(56,189,248,.2);border-radius:16px;padding:20px 18px;box-shadow:0 24px 60px rgba(0,0,0,.55);}
+  .panel .big{font-size:24px;font-weight:800;letter-spacing:.08em;margin:2px 0 4px;color:var(--amber);}
+  .panel p{margin:6px 0;font-size:12.5px;color:var(--muted);line-height:1.7;}
+  .panel .keys{font-size:11.5px;color:#94a3b8;background:rgba(255,255,255,.035);border:1px solid var(--line);
+    border-radius:10px;padding:8px 10px;margin:10px 0 12px;line-height:1.8;}
+  .panel .keys b{color:var(--text);font-weight:600;}
+  .panel .scoreline{font-size:13px;color:var(--muted);margin:8px 0 12px;}
+  .panel .scoreline b{color:var(--amber);font-size:18px;}
+  button.primary{width:100%;border:0;border-radius:11px;padding:11px 14px;font-size:14px;font-weight:700;
+    color:#04121f;background:linear-gradient(180deg,#8ce9ff,#38bdf8);cursor:pointer;font-family:inherit;
+    box-shadow:0 8px 24px -8px rgba(56,189,248,.7);}
+  button.primary:active{transform:translateY(1px);}
+  .dpad{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);display:none;
+    width:150px;height:112px;z-index:6;}
+  .dpad button{position:absolute;width:48px;height:44px;border-radius:12px;border:1px solid rgba(255,216,77,.28);
+    background:rgba(10,16,30,.82);color:var(--amber);font-size:17px;cursor:pointer;backdrop-filter:blur(4px);}
+  .dpad .u{left:51px;top:0}.dpad .d{left:51px;top:64px}.dpad .l{left:0;top:32px}.dpad .r{left:102px;top:32px}
+  .dpad .c{left:51px;top:32px;width:48px;height:44px;border:0;background:transparent;color:#31415c;font-size:10px;pointer-events:none;}
+  @media (max-width:640px),(hover:none){
+    .brand small{display:none}
+    .brand{font-size:14px}
+    #hint{font-size:10px}
+    .dpad{display:block}
+    #stage{padding-bottom:4px}
+  }
+  @media (max-height:560px){ #hint{display:none} .dpad{bottom:2px;transform:translateX(-50%) scale(.9)} }
+</style>
+<style id="tx-aurora-skin">
+/* tx-aurora-skin:pacman */
+:root{--tx-a1:#ffd84d;--tx-a2:#38bdf8;}
+html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+::selection{background:rgba(255,216,77,0.38);color:#fff}
+*::-webkit-scrollbar{width:8px;height:8px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:rgba(255,216,77,0.26);border-radius:99px;border:2px solid transparent;background-clip:content-box}
+*::-webkit-scrollbar-thumb:hover{background:rgba(255,216,77,0.46);background-clip:content-box}
+body{background-color:#05070f!important;background-image:radial-gradient(1100px 640px at 6% -12%, rgba(255,216,77,0.16), transparent 62%), radial-gradient(900px 680px at 104% 112%, rgba(56,189,248,0.12), transparent 62%)!important}
+button{transition:transform .14s ease,filter .16s ease,box-shadow .2s ease,border-color .16s ease,background-color .16s ease}
+button:hover{filter:brightness(1.07)}
+button:active{transform:translateY(1px) scale(.995)}
+button:focus-visible{outline:2px solid rgba(255,216,77,0.72);outline-offset:2px}
+.overlay,.modal,.dialog,.sheet,#levels,#loading{background-image:radial-gradient(900px 520px at 50% 0%,rgba(255,216,77,0.15),transparent 62%),radial-gradient(720px 520px at 50% 100%,rgba(56,189,248,0.08),transparent 60%)!important}
+.overlay,.modal,.dialog,.sheet{backdrop-filter:blur(9px) saturate(1.1)}
+.overlay h1,.modal h1,.screen h1,.overlay-card h1,.win-card h1,.result-card h1,.bcard .btitle,.loadcard .ltitle{text-shadow:0 2px 30px rgba(255,216,77,0.45)}
+.overlay .screen,.overlay .panel,.overlay-card,.modal .panel,.win-card,.result-card,.bcard,.loadcard,.rules-dialog,.panel{box-shadow:0 38px 96px -34px rgba(0,0,0,.95), inset 0 1px 0 rgba(255,255,255,.07)!important}
+.bcard,.loadcard{border-color:rgba(255,216,77,0.34)!important}
+.overlay .panel,.overlay-card,.win-card,.result-card,.modal .panel{backdrop-filter:blur(10px) saturate(1.08);border-color:rgba(255,216,77,0.26)!important}
+</style>
+
+<style id="tx-space">
+/* tx-space: short landscape play-space boost */
+@media (max-height:560px) and (orientation:landscape){
+  #wrap{max-width:none;height:100%;display:grid;grid-template-columns:minmax(0,1fr) 216px;
+    grid-template-rows:auto 1fr;grid-template-areas:"stage header" "stage .";
+    padding:6px 8px;gap:6px 10px}
+  header{grid-area:header;flex-direction:column;align-items:stretch;gap:6px}
+  .brand{font-size:13px}
+  .brand small{display:none}
+  .hud{margin-left:0;display:grid;grid-template-columns:repeat(3,1fr);gap:4px;align-items:center;width:100%}
+  .stat{align-items:flex-start}
+  .stat span{font-size:8px}
+  .stat b{font-size:12px}
+  #lives{grid-column:1/3;height:14px}
+  #soundBtn{width:28px;height:28px;grid-column:3/4;justify-self:end}
+  #stage{grid-area:stage;margin-top:0;height:100%;min-height:0;padding-bottom:0}
+  #hint{display:none}
+  .dpad{display:flex;position:fixed;right:10px;bottom:10px;left:auto;transform:scale(.76);transform-origin:100% 100%;width:150px;height:112px;z-index:7}
+}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <header>
+    <div class="brand"><b>吃豆人</b><small>MAZE CHASE</small></div>
+    <div class="hud">
+      <div class="stat"><span>分数</span><b id="score">0</b></div>
+      <div class="stat"><span>最高</span><b id="best">0</b></div>
+      <div class="stat"><span>关卡</span><b id="level">1</b></div>
+      <div id="lives"></div>
+      <button id="soundBtn" class="on" type="button" aria-label="音效开关">♪</button>
+    </div>
+  </header>
+  <div id="stage">
+    <canvas id="game"></canvas>
+    <div class="overlay show" id="screenStart">
+      <div class="panel">
+        <div class="big">吃豆人</div>
+        <p>吃光迷宫里的豆子，躲开四只幽灵。<br>吃下能量豆后，反过来追它们。</p>
+        <div class="keys">
+          <b>← ↑ → ↓ / WASD</b> 移动　·　<b>P</b> 暂停<br>
+          手机：滑动屏幕或使用下方方向键
+        </div>
+        <button class="primary" id="startBtn" type="button">开始游戏</button>
+      </div>
+    </div>
+    <div class="overlay" id="screenPause">
+      <div class="panel">
+        <div class="big">已暂停</div>
+        <p>喘口气，幽灵也停下了。</p>
+        <button class="primary" id="resumeBtn" type="button">继续</button>
+      </div>
+    </div>
+    <div class="overlay" id="screenOver">
+      <div class="panel">
+        <div class="big" id="overTitle">游戏结束</div>
+        <div class="scoreline">本局得分 <b id="finalScore">0</b><br><span id="finalNote"></span></div>
+        <button class="primary" id="againBtn" type="button">再来一局</button>
+      </div>
+    </div>
+    <div class="dpad" id="dpad">
+      <button class="u" data-dir="up" type="button">▲</button>
+      <button class="l" data-dir="left" type="button">◀</button>
+      <button class="c" type="button">PAC</button>
+      <button class="r" data-dir="right" type="button">▶</button>
+      <button class="d" data-dir="down" type="button">▼</button>
+    </div>
+  </div>
+  <div id="hint">← ↑ → ↓ 移动　·　P 暂停　·　吃能量豆反杀幽灵</div>
+</div>
+<script>
+(function () {
+  'use strict';
+
+  var MAZE = [
+    "###################",
+    "#........#........#",
+    "#.##.###.#.###.##.#",
+    "#o##.###.#.###.##o#",
+    "#.................#",
+    "#.##.#.#####.#.##.#",
+    "#....#...#...#....#",
+    "####.###.#.###.####",
+    "#......#...#......#",
+    "#.####.#####.####.#",
+    "#.#.............#.#",
+    "#.#.###.###.###.#.#",
+    "#...#...........#.#",
+    "###.#.#.#####.#.#.#",
+    "#.....#...#...#...#",
+    "#.#####.#.#.#####.#",
+    "#.......#.#.......#",
+    "#.#####.#.#.#####.#",
+    "#o......#.#......o#",
+    "#.................#",
+    "###################"
+  ];
+  var ROWS = MAZE.length, COLS = MAZE[0].length;
+  var START = { c: 9, r: 16 };
+
+  var cvs = document.getElementById('game');
+  var ctx = cvs.getContext('2d');
+  var $ = function (id) { return document.getElementById(id); };
+  var stage = $('stage');
+  var TILE = 20, OX = 0, OY = 0, CW = 0, CH = 0, DPR = 1;
+  var state = 'start';
+  var score = 0, level = 1, lives = 3, best = loadNum('pacman.best', 0);
+  var soundOn = loadNum('pacman.sound', 1) === 1;
+  var pellets, pelletsLeft, frightT, ghostCombo, modeT, modeIdx, animT = 0, deathT = 0, clearT = 0;
+  var toast = '', toastT = 0;
+
+  var dirs = {
+    left:  { x: -1, y: 0 },
+    right: { x: 1, y: 0 },
+    up:    { x: 0, y: -1 },
+    down:  { x: 0, y: 1 }
+  };
+
+  var player = { c: 9, r: 16, dir: { x: 0, y: 0 }, want: { x: 0, y: 0 }, prog: 0, moving: false, mouth: 0 };
+  var ghosts = [];
+
+  function loadNum(k, d) {
+    try { var v = localStorage.getItem(k); return v === null ? d : parseFloat(v); } catch (e) { return d; }
+  }
+  function saveNum(k, v) {
+    try { localStorage.setItem(k, String(v)); } catch (e) {}
+  }
+  $('best').textContent = best;
+
+  /* ---------------- audio ---------------- */
+  var ac = null, lastBeep = 0, beepFlip = 0;
+  function audio() {
+    if (!soundOn) return null;
+    if (!ac) {
+      try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { ac = null; }
+    }
+    if (ac && ac.state === 'suspended') { try { ac.resume(); } catch (e) {} }
+    return ac;
+  }
+  function tone(freq, dur, type, vol, slideTo) {
+    var a = audio(); if (!a) return;
+    var o = a.createOscillator(), g = a.createGain();
+    o.type = type || 'square';
+    o.frequency.setValueAtTime(freq, a.currentTime);
+    if (slideTo) o.frequency.exponentialRampToValueAtTime(Math.max(30, slideTo), a.currentTime + dur);
+    g.gain.setValueAtTime(vol == null ? 0.05 : vol, a.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + dur);
+    o.connect(g); g.connect(a.destination);
+    o.start(); o.stop(a.currentTime + dur + 0.01);
+  }
+  function beep() {
+    var a = audio(); if (!a) return;
+    if (a.currentTime - lastBeep < 0.045) return;
+    lastBeep = a.currentTime;
+    beepFlip = 1 - beepFlip;
+    tone(beepFlip ? 520 : 400, 0.045, 'square', 0.028);
+  }
+
+  /* ---------------- layout ---------------- */
+  function resize() {
+    var rect = stage.getBoundingClientRect();
+    var availW = Math.max(220, rect.width - 4);
+    var availH = Math.max(240, rect.height - 4);
+    var mobile = window.matchMedia('(max-width:640px),(hover:none)').matches;
+    var shortLandscape = window.matchMedia('(max-height:560px) and (orientation:landscape)').matches;
+    if (mobile && !shortLandscape) availH -= 100;
+    TILE = Math.max(12, Math.floor(Math.min(availW / COLS, availH / ROWS)));
+    CW = TILE * COLS; CH = TILE * ROWS;
+    cvs.style.width = CW + 'px';
+    cvs.style.height = CH + 'px';
+    DPR = Math.min(2.5, window.devicePixelRatio || 1);
+    cvs.width = Math.round(CW * DPR);
+    cvs.height = Math.round(CH * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    OX = 0; OY = 0;
+    mazeLayer = null;
+    buildMazeLayer();
+    draw();
+  }
+
+  /* ---------------- maze helpers ---------------- */
+  function isWall(c, r) {
+    if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return true;
+    return MAZE[r].charAt(c) === '#';
+  }
+  function canGo(c, r, d) {
+    if (!d || (d.x === 0 && d.y === 0)) return false;
+    return !isWall(c + d.x, r + d.y);
+  }
+  function centerPos(m) {
+    var x = m.c;
+    var y = m.r;
+    if (!m.moving) {
+      if (m.dir.x || m.dir.y) { x += m.dir.x * m.prog; y += m.dir.y * m.prog; }
+    } else {
+      x += m.dir.x * m.prog; y += m.dir.y * m.prog;
+    }
+    return { x: x, y: y };
+  }
+  function dist2(ax, ay, bx, by) {
+    var dx = ax - bx, dy = ay - by; return dx * dx + dy * dy;
+  }
+
+  /* ---------------- pellets ---------------- */
+  function buildPellets() {
+    pellets = [];
+    pelletsLeft = 0;
+    for (var r = 0; r < ROWS; r++) {
+      pellets[r] = [];
+      for (var c = 0; c < COLS; c++) {
+        var ch = MAZE[r].charAt(c);
+        pellets[r][c] = ch === '.' ? 1 : (ch === 'o' ? 2 : 0);
+        if (ch === '.' || ch === 'o') pelletsLeft++;
+      }
+    }
+  }
+  function eatPellet(c, r) {
+    var v = pellets[r][c];
+    if (!v) return;
+    pellets[r][c] = 0; pelletsLeft--;
+    if (v === 1) {
+      score += 10; beep();
+    } else {
+      score += 50;
+      frightT = 7.2; ghostCombo = 0;
+      toast = '能量豆！'; toastT = 1.8;
+      tone(180, 0.24, 'sawtooth', 0.05, 620);
+      for (var i = 0; i < ghosts.length; i++) {
+        var g = ghosts[i];
+        if (!g.eaten) { g.dir = { x: -g.dir.x, y: -g.dir.y }; g.prog = 0; }
+      }
+    }
+    updHud();
+    if (pelletsLeft <= 0) {
+      state = 'clear'; clearT = 0; toast = '清空迷宫！'; toastT = 2.4;
+      tone(660, 0.12, 'square', 0.05);
+      setTimeout(function () { tone(880, 0.16, 'square', 0.05); }, 130);
+    }
+  }
+
+  /* ---------------- movers ---------------- */
+  function resetActors() {
+    player.c = START.c; player.r = START.r;
+    player.dir = { x: 0, y: 0 }; player.want = { x: 0, y: 0 };
+    player.prog = 0; player.moving = false; player.mouth = 0;
+    var spawns = [
+      { c: 9, r: 10 }, { c: 7, r: 10 }, { c: 11, r: 10 }, { c: 9, r: 12 }
+    ];
+    ghosts = [];
+    for (var i = 0; i < 4; i++) {
+      ghosts.push({
+        c: spawns[i].c, r: spawns[i].r, dir: { x: 0, y: 0 }, prog: 0,
+        moving: false, color: ['#ff4d6d', '#ff9ecb', '#4dd2ff', '#ffb84d'][i],
+        name: ['布莱', '小粉', '茵奇', '克莱'][i],
+        wait: 1.2 + i * 0.9, eaten: false, revive: 0, home: spawns[i]
+      });
+    }
+    frightT = 0; ghostCombo = 0;
+    modeT = 6; modeIdx = 0;
+    deathT = 0; clearT = 0;
+  }
+
+  function tryStart(p, speed) {
+    if (!p.dir.x && !p.dir.y) {
+      if (canGo(p.c, p.r, p.want)) {
+        p.dir = { x: p.want.x, y: p.want.y };
+        p.prog = 0; p.moving = true;
+      }
+    }
+  }
+
+  function advance(m, dt, speed, onArrive) {
+    if (!m.moving) return;
+    m.prog += speed * dt;
+    if (m.prog >= 1) {
+      m.c += m.dir.x; m.r += m.dir.y;
+      m.prog = 0;
+      onArrive(m);
+      if (!m.moving) return;
+      if (m.prog >= 1) m.prog = 0;
+    }
+  }
+
+  function updatePlayer(dt) {
+    if (state !== 'playing') return;
+    var speed = 5.0 + Math.min(1.6, (level - 1) * 0.18);
+    // 反向可以随时进行
+    if (player.moving && player.want.x === -player.dir.x && player.want.y === -player.dir.y &&
+        (player.want.x || player.want.y)) {
+      player.c += player.dir.x; player.r += player.dir.y;
+      player.prog = 1 - player.prog;
+      player.dir = { x: player.want.x, y: player.want.y };
+    }
+    if (!player.moving) {
+      tryStart(player, speed);
+    }
+    if (player.moving) {
+      player.prog += speed * dt;
+      while (player.prog >= 1) {
+        player.prog -= 1;
+        var nc = player.c + player.dir.x, nr = player.r + player.dir.y;
+        player.c = nc; player.r = nr;
+        eatPellet(player.c, player.r);
+        if (state !== 'playing') return;
+        // 选择方向：优先输入方向
+        if (canGo(player.c, player.r, player.want)) {
+          player.dir = { x: player.want.x, y: player.want.y };
+        } else if (!canGo(player.c, player.r, player.dir)) {
+          player.moving = false; player.dir = { x: 0, y: 0 }; player.prog = 0;
+          break;
+        }
+        player.prog = Math.min(player.prog, 0.999);
+      }
+      player.mouth += dt * 11;
+    }
+    // 撞鬼
+    var pp = centerPos(player);
+    for (var i = 0; i < ghosts.length; i++) {
+      var g = ghosts[i];
+      if (g.eaten || g.revive > 0 || g.wait > 0) continue;
+      var gp = centerPos(g);
+      if (dist2(pp.x, pp.y, gp.x, gp.y) < 0.62 * 0.62) {
+        if (frightT > 0 && !g.eaten) {
+          ghostCombo = Math.min(4, ghostCombo + 1);
+          var gain = 200 * Math.pow(2, ghostCombo - 1);
+          score += gain;
+          g.eaten = true; g.revive = 2.4; g.moving = false; g.prog = 0;
+          toast = '+' + gain; toastT = 1.2;
+          tone(1400, 0.08, 'square', 0.05, 700);
+          setTimeout(function(){ tone(1000, 0.09, 'square', 0.04, 500); }, 80);
+          updHud();
+        } else if (frightT <= 0) {
+          state = 'dying'; deathT = 0;
+          tone(520, 0.5, 'sawtooth', 0.06, 80);
+          return;
+        }
+      }
+    }
+  }
+
+  function ghostTarget(g) {
+    var px = player.c, py = player.r;
+    if (g.eaten) return g.home;
+    if (frightT > 0) {
+      // 逃跑：选离玩家最远的方向
+      return { c: COLS - 1 - player.c, r: ROWS - 1 - player.r };
+    }
+    var idx = ghosts.indexOf(g);
+    if (idx === 0) return { c: px, r: py };
+    if (idx === 1) return { c: px + player.dir.x * 4, r: py + player.dir.y * 4 };
+    if (idx === 2) {
+      var bx = px + player.dir.x * 2, by = py + player.dir.y * 2;
+      return { c: bx + (bx - ghosts[0].c), r: by + (by - ghosts[0].r) };
+    }
+    if (dist2(g.c, g.r, px, py) > 36) return { c: px, r: py };
+    return { c: 1, r: ROWS - 2 };
+  }
+
+  function chooseGhostDir(g) {
+    var opts = [];
+    var all = [dirs.left, dirs.right, dirs.up, dirs.down];
+    for (var i = 0; i < 4; i++) {
+      var d = all[i];
+      if (d.x === -g.dir.x && d.y === -g.dir.y) continue;
+      if (!canGo(g.c, g.r, d)) continue;
+      opts.push(d);
+    }
+    if (!opts.length) {
+      g.moving = false; g.dir = { x: 0, y: 0 }; return;
+    }
+    if (frightT > 0 && !g.eaten) {
+      var pick = opts[(Math.random() * opts.length) | 0];
+      g.dir = { x: pick.x, y: pick.y }; g.moving = true; return;
+    }
+    var t = ghostTarget(g), best = opts[0], bestD = Infinity;
+    for (var j = 0; j < opts.length; j++) {
+      var dd = dist2(g.c + opts[j].x, g.r + opts[j].y, t.c, t.r);
+      if (dd < bestD) { bestD = dd; best = opts[j]; }
+    }
+    g.dir = { x: best.x, y: best.y }; g.moving = true;
+  }
+
+  function updateGhost(g, dt) {
+    if (g.revive > 0) {
+      g.revive -= dt;
+      if (g.revive <= 0) {
+        g.eaten = false;
+        g.c = g.home.c; g.r = g.home.r; g.prog = 0; g.moving = false;
+        g.dir = { x: 0, y: 0 };
+      }
+      return;
+    }
+    if (g.wait > 0) { g.wait -= dt; return; }
+    if (!g.moving) {
+      chooseGhostDir(g);
+      if (!g.moving) return;
+    }
+    var speed;
+    if (g.eaten) speed = 9.5;
+    else if (frightT > 0) speed = 3.1;
+    else speed = 4.1 + Math.min(1.4, (level - 1) * 0.16);
+    g.prog += speed * dt;
+    var guard = 0;
+    while (g.prog >= 1 && guard++ < 4) {
+      g.prog -= 1;
+      g.c += g.dir.x; g.r += g.dir.y;
+      if (g.eaten && g.c === g.home.c && g.r === g.home.r) {
+        g.moving = false; g.prog = 0; g.dir = { x: 0, y: 0 };
+        g.revive = 1.2; g.eaten = false;
+        return;
+      }
+      chooseGhostDir(g);
+      if (!g.moving) { g.prog = 0; break; }
+    }
+  }
+
+  /* ---------------- game flow ---------------- */
+  function startGame() {
+    score = 0; level = 1; lives = 3;
+    buildPellets(); resetActors();
+    state = 'playing';
+    hideAll();
+    updHud();
+    toast = ''; toastT = 0;
+    tone(440, 0.08, 'square', 0.04); setTimeout(function(){ tone(660, 0.1, 'square', 0.04); }, 90);
+  }
+  function nextLevel() {
+    level++;
+    buildPellets(); resetActors();
+    state = 'playing';
+    updHud();
+    toast = '第 ' + level + ' 关'; toastT = 1.6;
+  }
+  function loseLife() {
+    lives--;
+    updHud();
+    if (lives <= 0) {
+      state = 'over';
+      if (score > best) { best = score; saveNum('pacman.best', best); $('best').textContent = best; }
+      $('finalScore').textContent = score;
+      $('finalNote').textContent = score >= best ? '新纪录！' : '最高纪录 ' + best;
+      $('overTitle').textContent = '游戏结束';
+      show('screenOver');
+      tone(220, 0.5, 'sawtooth', 0.05, 60);
+    } else {
+      resetActors();
+      state = 'playing';
+      toast = '还剩 ' + lives + ' 条命'; toastT = 1.6;
+    }
+  }
+  function updHud() {
+    $('score').textContent = score;
+    $('level').textContent = level;
+    $('best').textContent = best;
+    var box = $('lives'); box.innerHTML = '';
+    for (var i = 0; i < Math.max(0, lives); i++) {
+      var s = document.createElement('i'); s.className = 'life'; box.appendChild(s);
+    }
+  }
+  function show(id) { hideAll(); $(id).classList.add('show'); }
+  function hideAll() {
+    var ids = ['screenStart', 'screenPause', 'screenOver'];
+    for (var i = 0; i < ids.length; i++) $(ids[i]).classList.remove('show');
+  }
+  function togglePause() {
+    if (state === 'playing') { state = 'paused'; show('screenPause'); }
+    else if (state === 'paused') { state = 'playing'; hideAll(); }
+  }
+
+  /* ---------------- drawing ---------------- */
+  var mazeLayer = null;
+  function buildMazeLayer() {
+    if (!CW || !CH) return;
+    var lc = document.createElement('canvas');
+    lc.width = Math.round(CW * DPR);
+    lc.height = Math.round(CH * DPR);
+    var lg = lc.getContext('2d');
+    lg.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+    var path = new Path2D();
+    for (var r = 0; r < ROWS; r++) {
+      for (var c = 0; c < COLS; c++) {
+        if (MAZE[r].charAt(c) !== '#') continue;
+        path.rect(c * TILE, r * TILE, TILE, TILE);
+      }
+    }
+
+    // 外发光：整条路径一次填充，只在迷宫轮廓外产生光晕
+    lg.save();
+    lg.shadowColor = 'rgba(56,130,255,.55)';
+    lg.shadowBlur = TILE * 0.62;
+    lg.fillStyle = '#0a1733';
+    lg.fill(path);
+    lg.restore();
+
+    // 墙体渐变
+    var wg = lg.createLinearGradient(0, 0, CW, CH);
+    wg.addColorStop(0, '#0d1e3f');
+    wg.addColorStop(.45, '#0a1733');
+    wg.addColorStop(1, '#0b1b3a');
+    lg.fillStyle = wg;
+    lg.fill(path);
+
+    // 外轮廓亮边：只描相邻格不是墙的边
+    lg.beginPath();
+    for (var rr2 = 0; rr2 < ROWS; rr2++) {
+      for (var cc = 0; cc < COLS; cc++) {
+        if (MAZE[rr2].charAt(cc) !== '#') continue;
+        var x = cc * TILE, y = rr2 * TILE;
+        if (!isWall(cc, rr2 - 1)) { lg.moveTo(x, y + 0.5); lg.lineTo(x + TILE, y + 0.5); }
+        if (!isWall(cc, rr2 + 1)) { lg.moveTo(x, y + TILE - 0.5); lg.lineTo(x + TILE, y + TILE - 0.5); }
+        if (!isWall(cc - 1, rr2)) { lg.moveTo(x + 0.5, y); lg.lineTo(x + 0.5, y + TILE); }
+        if (!isWall(cc + 1, rr2)) { lg.moveTo(x + TILE - 0.5, y); lg.lineTo(x + TILE - 0.5, y + TILE); }
+      }
+    }
+    lg.lineCap = 'round';
+    lg.lineJoin = 'round';
+    lg.strokeStyle = 'rgba(70,170,255,.62)';
+    lg.lineWidth = Math.max(1.4, TILE * 0.08);
+    lg.stroke();
+    lg.strokeStyle = 'rgba(190,235,255,.20)';
+    lg.lineWidth = Math.max(0.8, TILE * 0.025);
+    lg.stroke();
+
+    // 内壁暗线，增加厚度
+    lg.beginPath();
+    for (var r3 = 0; r3 < ROWS; r3++) {
+      for (var c3 = 0; c3 < COLS; c3++) {
+        if (MAZE[r3].charAt(c3) !== '#') continue;
+        var x3 = c3 * TILE, y3 = r3 * TILE;
+        if (!isWall(c3, r3 - 1)) { lg.moveTo(x3 + 3, y3 + 3); lg.lineTo(x3 + TILE - 3, y3 + 3); }
+      }
+    }
+    lg.strokeStyle = 'rgba(140,210,255,.10)';
+    lg.lineWidth = 1;
+    lg.stroke();
+
+    mazeLayer = lc;
+  }
+
+  function drawMaze() {
+    if (!mazeLayer) buildMazeLayer();
+    if (mazeLayer) {
+      ctx.save();
+      ctx.drawImage(mazeLayer, 0, 0, CW, CH);
+      ctx.restore();
+    }
+    // 内发光边框
+    ctx.strokeStyle = 'rgba(56,189,248,.20)';
+    ctx.lineWidth = 1;
+    roundRect(2, 2, CW - 4, CH - 4, TILE * 0.3);
+    ctx.stroke();
+  }
+  function roundRect(x, y, w, h, r) {
+    r = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+  function drawPellets(t) {
+    for (var r = 0; r < ROWS; r++) {
+      for (var c = 0; c < COLS; c++) {
+        var v = pellets[r][c];
+        if (!v) continue;
+        var x = c * TILE + TILE / 2, y = r * TILE + TILE / 2;
+        if (v === 1) {
+          var prad = Math.max(1.4, TILE * 0.075);
+          ctx.fillStyle = 'rgba(255,215,168,.14)';
+          ctx.beginPath(); ctx.arc(x, y, prad * 2.1, 0, 6.2832); ctx.fill();
+          ctx.fillStyle = '#ffe4c4';
+          ctx.beginPath(); ctx.arc(x, y, prad, 0, 6.2832); ctx.fill();
+        } else {
+          var pulse = 1 + Math.sin(t * 5) * 0.18;
+          var rr = Math.max(3.2, TILE * 0.24) * pulse;
+          ctx.save();
+          ctx.shadowColor = '#ffd84d'; ctx.shadowBlur = TILE * 0.5;
+          ctx.fillStyle = '#ffd84d';
+          ctx.beginPath(); ctx.arc(x, y, rr, 0, 6.2832); ctx.fill();
+          ctx.restore();
+        }
+      }
+    }
+  }
+  function drawPac(t, m) {
+    var p = centerPos(m);
+    var x = (p.x + 0.5) * TILE, y = (p.y + 0.5) * TILE;
+    var r = TILE * 0.44;
+    var ang = Math.atan2(m.dir.y, m.dir.x);
+    if (!m.dir.x && !m.dir.y) ang = 0;
+    var open = m.moving ? (0.12 + Math.abs(Math.sin(m.mouth)) * 0.42) : 0.28;
+    ctx.save();
+    ctx.translate(x, y); ctx.rotate(ang);
+    var grd = ctx.createRadialGradient(-r * 0.3, -r * 0.3, r * 0.2, 0, 0, r);
+    grd.addColorStop(0, '#fff3a8'); grd.addColorStop(1, '#ffd21f');
+    ctx.fillStyle = grd;
+    ctx.shadowColor = 'rgba(255,216,77,.55)'; ctx.shadowBlur = TILE * 0.45;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, r, open, Math.PI * 2 - open);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+  function drawGhost(g, t) {
+    if (g.revive > 0 && !g.eaten) {
+      // 复活闪烁的小光点
+      var gp0 = centerPos(g);
+      ctx.save(); ctx.globalAlpha = 0.35 + Math.sin(t * 12) * 0.25;
+      ctx.fillStyle = g.color;
+      ctx.beginPath(); ctx.arc((gp0.x + 0.5) * TILE, (gp0.y + 0.5) * TILE, TILE * 0.18, 0, 6.2832); ctx.fill();
+      ctx.restore();
+      return;
+    }
+    var p = centerPos(g);
+    var x = (p.x + 0.5) * TILE, y = (p.y + 0.5) * TILE;
+    var r = TILE * 0.42;
+    var fright = frightT > 0 && !g.eaten;
+    var flash = fright && frightT < 2.2 && Math.floor(frightT * 6) % 2 === 0;
+    var body = g.eaten ? 'rgba(255,255,255,.16)' : (fright ? (flash ? '#f8fafc' : '#2b5dff') : g.color);
+    ctx.save();
+    ctx.translate(x, y);
+    if (!g.eaten) {
+      ctx.fillStyle = body;
+      ctx.beginPath();
+      ctx.arc(0, -r * 0.12, r, Math.PI, 0);
+      ctx.lineTo(r, r * 0.72);
+      var waves = 3;
+      for (var i = 0; i < waves; i++) {
+        var x1 = r - (i + 0.5) * (r * 2 / waves);
+        var x2 = r - (i + 1) * (r * 2 / waves);
+        ctx.quadraticCurveTo(x1, r * (i % 2 ? 1.1 : 0.38), x2, r * 0.72);
+      }
+      ctx.closePath();
+      ctx.fill();
+    }
+    if (!g.eaten) {
+      // 眼睛
+      var ex = r * 0.36, ey = -r * 0.18;
+      var lookX = g.dir.x * r * 0.12, lookY = g.dir.y * r * 0.12;
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(-ex, ey, r * 0.26, 0, 6.2832); ctx.fill();
+      ctx.beginPath(); ctx.arc(ex, ey, r * 0.26, 0, 6.2832); ctx.fill();
+      ctx.fillStyle = fright ? '#1e3a8a' : '#0b1226';
+      ctx.beginPath(); ctx.arc(-ex + lookX, ey + lookY, r * 0.13, 0, 6.2832); ctx.fill();
+      ctx.beginPath(); ctx.arc(ex + lookX, ey + lookY, r * 0.13, 0, 6.2832); ctx.fill();
+      if (fright) {
+        ctx.strokeStyle = '#93c5fd'; ctx.lineWidth = Math.max(1, r * 0.1);
+        ctx.beginPath(); ctx.moveTo(-ex - r * 0.18, r * 0.3); ctx.lineTo(-ex + r * 0.18, r * 0.3);
+        ctx.moveTo(ex - r * 0.18, r * 0.3); ctx.lineTo(ex + r * 0.18, r * 0.3); ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+
+  function draw() {
+    if (!CW) return;
+    ctx.clearRect(0, 0, CW, CH);
+    // 背景网格光
+    var g = ctx.createRadialGradient(CW / 2, CH / 2, 10, CW / 2, CH / 2, Math.max(CW, CH) * 0.7);
+    g.addColorStop(0, 'rgba(22,36,70,.35)'); g.addColorStop(1, 'rgba(4,6,13,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, CW, CH);
+    drawMaze();
+    drawPellets(animT);
+    if (state !== 'start' && state !== 'over') {
+      for (var i = 0; i < ghosts.length; i++) drawGhost(ghosts[i], animT);
+      if (state === 'dying') {
+        var pr = TILE * 0.44 * Math.max(0, 1 - deathT / 1.1);
+        var pp = centerPos(player);
+        if (pr > 1) {
+          ctx.save();
+          ctx.fillStyle = '#ffd21f'; ctx.shadowColor = '#ffd84d'; ctx.shadowBlur = 14;
+          ctx.beginPath(); ctx.arc((pp.x + 0.5) * TILE, (pp.y + 0.5) * TILE, pr, 0, 6.2832); ctx.fill();
+          ctx.restore();
+        }
+      } else if (state !== 'clear') {
+        drawPac(animT, player);
+      }
+    }
+    // 顶部提示
+    if (toast) {
+      ctx.save();
+      ctx.globalAlpha = 0.85;
+      ctx.font = 'bold ' + Math.max(10, TILE * 0.5) + 'px "Microsoft YaHei",sans-serif';
+      ctx.textAlign = 'center'; ctx.fillStyle = '#93c5fd';
+      ctx.fillText(toast, CW / 2, TILE * 0.7);
+      ctx.restore();
+    }
+    if (frightT > 0 && state === 'playing') {
+      ctx.save();
+      ctx.fillStyle = 'rgba(56,120,255,.10)';
+      ctx.fillRect(0, 0, CW, CH);
+      ctx.restore();
+    }
+  }
+
+  /* ---------------- main loop ---------------- */
+  var last = 0;
+  function loop(now) {
+    if (!last) last = now;
+    var dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    animT += dt;
+    if (state === 'playing') {
+      updatePlayer(dt);
+      if (state === 'playing') {
+        for (var i = 0; i < ghosts.length; i++) updateGhost(ghosts[i], dt);
+        if (frightT > 0) frightT = Math.max(0, frightT - dt);
+        modeT -= dt;
+        if (modeT <= 0) {
+          modeT = 7;
+          modeIdx = (modeIdx + 1) % 2;
+        }
+      }
+    } else if (state === 'dying') {
+      deathT += dt;
+      if (deathT > 1.25) loseLife();
+    } else if (state === 'clear') {
+      clearT += dt;
+      if (clearT > 1.5) nextLevel();
+    }
+    if (toastT > 0) { toastT -= dt; if (toastT <= 0) toast = ''; }
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  /* ---------------- input ---------------- */
+  var keyMap = {
+    ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down',
+    a: 'left', d: 'right', w: 'up', s: 'down', A: 'left', D: 'right', W: 'up', S: 'down'
+  };
+  document.addEventListener('keydown', function (e) {
+    if (keyMap[e.key]) {
+      e.preventDefault();
+      if (state === 'playing' || state === 'paused') {
+        var d = dirs[keyMap[e.key]];
+        player.want = { x: d.x, y: d.y };
+        audio();
+      }
+      return;
+    }
+    if (e.key === 'p' || e.key === 'P' || e.key === 'Escape') {
+      e.preventDefault(); togglePause(); return;
+    }
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      if (state === 'start' || state === 'over') startGame();
+      else if (state === 'paused') togglePause();
+    }
+  }, { passive: false });
+
+  var startBtn = $('startBtn'), againBtn = $('againBtn'), resumeBtn = $('resumeBtn');
+  startBtn.addEventListener('click', startGame);
+  againBtn.addEventListener('click', startGame);
+  resumeBtn.addEventListener('click', function () { if (state === 'paused') togglePause(); });
+
+  $('soundBtn').addEventListener('click', function () {
+    soundOn = !soundOn;
+    saveNum('pacman.sound', soundOn ? 1 : 0);
+    this.classList.toggle('on', soundOn);
+    this.textContent = soundOn ? '♪' : '×';
+    if (soundOn) tone(700, 0.06, 'square', 0.03);
+  });
+  $('soundBtn').classList.toggle('on', soundOn);
+  $('soundBtn').textContent = soundOn ? '♪' : '×';
+
+  var dpad = $('dpad');
+  dpad.addEventListener('pointerdown', function (e) {
+    var b = e.target.closest('button[data-dir]');
+    if (!b) return;
+    e.preventDefault();
+    var d = dirs[b.getAttribute('data-dir')];
+    player.want = { x: d.x, y: d.y };
+    audio();
+  });
+  // dpad 默认阻止滑动
+  dpad.addEventListener('touchstart', function (e) { if (e.target.closest('button[data-dir]')) e.preventDefault(); }, { passive: false });
+
+  // 滑动
+  var swipe = null;
+  cvs.addEventListener('pointerdown', function (e) {
+    swipe = { x: e.clientX, y: e.clientY };
+    audio();
+  });
+  cvs.addEventListener('pointermove', function (e) {
+    if (!swipe) return;
+    var dx = e.clientX - swipe.x, dy = e.clientY - swipe.y;
+    if (dx * dx + dy * dy < 24 * 24) return;
+    if (Math.abs(dx) > Math.abs(dy)) player.want = { x: dx > 0 ? 1 : -1, y: 0 };
+    else player.want = { x: 0, y: dy > 0 ? 1 : -1 };
+    swipe = null;
+  });
+  cvs.addEventListener('pointerup', function () { swipe = null; });
+  cvs.addEventListener('pointercancel', function () { swipe = null; });
+
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden && state === 'playing') togglePause();
+  });
+  window.addEventListener('resize', resize);
+  window.addEventListener('orientationchange', function () { setTimeout(resize, 120); });
+
+  buildPellets(); resetActors(); updHud();
+  resize();
+  draw();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
+

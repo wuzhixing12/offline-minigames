@@ -124,6 +124,12 @@
   .res-grid b{display:block;margin-top:2px;font-size:17px;font-variant-numeric:tabular-nums;}
   .card .btn.primary{width:100%;padding:11px 14px;font-size:13.5px;}
   .card .btn.ghost{width:100%;margin-top:8px;}
+  .diff-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 14px;}
+  .diff-btn{padding:10px 6px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#dbeafe;cursor:pointer;line-height:1.4;font-size:12px;font-weight:600;transition:background .16s,border-color .16s,transform .16s;}
+  .diff-btn:hover{background:rgba(255,255,255,.1);border-color:rgba(244,114,182,.45);transform:translateY(-1px);}
+  .diff-btn b{display:block;font-size:13px;}
+  .diff-btn span{display:block;margin-top:2px;font-size:10px;color:var(--muted);font-weight:500;}
+  .diff-btn.now{border-color:rgba(244,114,182,.65);background:rgba(244,114,182,.14);}
 
   .confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:1;}
   .confetti i{position:absolute;top:-12px;width:7px;height:12px;border-radius:2px;animation:fall linear forwards;}
@@ -146,6 +152,7 @@
     .badge{left:10px;top:10px;font-size:9px;}
     .actions{width:100%;justify-content:center;}
     .actions .btn{flex:1;}
+    .diff-btn{font-size:11px;padding:9px 4px;}
     .card{padding:20px 18px 16px;}
     .card h2{font-size:27px;}
   }
@@ -163,11 +170,12 @@
       <div class="logo">找</div>
       <div>
         <h1>找不同</h1>
-        <p id="subtitle">共 12 个场景 · 差异从 3 处加到 5 处 · 点中任意一张图都能标记</p>
+        <p id="subtitle">共 26 个场景 · 简单 3 处 / 普通 4 处 / 困难 5 处 · 点中任意一张图都能标记</p>
       </div>
     </div>
     <div class="stats">
-      <div class="stat"><span>关卡</span><b id="level">1 / 12</b></div>
+      <div class="stat"><span>难度</span><b id="mode">普通</b></div>
+      <div class="stat"><span>关卡</span><b id="level">1 / 20</b></div>
       <div class="stat"><span>找到</span><b id="found" class="hot">0 / 3</b></div>
       <div class="stat"><span>时间</span><b id="time">48.0</b></div>
       <div class="stat"><span>得分</span><b id="score">0</b></div>
@@ -195,7 +203,7 @@
     </div>
   </div>
   <div class="track" id="track" aria-hidden="true"></div>
-  <p class="foot">点中不同处 +100 · 点错 -2 秒 · 提示 -8 秒 · 差异越多时间越长</p>
+  <p class="foot">点中不同处 +100 · 点错 -2 秒 · 提示 -8 秒 · 难度决定每关差异数量</p>
 </div>
 
 <div class="overlay on" id="overlay"><div class="card" id="ovCard"></div></div>
@@ -204,14 +212,16 @@
 (function () {
   'use strict';
 
-  var BEST_KEY = 'tx_spotdiff_best_v1';
-  var PROGRESS_KEY = 'tx_spotdiff_progress_v1';
-  var DIFF_TIERS = [3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5];
-
-  function diffsForLevel(lv) {
-    var i = lv < 0 ? 0 : (lv > DIFF_TIERS.length - 1 ? DIFF_TIERS.length - 1 : lv);
-    return DIFF_TIERS[i];
-  }
+  var BEST_KEY = 'tx_spotdiff_best_v2';
+  var PROGRESS_KEY = 'tx_spotdiff_progress_v2';
+  var DIFFICULTIES = {
+    easy:   { name: '简单', diffs: 3 },
+    normal: { name: '普通', diffs: 4 },
+    hard:   { name: '困难', diffs: 5 }
+  };
+  var DIFF_ORDER = ['easy', 'normal', 'hard'];
+  function modeCfg(m) { return DIFFICULTIES[m] || DIFFICULTIES.normal; }
+  function diffsForMode(m) { return modeCfg(m).diffs; }
   function levelTime(d) { return d * 12000 + 12000; }
   function clamp(v, lo, hi) { return v < lo ? lo : (v > hi ? hi : v); }
 
@@ -429,6 +439,217 @@
       '<path d="M0 214 C110 194 290 194 400 214 L400 300 L0 300 Z" fill="#c2410c" opacity=".55"/>' +
       '<path d="M0 250 C110 232 290 232 400 250" stroke="#fde68a" stroke-width="3" fill="none" opacity=".3"/>' +
       '<path d="M0 276 C110 260 290 260 400 276" stroke="#fde68a" stroke-width="2" fill="none" opacity=".18"/>';
+  }
+
+
+  function bgCafe(sid) {
+    var steam = '';
+    for (var i = 0; i < 9; i++) steam += '<circle cx="' + (48 + i * 40) + '" cy="' + (46 + (i % 3) * 9) + '" r="' + (2 + i % 3) + '" fill="#fde68a" opacity=".13"/>';
+    return '<defs>' +
+      '<linearGradient id="cafe_' + sid + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c120c"/><stop offset=".6" stop-color="#3b2417"/><stop offset="1" stop-color="#5a3620"/></linearGradient>' +
+      '</defs>' +
+      '<rect width="400" height="300" fill="url(#cafe_' + sid + ')"/>' +
+      '<rect x="0" y="70" width="400" height="120" fill="#2a1a10" opacity=".4"/>' +
+      '<rect x="18" y="78" width="160" height="96" rx="4" fill="#0c1830" opacity=".78"/>' +
+      '<path d="M98 78 v96 M18 126 h160" stroke="#f8d9a8" stroke-width="2" opacity=".16"/>' +
+      '<rect x="200" y="84" width="176" height="64" rx="4" fill="#f8d9a8" opacity=".07"/>' + steam +
+      '<rect x="0" y="198" width="400" height="16" fill="#7a4a2b" opacity=".72"/>' +
+      '<rect x="0" y="214" width="400" height="86" fill="#24150c" opacity=".7"/>' +
+      '<path d="M0 214 h400" stroke="#fde6c6" stroke-width="2" opacity=".2"/>';
+  }
+  function bgRainforest(sid) {
+    var r = rng(107), leaves = '';
+    for (var i = 0; i < 20; i++) {
+      var x = Math.round(r() * 390 + 5), y = Math.round(r() * 280 + 10);
+      leaves += '<ellipse cx="' + x + '" cy="' + y + '" rx="' + Math.round(10 + r() * 16) + '" ry="' + Math.round(5 + r() * 8) + '" fill="#22c55e" opacity="' + (0.08 + r() * 0.16).toFixed(2) + '" transform="rotate(' + Math.round(r() * 180) + ' ' + x + ' ' + y + ')"/>';
+    }
+    return '<defs>' +
+      '<linearGradient id="rf_' + sid + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#052e16"/><stop offset=".55" stop-color="#166534"/><stop offset="1" stop-color="#14532d"/></linearGradient>' +
+      '<radialGradient id="rfm_' + sid + '" cx=".5" cy=".45" r=".6"><stop offset="0" stop-color="#86efac" stop-opacity=".2"/><stop offset="1" stop-color="#86efac" stop-opacity="0"/></radialGradient>' +
+      '</defs>' +
+      '<rect width="400" height="300" fill="url(#rf_' + sid + ')"/>' +
+      '<ellipse cx="200" cy="140" rx="220" ry="140" fill="url(#rfm_' + sid + ')"/>' + leaves +
+      '<path d="M40 0 v300 M200 0 v300 M360 0 v300" stroke="#065f46" stroke-width="6" opacity=".32"/>' +
+      '<path d="M0 252 C80 240 150 262 230 250 C300 240 350 260 400 250 L400 300 L0 300 Z" fill="#052e16" opacity=".55"/>';
+  }
+  function bgSnow(sid) {
+    var r = rng(113), dots = '';
+    for (var i = 0; i < 42; i++) dots += '<circle cx="' + Math.round(r() * 392 + 4) + '" cy="' + Math.round(r() * 200 + 6) + '" r="' + (0.8 + r() * 1.6).toFixed(1) + '" fill="#e0f2fe" opacity="' + (0.25 + r() * 0.5).toFixed(2) + '"/>';
+    return '<defs>' +
+      '<linearGradient id="sn_' + sid + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#020617"/><stop offset=".5" stop-color="#1e3a8a"/><stop offset="1" stop-color="#7dd3fc"/></linearGradient>' +
+      '<linearGradient id="snA_' + sid + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a5f3fc" stop-opacity=".35"/><stop offset="1" stop-color="#a5f3fc" stop-opacity="0"/></linearGradient>' +
+      '</defs>' +
+      '<rect width="400" height="300" fill="url(#sn_' + sid + ')"/>' +
+      '<path d="M0 40 C80 20 130 60 200 34 C270 10 330 44 400 26 L400 70 L0 70 Z" fill="url(#snA_' + sid + ')"/>' + dots +
+      '<path d="M0 200 L70 120 L120 180 L180 96 L250 190 L320 128 L400 210 L400 300 L0 300 Z" fill="#0f172a" opacity=".6"/>' +
+      '<path d="M0 240 L90 170 L150 230 L230 160 L300 238 L370 186 L400 214 L400 300 L0 300 Z" fill="#f8fafc" opacity=".8"/>';
+  }
+  function bgNightMarket(sid) {
+    var lanterns = '';
+    for (var i = 0; i < 6; i++) {
+      var x = 36 + i * 66;
+      lanterns += '<circle cx="' + x + '" cy="40" r="12" fill="#fb7185" opacity=".55"/>' +
+        '<circle cx="' + x + '" cy="40" r="22" fill="#fb7185" opacity=".12"/>' +
+        '<path d="M' + x + ' 0 V28" stroke="#fda4af" stroke-width="2" opacity=".3"/>';
+    }
+    return '<defs>' +
+      '<linearGradient id="nm_' + sid + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1e1b4b"/><stop offset=".55" stop-color="#5b21b6"/><stop offset="1" stop-color="#9d174d"/></linearGradient>' +
+      '</defs>' +
+      '<rect width="400" height="300" fill="url(#nm_' + sid + ')"/>' + lanterns +
+      '<path d="M0 196 h400" stroke="#fbcfe8" stroke-width="2" opacity=".14"/>' +
+      '<path d="M0 196 L40 160 L82 196 Z M96 196 L138 158 L180 196 Z M198 196 L240 162 L282 196 Z M300 196 L342 158 L384 196 Z" fill="#7f1d1d" opacity=".5"/>' +
+      '<path d="M0 214 h400" stroke="#fde68a" stroke-width="2" opacity=".2"/>' +
+      '<rect x="0" y="232" width="400" height="68" fill="#1c1024" opacity=".7"/>';
+  }
+  function bgPark(sid) {
+    var spokes = '';
+    for (var i = 0; i < 8; i++) {
+      var a = i * Math.PI / 4;
+      spokes += '<path d="M320 108 L' + (320 + Math.cos(a) * 54).toFixed(1) + ' ' + (108 + Math.sin(a) * 54).toFixed(1) + '" stroke="#fdf2f8" stroke-width="2" opacity=".2"/>';
+    }
+    return '<defs>' +
+      '<linearGradient id="pk_' + sid + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#312e81"/><stop offset=".5" stop-color="#a21caf"/><stop offset="1" stop-color="#fb923c"/></linearGradient>' +
+      '</defs>' +
+      '<rect width="400" height="300" fill="url(#pk_' + sid + ')"/>' +
+      '<circle cx="320" cy="108" r="58" fill="none" stroke="#fdf2f8" stroke-width="3" opacity=".28"/>' + spokes +
+      '<circle cx="320" cy="108" r="6" fill="#fde68a" opacity=".6"/>' +
+      '<path d="M320 166 L300 240 M320 166 L340 240" stroke="#fdf2f8" stroke-width="3" opacity=".22"/>' +
+      '<path d="M20 220 L80 150 L140 220 Z M150 220 L220 160 L290 220 Z" fill="#f9a8d4" opacity=".26"/>' +
+      '<path d="M0 246 C90 232 150 252 240 242 C320 234 360 248 400 242 L400 300 L0 300 Z" fill="#1e1b4b" opacity=".55"/>';
+  }
+  function bgMuseum(sid) {
+    return '<defs>' +
+      '<linearGradient id="mu_' + sid + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0f172a"/><stop offset=".55" stop-color="#1e293b"/><stop offset="1" stop-color="#334155"/></linearGradient>' +
+      '<radialGradient id="mul_' + sid + '" cx=".5" cy=".25" r=".6"><stop offset="0" stop-color="#fde68a" stop-opacity=".18"/><stop offset="1" stop-color="#fde68a" stop-opacity="0"/></radialGradient>' +
+      '</defs>' +
+      '<rect width="400" height="300" fill="url(#mu_' + sid + ')"/>' +
+      '<ellipse cx="200" cy="60" rx="200" ry="110" fill="url(#mul_' + sid + ')"/>' +
+      '<rect x="26" y="52" width="104" height="80" rx="3" fill="#0b1220" opacity=".6" stroke="#f8d9a8" stroke-width="2" stroke-opacity=".25"/>' +
+      '<rect x="150" y="44" width="120" height="94" rx="3" fill="#0b1220" opacity=".55" stroke="#f8d9a8" stroke-width="2" stroke-opacity=".22"/>' +
+      '<rect x="292" y="58" width="86" height="74" rx="3" fill="#0b1220" opacity=".55" stroke="#f8d9a8" stroke-width="2" stroke-opacity=".22"/>' +
+      '<rect x="0" y="206" width="400" height="6" fill="#0b1220" opacity=".7"/>' +
+      '<rect x="0" y="212" width="400" height="88" fill="#111827" opacity=".6"/>' +
+      '<path d="M0 212 h400" stroke="#f8d9a8" stroke-width="2" opacity=".16"/>';
+  }
+  function bgGarden(sid) {
+    var r = rng(131), dots = '';
+    var cols = ['#f472b6', '#fbbf24', '#a78bfa', '#fb7185', '#fef3c7'];
+    for (var i = 0; i < 36; i++) dots += '<circle cx="' + Math.round(r() * 392 + 4) + '" cy="' + Math.round(r() * 70 + 170) + '" r="' + (1.4 + r() * 2.4).toFixed(1) + '" fill="' + cols[i % cols.length] + '" opacity="' + (0.25 + r() * 0.4).toFixed(2) + '"/>';
+    return '<defs>' +
+      '<linearGradient id="gd_' + sid + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7dd3fc"/><stop offset=".55" stop-color="#bae6fd"/><stop offset="1" stop-color="#dcfce7"/></linearGradient>' +
+      '</defs>' +
+      '<rect width="400" height="300" fill="url(#gd_' + sid + ')"/>' +
+      '<circle cx="330" cy="52" r="26" fill="#fde68a" opacity=".9"/>' +
+      '<circle cx="330" cy="52" r="44" fill="#fde68a" opacity=".16"/>' +
+      '<path d="M0 170 C70 148 140 168 200 158 C270 146 340 172 400 158 L400 300 L0 300 Z" fill="#4ade80"/>' +
+      '<path d="M0 208 C90 190 160 214 240 202 C310 192 360 210 400 202 L400 300 L0 300 Z" fill="#22c55e" opacity=".6"/>' + dots +
+      '<path d="M0 252 h400" stroke="#166534" stroke-width="2" opacity=".18"/>';
+  }
+  function bgHarbor(sid) {
+    var ripples = '';
+    for (var i = 0; i < 10; i++) {
+      var y = 170 + i * 11;
+      ripples += '<path d="M' + (10 + i * 8) + ' ' + y + ' q20 -5 40 0" stroke="#bae6fd" stroke-width="2" fill="none" opacity="' + (0.08 + (i % 4) * 0.04).toFixed(2) + '"/>';
+    }
+    return '<defs>' +
+      '<linearGradient id="hb_' + sid + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1e1b4b"/><stop offset=".45" stop-color="#7c3aed"/><stop offset=".7" stop-color="#fb7185"/><stop offset="1" stop-color="#0369a1"/></linearGradient>' +
+      '</defs>' +
+      '<rect width="400" height="300" fill="url(#hb_' + sid + ')"/>' +
+      '<circle cx="308" cy="148" r="28" fill="#fde68a" opacity=".55"/>' +
+      '<rect x="0" y="158" width="400" height="142" fill="#0c4a6e" opacity=".72"/>' + ripples +
+      '<path d="M0 214 L120 214 L150 300 L0 300 Z" fill="#3f2a18" opacity=".72"/>' +
+      '<path d="M18 214 v-26 M52 214 v-26 M86 214 v-26" stroke="#fde6c6" stroke-width="3" opacity=".3"/>' +
+      '<path d="M330 158 v-56 h26 v56" fill="#0f172a" opacity=".7"/>' +
+      '<path d="M343 96 v-24" stroke="#fde68a" stroke-width="3" opacity=".5"/>';
+  }
+
+
+  function bgDessert(sid) {
+    var r = rng(151), dots = '';
+    for (var i = 0; i < 28; i++) dots += '<circle cx="' + Math.round(r() * 392 + 4) + '" cy="' + Math.round(r() * 200 + 8) + '" r="' + (1.2 + r() * 2).toFixed(1) + '" fill="#fbcfe8" opacity="' + (0.1 + r() * 0.18).toFixed(2) + '"/>';
+    return '<defs>' +
+      '<linearGradient id="ds_' + sid + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b0a2a"/><stop offset=".55" stop-color="#7a2048"/><stop offset="1" stop-color="#be185d"/></linearGradient>' +
+      '<radialGradient id="dsg_' + sid + '" cx=".5" cy=".2" r=".6"><stop offset="0" stop-color="#fbcfe8" stop-opacity=".22"/><stop offset="1" stop-color="#fbcfe8" stop-opacity="0"/></radialGradient>' +
+      '</defs>' +
+      '<rect width="400" height="300" fill="url(#ds_' + sid + ')"/>' +
+      '<ellipse cx="200" cy="50" rx="190" ry="90" fill="url(#dsg_' + sid + ')"/>' + dots +
+      '<rect x="0" y="92" width="400" height="6" fill="#2b071c" opacity=".55"/>' +
+      '<rect x="0" y="168" width="400" height="6" fill="#2b071c" opacity=".5"/>' +
+      '<rect x="0" y="222" width="400" height="78" fill="#2b071c" opacity=".55"/>' +
+      '<path d="M0 222 h400" stroke="#fbcfe8" stroke-width="2" opacity=".2"/>';
+  }
+  function bgAquarium(sid) {
+    var r = rng(157), bubbles = '';
+    for (var i = 0; i < 26; i++) bubbles += '<circle cx="' + Math.round(r() * 386 + 8) + '" cy="' + Math.round(r() * 270 + 12) + '" r="' + (1.5 + r() * 4).toFixed(1) + '" fill="#a5f3fc" opacity="' + (0.1 + r() * 0.18).toFixed(2) + '"/>';
+    return '<defs>' +
+      '<linearGradient id="aq_' + sid + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#031525"/><stop offset=".55" stop-color="#0e4a6b"/><stop offset="1" stop-color="#0891b2"/></linearGradient>' +
+      '</defs>' +
+      '<rect width="400" height="300" fill="url(#aq_' + sid + ')"/>' +
+      '<path d="M70 0 L150 0 L90 300 L10 300 Z" fill="#a5f3fc" opacity=".06"/>' +
+      '<path d="M250 0 L320 0 L260 300 L190 300 Z" fill="#a5f3fc" opacity=".05"/>' + bubbles +
+      '<rect x="0" y="236" width="400" height="64" fill="#0c4a6e" opacity=".55"/>' +
+      '<path d="M0 236 h400" stroke="#a5f3fc" stroke-width="2" opacity=".18"/>' +
+      '<path d="M0 270 C60 262 120 274 180 268 C250 260 320 274 400 266" stroke="#67e8f9" stroke-width="2" fill="none" opacity=".14"/>';
+  }
+  function bgSubway(sid) {
+    var tiles = '';
+    for (var i = 1; i < 10; i++) tiles += '<path d="M' + (i * 44) + ' 0 V170" stroke="#cbd5e1" stroke-width="1" opacity=".08"/>';
+    for (var j = 1; j < 4; j++) tiles += '<path d="M0 ' + (j * 42) + ' H400" stroke="#cbd5e1" stroke-width="1" opacity=".08"/>';
+    return '<defs>' +
+      '<linearGradient id="sw_' + sid + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0b1220"/><stop offset=".55" stop-color="#1e293b"/><stop offset="1" stop-color="#334155"/></linearGradient>' +
+      '</defs>' +
+      '<rect width="400" height="300" fill="url(#sw_' + sid + ')"/>' +
+      '<rect width="400" height="170" fill="#0f172a" opacity=".55"/>' + tiles +
+      '<rect x="0" y="170" width="400" height="8" fill="#475569" opacity=".6"/>' +
+      '<rect x="0" y="238" width="400" height="8" fill="#facc15" opacity=".35"/>' +
+      '<rect x="0" y="246" width="400" height="54" fill="#0b1220" opacity=".7"/>' +
+      '<path d="M0 170 h400" stroke="#fde68a" stroke-width="2" opacity=".12"/>';
+  }
+  function bgCamp(sid) {
+    var r = rng(163), stars = '';
+    for (var i = 0; i < 34; i++) stars += '<circle cx="' + Math.round(r() * 392 + 4) + '" cy="' + Math.round(r() * 150 + 8) + '" r="' + (0.8 + r() * 1.4).toFixed(1) + '" fill="#e0f2fe" opacity="' + (0.3 + r() * 0.5).toFixed(2) + '"/>';
+    return '<defs>' +
+      '<linearGradient id="cp_' + sid + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#020617"/><stop offset=".55" stop-color="#14532d"/><stop offset="1" stop-color="#166534"/></linearGradient>' +
+      '<radialGradient id="cpg_' + sid + '" cx=".5" cy=".65" r=".5"><stop offset="0" stop-color="#fb923c" stop-opacity=".28"/><stop offset="1" stop-color="#fb923c" stop-opacity="0"/></radialGradient>' +
+      '</defs>' +
+      '<rect width="400" height="300" fill="url(#cp_' + sid + ')"/>' + stars +
+      '<circle cx="330" cy="52" r="20" fill="#fef3c7" opacity=".85"/>' +
+      '<path d="M0 190 L40 140 L80 190 Z M320 190 L360 130 L400 190 Z" fill="#052e16" opacity=".75"/>' +
+      '<path d="M0 210 C80 196 150 218 230 206 C310 196 360 214 400 206 L400 300 L0 300 Z" fill="#052e16" opacity=".7"/>' +
+      '<ellipse cx="200" cy="250" rx="150" ry="46" fill="url(#cpg_' + sid + ')"/>';
+  }
+  function bgOrchard(sid) {
+    var rows = '';
+    for (var i = 0; i < 14; i++) {
+      var x = 20 + i * 28;
+      rows += '<ellipse cx="' + x + '" cy="' + (196 + (i % 3) * 8) + '" rx="16" ry="10" fill="#166534" opacity=".45"/>';
+    }
+    return '<defs>' +
+      '<linearGradient id="or_' + sid + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7dd3fc"/><stop offset=".55" stop-color="#bae6fd"/><stop offset="1" stop-color="#dcfce7"/></linearGradient>' +
+      '</defs>' +
+      '<rect width="400" height="300" fill="url(#or_' + sid + ')"/>' +
+      '<circle cx="70" cy="54" r="26" fill="#fde68a" opacity=".9"/>' +
+      '<circle cx="70" cy="54" r="42" fill="#fde68a" opacity=".16"/>' +
+      '<path d="M0 170 C80 150 150 172 220 162 C290 152 350 170 400 160 L400 300 L0 300 Z" fill="#4ade80"/>' +
+      '<path d="M0 210 C90 192 160 214 240 202 C310 192 360 210 400 202 L400 300 L0 300 Z" fill="#22c55e" opacity=".6"/>' + rows +
+      '<path d="M0 252 h400" stroke="#166534" stroke-width="2" opacity=".16"/>';
+  }
+  function bgMarket(sid) {
+    var awn = '', cols = ['#dc2626', '#f8d9a8'];
+    for (var i = 0; i < 7; i++) {
+      var x = i * 58;
+      awn += '<path d="M' + x + ' 0 L' + (x + 29) + ' 0 L' + (x + 29) + ' 64 L' + x + ' 64 Z" fill="' + cols[i % 2] + '" opacity=".35"/>';
+    }
+    return '<defs>' +
+      '<linearGradient id="mk_' + sid + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a1508"/><stop offset=".55" stop-color="#5a3216"/><stop offset="1" stop-color="#7c4a1e"/></linearGradient>' +
+      '</defs>' +
+      '<rect width="400" height="300" fill="url(#mk_' + sid + ')"/>' +
+      '<rect width="400" height="64" fill="#7f1d1d" opacity=".45"/>' + awn +
+      '<path d="M0 64 h400" stroke="#f8d9a8" stroke-width="2" opacity=".25"/>' +
+      '<path d="M0 84 h400" stroke="#f8d9a8" stroke-width="1" opacity=".1"/>' +
+      '<rect x="0" y="214" width="400" height="86" fill="#26150a" opacity=".65"/>' +
+      '<path d="M0 214 h400" stroke="#fde6c6" stroke-width="2" opacity=".2"/>' +
+      '<path d="M0 262 h400" stroke="#fde6c6" stroke-width="1" opacity=".08"/>';
   }
 
   var SCENES = [
@@ -674,6 +895,288 @@
         { e: '🎯', x: 218, y: 172, s: 28 },
         { e: '⏱️', x: 372, y: 110, s: 26 }
       ]
+    },
+    {
+      id: 'cafe', name: '咖啡馆', bg: bgCafe,
+      pool: ['🍩', '🥯', '🍵', '🥧', '🍫'],
+      objects: [
+        { e: '☕', x: 95, y: 120, s: 34 },
+        { e: '🥐', x: 170, y: 132, s: 30 },
+        { e: '🍰', x: 245, y: 122, s: 32 },
+        { e: '🧁', x: 312, y: 140, s: 28 },
+        { e: '🪴', x: 348, y: 206, s: 36 },
+        { e: '🪑', x: 70, y: 224, s: 38 },
+        { e: '📖', x: 152, y: 207, s: 28 },
+        { e: '🕯️', x: 214, y: 202, s: 26 },
+        { e: '🎂', x: 268, y: 212, s: 32 },
+        { e: '🧋', x: 58, y: 164, s: 28 },
+        { e: '🥪', x: 186, y: 76, s: 28 },
+        { e: '💐', x: 118, y: 58, s: 30 },
+        { e: '🎵', x: 352, y: 58, s: 26 },
+        { e: '🍪', x: 316, y: 252, s: 26 },
+        { e: '🧾', x: 220, y: 262, s: 26 }
+      ]
+    },
+    {
+      id: 'rainforest', name: '雨林', bg: bgRainforest,
+      pool: ['🐢', '🦂', '🐛', '🪴', '🍄'],
+      objects: [
+        { e: '🐒', x: 84, y: 112, s: 36 },
+        { e: '🦜', x: 172, y: 62, s: 30 },
+        { e: '🐸', x: 126, y: 222, s: 28 },
+        { e: '🦋', x: 252, y: 92, s: 26 },
+        { e: '🐍', x: 306, y: 188, s: 34 },
+        { e: '🦥', x: 224, y: 152, s: 34 },
+        { e: '🐆', x: 344, y: 238, s: 36 },
+        { e: '🌺', x: 58, y: 182, s: 28 },
+        { e: '🍃', x: 324, y: 64, s: 28 },
+        { e: '🐞', x: 162, y: 160, s: 22 },
+        { e: '🦎', x: 258, y: 252, s: 28 },
+        { e: '🥥', x: 42, y: 254, s: 26 },
+        { e: '🦉', x: 360, y: 128, s: 30 },
+        { e: '🪵', x: 202, y: 266, s: 28 }
+      ]
+    },
+    {
+      id: 'snow', name: '雪山', bg: bgSnow,
+      pool: ['🦊', '🌲', '🧊', '🥌', '⛷️'],
+      objects: [
+        { e: '⛄', x: 112, y: 192, s: 40 },
+        { e: '🎿', x: 232, y: 242, s: 30 },
+        { e: '🐧', x: 302, y: 172, s: 32 },
+        { e: '🧣', x: 162, y: 122, s: 28 },
+        { e: '🏂', x: 72, y: 142, s: 30 },
+        { e: '🦌', x: 322, y: 92, s: 34 },
+        { e: '🏔️', x: 42, y: 222, s: 34 },
+        { e: '🧤', x: 202, y: 102, s: 24 },
+        { e: '❄️', x: 146, y: 62, s: 28 },
+        { e: '🔥', x: 262, y: 122, s: 26 },
+        { e: '🛷', x: 352, y: 252, s: 30 },
+        { e: '🧥', x: 62, y: 62, s: 28 },
+        { e: '🐻‍❄️', x: 272, y: 206, s: 32 },
+        { e: '🥾', x: 182, y: 258, s: 26 }
+      ]
+    },
+    {
+      id: 'nightmarket', name: '夜市', bg: bgNightMarket,
+      pool: ['🍤', '🥡', '🍧', '🎋', '🪭'],
+      objects: [
+        { e: '🏮', x: 92, y: 102, s: 30 },
+        { e: '🍢', x: 162, y: 132, s: 28 },
+        { e: '🥟', x: 242, y: 112, s: 28 },
+        { e: '🧋', x: 312, y: 142, s: 28 },
+        { e: '🎏', x: 72, y: 62, s: 28 },
+        { e: '🍡', x: 192, y: 222, s: 26 },
+        { e: '🥠', x: 262, y: 222, s: 26 },
+        { e: '🎐', x: 342, y: 82, s: 26 },
+        { e: '🪅', x: 122, y: 202, s: 30 },
+        { e: '🍜', x: 302, y: 232, s: 30 },
+        { e: '🎎', x: 42, y: 172, s: 28 },
+        { e: '🥮', x: 212, y: 62, s: 26 },
+        { e: '🧧', x: 352, y: 202, s: 26 },
+        { e: '🎇', x: 152, y: 262, s: 28 }
+      ]
+    },
+    {
+      id: 'park', name: '游乐园', bg: bgPark,
+      pool: ['🤡', '🎭', '🎺', '🪁', '🍦'],
+      objects: [
+        { e: '🎡', x: 302, y: 112, s: 40 },
+        { e: '🎢', x: 92, y: 172, s: 40 },
+        { e: '🎠', x: 212, y: 212, s: 36 },
+        { e: '🎈', x: 62, y: 92, s: 28 },
+        { e: '🍿', x: 172, y: 122, s: 26 },
+        { e: '🎪', x: 352, y: 192, s: 36 },
+        { e: '🧸', x: 122, y: 252, s: 32 },
+        { e: '🎟️', x: 252, y: 72, s: 26 },
+        { e: '🍭', x: 42, y: 242, s: 26 },
+        { e: '🎯', x: 182, y: 262, s: 26 },
+        { e: '🪄', x: 332, y: 252, s: 26 },
+        { e: '🥤', x: 282, y: 192, s: 26 },
+        { e: '🎉', x: 142, y: 72, s: 26 },
+        { e: '🐰', x: 222, y: 152, s: 28 }
+      ]
+    },
+    {
+      id: 'museum', name: '博物馆', bg: bgMuseum,
+      pool: ['🪆', '🪘', '🧿', '📿', '🔮'],
+      objects: [
+        { e: '🏺', x: 82, y: 182, s: 32 },
+        { e: '🗿', x: 182, y: 162, s: 36 },
+        { e: '🖼️', x: 302, y: 112, s: 34 },
+        { e: '🦖', x: 122, y: 112, s: 40 },
+        { e: '💎', x: 252, y: 222, s: 26 },
+        { e: '🏛️', x: 342, y: 182, s: 36 },
+        { e: '🪙', x: 62, y: 242, s: 24 },
+        { e: '📜', x: 212, y: 82, s: 26 },
+        { e: '🗡️', x: 302, y: 252, s: 26 },
+        { e: '🧭', x: 42, y: 102, s: 26 },
+        { e: '🪶', x: 162, y: 242, s: 24 },
+        { e: '⚱️', x: 262, y: 132, s: 28 },
+        { e: '🎭', x: 352, y: 82, s: 26 },
+        { e: '🔔', x: 92, y: 72, s: 26 }
+      ]
+    },
+    {
+      id: 'garden', name: '花园', bg: bgGarden,
+      pool: ['🌹', '🌺', '🐛', '🪱', '🍀'],
+      objects: [
+        { e: '🌷', x: 82, y: 212, s: 30 },
+        { e: '🌻', x: 172, y: 192, s: 34 },
+        { e: '🐝', x: 242, y: 122, s: 24 },
+        { e: '🦋', x: 322, y: 92, s: 26 },
+        { e: '🐌', x: 62, y: 252, s: 26 },
+        { e: '🌳', x: 352, y: 192, s: 40 },
+        { e: '🌼', x: 132, y: 152, s: 24 },
+        { e: '🪴', x: 292, y: 242, s: 30 },
+        { e: '🐞', x: 202, y: 242, s: 22 },
+        { e: '🦔', x: 252, y: 202, s: 28 },
+        { e: '🪁', x: 112, y: 82, s: 28 },
+        { e: '🐿️', x: 332, y: 262, s: 26 },
+        { e: '🌸', x: 42, y: 122, s: 26 },
+        { e: '🍄', x: 192, y: 92, s: 24 }
+      ]
+    },
+    {
+      id: 'harbor', name: '港口', bg: bgHarbor,
+      pool: ['🦀', '🦐', '🐡', '🦑', '🪹'],
+      objects: [
+        { e: '⚓', x: 92, y: 232, s: 30 },
+        { e: '🚢', x: 252, y: 182, s: 40 },
+        { e: '🐟', x: 162, y: 122, s: 28 },
+        { e: '🦅', x: 322, y: 72, s: 28 },
+        { e: '🎣', x: 62, y: 142, s: 26 },
+        { e: '🪝', x: 182, y: 242, s: 24 },
+        { e: '🧭', x: 342, y: 152, s: 26 },
+        { e: '🛟', x: 112, y: 182, s: 28 },
+        { e: '🐙', x: 222, y: 252, s: 30 },
+        { e: '🕊️', x: 42, y: 82, s: 26 },
+        { e: '🐚', x: 302, y: 262, s: 24 },
+        { e: '🪸', x: 282, y: 112, s: 26 },
+        { e: '🪣', x: 142, y: 262, s: 24 },
+        { e: '🐠', x: 202, y: 62, s: 26 }
+      ]
+    },
+    {
+      id: 'dessert', name: '甜品店', bg: bgDessert,
+      pool: ['🍯', '🍡', '🍥', '🥞', '🍇'],
+      objects: [
+        { e: '🍰', x: 80, y: 120, s: 32 },
+        { e: '🧁', x: 150, y: 120, s: 30 },
+        { e: '🍮', x: 220, y: 130, s: 28 },
+        { e: '🍩', x: 290, y: 120, s: 30 },
+        { e: '🍪', x: 350, y: 140, s: 26 },
+        { e: '🍬', x: 60, y: 200, s: 26 },
+        { e: '🍫', x: 130, y: 210, s: 28 },
+        { e: '🍦', x: 200, y: 210, s: 32 },
+        { e: '🥧', x: 270, y: 215, s: 30 },
+        { e: '🍭', x: 330, y: 210, s: 28 },
+        { e: '🧋', x: 90, y: 250, s: 28 },
+        { e: '🥛', x: 170, y: 255, s: 26 },
+        { e: '🍓', x: 240, y: 255, s: 24 },
+        { e: '🍒', x: 310, y: 252, s: 24 },
+        { e: '🎀', x: 360, y: 58, s: 26 }
+      ]
+    },
+    {
+      id: 'aquarium', name: '水族馆', bg: bgAquarium,
+      pool: ['🐢', '🦭', '🦞', '🐋', '🫧'],
+      objects: [
+        { e: '🐠', x: 70, y: 100, s: 30 },
+        { e: '🐟', x: 150, y: 80, s: 28 },
+        { e: '🐡', x: 230, y: 100, s: 30 },
+        { e: '🦈', x: 322, y: 142, s: 40 },
+        { e: '🐙', x: 80, y: 200, s: 34 },
+        { e: '🦀', x: 160, y: 242, s: 30 },
+        { e: '🪼', x: 240, y: 210, s: 30 },
+        { e: '🐚', x: 310, y: 250, s: 26 },
+        { e: '🦐', x: 344, y: 190, s: 26 },
+        { e: '🐬', x: 280, y: 80, s: 34 },
+        { e: '🪸', x: 40, y: 250, s: 28 },
+        { e: '🐳', x: 200, y: 160, s: 40 },
+        { e: '🦑', x: 120, y: 150, s: 28 },
+        { e: '🌊', x: 360, y: 60, s: 26 }
+      ]
+    },
+    {
+      id: 'subway', name: '地铁站', bg: bgSubway,
+      pool: ['🚄', '🚌', '🗺️', '🎒', '📢'],
+      objects: [
+        { e: '🚇', x: 120, y: 150, s: 40 },
+        { e: '🚦', x: 300, y: 120, s: 28 },
+        { e: '🎫', x: 70, y: 222, s: 26 },
+        { e: '📰', x: 150, y: 232, s: 28 },
+        { e: '🧳', x: 212, y: 232, s: 30 },
+        { e: '☕', x: 270, y: 232, s: 26 },
+        { e: '📱', x: 330, y: 222, s: 26 },
+        { e: '🚉', x: 60, y: 100, s: 32 },
+        { e: '🕰️', x: 340, y: 90, s: 26 },
+        { e: '🪧', x: 200, y: 100, s: 28 },
+        { e: '🧥', x: 90, y: 172, s: 28 },
+        { e: '🎧', x: 260, y: 172, s: 26 },
+        { e: '🪙', x: 320, y: 260, s: 24 },
+        { e: '🚶', x: 180, y: 272, s: 28 }
+      ]
+    },
+    {
+      id: 'camp', name: '露营', bg: bgCamp,
+      pool: ['🦌', '🐇', '🧊', '🥘', '🪓'],
+      objects: [
+        { e: '⛺', x: 100, y: 200, s: 40 },
+        { e: '🔥', x: 190, y: 232, s: 32 },
+        { e: '🪵', x: 250, y: 252, s: 26 },
+        { e: '🌲', x: 340, y: 172, s: 40 },
+        { e: '🦉', x: 60, y: 100, s: 28 },
+        { e: '🌙', x: 330, y: 60, s: 30 },
+        { e: '🐻', x: 280, y: 120, s: 34 },
+        { e: '🥾', x: 150, y: 270, s: 24 },
+        { e: '🎒', x: 220, y: 120, s: 28 },
+        { e: '🔦', x: 300, y: 212, s: 26 },
+        { e: '🌭', x: 170, y: 150, s: 26 },
+        { e: '🍫', x: 80, y: 160, s: 24 },
+        { e: '🧭', x: 352, y: 250, s: 24 },
+        { e: '🪕', x: 240, y: 70, s: 26 }
+      ]
+    },
+    {
+      id: 'orchard', name: '果园', bg: bgOrchard,
+      pool: ['🍏', '🍈', '🍉', '🪺', '🌾'],
+      objects: [
+        { e: '🍎', x: 90, y: 160, s: 30 },
+        { e: '🍐', x: 170, y: 140, s: 28 },
+        { e: '🍊', x: 250, y: 160, s: 28 },
+        { e: '🍇', x: 330, y: 140, s: 30 },
+        { e: '🧺', x: 120, y: 240, s: 32 },
+        { e: '🪜', x: 300, y: 210, s: 34 },
+        { e: '🐦', x: 60, y: 80, s: 26 },
+        { e: '🐝', x: 200, y: 90, s: 24 },
+        { e: '🌳', x: 352, y: 192, s: 40 },
+        { e: '🍑', x: 230, y: 222, s: 26 },
+        { e: '🍒', x: 160, y: 222, s: 26 },
+        { e: '🧃', x: 70, y: 252, s: 24 },
+        { e: '🦋', x: 280, y: 80, s: 26 },
+        { e: '🍋', x: 350, y: 252, s: 24 }
+      ]
+    },
+    {
+      id: 'market', name: '菜市场', bg: bgMarket,
+      pool: ['🥒', '🌶️', '🍄', '🫑', '🥔'],
+      objects: [
+        { e: '🥬', x: 80, y: 180, s: 30 },
+        { e: '🍅', x: 150, y: 190, s: 28 },
+        { e: '🥕', x: 220, y: 200, s: 28 },
+        { e: '🥦', x: 290, y: 190, s: 30 },
+        { e: '🍆', x: 350, y: 180, s: 28 },
+        { e: '🐟', x: 100, y: 250, s: 30 },
+        { e: '🍖', x: 180, y: 250, s: 28 },
+        { e: '🧄', x: 250, y: 250, s: 24 },
+        { e: '🧅', x: 310, y: 250, s: 24 },
+        { e: '🧺', x: 50, y: 120, s: 28 },
+        { e: '⚖️', x: 200, y: 120, s: 26 },
+        { e: '🪙', x: 280, y: 120, s: 24 },
+        { e: '🧾', x: 340, y: 110, s: 24 },
+        { e: '🌽', x: 120, y: 120, s: 28 }
+      ]
     }
   ];
 
@@ -694,6 +1197,7 @@
   var pauseBtn = document.getElementById('pause');
   var trackEl = document.getElementById('track');
   var subtitleEl = document.getElementById('subtitle');
+  var modeEl = document.getElementById('mode');
 
   var order = [];
   var level = 0;
@@ -709,9 +1213,16 @@
   var paused = false;
   var over = false;
   var shakeTimerA = 0, shakeTimerB = 0, hintTimer = 0;
-  var best = 0;
+  var mode = 'normal';
+  var bests = { easy: 0, normal: 0, hard: 0 };
 
-  try { best = parseInt(localStorage.getItem(BEST_KEY) || '0', 10) || 0; } catch (e) { best = 0; }
+  try {
+    var savedBest = JSON.parse(localStorage.getItem(BEST_KEY) || '{}');
+    if (savedBest && typeof savedBest === 'object') {
+      DIFF_ORDER.forEach(function (m) { bests[m] = Math.max(0, parseInt(savedBest[m], 10) || 0); });
+    }
+  } catch (e) {}
+  function bestFor(m) { return bests[m] || 0; }
 
   function fmtTime(ms) {
     return Math.max(0, ms / 1000).toFixed(1);
@@ -732,7 +1243,8 @@
     foundEl.textContent = foundCount() + ' / ' + diffCount;
     timeEl.textContent = fmtTime(frozenLeft);
     scoreEl.textContent = String(score);
-    bestEl.textContent = best > 0 ? String(best) : '—';
+    if (modeEl) modeEl.textContent = modeCfg(mode).name;
+    bestEl.textContent = bestFor(mode) > 0 ? String(bestFor(mode)) : '—';
   }
 
   function buildTrack() {
@@ -755,7 +1267,7 @@
 
   function saveProgress() {
     try {
-      localStorage.setItem(PROGRESS_KEY, JSON.stringify({ order: order, level: level, score: score }));
+      localStorage.setItem(PROGRESS_KEY, JSON.stringify({ order: order, level: level, score: score, mode: mode }));
     } catch (e) {}
   }
   function clearProgress() {
@@ -771,13 +1283,14 @@
     if (!p || !p.order || !p.order.length || p.order.length !== SCENES.length) return null;
     if (typeof p.level !== 'number' || p.level < 0 || p.level >= SCENES.length) return null;
     if (typeof p.score !== 'number' || p.score < 0 || p.score > 1000000) return null;
+    if (!DIFFICULTIES[p.mode]) return null;
     for (k = 0; k < p.order.length; k++) {
       var v = p.order[k];
       if (typeof v !== 'number' || v < 0 || v >= SCENES.length || v % 1 !== 0) return null;
       if (seen[v]) return null;
       seen[v] = 1;
     }
-    return { order: p.order.slice(), level: p.level, score: Math.round(p.score) };
+    return { order: p.order.slice(), mode: p.mode, level: p.level, score: Math.round(p.score) };
   }
 
   function dist2(a, b) {
@@ -833,7 +1346,7 @@
         pB: { x: o2.x, y: o2.y },
         r: Math.max(28, o2.s * 0.8)
       };
-      var order0 = shuffle(['swap', 'swap', 'scale', 'move', 'tint', 'remove']);
+      var order0 = shuffle(['swap', 'swap', 'scale', 'tint', 'remove']);
       var chosen = null;
       for (var t = 0; t < order0.length; t++) {
         var op = order0[t];
@@ -846,18 +1359,6 @@
           if (maxK >= 1.3) {
             var k2 = Math.min(1.52, maxK);
             if (k2 >= 1.28) { d.factor = k2; d.sB = Math.round(o2.s * k2); chosen = 'scale'; break; }
-          }
-        } else if (op === 'move') {
-          var ang = Math.random() * Math.PI * 2;
-          var mag = 22 + Math.random() * 9;
-          var nx = Math.round(o2.x + Math.cos(ang) * mag);
-          var ny = Math.round(o2.y + Math.sin(ang) * mag * 0.8);
-          nx = clamp(nx, Math.round(o2.s * 0.5) + 10, 390 - Math.round(o2.s * 0.5));
-          ny = clamp(ny, Math.round(o2.s * 0.5) + 10, 290 - Math.round(o2.s * 0.5));
-          if (Math.abs(nx - o2.x) >= 18 || Math.abs(ny - o2.y) >= 16) {
-            d.dx = nx - o2.x; d.dy = ny - o2.y;
-            d.pB = { x: nx, y: ny };
-            chosen = 'move'; break;
           }
         } else if (op === 'tint') {
           d.hue = 110 + Math.round(Math.random() * 80);
@@ -899,7 +1400,6 @@
         if (d.op === 'remove') continue;
         if (d.op === 'swap') e = d.alt;
         else if (d.op === 'scale') s = d.sB;
-        else if (d.op === 'move') { x = d.pB.x; y = d.pB.y; }
         else if (d.op === 'tint') style = 'filter:hue-rotate(' + d.hue + 'deg) saturate(1.7) brightness(1.06)';
         else if (d.op === 'rotate') rot = d.deg;
       }
@@ -931,7 +1431,7 @@
     clearTimeout(hintTimer);
     hintIdx = -1;
     var sc = currentScene();
-    diffCount = diffsForLevel(level);
+    diffCount = diffsForMode(mode);
     var t = levelTime(diffCount);
     diffs = makeDiffs(sc, diffCount);
     found = [];
@@ -946,10 +1446,11 @@
     updateHud();
     updateTrack();
     saveProgress();
-    setStatus('第 ' + (level + 1) + ' 关 / 共 ' + SCENES.length + ' 关 · ' + sc.name + ' · 找出 ' + diffCount + ' 处不同');
+    setStatus('第 ' + (level + 1) + ' 关 / 共 ' + SCENES.length + ' 关 · ' + sc.name + ' · ' + modeCfg(mode).name + '难度 · 找出 ' + diffCount + ' 处不同');
   }
 
-  function startRun() {
+  function startRun(nextMode) {
+    if (nextMode) mode = nextMode;
     order = shuffle(SCENES.map(function (_, i) { return i; }));
     level = 0;
     score = 0;
@@ -1093,27 +1594,29 @@
     clearTimeout(hintTimer);
     hintIdx = -1;
     clearProgress();
-    if (score > best) {
-      best = score;
-      try { localStorage.setItem(BEST_KEY, String(best)); } catch (e) {}
+    if (score > bestFor(mode)) {
+      bests[mode] = score;
+      try { localStorage.setItem(BEST_KEY, JSON.stringify(bests)); } catch (e) {}
     }
     updateHud();
     var doneLevels = reason === 'clear' ? SCENES.length : level;
     showOverlay(
       '<div class="kicker">' + (reason === 'clear' ? 'ALL FOUND' : 'TIME UP') + '</div>' +
       '<h2>' + (reason === 'clear' ? '全部找齐' : '时间到') + '</h2>' +
-      '<p>' + (reason === 'clear'
-        ? SCENES.length + ' 个场景的差异都被你找出来了，进度已清空，可以重新挑战。'
+      '<p>难度：' + modeCfg(mode).name + ' · ' + (reason === 'clear'
+        ? SCENES.length + ' 个场景的差异都被你找出来了，进度已清空，可以换一档难度再挑战。'
         : '本局到这里，记住这些差异下次会更快；进度已清空。') + '</p>' +
       '<div class="res-grid">' +
         '<div><span>完成关卡</span><b>' + doneLevels + ' / ' + SCENES.length + '</b></div>' +
         '<div><span>本局得分</span><b>' + score + '</b></div>' +
-        '<div><span>历史最佳</span><b>' + best + '</b></div>' +
+        '<div><span>历史最佳</span><b>' + bestFor(mode) + '</b></div>' +
         '<div><span>平均每关</span><b>' + Math.round(score / Math.max(1, doneLevels)) + '</b></div>' +
       '</div>' +
-      '<button type="button" class="btn primary" id="againRun">从头再来</button>',
+      '<button type="button" class="btn primary" id="againRun">再玩一次（' + modeCfg(mode).name + '）</button>' +
+      '<button type="button" class="btn ghost" id="changeMode">换个难度</button>',
       function () {
-        ovCard.querySelector('#againRun').addEventListener('click', startRun);
+        ovCard.querySelector('#againRun').addEventListener('click', function () { startRun(); });
+        ovCard.querySelector('#changeMode').addEventListener('click', function () { showStart(false); });
       }
     );
     if (reason === 'clear') confetti();
@@ -1164,50 +1667,59 @@
     }
   }
 
-  function tierText() {
-    var lo = DIFF_TIERS[0], hi = DIFF_TIERS[DIFF_TIERS.length - 1];
-    return lo + ' → ' + hi + ' 处';
-  }
-
   function showStart(resume) {
     var sc = currentScene();
-    var dc = diffsForLevel(level);
+    var dc = diffsForMode(mode);
     if (resume) {
       showOverlay(
         '<div class="kicker">进度已保存</div>' +
         '<h2>接着找</h2>' +
-        '<p>上次停在第 ' + (level + 1) + ' 关 / 共 ' + SCENES.length + ' 关 · ' + sc.name + '，本关 ' + dc + ' 处不同。继续这一关，还是从头开始？</p>' +
+        '<p>上次停在第 ' + (level + 1) + ' 关 / 共 ' + SCENES.length + ' 关 · ' + sc.name + '，' + modeCfg(mode).name + '难度本关 ' + dc + ' 处不同。继续这一关，还是从头开始？</p>' +
         '<div class="res-grid">' +
           '<div><span>当前关卡</span><b>第 ' + (level + 1) + ' 关</b></div>' +
           '<div><span>场景</span><b>' + sc.name + '</b></div>' +
           '<div><span>累计得分</span><b>' + score + '</b></div>' +
-          '<div><span>历史最佳</span><b>' + (best > 0 ? best : '—') + '</b></div>' +
+          '<div><span>历史最佳</span><b>' + (bestFor(mode) > 0 ? bestFor(mode) : '—') + '</b></div>' +
         '</div>' +
         '<button type="button" class="btn primary" id="btnResume">继续第 ' + (level + 1) + ' 关</button>' +
-        '<button type="button" class="btn ghost" id="btnNewRun">从头开始</button>',
+        '<button type="button" class="btn ghost" id="btnNewRun">本难度从头开始</button>' +
+        '<button type="button" class="btn ghost" id="btnChangeMode">换个难度</button>',
         function () {
           ovCard.querySelector('#btnResume').addEventListener('click', function () {
             hideOverlay();
             loadLevel();
           });
-          ovCard.querySelector('#btnNewRun').addEventListener('click', startRun);
+          ovCard.querySelector('#btnNewRun').addEventListener('click', function () { startRun(); });
+          ovCard.querySelector('#btnChangeMode').addEventListener('click', function () { showStart(false); });
         }
       );
       return;
     }
+    var diffButtons = DIFF_ORDER.map(function (m) {
+      var c = DIFFICULTIES[m];
+      return '<button type="button" class="diff-btn' + (m === mode ? ' now' : '') + '" data-mode="' + m + '">' +
+        '<b>' + c.name + '</b><span>' + c.diffs + ' 处 · ' + Math.round(levelTime(c.diffs) / 1000) + ' 秒</span></button>';
+    }).join('');
     showOverlay(
       '<div class="kicker">' + SCENES.length + ' 个场景</div>' +
       '<h2>找不同</h2>' +
-      '<p>左右两张图来自同一个场景，右图藏了几处不同。点中任意一张图的差异位置即可标记，差异越多时间越长。</p>' +
+      '<p>' + SCENES.length + ' 个场景随机轮换，选一档难度开始。差异只由颜色、大小、物件替换或消失产生，不再用轻微位移凑数。</p>' +
       '<div class="res-grid">' +
         '<div><span>场景数量</span><b>' + SCENES.length + ' 个</b></div>' +
-        '<div><span>差异梯度</span><b>' + tierText() + '</b></div>' +
-        '<div><span>历史最佳</span><b>' + (best > 0 ? best : '—') + '</b></div>' +
-        '<div><span>每关时间</span><b>48–72 秒</b></div>' +
+        '<div><span>本档最佳</span><b>' + (bestFor(mode) > 0 ? bestFor(mode) : '—') + '</b></div>' +
+        '<div><span>简单</span><b>3 处 / 48 秒</b></div>' +
+        '<div><span>困难</span><b>5 处 / 72 秒</b></div>' +
       '</div>' +
-      '<button type="button" class="btn primary" id="startBtn">从头开始</button>',
+      '<div class="diff-row">' + diffButtons + '</div>' +
+      '<button type="button" class="btn primary" id="startBtn">以' + modeCfg(mode).name + '难度开始</button>',
       function () {
-        ovCard.querySelector('#startBtn').addEventListener('click', startRun);
+        Array.prototype.forEach.call(ovCard.querySelectorAll('.diff-btn'), function (b) {
+          b.addEventListener('click', function () {
+            mode = b.getAttribute('data-mode');
+            showStart(false);
+          });
+        });
+        ovCard.querySelector('#startBtn').addEventListener('click', function () { startRun(); });
       }
     );
   }
@@ -1235,6 +1747,7 @@
   var saved = readProgress();
   if (saved) {
     order = saved.order;
+    mode = saved.mode;
     level = saved.level;
     score = saved.score;
   } else {
@@ -1242,13 +1755,12 @@
     level = 0;
     score = 0;
   }
-  diffCount = diffsForLevel(level);
+  diffCount = diffsForMode(mode);
   diffs = makeDiffs(currentScene(), diffCount);
   found = [];
   for (var fi = 0; fi < diffCount; fi++) found.push(false);
   frozenLeft = levelTime(diffCount);
-  subtitleEl.textContent = '共 ' + SCENES.length + ' 个场景 · 差异从 ' + DIFF_TIERS[0] + ' 处加到 ' +
-    DIFF_TIERS[DIFF_TIERS.length - 1] + ' 处 · 点中任意一张图都能标记';
+  subtitleEl.textContent = '共 ' + SCENES.length + ' 个场景 · 简单 3 处 / 普通 4 处 / 困难 5 处 · 点中任意一张图都能标记';
   buildTrack();
   updateTrack();
   renderAll();

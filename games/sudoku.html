@@ -154,7 +154,7 @@
 
   .status {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 1px;
     background: var(--line);
     border: 1px solid var(--line);
@@ -179,6 +179,43 @@
     color: var(--text);
   }
   .stat .v.red { color: var(--red); }
+  .stat .v.small { font-size: 12px; }
+
+  /* ---------- 关卡栏 ---------- */
+  .lvlbar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: -2px 0 12px;
+  }
+  .lvlbar .lvltxt {
+    flex: 1;
+    min-width: 0;
+    text-align: center;
+    font-size: 11.5px;
+    color: var(--dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-variant-numeric: tabular-nums;
+  }
+  .lvlbar .lvltxt b { color: var(--amber); font-size: 13px; }
+  .lvlbar input {
+    width: 78px;
+    appearance: textfield;
+    -moz-appearance: textfield;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 6px;
+    font-size: 12px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .lvlbar input::-webkit-outer-spin-button,
+  .lvlbar input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .lvlbar .mini:disabled { opacity: .45; cursor: default; }
 
   /* ---------- 棋盘 ---------- */
   .board-wrap { position: relative; }
@@ -253,6 +290,9 @@
   .cell.sel { background: rgba(255, 212, 121, .2); box-shadow: inset 0 0 0 2px var(--amber); z-index: 2; }
   .cell.sel.same { background: rgba(255, 212, 121, .2); }
   .cell.sel.bad { background: rgba(255, 90, 90, .2); box-shadow: inset 0 0 0 2px var(--amber); }
+  .cell.wrong { background: rgba(255, 90, 90, .13); }
+  .cell.wrong .val { color: #ff8a8a; }
+  .cell.sel.wrong { box-shadow: inset 0 0 0 2px var(--red); }
 
   .tip {
     position: absolute;
@@ -267,6 +307,29 @@
     letter-spacing: 2px;
   }
   .board-wrap.loading .tip { display: flex; }
+  .board-wrap.paused .board { filter: blur(7px); opacity: .22; }
+  .board-wrap.paused .tip { display: none; }
+
+  .pause-mask {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: rgba(10, 17, 26, .82);
+    border: 1px solid var(--line-strong);
+    border-radius: 12px;
+    color: var(--text);
+    font-size: 14px;
+    letter-spacing: 3px;
+    cursor: pointer;
+    z-index: 6;
+    backdrop-filter: blur(4px);
+  }
+  .pause-mask[hidden] { display: none; }
+  .pause-mask small { font-size: 11px; letter-spacing: 1px; color: var(--dim); }
 
   /* ---------- 数字键盘 ---------- */
   .pad {
@@ -308,7 +371,7 @@
   /* ---------- 操作按钮 ---------- */
   .acts {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(8, 1fr);
     gap: 6px;
   }
   .act {
@@ -470,14 +533,38 @@
     .stat .v { font-size: 13px; }
     .pad { gap: 4px; margin: 10px 0 8px; }
     .num { border-radius: 8px; }
-    .acts { grid-template-columns: repeat(3, 1fr); }
+    .acts { grid-template-columns: repeat(4, 1fr); }
     .act { flex-direction: row; justify-content: center; gap: 5px; padding: 9px 4px; font-size: 12px; }
     .act kbd { display: none; }
     .help { display: none; }
     .resume { flex-wrap: wrap; }
     .resume .r-txt { flex-basis: calc(100% - 34px); }
+    .lvlbar { flex-wrap: wrap; margin-bottom: 10px; }
+    .lvlbar .lvltxt { flex-basis: 100%; order: -1; }
+    .lvlbar input { flex: 1; width: auto; }
     .modal { padding: 22px 18px 18px; }
   }
+</style>
+<style id="tx-aurora-skin">
+/* tx-aurora-skin:sudoku */
+:root{--tx-a1:#ffd479;--tx-a2:#38bdf8;}
+html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+::selection{background:rgba(255,212,121,0.38);color:#fff}
+*::-webkit-scrollbar{width:8px;height:8px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:rgba(255,212,121,0.26);border-radius:99px;border:2px solid transparent;background-clip:content-box}
+*::-webkit-scrollbar-thumb:hover{background:rgba(255,212,121,0.46);background-clip:content-box}
+body{background-color:#0e1621!important;background-image:radial-gradient(1100px 640px at 6% -12%, rgba(255,212,121,0.16), transparent 62%), radial-gradient(900px 680px at 104% 112%, rgba(56,189,248,0.12), transparent 62%)!important}
+button{transition:transform .14s ease,filter .16s ease,box-shadow .2s ease,border-color .16s ease,background-color .16s ease}
+button:hover{filter:brightness(1.07)}
+button:active{transform:translateY(1px) scale(.995)}
+button:focus-visible{outline:2px solid rgba(255,212,121,0.72);outline-offset:2px}
+.overlay,.modal,.dialog,.sheet,#levels,#loading{background-image:radial-gradient(900px 520px at 50% 0%,rgba(255,212,121,0.15),transparent 62%),radial-gradient(720px 520px at 50% 100%,rgba(56,189,248,0.08),transparent 60%)!important}
+.overlay,.modal,.dialog,.sheet{backdrop-filter:blur(9px) saturate(1.1)}
+.overlay h1,.modal h1,.screen h1,.overlay-card h1,.win-card h1,.result-card h1,.bcard .btitle,.loadcard .ltitle{text-shadow:0 2px 30px rgba(255,212,121,0.45)}
+.overlay .screen,.overlay .panel,.overlay-card,.modal .panel,.win-card,.result-card,.bcard,.loadcard,.rules-dialog,.panel{box-shadow:0 38px 96px -34px rgba(0,0,0,.95), inset 0 1px 0 rgba(255,255,255,.07)!important}
+.bcard,.loadcard{border-color:rgba(255,212,121,0.34)!important}
+.overlay .panel,.overlay-card,.win-card,.result-card,.modal .panel{backdrop-filter:blur(10px) saturate(1.08);border-color:rgba(255,212,121,0.26)!important}
 </style>
 </head>
 <body>
@@ -488,7 +575,7 @@
       <div class="mark" aria-hidden="true">▦</div>
       <div>
         <h1>数独</h1>
-        <p class="sub">唯一解 · 自动存档 · 离线可玩</p>
+        <p class="sub">600 关题库 · 唯一解 · 离线可玩</p>
       </div>
     </div>
     <div class="diffs" role="group" aria-label="难度">
@@ -511,14 +598,27 @@
   <main class="card">
     <div class="status">
       <div class="stat"><span class="k">难度</span><span class="v" id="stDiff">简单</span></div>
+      <div class="stat"><span class="k">关卡</span><span class="v small" id="stLevel">—</span></div>
       <div class="stat"><span class="k">时间</span><span class="v" id="stTime">00:00</span></div>
       <div class="stat"><span class="k">进度</span><span class="v" id="stProg">0/41</span></div>
       <div class="stat"><span class="k">错误</span><span class="v" id="stErr">0</span></div>
     </div>
 
+    <div class="lvlbar" id="lvlBar">
+      <button type="button" class="mini" id="btnPrevLvl" title="上一关">‹ 上一关</button>
+      <div class="lvltxt" id="lvlTxt">题库加载中…</div>
+      <input type="number" id="lvlInput" min="1" step="1" inputmode="numeric" placeholder="关卡号" aria-label="跳到关卡号">
+      <button type="button" class="mini" id="btnGoLvl">跳转</button>
+      <button type="button" class="mini" id="btnNextLvl" title="下一关">下一关 ›</button>
+    </div>
+
     <div class="board-wrap" id="boardWrap">
       <div class="board" id="board" role="grid" aria-label="数独棋盘"></div>
       <div class="tip" id="boardTip">生成题目中…</div>
+      <div class="pause-mask" id="pauseMask" hidden>
+        <span>已暂停</span>
+        <small>按 P 或点击棋盘继续</small>
+      </div>
     </div>
 
     <div class="pad" id="pad" role="group" aria-label="数字键盘"></div>
@@ -527,15 +627,18 @@
       <button type="button" class="act" id="btnErase"><i>⌫</i><span>擦除</span></button>
       <button type="button" class="act" id="btnNote" aria-pressed="false"><i>✏️</i><span>笔记</span><kbd>N</kbd></button>
       <button type="button" class="act" id="btnUndo"><i>↶</i><span>撤销</span><kbd>Z</kbd></button>
+      <button type="button" class="act" id="btnRedo"><i>↷</i><span>重做</span><kbd>Y</kbd></button>
       <button type="button" class="act" id="btnHint"><i>💡</i><span>提示</span><kbd>H</kbd></button>
+      <button type="button" class="act" id="btnPause" aria-pressed="false"><i>⏸</i><span>暂停</span><kbd>P</kbd></button>
       <button type="button" class="act" id="btnRestart"><i>⟳</i><span>重开</span></button>
       <button type="button" class="act accent" id="btnNew"><i>✨</i><span>换新题</span></button>
     </div>
 
-    <p class="help">点格子选中 · 1–9 填入 · 方向键移动 · Backspace 擦除 · N 笔记 · Z 撤销 · H 提示 · 右键数字键划掉候选</p>
+    <p class="help">点格子选中 · 1–9 填入 · 方向键移动 · Backspace 擦除 · N 笔记 · Z 撤销 / Y 重做 · H 提示 · P 暂停 · [ ] 切关卡 · 右键数字键划掉候选</p>
   </main>
 
   <div class="foot" id="bestLine">最佳记录 · 简单 --:-- · 中等 --:-- · 困难 --:--</div>
+  <div class="foot" id="lvLine">关卡进度 · 已通关 0 / 600</div>
 </div>
 
 <div class="overlay" id="overlay">
@@ -568,6 +671,7 @@
   };
   var SAVE_KEY = 'sudoku.save.v1';
   var BEST_KEY = 'sudoku.best.v1';
+  var LV_BEST_KEY = 'sudoku.lvbest.v1';
 
   var POP = new Int8Array(1024);
   var BITV = new Int8Array(1024);
@@ -796,10 +900,76 @@
   }
 
   /* =====================================================================
+     内置关卡题库
+     每关一行：难度标记(e/m/h) + 81 格数字 + 换行 = 83 字符
+     ===================================================================== */
+  var PACK_LINE = 83;
+  var PACK_TOTAL = 0;
+  var packText = '';
+  var packRange = { easy: [1, 0], medium: [1, 0], hard: [1, 0] };
+
+  function initPack() {
+    var node = document.getElementById('sudoku-pack');
+    var raw = node ? String(node.textContent || '') : '';
+    if (!raw) { return false; }
+    var start = 0;
+    var c;
+    while (start < raw.length) {
+      c = raw.charCodeAt(start);
+      if (c === 10 || c === 13 || c === 32 || c === 9) { start++; } else { break; }
+    }
+    var total = Math.floor((raw.length - start) / PACK_LINE);
+    if ((raw.length - start) - total * PACK_LINE >= 82) { total++; }
+    if (total <= 0) { return false; }
+    PACK_TOTAL = total;
+    packText = raw.slice(start, start + total * PACK_LINE);
+
+    var mi = packText.indexOf('m');
+    var hi = packText.indexOf('h');
+    var ms = mi > 0 ? Math.floor(mi / PACK_LINE) + 1 : 1;
+    var hs = hi > 0 ? Math.floor(hi / PACK_LINE) + 1 : ms;
+    if (ms < 1) { ms = 1; }
+    if (hs < ms) { hs = ms; }
+    packRange.easy = [1, ms - 1];
+    packRange.medium = [ms, hs - 1];
+    packRange.hard = [hs, PACK_TOTAL];
+    return true;
+  }
+
+  function loadLevel(n) {
+    if (PACK_TOTAL <= 0) { return null; }
+    n = Math.floor(n);
+    if (!isFinite(n) || n < 1) { n = 1; }
+    if (n > PACK_TOTAL) { n = PACK_TOTAL; }
+    var line = packText.substr((n - 1) * PACK_LINE, PACK_LINE);
+    if (line.length < 82) { return null; }
+    var tag = line.charAt(0);
+    var diff = tag === 'e' ? 'easy' : (tag === 'm' ? 'medium' : (tag === 'h' ? 'hard' : ''));
+    if (!diff) { return null; }
+    var puzzle = new Array(81);
+    for (var i = 0; i < 81; i++) {
+      var v = line.charCodeAt(i + 1) - 48;
+      if (v < 0 || v > 9) { return null; }
+      puzzle[i] = v;
+    }
+    var sol = [];
+    if (countSolutions(puzzle.slice(), 2, sol) !== 1) { return null; }
+    return { level: n, diff: diff, puzzle: puzzle, solution: sol };
+  }
+
+  function randomLevelOf(diffKey) {
+    var rg = packRange[diffKey] || packRange.easy;
+    if (rg[1] < rg[0]) { return 0; }
+    return rg[0] + Math.floor(Math.random() * (rg[1] - rg[0] + 1));
+  }
+
+  /* =====================================================================
      状态
      ===================================================================== */
   var st = {
     diff: 'easy',
+    level: 0,
+    paused: false,
     puzzle: null,
     solution: null,
     values: null,
@@ -814,6 +984,7 @@
   var timerBase = 0;
   var timerStart = null;
   var undoStack = [];
+  var redoStack = [];
   var resumePending = false;
   var bestTimes = { easy: 0, medium: 0, hard: 0 };
   var baseCls = [];
@@ -867,7 +1038,8 @@
       t: Math.floor(elapsedMs() / 1000),
       h: st.hints,
       note: st.noteMode ? 1 : 0,
-      sel: st.selected
+      sel: st.selected,
+      lv: st.level || 0
     };
     storeSet(SAVE_KEY, JSON.stringify(data));
   }
@@ -918,9 +1090,12 @@
     if (!isFinite(sel) || sel < 0 || sel > 80) { sel = -1; }
     var hints = parseInt(d.h, 10);
     if (!isFinite(hints) || hints < 0) { hints = 0; }
+    var lvl = parseInt(d.lv, 10);
+    if (!isFinite(lvl) || lvl < 0 || lvl > PACK_TOTAL) { lvl = 0; }
 
     return {
       diff: diff,
+      level: lvl,
       puzzle: puzzle,
       solution: out,
       values: values,
@@ -934,6 +1109,7 @@
 
   function applySave(sv) {
     st.diff = sv.diff;
+    st.level = sv.level || 0;
     st.puzzle = sv.puzzle;
     st.solution = sv.solution;
     st.values = sv.values;
@@ -943,14 +1119,24 @@
     st.hints = sv.hints;
     st.solved = false;
     st.busy = false;
+    st.paused = false;
     undoStack = [];
+    redoStack = [];
     timerBase = sv.elapsed * 1000;
     timerStart = null;
     resumePending = true;
 
+    if (els.pauseMask) { els.pauseMask.hidden = true; }
+    if (els.btnPause) {
+      els.btnPause.classList.remove('on');
+      els.btnPause.setAttribute('aria-pressed', 'false');
+    }
+    els.boardWrap.classList.remove('paused');
+
     els.btnNote.classList.toggle('on', st.noteMode);
     els.btnNote.setAttribute('aria-pressed', st.noteMode ? 'true' : 'false');
     updateDiff();
+    updateLevelUI();
     renderAll();
     updateTimer();
     showResume(sv);
@@ -1007,7 +1193,7 @@
     return bad;
   }
 
-  function updateStatus(badCount) {
+  function updateStatus(badCount, wrongCount) {
     var blanks = 0, filled = 0, i;
     for (i = 0; i < 81; i++) {
       if (st.puzzle[i] === 0) {
@@ -1015,10 +1201,11 @@
         if (st.values[i] !== 0) { filled++; }
       }
     }
+    var errs = Math.max(badCount || 0, wrongCount || 0);
     els.stDiff.textContent = DIFFS[st.diff].label;
     els.stProg.textContent = filled + '/' + blanks;
-    els.stErr.textContent = String(badCount);
-    els.stErr.className = badCount ? 'v red' : 'v';
+    els.stErr.textContent = String(errs);
+    els.stErr.className = errs ? 'v red' : 'v';
     updateTimer();
   }
 
@@ -1041,6 +1228,7 @@
 
     var bad = findConflicts();
     var badCount = 0;
+    var wrongCount = 0;
     var i, d;
     for (i = 0; i < 81; i++) { if (bad[i]) { badCount++; } }
 
@@ -1053,11 +1241,13 @@
     for (i = 0; i < 81; i++) {
       var v = st.values[i];
       var given = st.puzzle[i] !== 0;
+      var isWrong = !given && v !== 0 && v !== st.solution[i];
       var cls = 'cell' + baseCls[i];
 
       if (given) { cls += ' given'; }
       else if (v) { cls += ' user'; }
       if (bad[i]) { cls += ' bad'; }
+      if (isWrong) { cls += ' wrong'; wrongCount++; }
 
       if (sel >= 0 && i !== sel) {
         var r = (i / 9) | 0;
@@ -1078,7 +1268,7 @@
       }
     }
 
-    updateStatus(badCount);
+    updateStatus(badCount, wrongCount);
     updatePad();
   }
 
@@ -1110,6 +1300,45 @@
   /* =====================================================================
      游戏流程
      ===================================================================== */
+  function beginRound(diffKey, puzzle, solution, level, msg) {
+    st.diff = diffKey;
+    st.level = level || 0;
+    st.puzzle = puzzle;
+    st.solution = solution;
+    st.values = puzzle.slice();
+    st.notes = new Array(81);
+    for (var i = 0; i < 81; i++) { st.notes[i] = 0; }
+    st.selected = -1;
+    st.noteMode = false;
+    st.hints = 0;
+    st.solved = false;
+    st.busy = false;
+    st.paused = false;
+
+    undoStack = [];
+    redoStack = [];
+    stopTimer();
+    timerBase = 0;
+    timerStart = null;
+    tickCount = 0;
+
+    els.boardWrap.classList.remove('loading', 'paused');
+    if (els.pauseMask) { els.pauseMask.hidden = true; }
+    if (els.btnPause) {
+      els.btnPause.classList.remove('on');
+      els.btnPause.setAttribute('aria-pressed', 'false');
+    }
+    els.btnNote.classList.remove('on');
+    els.btnNote.setAttribute('aria-pressed', 'false');
+    hideOverlay();
+    updateDiff();
+    updateLevelUI();
+    renderAll();
+    startTimer();
+    saveGame();
+    if (msg) { toast(msg); }
+  }
+
   function newGame(diffKey) {
     if (!DIFFS[diffKey]) { diffKey = 'easy'; }
     if (st.busy) { return; }
@@ -1132,34 +1361,92 @@
         return;
       }
 
-      st.diff = diffKey;
-      st.puzzle = gen.puzzle;
-      st.solution = gen.solution;
-      st.values = gen.puzzle.slice();
-      st.notes = new Array(81);
-      for (var i = 0; i < 81; i++) { st.notes[i] = 0; }
-      st.selected = -1;
-      st.noteMode = false;
-      st.hints = 0;
-      st.solved = false;
-      st.busy = false;
-
-      undoStack = [];
-      stopTimer();
-      timerBase = 0;
-      timerStart = null;
-      tickCount = 0;
-
-      els.boardWrap.classList.remove('loading');
-      els.btnNote.classList.remove('on');
-      els.btnNote.setAttribute('aria-pressed', 'false');
-      hideOverlay();
-      updateDiff();
-      renderAll();
-      startTimer();
-      saveGame();
-      toast(DIFFS[diffKey].label + ' · 新一局 · 生成 ' + (took / 1000).toFixed(2) + ' 秒');
+      beginRound(diffKey, gen.puzzle, gen.solution, 0,
+        DIFFS[diffKey].label + ' · 随机新局 · 生成 ' + (took / 1000).toFixed(2) + ' 秒');
     }, 16);
+  }
+
+  function startLevel(n, extra) {
+    if (st.busy) { return; }
+    st.busy = true;
+    els.boardWrap.classList.add('loading');
+    hideResume();
+    resumePending = false;
+
+    setTimeout(function () {
+      var g = null;
+      try { g = loadLevel(n); } catch (e) { g = null; }
+      if (!g) {
+        st.busy = false;
+        els.boardWrap.classList.remove('loading');
+        toast(PACK_TOTAL > 0 ? '这关读取失败，已回到随机出题' : '题库不可用，已回到随机出题');
+        newGame(st.diff);
+        return;
+      }
+      beginRound(g.diff, g.puzzle, g.solution, g.level,
+        '第 ' + g.level + ' 关 · ' + DIFFS[g.diff].label + (extra ? ' · ' + extra : ''));
+    }, 16);
+  }
+
+  function fmtTotal(n) {
+    var s = String(n);
+    var out = '';
+    var i = s.length;
+    while (i > 3) {
+      out = ',' + s.slice(i - 3, i) + out;
+      i -= 3;
+    }
+    return s.slice(0, i) + out;
+  }
+
+  function updateLevelUI() {
+    if (!els.stLevel) { return; }
+    if (!PACK_TOTAL) {
+      els.stLevel.textContent = '随机';
+      if (els.lvlTxt) { els.lvlTxt.textContent = '题库未加载 · 使用随机出题'; }
+      if (els.btnPrevLvl) { els.btnPrevLvl.disabled = true; }
+      if (els.btnNextLvl) { els.btnNextLvl.disabled = true; }
+      updateLvLine();
+      return;
+    }
+    if (st.level) {
+      els.stLevel.textContent = '#' + st.level;
+      if (els.lvlTxt) {
+        els.lvlTxt.textContent = '第 ' + fmtTotal(st.level) + ' / ' + fmtTotal(PACK_TOTAL) + ' 关 · ' + DIFFS[st.diff].label;
+      }
+    } else {
+      els.stLevel.textContent = '随机';
+      if (els.lvlTxt) {
+        els.lvlTxt.textContent = '随机题 · 题库共 ' + fmtTotal(PACK_TOTAL) + ' 关';
+      }
+    }
+    if (els.btnPrevLvl) { els.btnPrevLvl.disabled = false; }
+    if (els.btnNextLvl) { els.btnNextLvl.disabled = false; }
+    updateLvLine();
+  }
+
+  function levelStep(step) {
+    if (!PACK_TOTAL) { toast('题库未加载'); return; }
+    var n;
+    if (st.level > 0) {
+      n = st.level + step;
+    } else {
+      var rg = packRange[st.diff] || packRange.easy;
+      n = step > 0 ? rg[0] : rg[1];
+    }
+    if (n < 1) { n = 1; }
+    if (n > PACK_TOTAL) { n = PACK_TOTAL; }
+    if (n === st.level) { toast(n === 1 ? '已经是第一关了' : '已经是最后一关了'); return; }
+    startLevel(n);
+  }
+
+  function jumpLevel() {
+    if (!PACK_TOTAL) { toast('题库未加载'); return; }
+    var n = els.lvlInput ? parseInt(els.lvlInput.value, 10) : NaN;
+    if (!isFinite(n) || n < 1) { toast('请输入 1 – ' + PACK_TOTAL + ' 的关卡号'); return; }
+    if (n > PACK_TOTAL) { n = PACK_TOTAL; }
+    if (els.lvlInput) { els.lvlInput.value = ''; }
+    startLevel(n);
   }
 
   function restart() {
@@ -1173,12 +1460,21 @@
     st.noteMode = false;
     st.hints = 0;
     st.solved = false;
+    st.paused = false;
     undoStack = [];
+    redoStack = [];
 
     stopTimer();
     timerBase = 0;
     timerStart = null;
     startTimer();
+
+    els.boardWrap.classList.remove('paused');
+    if (els.pauseMask) { els.pauseMask.hidden = true; }
+    if (els.btnPause) {
+      els.btnPause.classList.remove('on');
+      els.btnPause.setAttribute('aria-pressed', 'false');
+    }
 
     els.btnNote.classList.remove('on');
     els.btnNote.setAttribute('aria-pressed', 'false');
@@ -1212,13 +1508,42 @@
     }
     updateBestLine();
 
-    els.modalTime.textContent = fmtTime(sec);
-    els.modalSub.textContent = DIFFS[st.diff].label + ' · 提示 ' + st.hints + ' 次';
-    if (isNew) {
-      els.modalBest.textContent = prev ? '🏆 新纪录！' : '🏆 首次完成，已记录最佳';
-    } else {
-      els.modalBest.textContent = '本难度最佳 ' + fmtTime(prev);
+    var lvPrev = 0;
+    var lvNew = false;
+    if (st.level) {
+      lvPrev = lvBest[st.level] || 0;
+      lvNew = sec > 0 && (!lvPrev || sec < lvPrev);
+      if (lvNew) {
+        lvBest[st.level] = sec;
+        saveLvBest();
+      }
+      updateLvLine();
     }
+
+    els.modalTime.textContent = fmtTime(sec);
+    els.modalSub.textContent = (st.level ? '第 ' + fmtTotal(st.level) + ' 关 · ' : '') +
+      DIFFS[st.diff].label + ' · 提示 ' + st.hints + ' 次';
+
+    var msg = '';
+    if (st.level && lvNew) {
+      msg = lvPrev ? '🏆 本关新纪录！' : '🏆 首次通关本关';
+    } else if (st.level && lvPrev) {
+      msg = '本关最佳 ' + fmtTime(lvPrev);
+    } else if (st.level) {
+      msg = '🏆 首次通关本关';
+    } else if (isNew) {
+      msg = prev ? '🏆 新纪录！' : '🏆 首次完成，已记录最佳';
+    } else {
+      msg = '本难度最佳 ' + fmtTime(prev);
+    }
+    if (PACK_TOTAL && st.level) {
+      msg += ' · 已通关 ' + lvDoneCount() + ' / ' + PACK_TOTAL;
+    }
+    els.modalBest.textContent = msg;
+
+    var more = PACK_TOTAL && st.level > 0 && st.level < PACK_TOTAL;
+    els.btnAgain.textContent = more ? '下一关 ›' : '再来一局';
+
     els.overlay.classList.add('show');
 
     renderAll();
@@ -1237,6 +1562,7 @@
   function pushUndo() {
     undoStack.push({ v: st.values.slice(), n: st.notes.slice() });
     if (undoStack.length > 120) { undoStack.shift(); }
+    redoStack.length = 0;
   }
 
   function clearPeers(i, d) {
@@ -1256,14 +1582,14 @@
 
   function selectCell(i) {
     ensureResumed();
-    if (st.busy || st.solved || !st.values) { return; }
+    if (st.busy || st.solved || !st.values || st.paused) { return; }
     st.selected = i;
     renderAll();
   }
 
   function place(d) {
     ensureResumed();
-    if (!st.values || st.busy || st.solved) { return; }
+    if (!st.values || st.busy || st.solved || st.paused) { return; }
 
     var i = st.selected;
     if (i < 0) { toast('先点选一个格子'); return; }
@@ -1291,7 +1617,7 @@
 
   function removeNote(d) {
     ensureResumed();
-    if (!st.values || st.busy || st.solved) { return; }
+    if (!st.values || st.busy || st.solved || st.paused) { return; }
 
     var i = st.selected;
     if (i < 0) { toast('先点选一个格子'); return; }
@@ -1307,7 +1633,7 @@
 
   function erase() {
     ensureResumed();
-    if (!st.values || st.busy || st.solved) { return; }
+    if (!st.values || st.busy || st.solved || st.paused) { return; }
 
     var i = st.selected;
     if (i < 0) { toast('先点选一个格子'); return; }
@@ -1322,7 +1648,7 @@
 
   function toggleNote() {
     ensureResumed();
-    if (st.busy || st.solved) { return; }
+    if (st.busy || st.solved || st.paused) { return; }
     st.noteMode = !st.noteMode;
     els.btnNote.classList.toggle('on', st.noteMode);
     els.btnNote.setAttribute('aria-pressed', st.noteMode ? 'true' : 'false');
@@ -1332,18 +1658,59 @@
 
   function undo() {
     ensureResumed();
-    if (!st.values || st.busy || st.solved) { return; }
+    if (!st.values || st.busy || st.solved || st.paused) { return; }
     var snap = undoStack.pop();
     if (!snap) { toast('没有可撤销的操作'); return; }
+    redoStack.push({ v: st.values.slice(), n: st.notes.slice() });
+    if (redoStack.length > 120) { redoStack.shift(); }
     st.values = snap.v;
     st.notes = snap.n;
     renderAll();
     saveGame();
   }
 
-  function useHint() {
+  function redo() {
+    ensureResumed();
+    if (!st.values || st.busy || st.solved || st.paused) { return; }
+    var snap = redoStack.pop();
+    if (!snap) { toast('没有可重做的操作'); return; }
+    undoStack.push({ v: st.values.slice(), n: st.notes.slice() });
+    if (undoStack.length > 120) { undoStack.shift(); }
+    st.values = snap.v;
+    st.notes = snap.n;
+    renderAll();
+    saveGame();
+  }
+
+  function togglePause() {
     ensureResumed();
     if (!st.values || st.busy || st.solved) { return; }
+    st.paused = !st.paused;
+    if (st.paused) {
+      stopTimer();
+      saveGame();
+      els.pauseMask.hidden = false;
+      els.boardWrap.classList.add('paused');
+      if (els.btnPause) {
+        els.btnPause.classList.add('on');
+        els.btnPause.setAttribute('aria-pressed', 'true');
+      }
+      toast('已暂停 · 按 P 或点击棋盘继续');
+    } else {
+      els.pauseMask.hidden = true;
+      els.boardWrap.classList.remove('paused');
+      if (els.btnPause) {
+        els.btnPause.classList.remove('on');
+        els.btnPause.setAttribute('aria-pressed', 'false');
+      }
+      startTimer();
+      toast('继续');
+    }
+  }
+
+  function useHint() {
+    ensureResumed();
+    if (!st.values || st.busy || st.solved || st.paused) { return; }
 
     var i = st.selected;
     var target = -1;
@@ -1374,7 +1741,7 @@
 
   function moveSel(dr, dc) {
     ensureResumed();
-    if (st.busy || st.solved || !st.values) { return; }
+    if (st.busy || st.solved || !st.values || st.paused) { return; }
 
     var i = st.selected;
     if (i < 0) {
@@ -1420,6 +1787,50 @@
     var b = bestTimes.medium ? fmtTime(bestTimes.medium) : '--:--';
     var c = bestTimes.hard ? fmtTime(bestTimes.hard) : '--:--';
     els.bestLine.textContent = '最佳记录 · 简单 ' + a + ' · 中等 ' + b + ' · 困难 ' + c;
+  }
+
+  /* 每关最佳用时：{ '12': 183, ... } */
+  var lvBest = {};
+
+  function loadLvBest() {
+    var raw = storeGet(LV_BEST_KEY);
+    if (!raw) { return; }
+    try {
+      var obj = JSON.parse(raw);
+      if (!obj || typeof obj !== 'object') { return; }
+      var k, v;
+      for (k in obj) {
+        if (!Object.prototype.hasOwnProperty.call(obj, k)) { continue; }
+        v = parseInt(obj[k], 10);
+        if (isFinite(v) && v > 0) { lvBest[k] = v; }
+      }
+    } catch (e) { /* 忽略损坏数据 */ }
+  }
+
+  function saveLvBest() {
+    storeSet(LV_BEST_KEY, JSON.stringify(lvBest));
+  }
+
+  function lvDoneCount() {
+    var n = 0;
+    for (var k in lvBest) {
+      if (Object.prototype.hasOwnProperty.call(lvBest, k)) { n++; }
+    }
+    return n;
+  }
+
+  function updateLvLine() {
+    if (!els.lvLine) { return; }
+    if (!PACK_TOTAL) {
+      els.lvLine.textContent = '关卡进度 · 题库未加载';
+      return;
+    }
+    var txt = '关卡进度 · 已通关 ' + lvDoneCount() + ' / ' + PACK_TOTAL;
+    if (st.level) {
+      var b = lvBest[st.level] > 0 ? fmtTime(lvBest[st.level]) : '--:--';
+      txt += ' · 本关最佳 ' + b;
+    }
+    els.lvLine.textContent = txt;
   }
 
   /* =====================================================================
@@ -1505,7 +1916,22 @@
      键盘
      ===================================================================== */
   function onKey(ev) {
-    if (ev.ctrlKey || ev.metaKey || ev.altKey) { return; }
+    if (ev.target && (ev.target.tagName === 'INPUT' || ev.target.tagName === 'TEXTAREA')) { return; }
+    if (ev.ctrlKey || ev.metaKey) {
+      var ck = ev.key;
+      if (ck === 'z' || ck === 'Z') {
+        ev.preventDefault();
+        if (ev.shiftKey) { redo(); } else { undo(); }
+        return;
+      }
+      if (ck === 'y' || ck === 'Y') {
+        ev.preventDefault();
+        redo();
+        return;
+      }
+      return;
+    }
+    if (ev.altKey) { return; }
     if (!st.values) { return; }
 
     var k = ev.key;
@@ -1541,6 +1967,16 @@
       undo();
       return;
     }
+    if (k === 'y' || k === 'Y') {
+      ev.preventDefault();
+      redo();
+      return;
+    }
+    if (k === 'p' || k === 'P') {
+      ev.preventDefault();
+      togglePause();
+      return;
+    }
     if (k === 'h' || k === 'H') {
       ev.preventDefault();
       useHint();
@@ -1551,6 +1987,16 @@
       restart();
       return;
     }
+    if (k === '[') {
+      ev.preventDefault();
+      levelStep(-1);
+      return;
+    }
+    if (k === ']') {
+      ev.preventDefault();
+      levelStep(1);
+      return;
+    }
     if (k === 'Escape') {
       hideOverlay();
     }
@@ -1559,6 +2005,15 @@
   /* =====================================================================
      绑定
      ===================================================================== */
+  function nextPuzzle() {
+    if (PACK_TOTAL) {
+      if (st.level > 0 && st.level < PACK_TOTAL) { startLevel(st.level + 1); }
+      else { startLevel(randomLevelOf(st.diff)); }
+    } else {
+      newGame(st.diff);
+    }
+  }
+
   function bindUI() {
     var segs = document.querySelectorAll('.seg');
     var i;
@@ -1572,7 +2027,8 @@
             toast('已经是' + DIFFS[d].label + '，点「换新题」再换一局');
             return;
           }
-          newGame(d);
+          if (PACK_TOTAL) { startLevel(randomLevelOf(d)); }
+          else { newGame(d); }
         });
       })(segs[i]);
     }
@@ -1580,20 +2036,37 @@
     document.getElementById('btnErase').addEventListener('click', erase);
     document.getElementById('btnNote').addEventListener('click', toggleNote);
     document.getElementById('btnUndo').addEventListener('click', undo);
+    document.getElementById('btnRedo').addEventListener('click', redo);
     document.getElementById('btnHint').addEventListener('click', useHint);
+    document.getElementById('btnPause').addEventListener('click', togglePause);
+    if (els.pauseMask) { els.pauseMask.addEventListener('click', togglePause); }
     document.getElementById('btnRestart').addEventListener('click', restart);
-    document.getElementById('btnNew').addEventListener('click', function () { newGame(st.diff); });
+    document.getElementById('btnNew').addEventListener('click', nextPuzzle);
+
+    var bPrev = document.getElementById('btnPrevLvl');
+    var bNext = document.getElementById('btnNextLvl');
+    var bGo = document.getElementById('btnGoLvl');
+    var inp = document.getElementById('lvlInput');
+    if (bPrev) { bPrev.addEventListener('click', function () { levelStep(-1); }); }
+    if (bNext) { bNext.addEventListener('click', function () { levelStep(1); }); }
+    if (bGo) { bGo.addEventListener('click', jumpLevel); }
+    if (inp) {
+      inp.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter') { ev.preventDefault(); jumpLevel(); }
+        ev.stopPropagation();
+      });
+    }
 
     document.getElementById('btnResume').addEventListener('click', function () {
       ensureResumed();
       toast('继续上次的进度');
     });
     document.getElementById('btnFresh').addEventListener('click', function () {
-      newGame(st.diff);
+      nextPuzzle();
     });
     document.getElementById('btnAgain').addEventListener('click', function () {
       hideOverlay();
-      newGame(st.diff);
+      nextPuzzle();
     });
     document.getElementById('btnClose').addEventListener('click', hideOverlay);
 
@@ -1607,7 +2080,7 @@
       if (document.hidden) {
         stopTimer();
         saveGame();
-      } else if (st.values && !st.solved && !st.busy && !resumePending) {
+      } else if (st.values && !st.solved && !st.busy && !resumePending && !st.paused) {
         startTimer();
       }
     });
@@ -1628,11 +2101,19 @@
   function init() {
     els.board = document.getElementById('board');
     els.boardWrap = document.getElementById('boardWrap');
+    els.pauseMask = document.getElementById('pauseMask');
+    els.btnPause = document.getElementById('btnPause');
+    els.lvLine = document.getElementById('lvLine');
     els.pad = document.getElementById('pad');
     els.resume = document.getElementById('resume');
     els.resumeInfo = document.getElementById('resumeInfo');
     els.overlay = document.getElementById('overlay');
     els.stDiff = document.getElementById('stDiff');
+    els.stLevel = document.getElementById('stLevel');
+    els.lvlTxt = document.getElementById('lvlTxt');
+    els.lvlInput = document.getElementById('lvlInput');
+    els.btnPrevLvl = document.getElementById('btnPrevLvl');
+    els.btnNextLvl = document.getElementById('btnNextLvl');
     els.stTime = document.getElementById('stTime');
     els.stProg = document.getElementById('stProg');
     els.stErr = document.getElementById('stErr');
@@ -1642,6 +2123,7 @@
     els.modalTime = document.getElementById('modalTime');
     els.modalSub = document.getElementById('modalSub');
     els.modalBest = document.getElementById('modalBest');
+    els.btnAgain = document.getElementById('btnAgain');
 
     buildBoard();
     buildPad();
@@ -1649,16 +2131,23 @@
 
     bestTimes = loadBest();
     updateBestLine();
+    loadLvBest();
+    updateLvLine();
+
+    initPack();
+    updateLevelUI();
 
     var sv = loadSave();
     if (sv) {
       applySave(sv);
+    } else if (PACK_TOTAL) {
+      startLevel(1);
     } else {
       newGame('easy');
     }
 
     setInterval(function () {
-      if (!st.values || st.solved) { return; }
+      if (!st.values || st.solved || st.paused) { return; }
       if (timerStart !== null) {
         updateTimer();
         tickCount++;
@@ -1676,6 +2165,609 @@
     init();
   }
 })();
+</script>
+<script type="text/plain" id="sudoku-pack">
+e350700040070100950018060200140900080790841362000050100037019000600078003081305079
+e046798300100203087700150026900075208000819063000402709800000000052900000670301890
+e207004050018970023030000009020507308005003940360090100040750000001430097783069504
+e006407123180000000020150080050020906040030058608045010037010805465000270002570039
+e000805062800900004000126300059280600008304527720651800000539000500012003293460000
+e160005293000360500390012460000080000003940600624500981451000020036058009079020005
+e460007008801903070320840160100056000070020000040730851003500610206301085004600093
+e435000000092070010070000405000041209523068700004257360006015000259730000001802576
+e120603070569708013007200009400000000000006548006420301613004082078300004205001706
+e061007328234000509870009016002084003600530080000901065300800907109740002040000051
+e163054020700608345540302001300900812610020053000043700901486000000501200000200004
+e901007040070480130000006795014090200237000000000074001785900610403618027102030009
+e000913840054786210800020067340060009000405370100300680516007400003009050409008700
+e002030415050090007004005003187900002206301090003080176030109704005700820720000631
+e700500340026004807000010509000040600673102408000756000140389765390005000000471093
+e004095187100008063893007024000020009036081040000700812402069050360800091001003200
+e080003002470802006260400300030109005100004000500306901094215030300608010610037854
+e920030450700042003004900670407625080503004720206300000130200840072400109000071030
+e938125640074000021006340009800500200195032000427006153600000970080069010009000030
+e046090010390004687000020039103600024207040005009872160000060050020430900001987206
+e250390468040827300080000072408000635001480007000560800016008500024100786035000040
+e010340000450091078207058304080160030000830000000705869809000720301070405720003096
+e090000000762934815300200947040501000003000068020000051070309080109060070604175392
+e634750920087640001900302000042817003060500470790000805006004059000030160071005200
+e128390064673400095090010300030100080015060000006000201947520036302847010000630000
+e086305021030102000140006000970500000600007209053069007060070812827014935000058040
+e002056100000000702307281690700300908830107200210000300000809020908010067641072830
+e563004001790862400020300700080040002300120608070000004050201900834050126912430000
+e009050602100890000030021805900500026210600900807230050600002003320075460071063089
+e300160500200000091096075803700004906580017030030502700010700405057001060860050179
+e230587600600349000047000000510004073080005960706800040020003006070021495065008237
+e074005306630820059908604700197000060020001000000090037402009675700546000300072048
+e050940037092731000000006492237000904140890006060000300906300041700100260503264000
+e800901056000640290609530008080300020503200780206057140038406000762005004900020060
+e210004000070109540008365000050200084804017200130548690000801452500070000480050076
+e827091503051670040609030070086305700000040620000000000072900050900054087018260439
+e700910384800750629000000175086000230307120000010000907200071098003860012100005403
+e900741003031002007200935010700400150029100400040003069372000001004300080890214305
+e003004705700309200500000431436028010290400653000006840005600028081000070302785009
+e760020149010046700849730060007085201008003470691470005000300850000807600380000900
+e065208400800050003304091000000400000006300208950120307000040601600513704241967035
+e065800000408251703123600000307926100500100000010004308071002030204309010036710020
+e057100000419023070020057400092360004643578010000240600065080740000030169000700280
+e310980247584120060070060100000512008140009002900000000450008016832691054000054000
+e138700950096050710000000030000060270421580069000390000800149527512000003007230601
+e000852401009000258000914630056040029901280540800005000000001385030570014010409700
+e719008240040010007820000030038096700604530020207001369300020596060080400000059803
+e006504082001007000354900670540070920060849135030000700807056200020093000093102500
+e602070504157006280008203070801005309024100000500004610000400968093010720786000400
+e850140300100007005630000400005870040700421059001000072070613290002098530006254010
+e000603000037000420009072063701208035058034000003510240002100806180009000594080712
+e800500001204870030156000089007090610000050390062003457700008064081206075009705003
+e209830000040056082508700460300000090007603800002010370071400230006920518820361000
+e009008002405002316000013084703050108608300200520064030007930400964100050100480600
+e009007040120804906060392071940080000312976000780400600004160390600009050890030060
+e009230075685004302302900840021600957400850013700092000000370020008006004007080509
+e000001400800400061701020030905100673174056002008000050450208396013967008000003017
+e000040010100730400064102800017085204050020006826491003000203040040508001500964028
+e076095002940700051305100790050080000400253060630000025000502000500804217024019580
+e401605738063008290080349000800502073059000000012003580004050060000930007000864321
+e005060480080000300040081079001002968468100732230600100813950607002830004600000003
+e270610000300002000600500217746001980159300400002906000060020105003095800581400329
+e006090002800000001709106040970304006040900700063580914007018409600079135104030080
+e150090834068000079070140060800310600506000980210000003021834007905001008700509016
+e600008740320976000807500902905300070000807309032000450408603001063000284291000030
+e000002038000050200037401509103040082576208900400106050648029000020000396309705004
+e000936014034800007509000002371000940806100000952640170480005701600000425005407080
+e000006040407059083359000260023900000145000000690030071914000600870063509506001724
+e108500097007930148060008300002054001050007036084300705090203004803005000240789010
+e080001050490825671100070084010000067600018002045200003901002035320107400074096000
+e400710620006000500020400001260503907149260830050001240504120009600000050891005072
+e109002503000093017372000480261349005000000301705280040500730098000950600000108750
+e007830064060001082800206901050080006301900028000120795023690807100750040704000009
+e810040030090570104430006000304769815059020003008350940081290070003010200600000401
+e504639800700012904200748010083070065005000080002085001001403678000060050056897000
+e000890026210473905390250040001028700005000002009560830402709513080340000903000008
+e017000902608000050002948617000391040100020739023057001709104000065009104000000398
+e900457803530810609800009052050301704471090008280005900300100200000900005100528090
+e050010067076930400049060105703100602000826000620753091000572014000049080030080070
+e309207601002000900008000205250900840081000369607008010906071400074500096030094720
+e528600004040051690019270030091405087080700925053900401000500840000000076060020059
+e705002890002070410300816000108250009003960100040081720200003504800105002450000371
+e009000000450800170803700500030648010180500036007000408005187003368902740971400020
+e236054000000009048080100302704600200352790006618003700140070060900080007800930524
+e320050087905080304687000000403508201802970053700040900109805030030007000000390812
+e861050304040000126200006905000500093380641057506007008100060809008204501604000700
+e000320579309000014201907830006400780080006301417800600790204150000080003060190007
+e609703081000000400351800290000086009126047058000500006500608010008095000964031875
+e200060109567000408039004062001230600006015204702800000903002870000090500825670901
+e060010204080006591021354070108205060679830420003000000097100000816500043000469000
+e080630710071000094000740600000010507062007109147090200710900003490305871003100906
+e509030000400100807010906045900407581100893264000001739300602000800009470061540000
+e000081000204003085801700000085417002709002831012098057008000500090830216106000740
+e900705608720000009158600030400050206005041970079360154607520090002006005010809000
+e007800000040016700390027140000673090003000051280000067031900574904705213050401006
+e497003800001000790500040060983000006046030020275090038014920080702085400850060270
+e750800030308074209060000007009400781485701002671302005000560003020007008800200574
+e020050090710000050900001748008307420060924100142860930271000064400070000605108009
+e009218467048030500071495008090801000720059301016320000162570000000060000050080072
+e001609357050207908700005061083001092100000436400000805000576003617030000035090670
+e000014670790250310064000020810000050420001003039700082000428960000039547900560038
+e520900703063807590097056020074090006081002957000003010000070049700631080000509601
+e065100200407500900310020060593008010200905680870031059700610395050390040600000007
+e490286003000009062008010045040000001200930478030104056702048130000007684080600520
+e360078049257100600004000000029600015178902430000007298003000901016004072582090000
+e705000930000000604140376002200010095906002043307000120091038457008007309503901000
+e047530900050406203006810470000300049004005028100784000005090000692040800713250094
+e120680090000017500064003810589000001016090020047500900001079058400105609002006174
+e060900132400050607900067048000830905500010400608040021004675210106308000350401000
+e869005320700809005000300086170580000903720610028090070645010009001930004307008001
+e705090163109060007600075820006702018207830094004000002000900046901003780400600031
+e000000046064980013730400000380054000107690035500000467410000070000861354600240981
+e001470805000510067050068409410600900905024030062000004700040600506901700140706203
+e002306050096750000000000200003501008610230005459860103920674031300905072780020000
+e179000000046350790030097810600700541503864009094002060300405920000070003087900100
+e006025019000040520500109340713002684060304071002700003050200090207406000800050462
+e000963008830200000600805430400580300006714509910030780060000205040020690129006807
+e000035687750008410060100030600501029020000800389700040007604098090870003018309064
+e080301540900057281120890070370400102000200430241070908452000096006000010010900020
+e179600000830040610000000003001864000700092536690503104400050890906020345010480200
+e510030276903700540470608000309214007000860009086905400601087900700300005805000060
+e703081509816500000920607081560000003437000150002003970300168025001000008600905010
+e000200860150070320020001079030098706680005000710600983403007090801040605590006017
+e703010400248070003195403600007145000010000257536900108000060029000800004089352001
+e106090408204680000780040062090006040070034190501700306407018903310000604900060001
+e625800430948000120030290560300000000210406705080720900090070600062009000750642890
+e009340600304700080705819000087203400006400000490600072002160800148037026000928700
+e097501060508006040300008175001800032020103080703904500000712004102609008006080021
+e100056290657000348930840060040700603000609700000004180070003812316000900290075030
+e006000970302060008180390004070200896640508000000600050900032140214906087735004600
+e100079040473600209062003000037800020524160983801300400250001000009500002306902008
+e000580004095060107040900000504870009078139000060025730010240806050600071603751400
+e360090800070084960090006407700243006005610070640050209020078003401060098800031600
+e006940015579310000400765932807200000093050284200003007008000059065070000042501008
+e891050670405070000000061590908645702700000850306082040030908405140020007000407001
+e071000050040100900000205310502000673063000000017639045700850009008092760904761580
+e945060078020003000018700605054070036790230000080640059070350410430009507502000090
+e203104967015679000090002100000023010024061739000497050030906201670015000002000500
+e020048700708090004500170300000710500002083060071260938396020075217000003845000001
+e300845069040067105060013470090026380508370601036090007000030750700600003003050006
+e300024975604500001070000060800700500006100700597462180409317008052906340000040600
+e018436050000807016630010004196300800003090641057168000200670509060509007000003060
+e000960010320100800000020034800300461034006907069481250290030105671090040003017000
+e108309600697005004430078900004807250500900806386002090043006020000504009009100460
+e009207180378001000040080000020095817090000640501800039936040500205760490700020308
+e000638002840007390250000076702940583300750000000000024108079035405006910079005008
+e200300490634080020971024800315742008000003200407806300180270600502008100090000002
+e003400108420690053007503900010000406030765281006214509002008310300107002000300800
+e000829710060010934170600582004001200010004358000030090000000000041097625030152849
+e958000130461000070703500960217058000009100302030204750004000000380475610090600840
+e045027060000900070729065104070403000003009008092010003510006200037502810286091005
+e000400520046082931000059708024090600300108090009274000005020800000816375780045200
+e703952160002001500005700200070100000050004000304507608410370826020409070030206459
+e005010742900650000130080600000530204080200900542060001470020009619870020258093006
+e950308074400100502721405300008002901000804007072560000500047000830050029017900640
+e065479380740000029000020604051247000607090102020001800904800063002003000006704295
+e304008105965200700780030049839000000517000320040050807058000402200845006090002503
+e053680294000092501000103000200000680000076120906030000001829356009065008865340002
+e010002064600908053000560070736219005080405000050300900175800006060120000298650740
+e867500003403926578200070410720048051054200007001650320000000769600000800540000030
+e000198000009054067305762089516000003070509846000000000030906570000030091950471608
+e000050067620900005005062400003410590460039008150207643301800026208004300506000070
+e978000046000000510500000208050940000000823070247000980730451800086079102105006734
+e060500030030402015902010040247600000500824070080051409105907060800036001306045200
+e670920035004056210200038076503000800027000009860000350085007603130865704700000080
+e317800042560004100020030005750009086090008520201060379002903600000042700100507203
+e023900007405071039907003008790002350050010000134706000641207905000104700372000600
+e370900000600080010840017530003000400000064009460091070006709140914628753730005002
+e408005010069031582005908360680100209970006835040803106000504600000700001020060008
+e561320089280000050930085260000000976079100040006947000120009604648000500090050810
+e670821940850743120002000087905630401780000650000000098000006009090300000160079534
+e419002506087106902000934781200060300790400825008090004950001600860070000070000408
+e468705301075010028230840075029080004000090206300002950190000003743900000800430060
+e401580920608000100200940800810065039924078000530094200100600300740000500365020010
+e016570238900000400300401000160342009009150000050697002038900007700000690590706384
+e004105000718906230560000140000302760076050091041000850089060027650820900432000000
+e700000195590000000618549072069400018800600020100003764050000201030160809001325600
+e008000046514280370036001800050060001080105003601300580309540000005032008040917630
+e009806075168537002720090600201300500596170030030200000600005000900602857450080006
+e062408070034070518000390604001500892020010000305029001090180030853207100200040080
+e831602000700030004504870061096258743080401000000000190003016082000000017402080635
+e680000170073490050000008030820905000000063002390271800408150327002087640007620900
+e792050080001004700080970300076203018014560000800190460040680090609000802208000176
+e500000047000000219890071060418960030067824105900700084040000300000402970036050428
+e800300216000000900601002050200603701790005020080207300917500842320701509500029007
+e008000050542800913610509000026000137057263000409180060000310070001794605090000301
+e030602000507400806061500209006140592090006700802900000003801020019034608200765010
+e674008051195400307208500006009032000406800930003900175300080620000200500580640700
+e305294001720000039091003600500189406000507000100632008009370805003400090478010002
+e002315074073064005504000003000130080365098700080050930040000208730601459200000067
+e089654003305072690642900507900300468508007000030206075201008006000100000006503010
+e000605043000017902180429500090106805000900004031540000008790001319854700074200008
+e520003060001000257670502000200700015710300608003406970030007581900800423100230006
+e609840100000020089072139000260078590080091720007000800196050238340002600025600000
+e300009140840010365015364020004600000906703000500000090670102900400938602200076480
+e400008010000000725759030000670921300048703100090800602310009567060007290080256001
+e007025000000900764091470280062109500580006400004800600903002100126004803450060920
+e000781400084050071300002900945006000100597043000010589530128000400300865097600300
+e360915874008060395507400120000670910080040060620039048076001080830000000900000607
+e309000007070908504006740009005020780734000200002650093520410930018090000090072145
+m790100000008095000000040703215460030430000007000900020076580010500019008000300906
+m708000506300000080569700003005320064000001000076900000034000058080603009000840310
+m900305104030789602800001007005004731300007008400000065020000049000208006080000000
+m700020030402073690900540007520000080800009000009001704008000000256834000000612000
+m394800100200060879070000005046001090900080000080900700000009040012670083009008060
+m200300010750000803083090207002987054090050000000210009600000000304020000070540130
+m060008530508000000000005408806020700740000610132000000954680020021500086000010000
+m070006012010000008020800406060003000709004500004270690050082060200600100000091205
+m500000000270080900000170040000000601800750400045009802709300504008000306006504087
+m900008052017052000008390700004260005065000040100000680000001936091035000040000010
+m500000002000063000010007506000080005058106237306004000070605400045800060630041000
+m040760102680302000700000050000007004000890023007040600300600400072130800405008030
+m052064730007013080000000100089300400003049001514007603000020308020008000090000070
+m000100065208590300500036090000051000030608470000004003000400037401703050009200004
+m700000004562003710000100006053000207800000905007500068030096400040800570000045002
+m200030800907100020034067000006072008042003060008000051009008030020300005000400692
+m020000408918003000007800090073000905085930042600050800790600000061000050034000060
+m000128090090400150307950040769000580001000700052000900906704010100009000003600000
+m900050406030080079180400000872003000004020000000640825060000012240800607090060000
+m005013270310200000700640900060100090980750002001004000030560009000830017800070000
+m100540600007030902006009000000000000072804000039050820080300700041000005763400281
+m021465000000020500070030002780290160900000300010500008800312007100700020000900640
+m000683970000700450030000001580000000073805294060174000000007008000090060018340009
+m040030000570040000003000964310008540000000021800001003729080356000650070060703000
+m000080007005007020907050010609000830000600109070193540728400300530000000096000200
+m125000070700020000806107900002080000600070041017900206070209000058010400960000010
+m079006008834000000060403000500040600000000009691008050040000065008620974000194003
+m089000400005030100200049000004970003008450061300826900000000007700692085603000000
+m000080604000900300531040078005410007087069001209500000158094006600020000000000005
+m289000400030429000000000020070951030005002079900708000800007064600803700091200000
+m493105087000000010600930004000009002200700060040060738000071005005000870109850000
+m000002000000650903080000560800301645100905030053006008028067000000000300005020786
+m700005000000036508900800040000300600030501080500640013005790001620153000001200007
+m290800060030000000060912037310004200600020740000030806000200305000400692009000071
+m000000000009160572021540000410309000065000000038601005090003620603420008100000050
+m009750008860000107407010000000003070000040000256000000540002780690300502700460013
+m000310000308026100700000006003040867400005300007900000050007943906038021200001000
+m926700405000020701007905003000000100503000860601092057009000500008001900000560070
+m080904006000300078730081900640050020070010000010008709807000090000060300006807510
+m470520006025001400138906050500100009000379508000004071302010800000000000006000030
+m058041030063002000020300700000200010000180067802030050000523000005700301300009508
+m001285000008040006290071005050004291040700050062008004000090000000417060000530700
+m000002300090453060300600418001000295000200600020040071780005030004108906010000000
+m000006045003005200900730060700601430306000700004008000030000904407890050569002000
+m700400100030090000401800090807000420000008000910200060020080903006102800178004052
+m920040000001059002700000060004962010007000500816500009340100000108400090609003040
+m006408500005001600103600009000905100000204930409106780804000300030000800907000006
+m010700020090000071702001006078000040001205000006084000307020184204000603080040050
+m007900435003024910000000020000009600940008072076200090000302080410000060008105040
+m000124960806007402000090350050008609000509034004600005000060000003081090065000070
+m068005020200000037047002000000900200109307400004800079001003506000060003030591002
+m080004260000100800000070905240007510007001040058003700010040087300050020020009053
+m000014000100530600700000000001400005045020073300190024602040008009702506010050400
+m000000030000020098100639072000760840600040710807000603069405300700002000080070050
+m108000007020008009300400000530902600600500300800736000003060005086300904204009060
+m061800900530010000400020000090000000004580300050009060006058427040196050300740010
+m001002084023004900407050000002005490000720000705841206108003000000090000000010362
+m370000600040000005600010000400500060060090008502607403006800100714265030020000540
+m040007050050243709001600034090800000237400081000002090008004100000105000000706420
+m000140800410000290005000016008010070600002009029300601090527060006900000000064920
+m379000000080000070600287003500000029002070130708930500000016900000009006190520800
+m200390650104000000050624807390080040000706500000903068708130000000009000519000000
+m507432001000700540000000800300004000470000023000379410002100300105000060064520009
+m735402190060800000002900070506100080010000000070500030087205009093010750000009040
+m004073090002000704050204001470000108000000000086109030600001005500730006820956000
+m000045000705060008020000000400600000007290000083751964350906807070000416002000500
+m000360802000027600003800007007040000508003006690580300001000269050106740040000100
+m502760900003008005000100730320070600078030000945800000100620000200480006000300409
+m763905100900860704400000950004000090000570001532000407080200000000050800010403005
+m009400600080570209640009000002000065070691020100250000900065000030817400000040300
+m070090810400500037020780400080040520000237004000005100350024000000070040040059200
+m320174900107009002906020000800003020000610000614090030700900610000200070090000053
+m000730090060190052004650301080000000407200069000415207940500000000000020201060900
+m700090006940008705000701000004050002200810050000000903360047500000900230519000604
+m024107093003926005700005000601700000000200140000008000005039204096070080200500700
+m603200900080030500070890603410500060007010290000076004001000000835064020020100000
+m000045030670100020300760800706000000053000082209056070000470090000000060037029508
+m349000750007063000000000004000070980900600000283905460000740000520830600700059008
+m001958040009420000000160000420000300030500400000306850900000086012600590580009100
+m013000000802006090567030108000002067300507080006004023201000600400000832000008009
+m038095000400000509015270040100534902500002003003006407390020800000000000200001700
+m035000280100300560000500070007002008000089000690045700300060850006003017051207000
+m005004160093500080000008000174080050820106034000207000002000000700609028358020000
+m050004000420900000090010380000800001200060090104000078006008957049100860000096140
+m000450038000863290380009046000010000100080000649000000005140907206005400004008005
+m104000070000008204000005010005296030090034650060000420019000500600040003080960047
+m000008003236000090079036200102000400900001780050043100700000041520009007000760002
+m000097000005002070006004510000009607009000800430006000052040190840070006600053784
+m408000702060200910000700000892051070005090200643070001006400080200587400004000000
+m060307008901028000300000500017009000290600000430000921002010084003082090080400100
+m200046030806100904401053020000009100060500007003704009020000010508007200004080070
+m002700610070090208800010040000075002700020000000680000304850100000064300006930475
+m000000710051090400003540060008000053000236004000958120060010082000003970000020506
+m300096005001400020296001070010040500008000002059070040075064000900010060860000950
+m000900014800514060300080205097300000045020076000041000070006000080000609960108400
+m067049500000050034000000906000807053925003070003010000039001040004600090250904000
+m020060810041387020600000754000902600000806300068000070000730580000090400004200060
+m090050000002067400400900601906400018015700040003010025000500107100000800000201590
+m300900006090074000005600080830000009000031600002489050008105002043008060700000894
+m563090210092610080870000000607500000005040000000207000010006078006800942309070000
+m500001000020800510078020000450006002000900100090415700705008000030207890280003600
+m200050900930724000701060040003000860107200350860500004070019000000000001600032007
+m870004006001800200502006003016000400029450700050000000060700004237500091000620070
+m700238000631005009000060407407920000908000000360400070000000653000602780000054200
+m060090042080010000349600708008069000076000420520007600004000006091400270000002090
+m900530000570000090043000600700080100209006400010340507800001300020060015300007204
+m003007060027040003801930070004302010500170200000004000160000700478503000002000650
+m469000300073002800528037600000000016000070002280501709800025900900010000050900000
+m034800950700050300006040017900000740801730000607900108270003000000000475009000200
+m002800057005904000000030906000403675060100004780000090040310560051009080390000000
+m000050064400000900009100000058400600002901005003560489000600708000705040764003001
+m000059078000760003700130650000005034802300000000000901307040002020501006600200017
+m000040600631827000750060020205000986000000070070200104409000060000608093000009052
+m050002000080907020032800761000000050340001008600000170004500900001706203070020046
+m200090780005800934090000000060004070000037600003500401830610045506200009900008000
+m000501002000090640080403100300709264750000000004000005500004001240030500806210400
+m507042600080500004432080570740000000000003080000010900000030006321008795079050000
+m000200958028050000057000021000080006560000070003000040200010030691403582370002000
+m007068400084000070000740900030005600000100830000030240341802000920070100570600300
+m000304970370000002908007430050062800090005000700090000000009641600001580509800700
+m000000380200900040400283960500029000702340500000000234000010003040690058600007020
+m000002000210000900000730600000060705050107009074009301030820090020016073080470010
+m002300500008102090730600080090800000050206417600500809000915070000008002509000004
+m002164000716203000400005200040500032900020007030009015824006000000002050070080020
+m153960000000501400000823605007000000008240500000080060261000058009300170030010009
+m900000000005090618000450002030000009000008026000501480470805960098040001003009840
+m010000700000100600500036000006401502290067001080000900730680010451700030000014200
+m400000706000100800187630040050406230020000604340800090000008360090063071000500000
+m500800030021030500348500190082000040000307020000000765000000002030086050900004378
+m008000000362010005004030061496057010200003607700000002007198003000300170000400900
+m001000305000050800090200040605008109003600000170009020002100973469037000007800004
+m005018040002600009000030010041020630806000000000804070000080020460200050928351060
+m000000054000700100903056027120000408360000000000000932000470010604310700270000349
+m600400801140832056270000009014200007006507400000040080000621000020000600300708000
+m705000008030000400004010000049807000501900700260041985900230500002090004400080010
+m070000001005009823000031907000090000400278006108400070080010002200080500041000368
+m980000040037001000400000631169802007073400910200007000000000006700000890096083020
+m020500341530240007008006002004000580060900004307008000900000100400001600206000475
+m400690002603005080900237500016900425700006890200000600000000007500800200090700060
+m309001207000620300002050000708500004005098070000370000091000006807216509260000000
+m804300070100000460300500090020050300908023500000060700609002000240605030500810020
+m002000007040503062008007040289000000170450003400200000020800501001090780000175200
+m003750040070930520090000731060000200021079000005100000000300004140082003300490002
+m050024700060030000370008020698010375000000000032509060000000100000003500506801437
+m073082900009310600001006200004000030000008106018905007100800002007000000985120300
+m000500002002000600968031000030020804009040050046007100600710408480000000090083026
+m051030006837000142002870905098702001020000000000090200700600000403900050009080010
+m832005007649001000017260000100700000000040103490000020001904306000100049000800501
+m000087360010092047072004010000200009700306504240009600000020480400000050003001200
+m400051028000402970020069040800600000001983007900200004000108706010047500000000090
+m000804501008005492040020870003000000060300980100000253200510709400702100000000005
+m000209800092000000070365000300700020048690100706004083080056002400000300025000410
+m002010705745000009100009200070000300400360070039200000500148600800030020000750180
+m601050090370600100020000600003070004400302000056090002005920000000013506007580209
+m649000100050040200032010740000104600004000001301006570010035090700400000000800457
+m000749030700003482000102900008075090504090000100000603802050306000000000040238700
+m400025000000000204001030800100000462306052000070000590268090057000080009090016028
+m030400900769830000025107000000080056002309407107050009510070040000008700074000000
+m060830271700016009103000560800000000000603410004000003200140056010370002000008007
+m030400001002008593090013800020009085000020410847150009000000070074602000009000002
+m080090037065000009409000615108940000054708020000030940000050804802000000040006300
+m300060700000009640700050009173000400085001306600005098061000204500014000000300501
+m010004002092010050080000030640102007170003028805090000937206040000049300000300000
+m000841007000090060790060008260007501350010000000500074001002603002000750000078402
+m900000023005100097048729000520987060070600030080040970750004000600010000000300500
+m090510000047308001000700024008002000701600003000100256060073400100206370005000800
+m640020000003010678790000003060008300300096080000103502000632010900080054000900030
+m007205104008091000000000603130002006006400007720906310250007000000500800041000205
+m600040507050200010980000430060800000079620000508093060890400000003079046700002000
+m060050000082000903000013000253601849708002130040009070000306000900000700620004080
+m706490000000005000040000190000010900300800250000350060051264009034501608007030400
+m080000431000094528000803090000372000000108070008005140804200010301000009050001004
+m007000000100700904064201753710403090000010020506000400043000007800070002201800030
+m402007000780004201030000080074850090000700000860300020003000400917000065648000302
+m000002010568170000410000600000003040000910028185200060000790080031000270070006095
+m000721090006030201902008004000000040008154007000080023803200510600095030204000000
+m200079060400380700007642908700030000080021097000000280010000026000060041300010500
+m000590081071000230000000004062000800190600057308907006500030978030089000080000003
+m000052301230004000001398400007003090850070000029080000010006540000030608006017020
+m000005683000862107000000000360200058020000070870010009208704006007000014004980700
+m006000501500070600004005802105040009000050000300109006478061000901504708600007000
+m000005130004830000108029600401603520300278000009000000600902751002050000000006800
+m200700108000000003500869000002006340307000060100093200040910706000007004030600829
+m600020009051400002027380000000259040700008006005670098000000080479002000006004307
+m059000020000970300308126900600507000431600702080412000000251000000800000014090000
+m073014000910076400000000007280603000041028000005000289000360108090000003030790500
+m107934060600010000000002501260000300700600820008000600046890070000040930029370000
+m070040509250000003000068071800130706003004000910000000490680020002090000080012405
+m830071600590000370401900082050090000009800030200005010920000160310040050000100007
+m090230500527408030004010000000001052000302900700580010409060800030900001106000004
+m051600840040008007007005061000052000078140530006000070064000020023809000180000090
+m708000004401000760000054000390000081200360907000090320903810005500040000042500008
+m050923780100708049098004030300205804020000000070410006000000150040030008080500000
+m000060480078000203090030170000070014300240060056000000003006801905004320800007050
+m030400150000953000200000000507000003002036090063015070000100547001302080008079001
+m490060008060704000000000410008047029320098000900003681009000800006530094000070005
+m060000000003800017487030052000000290020015070970000005701520000046000021090741000
+m007000036503908000619720000078250300104000508000000007002070049090000000700309250
+m027090000906000000408060050890602713200740680000100000009408130000005806000036000
+m745201000102690050600000102206000000000002604380009020821007000009500000060908007
+h000209014050600000704030000910000000060401090008000006049068000006000070100040900
+h051020000908603010000080006070000000103700009009008020700306000000000100590000240
+h000609000200100006301000000030000091480010050900000007070400083100006000009035010
+h006003000710008093020000710000007009400010080007090030600000001000705000009600420
+h907500004500900620600004000060302080000640007020700000000000030009007006301000700
+h000310000003476000600208400100000002900100850000007009000760000408900100050000007
+h400000000008300020750000004000050602000280010172000508097003000600901000000005200
+h149000208000000000070400060800000030004000005250319000000030001020000506010600049
+h004160030000900004530000060000800000280000410301200007020006900000004000050009120
+h006150002092000010071006900064010000009024030830000000047090000000300000000000095
+h090000000600000702002049600020000000408060030506001000087000013300020560000000407
+h000103700002000400070008019206500000030000070080200001004802100000000040100700062
+h000000086094018000200000005708340062050802004000000003000905320000200000030100000
+h000034000004800700601000280007001002005000010000400000008500400503700926020000800
+h290006000043000006000000701002507063000040002050020008800013000005800000060000027
+h000002760400010039070000800900008000000709204800250900008905006000670000000004000
+h026305080000080009008004600000000795000106002000050800007000100050063000402000030
+h000000047620004005070060080004050879000900000009007020060000000502030490000102000
+h000100508000005006050000010800030040000000000275040000598004100610720300007800000
+h406120000700408000020090000000500070000000100031009052300000400000080905080031600
+h009000300000037005000000070000000006570106080680009400400090700300008610860001000
+h042080007080050020007000080000279000020000064800100000500000001900700350073000008
+h390062001000500307000000006000080000560031800008904002907000100630000000040020000
+h000820000050009001000000729025040000090001003080000500000050318038200600000300040
+h090050400000400060070906001001003000306205090040080200210000000008500000007009006
+h030460008050000002000000015000720300000036000007041000108000900700004000006397080
+h800594002001780400005000070709000030308400009100060000000000940980006000000010000
+h480703000750001200000000050879000000500009080000060070000100060007002000290046001
+h500009270000002050028000604904100300000500040000000006006300002001200000800090061
+h000002057005060040710400006300000900000900010600003580009005000850701060006000000
+h400060700806000003000090080105406008002900000003005170030080000000100006001030020
+h007060002002003060030400000000020900800739006000046850200008005000290000069000000
+h700200000006000072000840000050000060004000203062098700090080020000075800010000059
+h000090005000000800304000106260004000400370008908600300000086000807200000006005400
+h000060000060085400005007980000000004146050007700004000410009060300000040080010700
+h004002006200500009000401700095000030400000005680030000900006000060007903030000082
+h901250300000000000020308007004020000502907400006001902800005000107000006000000800
+h700100200001048000000006004000000300080604507470000000037000658100025000900000020
+h000000060000239001000001400000000000210700600090008004009872010628300000500060800
+h060000014000000000000230080000400030094067201730080600008005000005000000900678100
+h001500600090000708000074009000000006600000423204300000047023000010800000080060500
+h500072030004000901000500002600040000000000000907600208000810000302000147009007003
+h400000300007008026008006009000030602000002001002190037080009000000070000163000070
+h007008004000000020003061000600000812000050000000000059002680003305100000009003148
+h680000900407030000003080107072050000010000060000100090004500309000060048700003000
+h000300708000000050000078190030020000100007004800010260070291005006005009000000007
+h000000001500000200000204006940052000062009000100040008020006057005001080080300004
+h000008001500160070000500020009000600000083049700290300930600000060005400050004000
+h000002403000010009090000620008471002000006040009030000410063000060000100050004080
+h007000008800100500003007900000000000000008401000051807230045000500000009064080150
+h010020679036005400000000000000003160060004005750800300090016043000000000000000057
+h720500003080000000509000700000285400900007000008000006005090300267000001000040520
+h000010080030400500000002907001000000000081000870030209190800400500007006000504070
+h000580709004003200000700060093000070062000000000200003030005400010026090009040500
+h000023000700000005843600209300000001000701354009000080000130000000000106906070000
+h000403201001000040030900000980160000003007100070090000300080620000005009400000850
+h105043706308060900020000000003010000002000090041900000000050010600008004500200009
+h007805060000000800981370400090400000000000030050169200500004006020080000600000003
+h030005006004800710200300005060750390000000000700039000040000000001000800300906140
+h090200076070000000206509001005903104000000037400700005004000000010060000000032700
+h004900020000000600050704030000806000061020000870039500000071802028000000009000010
+h001096008007000500640000003004200080000700090000018400730029040000000009500004100
+h092043001437060000600200003000000060000000004204000090000430000006010050305006070
+h040000007009030060000067100018090000500000019000070280920704008400000600000005020
+h000023000050060029700000000000054608004000000260030900095000100100002560007005300
+h401000200000070001000005080000004090040030500060907000000008000058201063103006005
+h000021800501060049000704000206010000900000050008000001307000120000490030000000097
+h000000000012030068600050370000002000000048900800100407060020000097005013051000000
+h109800730002000000030704900000050000041030600060001009000082360900007500000000008
+h003002000800009500000100607512007000004003000000045002090874000328000000040000100
+h030607009050209004000000000089000006100004500000000491500081600020000900040300007
+h860002001010000600000000540000059000408003090900061003140300000007000004003000810
+h005010000200073006000046905301207084008000001000000002000000608500000009670000100
+h000400360007800900000060000000500000070012000095070040004020091010703050060000704
+h000500306200000010000071000000029073302000000100007000007950200040800007509003600
+h000006040900010000064720000100800900000004108007000002008040030026007401300000600
+h750000038006108004000005260200803000091500000000009052000000005940600000060000080
+h000806029080015030507000060800092105000080200001000300309000050000000000160900000
+h200804300600090500700000000000000000000029010000050069308060947067000002040001003
+h020000000948200600001000509000000006002900001700831000000004005000170200069000304
+h009600040705200000008000069504001870020800001000000400000035004042780030000000000
+h000200750000400600005000409436008920570020000800006000000060000300100007001050800
+h604000000070000000100200500000040070003092004701500030030600751460000003000038000
+h000000000005040670000610342041000000009103000000500080390200107710000000080001030
+h080000930030090054000600000010086700000050000904002005000400000800200301003005027
+h610803020370050000004000060100000756000260000400300001700000100000000080060002370
+h000000070009000000000201003650809000000603092300047065800004000510300009007000100
+h007200460020000010460001000010030800006000070030500200670050000200708000000402500
+h708020000000005804030400700000000400100000009980007050000610000470509006006300090
+h000370060610050002000018005050090601030701900000000080001000000780000000500080710
+h700310600080020900000070000040700030078603009090040160605000720000000000020000001
+h000002090000000008090813002516000003000000406200007000905021000062305010008000000
+h000409000801000006940006730700000100090003000000782000076020301000000007000004205
+h003020090000000302400090700060000009100003040008000005890006000007001200006405908
+h200000900800000050050006200000001700007630500906057000300700080008300020000940030
+h140003900009002080020000165000050003060020050000100700000005000006000001983670000
+h304060900060000000008490200810000600040050170009010004002000000000000030590703008
+h000940020000600500064000190038000000100200003000000002000009000300065780090408056
+h250010900040000060080600005007100090009243070010700000000370000000001080030800001
+h000503080070002100306000000000038900700006200000207408010060090580000002040000007
+h700021645000008000000000000049007020001050800603002009900010560000000008000060092
+h000052703000006000001030600000078060004500007507001230000085000000100080360004000
+h640000080030000160120000004000630007000004810403050000070100000800000400090700036
+h020000010105007000790360008600023070000000100000580400060400000010070000407005020
+h100003960000079210002000000003000050620010070900080006059000640040060031000000000
+h009400600300005480500018000237004008000002000000060050470000000100057200000006070
+h591640800000009005400008000000030090003105020950200000162700000300460000000000000
+h030900600000035010001020008002000000800040107740200050307500200000000091005000300
+h401030500700080400000600300004150020005000800000890004080000030600200001102300000
+h031060040000905008850201030000000001000020300000008004047006800210000070003100000
+h600000000080000102007090540510000007060070095900050000000900030003800451000340000
+h070090020000000008500400010010900050008200004002500300021000000830700209090003070
+h000005009190004235000300600061009450002000000080400000000230000000000120000807904
+h000300061000087200009100080002008000050041003000960000000800000003600074060009102
+h000000720500000091003260500700104036001005009080600050000050048000800000900000060
+h620009307803024000400700200506000000000400082100000006207800500050600000000090000
+h000050020009007310240000050036704000000500003005090000103600000060000002002080604
+h003000002000000010020869000000300000300456200089200500700940003804100000000600900
+h000000000060008000187400056010000000800300500000000420901500007050040890020093060
+h000051038074000009000000400090100080510260007020900005051006000008000000700002300
+h400207018001030070570000400002000090100795000006020100900000000000004005200010800
+h000080329000073000020001400480510002000000090007000500050090100370002005010700000
+h900040000002070006010300000001060005300020608069500030005001009027630000400000000
+h004670100005409003060005000002500706000000510090000008100007300700002000350000800
+h002005300704600000000010000008070000000060102003050970427003059060700800000000003
+h001000700050610040004900002300128000000504020000070000648003001700000400000400070
+h008000704075000002006003000253000001010000600000901080000000070001070008000814906
+h000005060080720000007089400590000100002000089018006500000504700075300000000000008
+h800000000001007000005000970900006000006704200000003609087509020520001000000008041
+h000004300850002000000380020070000000400700096096200070000007008068029500500600000
+h814600300000001000006009000000500000003086540028007003005000004000168020070000100
+h000000980006020070000500140800706005000010090010000600690400000050370000730200004
+h000000920000504000060080100001907600600050090540000000006000000030725000704630200
+h902000500306027010100000000000004700000502036000100084000000200520000008490053000
+h000500024014600970300000600070000008080040200006000000760080000000920000002010857
+h040097600000061098070320004000006001109200000058000002000003080504089000000000000
+h000002000009060508080501407860025000003000090000070000940000072508000009030000001
+h720000800098000200050004090000030004000062309007000010060200000000480000500610780
+h000000002400007030501306800700030100012060300000000028060000080008000050140020009
+h008090002170002008506000000000040091000020035800003006000050073300900000700008060
+h003590000002000710600000008000000070000605102000001300400019207000350400058006000
+h000200790001006430380000000000600015000700320060108000028901040009000080040000000
+h120005000400200500800000091000000104500060007000072059010900000040500870000087000
+h120000380040000100035000000000300910002010700000506000000400030200073060900060801
+h950016300300500004002040000000700910109000400000000082000001000000005790207360000
+h007050100053100062000802000005304000000000308800000040970000030010007200000001079
+h900006800003080004510000000300040701204910500006800090600003000409000000050000003
+h000507304000084000500000000040700003320100009070420010002650900000000002630000400
+h079080000000390040201040900000000000000179000108000032807600109006400000002000800
+h000700920045000701000150000030500100006940050408000006800000472000070000003090000
+h000000539062500000005009800000000040097000085000008203004000010706090400500400007
+h000000853070030000850060007004000960390040008000200000700408000002700000001096070
+h000000906097000000050008000000020600300079021702600050000010000006500703000302095
+h000207000600050004000000380050014039800000500060009000019072003400090000700060040
+h000000000020950480600208300009730000000005230800000000002070654090002010000010800
+h500300000000020810000086004000000300013940000070000025890007000750210000001400007
+h000307005000021604030900000008103706009000000020500108740000300002000407000000002
+h072850004080007005000009000809325000300100900061000000000930450000000603700000000
+h060000310100000009573609000700001004000000720040800100900003006001000000200906040
+h002045080674200013800000000000009300020400000010070020180000050900000040000001709
+h000000200708023001005000800400006050010390000009001000900608000000002045100057006
+h000003140090140020400007000810000064030000001600200000100070000960000300207805000
+h300004100058000000004905300015062700700500020003000000000418050001000002069000000
+h050809003001053040000000000083000000605000004000198000002000090000720406030060520
+h901000703600000050000000008700009030002030145030018000000180500060040010000205000
+h002780005400020700006050000000600030903004010200030604000005091509008060000000000
+h020600005031000000605900200489001000000000400012800600007000000004709030100000086
+h005890401002041090000300007000900000000008640000020800800605000040000050703000160
+h040000010000001394602300000000030560090010837007006000180000000000020005000705100
+h000140690800000040060003700046500030050060000000300000010680009000900251002000800
+h208590010500000003030200000060007500000300002000604790870400200050700100009000000
+h063000200005700080008000000050410009900005310034060700600040100001500000500002000
+h000004900040800700072000001000001003080003100005900000600300270008050000314006050
+h001008050000093000590610030000002700000700004007004098830000000000840900010009005
+h000005200006080100000300470009000600503170000007608500000000314105004000708000000
+h401800009000200000280301600800004106000020008000090070090003420030007000005000800
+h300007800005000070080600300053040710040020000070001000100950020000072000004100080
+h000900000090000680600050000060580007700020000423000000240063000000049501010000062
+h000720000200400170006000940000040060060312000000000400000008000804001006150200803
+h300607900000000078094050300030040800050700003000002610000023000210080000000000089
+h090000300020039600630800270400000005510020000003000090000060437000000900000710020
+h006000009040300008002004730700000000054070390203000007000025060001008040580000000
+h000100000000000002002004908070030090400002000900018005050803600031005400040000059
+h908040000060010000750008006080000000200096500100200000000780030000003071003900460
+h000002506006100090300005000710200304000000000000709200007003002200080900090020015
+h009300051400000200165200000640050080000000506007000000500000100010003600780904000
+h000009000005800000080260900400000001000040059078020004001000000069050718004700006
+h080000000000000003070280000603529400000000106000801200900050060750140900000090001
+h201800005540630009000000003308006200600098500004000008003000107900500000000700000
+h000580600005004000600000000500069020003008040020300090008000002034000805000070461
+h007090042840000000000000038001750300500004000000806504203000076000000000058060020
+h400000900050003160200000803000309000001000000370060000800010709004050080009800025
+h039000400000002080000004509004800096010070050200000070940050001002000800700060020
+h020000008800007250039000076100002030060901700002630000010000409007006000080000000
+h000600000400007000069820100650090070000000602900000830003000000080975200270008000
+h107000050603875000020030080091600400300000005800402900000000710030000000000760000
+h008060000306000007210704586000310040000020000700000800030000960900400010040070000
+h010000000040960000000405860007023100030070006109000070000800000003002040060094008
+h010000060600040070007090001906000400005907083300080000000020000052001800000304010
+h700080036000007200020350807000703160040010003008060040092000000001500000000008000
+
 </script>
 </body>
 </html>

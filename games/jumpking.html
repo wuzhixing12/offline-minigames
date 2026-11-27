@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>登顶失败 · Almost Summit</title>
+<style>
+  :root{
+    --bg:#05070d;
+    --ink:#eaf2ff;
+    --muted:#7d8ea8;
+    --cyan:#67e8f9;
+    --amber:#fbbf24;
+    --rose:#fb7185;
+    --body:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    --mono:ui-monospace,"Cascadia Mono",Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{
+    background:radial-gradient(1000px 760px at 50% 110%,#122036 0%,#081019 45%,#04070c 100%);
+    color:var(--ink);font-family:var(--body);overflow:hidden;
+    -webkit-tap-highlight-color:transparent;user-select:none;
+    display:flex;align-items:center;justify-content:center;
+  }
+  #app{width:100%;height:100%;display:flex;flex-direction:column;padding:8px 10px 6px;gap:6px;max-width:1180px}
+  header{display:flex;align-items:center;gap:10px;padding:7px 13px;border-radius:12px;
+    background:rgba(8,14,24,.78);border:1px solid rgba(125,211,252,.14);
+    box-shadow:0 10px 36px rgba(0,0,0,.5);backdrop-filter:blur(8px)}
+  .brand b{font-size:15px;letter-spacing:.16em;
+    background:linear-gradient(92deg,#e0f2fe,#67e8f9 46%,#fbbf24);
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .brand span{display:block;font-size:8px;letter-spacing:.32em;color:#5d7089;margin-top:1px}
+  .stats{display:flex;gap:6px;margin-left:auto}
+  .stat{padding:3px 10px;border-radius:8px;background:rgba(5,10,18,.8);border:1px solid rgba(125,211,252,.12);
+    font-size:9px;color:#75889f;display:flex;align-items:baseline;gap:5px}
+  .stat b{font-family:var(--mono);font-size:14px;color:#eaf2ff;font-variant-numeric:tabular-nums}
+  .stat.best b{color:var(--amber)}
+  .stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;position:relative}
+  canvas{display:block;height:100%;max-height:100%;aspect-ratio:420/640;width:auto;max-width:100%;
+    border-radius:16px;touch-action:none;cursor:pointer;
+    box-shadow:0 30px 80px rgba(0,0,0,.72),0 0 0 1px rgba(125,211,252,.12)}
+  footer{display:flex;justify-content:center;gap:16px;font-size:9.5px;color:#647891;padding-bottom:1px;flex-wrap:wrap}
+  footer b{color:#9fb3cb;font-weight:600}
+  .overlay{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:18px;
+    background:radial-gradient(700px 540px at 50% 42%,rgba(10,24,40,.84),rgba(2,4,8,.96));backdrop-filter:blur(9px)}
+  .overlay.hide{display:none}
+  .panel{width:min(430px,94vw);max-height:94vh;overflow:auto;padding:26px 24px 22px;border-radius:22px;text-align:center;
+    background:linear-gradient(180deg,rgba(14,26,44,.98),rgba(4,8,14,.98));
+    border:1px solid rgba(125,211,252,.24);box-shadow:0 40px 100px rgba(0,0,0,.74),inset 0 1px 0 rgba(255,255,255,.07)}
+  .peak{width:84px;height:64px;margin:0 auto 12px;position:relative}
+  .peak svg{width:100%;height:100%;filter:drop-shadow(0 0 14px rgba(103,232,249,.35))}
+  h1{margin:0 0 3px;font-size:clamp(24px,6vw,32px);letter-spacing:.16em;
+     background:linear-gradient(96deg,#e0f2fe,#67e8f9 46%,#fbbf24);
+     -webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{font-size:9px;letter-spacing:.4em;color:#5f728b;margin-bottom:16px}
+  .rules{text-align:left;font-size:12px;line-height:1.9;color:#a9bdd3;margin:0 0 18px;padding:12px 15px;border-radius:12px;
+    background:rgba(6,14,24,.82);border:1px solid rgba(125,211,252,.13)}
+  .rules b{color:#eaf2ff}
+  .rules kbd{font-family:var(--mono);font-size:10px;padding:1px 5px;border-radius:4px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.13)}
+  .cta{width:100%;padding:13px 18px;border-radius:13px;border:0;cursor:pointer;font-family:var(--body);
+    font-size:14px;letter-spacing:.16em;font-weight:700;color:#031018;
+    background:linear-gradient(96deg,#a5f3fc,#67e8f9 46%,#fbbf24);
+    box-shadow:0 14px 34px rgba(103,232,249,.26);transition:.16s}
+  .cta:hover{filter:brightness(1.08);transform:translateY(-1px)}
+  .cta:active{transform:translateY(1px)}
+  .bigscore{font-family:var(--mono);font-size:50px;line-height:1;color:#67e8f9;text-shadow:0 0 32px rgba(103,232,249,.42);margin:12px 0 2px}
+  .bigscore small{font-size:14px;color:#7d8ea8;margin-left:4px}
+  .bestline{font-size:11px;color:#8195ad;margin-bottom:8px}
+  .bestline b{color:#fbbf24}
+  .rankline{font-size:12px;color:#a9bdd3;margin-bottom:18px;line-height:1.7}
+</style>
+
+<style id="tx-space">
+/* tx-space: short landscape play-space boost */
+@media (max-height:560px) and (orientation:landscape){
+  #app{max-width:none;height:100%;display:grid;grid-template-columns:minmax(0,1fr) 200px;
+    grid-template-rows:auto 1fr;grid-template-areas:"stage header" "stage footer";
+    padding:6px 8px;gap:6px 10px}
+  header{grid-area:header;flex-direction:column;align-items:stretch;gap:5px;padding:7px 9px}
+  .brand b{font-size:13px;letter-spacing:.1em}
+  .brand span{font-size:7px;letter-spacing:.24em}
+  .stats{margin-left:0;flex-direction:column;gap:5px}
+  .stat{justify-content:space-between;padding:4px 8px}
+  .stat b{font-size:12px}
+  .stage{grid-area:stage;height:100%;min-height:0}
+  canvas{height:100%;max-height:100%;width:auto;max-width:100%}
+  footer{grid-area:footer;flex-direction:column;align-items:flex-start;gap:3px;font-size:9px;padding:0}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="brand"><b>登顶失败</b><span>ALMOST SUMMIT</span></div>
+    <div class="stats">
+      <div class="stat">高度 <b id="sc">0</b>m</div>
+      <div class="stat best">最高 <b id="bs">0</b>m</div>
+      <div class="stat">坠落 <b id="fall">0</b></div>
+    </div>
+  </header>
+  <div class="stage"><canvas id="cv"></canvas></div>
+  <footer><span><b>蓄力</b> 按住 空格 / 屏幕</span><span><b>瞄准</b> ← → / 拖动</span><span><b>空中</b> A D 微调</span></footer>
+</div>
+<div class="overlay" id="ovStart">
+  <div class="panel">
+    <div class="peak">
+      <svg viewBox="0 0 84 64"><path d="M4 60 L30 18 L40 34 L56 6 L80 60 Z" fill="#0d2434" stroke="#67e8f9" stroke-width="1.5"/><path d="M49 24 L56 6 L63 27 L57 22 Z" fill="#e0f2fe" opacity=".85"/><circle cx="56" cy="6" r="3" fill="#fbbf24"/></svg>
+    </div>
+    <h1>登顶失败</h1>
+    <div class="sub">ALMOST SUMMIT</div>
+    <div class="rules">
+      按住蓄力，松手起跳。蓄得越久，跳得越高、越远。<br>
+      260 层、2027 米的高塔，在空中还能微调方向，但<b>落点一旦选错，就只能往下掉</b>。<br>
+      没有检查点，掉下去就要从头爬。<br>
+      <b>2027，势如破竹，登峰造极。顶峰不见不散。</b>
+    </div>
+    <button class="cta" id="btnStart">开始攀登</button>
+  </div>
+</div>
+<div class="overlay hide" id="ovEnd">
+  <div class="panel">
+    <div class="peak" id="endPeak"></div>
+    <h1 style="font-size:27px;letter-spacing:.18em" id="endTitle">登顶失败</h1>
+    <div class="sub">SUMMIT LOG</div>
+    <div class="bigscore"><span id="endScore">0</span><small>米</small></div>
+    <div class="bestline">个人最高 <b id="endBest">0</b> 米 · 用时 <b id="endTime">0.0</b> 秒</div>
+    <div class="rankline" id="endRank"></div>
+    <button class="cta" id="btnAgain">再爬一次</button>
+  </div>
+</div>
+<script>
+(function(){
+  'use strict';
+  var cv = document.getElementById('cv');
+  var ctx = cv.getContext('2d');
+  var W = 420, H = 640;
+  var DPR = Math.min(2, window.devicePixelRatio || 1);
+  cv.width = W*DPR; cv.height = H*DPR;
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+
+  var GRAV = 1900;
+  var TOWER_METERS = 2027;       // 顶峰高度：2027 米
+  var PX_PER_METER = 10;
+  var TOWER_TOP_PX = TOWER_METERS * PX_PER_METER; // 20270px
+  var TOWER_LAYERS = 260;        // 260 层
+  var FLOOR_H = TOWER_TOP_PX / TOWER_LAYERS;
+  var PW = 17, PH = 23;
+  var state = 'idle';
+  var player, plats = [], camY = 0, targetCam = 0;
+  var aim = 0, charging = false, charge = 0;
+  var keys = { left:false, right:false };
+  var jumps = 0, falls = 0, maxHeight = 0, runT = 0, best = 0, bestTime = 0;
+  var dust = [], snow = [], shake = 0, lastT = 0, won = false;
+  var goalPlat = null, climbTop = 0, startTime = 0;
+  var landFlash = 0, hint = 0;
+  var WHISPER_EVERY = 6;
+  var whisper = null, whisperSeq = 0, whisperNext = WHISPER_EVERY;
+  var whisperStarted = false, whisperLast = '', whisperFallAt = -99;
+  var WHISPER_ORDER = ['persist','irony','cheer'];
+  var WHISPER_BANDS = {
+    low: {
+      taunt: [
+        '你不可能登顶，不如早早放弃。',
+        '第一层就喘了？',
+        '回头还来得及。',
+        '山脚很安全，适合你。',
+        '别爬了，风比你有耐心。'
+      ],
+      irony: [
+        '真感人，你还在跳。',
+        '你管这叫攀登？',
+        '勇气可嘉，方向全无。',
+        '放心，没人看着你。'
+      ],
+      persist: [
+        '再跳一次。就一次。',
+        '你还没输，只是还没到。',
+        '慢一点也算向上。',
+        '摔下去不算失败，停下来才算。'
+      ],
+      cheer: [
+        '加油。虽然没人给你加油。',
+        '加油——这句话是免费的。',
+        '跳吧，我在这里看着。'
+      ]
+    },
+    mid: {
+      taunt: [
+        '上面没有你要的东西。',
+        '你只是还没摔得够狠。',
+        '再往上，只会更难。',
+        '这座山记得每一个放弃的人。'
+      ],
+      irony: [
+        '坚持的样子，像极了徒劳。',
+        '你跳得越高，摔得越响。',
+        '你是在爬，还是在原地挣扎？',
+        '你离顶峰最近的一次，是刚才那次坠落。'
+      ],
+      persist: [
+        '手抖了，但没松。',
+        '别数还剩多少层，数你跳了几次。',
+        '你比刚才高了一点。真的。',
+        '风很大，但你还在。'
+      ],
+      cheer: [
+        '加油，别让它看笑话。',
+        '这一次，别掉。',
+        '往上。别回头。'
+      ]
+    },
+    high: {
+      taunt: [
+        '你以为上面会有答案？',
+        '越接近，越舍不得放弃，对吧。',
+        '顶峰只容得下一个人，你猜是谁。',
+        '就快到了——这句话我说了很多次。'
+      ],
+      irony: [
+        '上面的人早走了。',
+        '你现在的坚持，很像一种习惯。',
+        '摔下去，故事才完整。',
+        '爬得这么高，还是没人看见。'
+      ],
+      persist: [
+        '再坚持一层，就一层。',
+        '你已经比大多数人高了。',
+        '别停在这里。',
+        '只差一点。真的只差一点。'
+      ],
+      cheer: [
+        '加油。上面见。',
+        '这次，别回头。',
+        '跳上去。让我看看。'
+      ]
+    },
+    top: [
+      '顶峰就在上面。你自己信吗？',
+      '到了又怎样？',
+      '别在这里掉下去。求你了。',
+      '你已经没有理由放弃了。',
+      '最后几层，最难，也最安静。',
+      '跳上去。让我看看。',
+      '你居然真的走到了这里。',
+      '上面很冷。但你还是想上去。'
+    ]
+  };
+  var FALL_WHISPERS = [
+    '看，又回来了。',
+    '山脚风景不错吧。',
+    '早说了，别爬。',
+    '这一摔，白跳了。',
+    '你摔下来的样子，比爬的时候熟练。'
+  ];
+
+  try { best = parseInt(localStorage.getItem('tx_summit_best_v1') || '0', 10) || 0; } catch(e){ best = 0; }
+  document.getElementById('bs').textContent = best;
+
+  var ac = null;
+  function sfx(freq, dur, type, vol, slide){
+    try {
+      if (!ac){ var AC = window.AudioContext || window.webkitAudioContext; if(!AC) return; ac = new AC(); }
+      if (ac.state === 'suspended') ac.resume();
+      var o = ac.createOscillator(), g = ac.createGain();
+      o.type = type || 'triangle';
+      o.frequency.setValueAtTime(freq, ac.currentTime);
+      if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(40,freq+slide), ac.currentTime+dur);
+      g.gain.setValueAtTime(0.0001, ac.currentTime);
+      g.gain.exponentialRampToValueAtTime(vol||0.05, ac.currentTime+0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime+dur);
+      o.connect(g); g.connect(ac.destination);
+      o.start(); o.stop(ac.currentTime+dur+0.02);
+    } catch(e){}
+  }
+
+  function makeTower(){
+    plats = [];
+    var ground = { x: 40, y: 0, w: W-80, ground: true, id: 0 };
+    plats.push(ground);
+    var lastX = W/2 - 60, lastW = 120;
+    var N = TOWER_LAYERS;
+    for (var i=1;i<=N;i++){
+      var y = (i === N) ? -TOWER_TOP_PX : -i*FLOOR_H;
+      var w = 66 + Math.random()*54;
+      if (i === N) w = 132;
+      var minX = 18, maxX = W - 18 - w;
+      var shift = (Math.random()*2-1) * 122;
+      var x = Math.max(minX, Math.min(maxX, lastX + shift));
+      if (i % 5 === 0) x = Math.max(minX, Math.min(maxX, lastX + (lastX > W/2 ? -1 : 1) * 36));
+      if (i === N) x = Math.max(minX, Math.min(maxX, lastX + (Math.random()*2-1)*50));
+      var p = { x:x, y:y, w:w, id:i };
+      plats.push(p);
+      lastX = x; lastW = w;
+    }
+    goalPlat = plats[plats.length-1];
+    climbTop = -TOWER_TOP_PX;
+  }
+
+  function reset(){
+    makeTower();
+    player = { x: W/2 - 30, y: -PH, vx:0, vy:0, onGround:true, facing:1, squash:0 };
+    camY = 0; targetCam = 0;
+    aim = 0; charging = false; charge = 0;
+    jumps = 0; falls = 0; maxHeight = 0; runT = 0; won = false; shake = 0;
+    whisper = null; whisperSeq = 0; whisperNext = WHISPER_EVERY;
+    whisperStarted = false; whisperLast = ''; whisperFallAt = -99;
+    dust = []; snow = [];
+    for (var i=0;i<70;i++) snow.push({ x:Math.random()*W, y:Math.random()*H, s:0.6+Math.random()*1.7, sp:8+Math.random()*26, ph:Math.random()*6.28 });
+    document.getElementById('sc').textContent = '0';
+    document.getElementById('fall').textContent = '0';
+    state = 'play';
+    startTime = performance.now();
+    lastT = performance.now();
+    hint = 4.5;
+  }
+
+  function jump(){
+    if (!player.onGround) return;
+    var c = charge;
+    player.vy = -(560 + c*520);
+    player.vx = aim * (70 + c*300);
+    player.onGround = false;
+    player.squash = 1;
+    jumps++;
+    if (jumps >= whisperNext){
+      whisperNext = jumps + WHISPER_EVERY;
+      nextWhisper();
+    }
+    charge = 0; charging = false;
+    for (var i=0;i<12;i++){
+      dust.push({ x:player.x+PW/2+(Math.random()-.5)*20, y:player.y+PH, vx:(Math.random()-.5)*150, vy:Math.random()*-90, life:0.4+Math.random()*0.3, t:0, r:1.5+Math.random()*2.5 });
+    }
+    sfx(260 + c*160, 0.13, 'triangle', 0.06, 80);
+  }
+
+  function step(dt){
+    runT += dt;
+    hint = Math.max(0, hint - dt);
+    if (state === 'play'){
+      if (!whisperStarted && runT > 1.15){
+        whisperStarted = true;
+        showWhisper('你不可能登顶，不如早早放弃。', 'taunt', 6.8, 0.4);
+      }
+      if (whisper){
+        whisper.t += dt;
+        if (whisper.t >= whisper.dur) whisper = null;
+      }
+    }
+    if (charging && state === 'play'){
+      charge = Math.min(1, charge + dt/0.72);
+    }
+    if (state !== 'play') return;
+
+    // air control
+    var acx = 0;
+    if (keys.left) acx -= 1;
+    if (keys.right) acx += 1;
+    if (!player.onGround) player.vx += acx * 520 * dt;
+    else player.vx *= 0.82;
+    player.vx = Math.max(-260, Math.min(260, player.vx));
+
+    var prevBottom = player.y + PH;
+    if (!player.onGround){
+      player.vy += GRAV*dt;
+      player.x += player.vx*dt;
+      player.y += player.vy*dt;
+      // walls
+      if (player.x < 8){ player.x = 8; player.vx *= -0.3; }
+      if (player.x + PW > W-8){ player.x = W-8-PW; player.vx *= -0.3; }
+      // land
+      if (player.vy > 0){
+        var bottom = player.y + PH;
+        var bestP = null;
+        for (var i=0;i<plats.length;i++){
+          var p = plats[i];
+          if (player.x + PW < p.x + 3 || player.x > p.x + p.w - 3) continue;
+          if (prevBottom <= p.y + 0.5 && bottom >= p.y){
+            if (!bestP || p.y < bestP.y) bestP = p;
+          }
+        }
+        if (bestP){
+          var fallDist = bottom - bestP.y;
+          player.y = bestP.y - PH;
+          player.vy = 0; player.vx = 0;
+          player.onGround = true;
+          landFlash = Math.min(1, fallDist/180 + 0.25);
+          player.squash = -0.8;
+          if (fallDist > 300){
+            falls++;
+            document.getElementById('fall').textContent = falls;
+            sfx(110, 0.22, 'sawtooth', 0.06, -30);
+            shake = 9;
+            if (falls % 3 === 0 && runT - whisperFallAt > 7){
+              whisperFallAt = runT;
+              showWhisper(pickWhisper(FALL_WHISPERS), 'fall', 3.9, 0.42);
+            }
+            for (var d=0;d<10;d++) dust.push({ x:player.x+PW/2, y:player.y+PH, vx:(Math.random()-.5)*200, vy:Math.random()*-70, life:0.5, t:0, r:2+Math.random()*3 });
+          } else {
+            sfx(150, 0.08, 'sine', 0.035, -20);
+          }
+          if (bestP.id === goalPlat.id){
+            win();
+          }
+        }
+      }
+    } else {
+      // follow platform? static
+      player.squash *= 0.86;
+    }
+
+    // fall out of world
+    if (player.y > 220){
+      player.x = W/2 - PW/2; player.y = -PH; player.vx = 0; player.vy = 0;
+      player.onGround = true; camY = 0; falls++;
+      document.getElementById('fall').textContent = falls;
+      shake = 12;
+      if (falls % 3 === 0 && runT - whisperFallAt > 7){
+        whisperFallAt = runT;
+        showWhisper(pickWhisper(FALL_WHISPERS), 'fall', 3.9, 0.42);
+      }
+    }
+
+    var h = Math.max(0, Math.round((-player.y - PH)/10));
+    if (h > TOWER_METERS) h = TOWER_METERS;
+    if (h > maxHeight){
+      maxHeight = h;
+      document.getElementById('sc').textContent = h;
+      if (h > best){
+        best = h;
+        document.getElementById('bs').textContent = best;
+        try { localStorage.setItem('tx_summit_best_v1', String(best)); } catch(e){}
+      }
+    }
+
+    // camera
+    targetCam = player.y - H*0.62;
+    if (targetCam > 0) targetCam = 0;
+    camY += (targetCam - camY) * Math.min(1, dt*6.5);
+    if (camY > 0) camY = 0;
+
+    // particles
+    for (var i=dust.length-1;i>=0;i--){
+      var q = dust[i]; q.t += dt;
+      if (q.t >= q.life){ dust.splice(i,1); continue; }
+      q.x += q.vx*dt; q.y += q.vy*dt; q.vy += 180*dt; q.vx *= 0.97;
+    }
+    for (var s=0;s<snow.length;s++){
+      var sn = snow[s];
+      sn.y += sn.sp*dt;
+      sn.x += Math.sin(runT*0.7 + sn.ph)*7*dt;
+      if (sn.y > H+5){ sn.y = -5; sn.x = Math.random()*W; }
+    }
+    if (shake > 0) shake = Math.max(0, shake - dt*38);
+    if (landFlash > 0) landFlash = Math.max(0, landFlash - dt*2.4);
+    if (player.squash !== undefined) player.squash *= 0.9;
+  }
+
+  function win(){
+    if (won) return;
+    won = true;
+    state = 'over';
+    whisper = null;
+    var secs = (performance.now() - startTime)/1000;
+    if (maxHeight > best){
+      best = maxHeight;
+      try { localStorage.setItem('tx_summit_best_v1', String(best)); } catch(e){}
+    }
+    document.getElementById('bs').textContent = best;
+    document.getElementById('endTitle').textContent = '登顶成功';
+    document.getElementById('endPeak').innerHTML = '<svg viewBox="0 0 84 64"><path d="M4 60 L30 18 L40 34 L56 6 L80 60 Z" fill="#122c1e" stroke="#4ade80" stroke-width="1.5"/><path d="M56 6 L56 24 M56 8 L68 12 L56 17" stroke="#fbbf24" stroke-width="2" fill="none"/><circle cx="56" cy="6" r="3" fill="#fbbf24"/></svg>';
+    document.getElementById('endScore').textContent = maxHeight;
+    document.getElementById('endBest').textContent = best;
+    document.getElementById('endTime').textContent = secs.toFixed(1);
+    document.getElementById('endRank').textContent = '坠落 ' + falls + ' 次，起跳 ' + jumps + ' 次。2027，顶峰不见不散。';
+    document.getElementById('ovEnd').classList.remove('hide');
+    sfx(523, .25, 'triangle', .07);
+    setTimeout(function(){ sfx(659, .25, 'triangle', .06); }, 130);
+    setTimeout(function(){ sfx(784, .4, 'triangle', .06); }, 260);
+  }
+
+  function pickWhisper(arr){
+    if (!arr || !arr.length) return '';
+    if (arr.length === 1) return arr[0];
+    var t = arr[Math.floor(Math.random()*arr.length)];
+    if (t === whisperLast) t = arr[(arr.indexOf(t)+1)%arr.length];
+    return t;
+  }
+
+  function showWhisper(text, kind, dur, alpha){
+    if (!text) return;
+    whisper = { text:text, kind:kind||'taunt', t:0, dur:dur||4.8, alpha:alpha||0.45 };
+    whisperLast = text;
+  }
+
+  function nextWhisper(){
+    var ratio = maxHeight / TOWER_METERS;
+    var band = ratio > 0.93 ? 'top' : ratio > 0.68 ? 'high' : ratio > 0.24 ? 'mid' : 'low';
+    var text, cat = 'taunt';
+    if (band === 'top'){
+      text = pickWhisper(WHISPER_BANDS.top);
+    } else {
+      cat = WHISPER_ORDER[whisperSeq % WHISPER_ORDER.length];
+      whisperSeq++;
+      text = pickWhisper(WHISPER_BANDS[band][cat]);
+    }
+    showWhisper(text, cat, 4.8, band === 'top' ? 0.52 : 0.45);
+  }
+
+  function wrapWhisper(text, maxW){
+    var out = [], cur = '';
+    for (var i=0;i<text.length;i++){
+      var t = cur + text.charAt(i);
+      if (ctx.measureText(t).width > maxW && cur.length){
+        out.push(cur);
+        cur = text.charAt(i);
+      } else cur = t;
+    }
+    if (cur) out.push(cur);
+    return out;
+  }
+
+  function drawWhisper(){
+    if (!whisper) return;
+    var p = Math.min(1, whisper.t / whisper.dur);
+    var env = p < 0.14 ? p/0.14 : (p > 0.70 ? Math.max(0, (1-p)/0.30) : 1);
+    var flick = 0.74 + 0.26 * (0.5 + 0.5*Math.sin(whisper.t*12.7)) * (0.55 + 0.45*Math.sin(whisper.t*4.3 + 1.2));
+    var a = whisper.alpha * env * flick;
+    if (a <= 0.008) return;
+    var fs = 13;
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = '500 ' + fs + 'px "Songti SC","STSong","SimSun",serif';
+    var text = '「' + whisper.text + '」';
+    var lines = wrapWhisper(text, 344);
+    if (lines.length > 2){
+      fs = 12;
+      ctx.font = '500 ' + fs + 'px "Songti SC","STSong","SimSun",serif';
+      lines = wrapWhisper(text, 352);
+    }
+    var lh = fs + 8;
+    var cx = W/2 + Math.sin(whisper.t*0.63)*3;
+    var cy = H*0.215 + Math.sin(whisper.t*0.87)*4 - (lines.length-1)*lh/2;
+    // 深色描边保证在亮色平台上仍可辨认
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = 'rgba(4,10,18,' + (a*0.62).toFixed(3) + ')';
+    for (var k=0;k<lines.length;k++) ctx.strokeText(lines[k], cx, cy + k*lh);
+    ctx.shadowColor = 'rgba(103,232,249,.5)';
+    ctx.shadowBlur = 16;
+    ctx.fillStyle = 'rgba(230,244,255,' + a.toFixed(3) + ')';
+    for (var i=0;i<lines.length;i++){
+      ctx.fillText(lines[i], cx, cy + i*lh);
+    }
+    ctx.shadowBlur = 0;
+    var ly = cy + (lines.length-1)*lh + fs*0.95;
+    var lg = ctx.createLinearGradient(cx-54,0,cx+54,0);
+    lg.addColorStop(0,'rgba(103,232,249,0)');
+    lg.addColorStop(.5,'rgba(103,232,249,' + (a*0.55).toFixed(3) + ')');
+    lg.addColorStop(1,'rgba(103,232,249,0)');
+    ctx.strokeStyle = lg;
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(cx-54,ly); ctx.lineTo(cx+54,ly); ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawBg(){
+    var sky = ctx.createLinearGradient(0,0,0,H);
+    sky.addColorStop(0,'#0a1526'); sky.addColorStop(.45,'#0a1420'); sky.addColorStop(1,'#050a12');
+    ctx.fillStyle = sky; ctx.fillRect(0,0,W,H);
+    // moon
+    var mx = W-86, my = 86 - camY*0.02;
+    var mg = ctx.createRadialGradient(mx,my,4,mx,my,46);
+    mg.addColorStop(0,'rgba(224,242,254,.32)'); mg.addColorStop(.4,'rgba(187,247,252,.12)'); mg.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle = mg; ctx.beginPath(); ctx.arc(mx,my,48,0,6.28); ctx.fill();
+    ctx.fillStyle = '#dff6ff'; ctx.beginPath(); ctx.arc(mx,my,19,0,6.28); ctx.fill();
+    ctx.fillStyle = 'rgba(8,16,26,.28)'; ctx.beginPath(); ctx.arc(mx-6,my-4,4,0,6.28); ctx.fill();
+    ctx.beginPath(); ctx.arc(mx+5,my+5,3,0,6.28); ctx.fill();
+    // stars
+    for (var i=0;i<70;i++){
+      var sx = (i*83.77 + 17) % W;
+      var sy = ((i*151.3 + 29 - camY*0.08) % (H+40) + H+40) % (H+40);
+      var tw = 0.35 + 0.4*(0.5+0.5*Math.sin(runT*1.8+i));
+      ctx.globalAlpha = tw; ctx.fillStyle = i%7===0 ? '#bae6fd' : '#e2f3ff';
+      ctx.beginPath(); ctx.arc(sx, sy, i%11===0?1.5:0.8, 0, 6.28); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    // far ridges
+    var base = H - 100;
+    for (var l=0;l<2;l++){
+      var off = l===0 ? 0.12 : 0.3;
+      var shift = (-camY*off) % 260;
+      ctx.fillStyle = l===0 ? 'rgba(12,26,42,.75)' : 'rgba(9,20,34,.92)';
+      ctx.beginPath();
+      ctx.moveTo(-20, H);
+      for (var x=-40;x<=W+40;x+=40){
+        var yy = base + l*46 + Math.sin((x+shift)*0.012 + l*2)*34 + Math.cos((x+shift)*0.031)*12;
+        ctx.lineTo(x, yy);
+      }
+      ctx.lineTo(W+40, H); ctx.closePath(); ctx.fill();
+    }
+    // snow
+    for (var s=0;s<snow.length;s++){
+      var sn = snow[s];
+      ctx.globalAlpha = 0.2 + Math.min(0.55, sn.s*0.25);
+      ctx.fillStyle = '#dff6ff';
+      ctx.beginPath(); ctx.arc(sn.x, sn.y, sn.s*0.8, 0, 6.28); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function platScreenY(p){ return p.y - camY; }
+
+  function drawPlat(p){
+    var y = platScreenY(p);
+    if (y < -40 || y > H+60) return;
+    var x = p.x, w = p.w;
+    var depth = p.ground ? 22 : 16;
+    ctx.save();
+    // shadow / rock body
+    var rg = ctx.createLinearGradient(0,y,0,y+depth+14);
+    rg.addColorStop(0,'#20364b'); rg.addColorStop(.4,'#16283a'); rg.addColorStop(1,'#0a1420');
+    ctx.fillStyle = rg;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x+w, y);
+    ctx.lineTo(x+w-7, y+depth);
+    ctx.lineTo(x+12, y+depth+6);
+    ctx.lineTo(x+2, y+10);
+    ctx.closePath(); ctx.fill();
+    // top snow cap
+    var tg = ctx.createLinearGradient(0,y-3,0,y+8);
+    tg.addColorStop(0,'#e8f7ff'); tg.addColorStop(.55,'#b6d9e8'); tg.addColorStop(1,'#6f97ad');
+    ctx.fillStyle = tg;
+    ctx.beginPath();
+    ctx.moveTo(x+1, y+2);
+    ctx.quadraticCurveTo(x+w*0.3, y-4, x+w*0.55, y+1);
+    ctx.quadraticCurveTo(x+w*0.8, y-3, x+w-2, y+2);
+    ctx.lineTo(x+w-2, y+6);
+    ctx.lineTo(x+2, y+6);
+    ctx.closePath(); ctx.fill();
+    // icicles
+    ctx.fillStyle = 'rgba(165,243,252,.42)';
+    for (var i=0;i<3;i++){
+      var ix = x + 10 + (i+0.5)*w/3 + (p.id*7%11);
+      var len = 3 + ((p.id+i*3)%7);
+      ctx.beginPath(); ctx.moveTo(ix-2, y+6); ctx.lineTo(ix+2, y+6); ctx.lineTo(ix, y+6+len); ctx.closePath(); ctx.fill();
+    }
+    // index number
+    if (!p.ground && p.id % 4 === 1){
+      ctx.fillStyle = 'rgba(125,211,252,.26)';
+      ctx.font = '700 9px ui-monospace,Consolas,monospace';
+      ctx.textAlign = 'right';
+      ctx.fillText('#' + p.id, x+w-6, y+18);
+    }
+    // goal flag
+    if (p === goalPlat){
+      var fx = x + w/2, fy = y - 2;
+      var glow = ctx.createRadialGradient(fx,fy-26,2,fx,fy-26,44);
+      glow.addColorStop(0,'rgba(251,191,36,.35)'); glow.addColorStop(1,'rgba(251,191,36,0)');
+      ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(fx,fy-26,44,0,6.28); ctx.fill();
+      ctx.strokeStyle = '#dbeafe'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(fx,fy); ctx.lineTo(fx,fy-48); ctx.stroke();
+      ctx.fillStyle = '#fbbf24';
+      var wave = Math.sin(runT*4)*3;
+      ctx.beginPath(); ctx.moveTo(fx,fy-48); ctx.lineTo(fx+24,fy-42+wave); ctx.lineTo(fx,fy-33); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = 'rgba(251,191,36,.85)';
+      ctx.font = '700 8px ui-monospace,Consolas,monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('2027 · SUMMIT', fx, fy-54);
+    }
+    ctx.restore();
+  }
+
+  function drawPlayer(){
+    var px = player.x + PW/2;
+    var py = player.y + PH - camY;
+    var squash = player.squash || 0;
+    var sx = 1 + squash*0.22, sy = 1 - squash*0.22;
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.scale(sx, sy);
+    // shadow glow
+    var gg = ctx.createRadialGradient(0,-PH/2,2,0,-PH/2,22);
+    gg.addColorStop(0,'rgba(103,232,249,.28)'); gg.addColorStop(1,'rgba(103,232,249,0)');
+    ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(0,-PH/2,22,0,6.28); ctx.fill();
+    // scarf
+    var wob = Math.sin(runT*8)*4 + Math.min(10, Math.abs(player.vx)*0.04);
+    ctx.fillStyle = '#fb7185';
+    ctx.beginPath();
+    ctx.moveTo(-4,-PH*0.62);
+    ctx.quadraticCurveTo(-18 - wob, -PH*0.55, -22 - wob, -PH*0.30 + Math.sin(runT*6)*3);
+    ctx.lineTo(-13 - wob*0.4, -PH*0.34);
+    ctx.quadraticCurveTo(-10, -PH*0.5, -4, -PH*0.52);
+    ctx.closePath(); ctx.fill();
+    // body
+    var bg = ctx.createLinearGradient(0,-PH,0,0);
+    bg.addColorStop(0,'#e0f2fe'); bg.addColorStop(.5,'#a5f3fc'); bg.addColorStop(1,'#22d3ee');
+    ctx.fillStyle = bg;
+    ctx.beginPath();
+    ctx.moveTo(-PW/2, -PH*0.1);
+    ctx.quadraticCurveTo(-PW/2-2, -PH*0.78, 0, -PH);
+    ctx.quadraticCurveTo(PW/2+2, -PH*0.78, PW/2, -PH*0.1);
+    ctx.quadraticCurveTo(PW/2, 1, 0, 1);
+    ctx.quadraticCurveTo(-PW/2, 1, -PW/2, -PH*0.1);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 1; ctx.stroke();
+    // eyes
+    ctx.fillStyle = '#062033';
+    var eyeY = -PH*0.62;
+    ctx.beginPath(); ctx.arc(-3.6 + player.facing*0.6, eyeY, 1.9, 0, 6.28); ctx.fill();
+    ctx.beginPath(); ctx.arc(3.6 + player.facing*0.6, eyeY, 1.9, 0, 6.28); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.9)';
+    ctx.beginPath(); ctx.arc(-3.1 + player.facing*0.6, eyeY-0.7, 0.7, 0, 6.28); ctx.fill();
+    ctx.beginPath(); ctx.arc(4.1 + player.facing*0.6, eyeY-0.7, 0.7, 0, 6.28); ctx.fill();
+    // cheeks
+    ctx.fillStyle = 'rgba(251,113,133,.45)';
+    ctx.beginPath(); ctx.arc(-6, -PH*0.45, 2, 0, 6.28); ctx.fill();
+    ctx.beginPath(); ctx.arc(6, -PH*0.45, 2, 0, 6.28); ctx.fill();
+    ctx.restore();
+
+    // charge bar
+    if (charging && state === 'play'){
+      var bw = 42, bx = px - bw/2, by = py - PH - 24;
+      ctx.fillStyle = 'rgba(2,8,14,.72)';
+      ctx.beginPath(); ctx.roundRect ? ctx.roundRect(bx,by,bw,7,3.5) : ctx.rect(bx,by,bw,7); ctx.fill();
+      var cg = ctx.createLinearGradient(bx,0,bx+bw,0);
+      cg.addColorStop(0,'#67e8f9'); cg.addColorStop(.6,'#a5f3fc'); cg.addColorStop(1,'#fbbf24');
+      ctx.fillStyle = cg;
+      ctx.beginPath(); ctx.roundRect ? ctx.roundRect(bx+1,by+1,(bw-2)*charge,5,2.5) : ctx.rect(bx+1,by+1,(bw-2)*charge,5); ctx.fill();
+      // aim arrow
+      if (Math.abs(aim) > 0.05){
+        ctx.strokeStyle = 'rgba(251,191,36,.65)'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(px, py - PH - 30); ctx.lineTo(px + aim*24, py - PH - 30); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(px+aim*24, py-PH-30); ctx.lineTo(px+aim*24-Math.sign(aim)*6, py-PH-34); ctx.lineTo(px+aim*24-Math.sign(aim)*6, py-PH-26); ctx.closePath(); ctx.fillStyle='rgba(251,191,36,.65)'; ctx.fill();
+      }
+    }
+  }
+
+  function drawHudWorld(){
+    // height ticks on the left
+    var altM = Math.min(TOWER_METERS, Math.round(-camY/10));
+    ctx.save();
+    ctx.globalAlpha = 0.5;
+    ctx.strokeStyle = 'rgba(125,211,252,.35)'; ctx.lineWidth = 1;
+    for (var m=0;m<8;m++){
+      var y = H - 20 - m*80 - ((-camY) % 80);
+      if (y < 20) continue;
+      ctx.beginPath(); ctx.moveTo(6,y); ctx.lineTo(12,y); ctx.stroke();
+    }
+    ctx.restore();
+    // altitude tape text
+    ctx.save();
+    ctx.globalAlpha = 0.7;
+    ctx.fillStyle = '#7dd3fc';
+    ctx.font = '700 9px ui-monospace,Consolas,monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText(altM + 'm', 16, 24);
+    ctx.restore();
+  }
+
+  function draw(){
+    var sx=0, sy=0;
+    if (shake > 1){ sx=(Math.random()-.5)*shake; sy=(Math.random()-.5)*shake; }
+    ctx.save();
+    ctx.translate(sx,sy);
+    drawBg();
+    for (var i=0;i<plats.length;i++) drawPlat(plats[i]);
+    for (var d=0;d<dust.length;d++){
+      var q = dust[d], al = 1 - q.t/q.life;
+      ctx.globalAlpha = al*0.65;
+      ctx.fillStyle = '#cfe9f5';
+      ctx.beginPath(); ctx.arc(q.x, q.y - camY, q.r*(0.5+al*0.8), 0, 6.28); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    drawPlayer();
+    drawHudWorld();
+    drawWhisper();
+    // hint
+    if (hint > 0 && state === 'play'){
+      ctx.globalAlpha = Math.min(1, hint);
+      ctx.fillStyle = 'rgba(224,242,254,.86)';
+      ctx.font = '600 11px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('按住蓄力 · 左右瞄准 · 松手起跳', W/2, H*0.32);
+      ctx.globalAlpha = 1;
+    }
+    if (landFlash > 0){
+      ctx.fillStyle = 'rgba(224,242,254,' + (landFlash*0.08) + ')';
+      ctx.fillRect(0,0,W,H);
+    }
+    ctx.restore();
+  }
+
+  function loop(now){
+    var dt = Math.min(0.04, (now-lastT)/1000 || 0.016);
+    lastT = now;
+    step(dt);
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  function setAim(v){ aim = Math.max(-1, Math.min(1, v)); if (aim !== 0) player.facing = aim > 0 ? 1 : -1; }
+
+  window.addEventListener('keydown', function(e){
+    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A'){ keys.left = true; setAim(-1); e.preventDefault(); }
+    if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D'){ keys.right = true; setAim(1); e.preventDefault(); }
+    if (e.key === ' ' || e.key === 'Enter'){
+      e.preventDefault();
+      if (state !== 'play'){ start(); return; }
+      if (!charging && player.onGround){ charging = true; charge = 0; }
+    }
+  });
+  window.addEventListener('keyup', function(e){
+    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A'){ keys.left = false; if (!keys.right) setAim(0); }
+    if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D'){ keys.right = false; if (!keys.left) setAim(0); }
+    if (e.key === ' ' || e.key === 'Enter'){
+      e.preventDefault();
+      if (charging && state === 'play') jump();
+    }
+  });
+
+  var downX = 0, downAim = 0;
+  cv.addEventListener('pointerdown', function(e){
+    e.preventDefault();
+    if (state !== 'play') return;
+    var rc = cv.getBoundingClientRect();
+    var frac = (e.clientX - rc.left) / rc.width;
+    downX = frac; downAim = frac < 0.5 ? -1 : 1;
+    if (player.onGround){ charging = true; charge = 0; setAim(frac < 0.5 ? -0.55 : 0.55); }
+  });
+  cv.addEventListener('pointermove', function(e){
+    if (!charging) return;
+    var rc = cv.getBoundingClientRect();
+    var frac = (e.clientX - rc.left) / rc.width;
+    var dx = frac - downX;
+    setAim(downAim > 0 ? Math.max(0, Math.min(1, 0.35 + dx*2.2)) : Math.min(0, Math.max(-1, -0.35 + dx*2.2)));
+  });
+  window.addEventListener('pointerup', function(e){
+    if (charging && state === 'play') jump();
+  });
+  cv.addEventListener('pointercancel', function(){ if (charging && state === 'play') jump(); });
+
+  function start(){
+    document.getElementById('ovStart').classList.add('hide');
+    document.getElementById('ovEnd').classList.add('hide');
+    document.getElementById('endTitle').textContent = '登顶失败';
+    reset();
+  }
+  document.getElementById('btnStart').addEventListener('click', start);
+  document.getElementById('btnAgain').addEventListener('click', start);
+
+  /* ================= 调试接口 ================= */
+
+  window.__SUMMIT__ = {
+    state: function(){
+      return {
+        state: state, jumps: jumps, falls: falls, maxHeight: maxHeight,
+        camY: Math.round(camY*10)/10, won: won,
+        plats: plats.length, goalId: goalPlat ? goalPlat.id : 0,
+        goalY: goalPlat ? goalPlat.y : 0, climbTop: climbTop,
+        floorH: FLOOR_H, towerLayers: TOWER_LAYERS,
+        towerMeters: TOWER_METERS, topPx: TOWER_TOP_PX,
+        whisper: whisper ? whisper.text : '',
+        whisperT: whisper ? Math.round(whisper.t*10)/10 : 0,
+        whisperNext: whisperNext,
+        player: { x: Math.round(player.x*10)/10, y: Math.round(player.y*10)/10, onGround: player.onGround }
+      };
+    },
+    goal: function(){
+      return goalPlat ? { id: goalPlat.id, x: goalPlat.x, y: goalPlat.y, w: goalPlat.w } : null;
+    },
+    warp: function(y, x){
+      if (typeof y === 'number') player.y = y;
+      if (typeof x === 'number') player.x = x;
+      player.vx = 0; player.vy = 0; player.onGround = false;
+      targetCam = player.y - H*0.62;
+      if (targetCam > 0) targetCam = 0;
+      camY = targetCam;
+      return this.state();
+    },
+    win: function(){ win(); return this.state(); }
+  };
+
+  makeTower();
+  player = { x:W/2-30, y:-PH, vx:0, vy:0, onGround:true, facing:1, squash:0 };
+  for (var i=0;i<70;i++) snow.push({ x:Math.random()*W, y:Math.random()*H, s:0.6+Math.random()*1.7, sp:8+Math.random()*26, ph:Math.random()*6.28 });
+  draw();
+  requestAnimationFrame(function(n){ lastT = n; requestAnimationFrame(loop); });
+})();
+</script>
+</body>
+</html>

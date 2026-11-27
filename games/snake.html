@@ -38,7 +38,29 @@
     font-family: "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
   }
 
+  body::before {
+    content: "";
+    position: fixed;
+    inset: -22%;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(closest-side, rgba(45, 255, 196, 0.13), transparent 72%) 14% 22% / 40% 40% no-repeat,
+      radial-gradient(closest-side, rgba(67, 232, 255, 0.11), transparent 72%) 84% 74% / 44% 44% no-repeat,
+      radial-gradient(closest-side, rgba(120, 255, 220, 0.06), transparent 72%) 52% 96% / 34% 34% no-repeat;
+    filter: blur(26px);
+    animation: aurora-drift 20s ease-in-out infinite alternate;
+  }
+
+  @keyframes aurora-drift {
+    0% { transform: translate3d(-1.5%, -1%, 0) scale(1); }
+    50% { transform: translate3d(1.2%, 1.4%, 0) scale(1.04); }
+    100% { transform: translate3d(-0.8%, 2%, 0) scale(1.02); }
+  }
+
   .app {
+    position: relative;
+    z-index: 1;
     width: 100%;
     max-width: 780px;
     padding: 18px 22px 16px;
@@ -207,18 +229,39 @@
   }
 
   .overlay-panel {
+    position: relative;
+    overflow: hidden;
     width: min(330px, 92%);
     max-height: calc(100% - 12px);
     overflow-y: auto;
     padding: 26px 24px 24px;
     text-align: center;
-    border: 1px solid rgba(103, 255, 216, 0.24);
+    border: 1px solid rgba(103, 255, 216, 0.28);
     border-radius: 19px;
     background:
-      linear-gradient(155deg, rgba(12, 36, 39, 0.96), rgba(4, 14, 19, 0.97));
+      linear-gradient(155deg, rgba(12, 38, 41, 0.96), rgba(4, 14, 19, 0.97));
     box-shadow:
       0 18px 60px rgba(0, 0, 0, 0.56),
+      0 0 44px rgba(45, 255, 195, 0.10),
+      inset 0 1px 0 rgba(180, 255, 235, 0.10),
       inset 0 0 42px rgba(45, 255, 195, 0.035);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+  }
+
+  .overlay-panel::before {
+    content: "";
+    position: absolute;
+    top: -42%;
+    left: -18%;
+    width: 136%;
+    height: 76%;
+    pointer-events: none;
+    background: radial-gradient(closest-side, rgba(94, 255, 214, 0.16), transparent 76%);
+  }
+
+  .overlay-panel > * {
+    position: relative;
   }
 
   .overlay-kicker {
@@ -226,18 +269,22 @@
     margin-bottom: 8px;
     color: #56eabe;
     font-size: 10px;
-    font-weight: 600;
+    font-weight: 700;
     letter-spacing: 0.3em;
+    text-shadow: 0 0 14px rgba(86, 234, 190, 0.5);
   }
 
   .overlay-title {
     margin: 0 0 10px;
-    color: #f1fffb;
     font-size: 27px;
     line-height: 1.2;
-    font-weight: 650;
+    font-weight: 700;
     letter-spacing: 0.08em;
-    text-shadow: 0 0 24px rgba(72, 255, 203, 0.32);
+    background: linear-gradient(120deg, #f4fffb 0%, #9dffe4 46%, #5ce6ff 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 0 22px rgba(72, 255, 203, 0.28));
   }
 
   .overlay-text {
@@ -310,10 +357,86 @@
     font-size: 10px;
   }
 
+  .mode-row {
+    width: 100%;
+    display: flex;
+    gap: 7px;
+    padding: 2px 0 1px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .mode-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mode-chip {
+    flex: 1 0 auto;
+    min-width: 62px;
+    padding: 8px 12px;
+    color: #8fc9bd;
+    border: 1px solid rgba(92, 255, 208, 0.18);
+    border-radius: 10px;
+    background: linear-gradient(150deg, rgba(20, 52, 55, 0.62), rgba(6, 20, 26, 0.72));
+    font: inherit;
+    font-size: 12.5px;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 0.18s ease, border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+  }
+
+  .mode-chip:hover {
+    color: #c9fff0;
+    border-color: rgba(123, 255, 219, 0.5);
+    transform: translateY(-1px);
+  }
+
+  .mode-chip.is-on {
+    color: #03251c;
+    border-color: transparent;
+    background: linear-gradient(135deg, #a2ffe7 0%, #43e9bd 58%, #38d5ff 100%);
+    font-weight: 700;
+    box-shadow: 0 6px 20px rgba(49, 236, 188, 0.22);
+  }
+
+  .mode-chip:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .mode-note {
+    width: 100%;
+    min-height: 17px;
+    margin: -4px 0 0;
+    color: #7fa79e;
+    font-size: 11.5px;
+    line-height: 1.6;
+    text-align: center;
+    letter-spacing: 0.04em;
+  }
+
   @media (max-width: 560px) {
     .app {
       padding: 12px 12px 14px;
       gap: 11px;
+    }
+
+    .mode-row {
+      gap: 5px;
+    }
+
+    .mode-chip {
+      flex: 1 1 0;
+      min-width: 0;
+      padding: 7px 4px;
+      font-size: 11.5px;
+      letter-spacing: 0.02em;
+    }
+
+    .mode-note {
+      font-size: 10.5px;
     }
 
     .brand-sub {
@@ -376,10 +499,23 @@
           <span class="stat-label">速度</span>
           <span class="stat-value"><span id="speed">8.0</span><span class="stat-unit">格/秒</span></span>
         </div>
+        <div class="stat">
+          <span class="stat-label" id="extraLabel">模式</span>
+          <span class="stat-value" id="extraValue">经典</span>
+        </div>
       </div>
 
       <button class="ghost-btn" id="restartBtn" type="button">重新开始</button>
     </header>
+
+    <div class="mode-row" id="modeRow" role="group" aria-label="选择游戏模式">
+      <button class="mode-chip is-on" data-mode="classic" type="button" aria-pressed="true">经典</button>
+      <button class="mode-chip" data-mode="wrap" type="button" aria-pressed="false">穿墙</button>
+      <button class="mode-chip" data-mode="timed" type="button" aria-pressed="false">限时</button>
+      <button class="mode-chip" data-mode="maze" type="button" aria-pressed="false">障碍</button>
+      <button class="mode-chip" data-mode="sprint" type="button" aria-pressed="false">冲刺</button>
+    </div>
+    <p class="mode-note" id="modeNote">撞墙或撞到自己即结束，速度随得分变快</p>
 
     <main class="stage" id="stage">
       <canvas id="game" width="660" height="660" aria-label="贪吃蛇棋盘"></canvas>
@@ -387,17 +523,19 @@
         <div class="overlay-panel">
           <div class="overlay-kicker" id="overlayKicker">离线街机</div>
           <h2 class="overlay-title" id="overlayTitle">贪吃蛇</h2>
-          <p class="overlay-text" id="overlayText">按方向键 / WASD 开始游戏</p>
-          <p class="overlay-hint" id="overlayHint">吃到一个食物 +1 分，速度会慢慢变快</p>
+          <p class="overlay-text" id="overlayText">按方向键 / WASD，或滑动屏幕开始</p>
+          <p class="overlay-hint" id="overlayHint">手机滑动屏幕控制方向，吃到食物 +1 分</p>
           <button class="primary-btn" id="overlayBtn" type="button">开始游戏</button>
         </div>
       </div>
     </main>
 
     <footer class="helpbar">
-      <span><kbd>方向键</kbd> / <kbd>WASD</kbd> 移动</span>
+      <span><kbd>方向键</kbd> / <kbd>WASD</kbd> / 滑动屏幕 移动</span>
       <span class="sep">·</span>
       <span><kbd>空格</kbd> 暂停 / 继续</span>
+      <span class="sep">·</span>
+      <span><kbd>数字 1–5</kbd> 暂停后切换模式</span>
       <span class="sep">·</span>
       <span>不能 180° 反向</span>
     </footer>
@@ -410,10 +548,51 @@
     var COLS = 22;
     var ROWS = 22;
     var START_LENGTH = 4;
-    var INITIAL_SPEED = 8;
-    var MAX_SPEED = 20;
-    var SPEED_PER_FOOD = 0.4;
     var HIGH_SCORE_KEY = "offline_snake_high_score_v1";
+    var MODE_KEY = "offline_snake_modes_v1";
+
+    var MODE_LIST = [
+      {
+        id: "classic", name: "经典",
+        kicker: "经典 · 无尽",
+        note: "撞墙或撞到自己即结束，速度随得分变快",
+        hint: "按方向键 / WASD，或滑动屏幕开始",
+        speed: 8, maxSpeed: 20, gain: 0.4
+      },
+      {
+        id: "wrap", name: "穿墙",
+        kicker: "穿墙 · 无边",
+        note: "从一侧穿到另一侧，只有撞到自己才会结束",
+        hint: "边界会把你送到另一边，别把自己绕死",
+        speed: 9, maxSpeed: 22, gain: 0.45, wrap: true
+      },
+      {
+        id: "timed", name: "限时",
+        kicker: "限时 · 60 秒",
+        note: "60 秒倒计时，尽量多吃；时间到自动结算",
+        hint: "60 秒内吃到更多食物，速度会越来越快",
+        speed: 9, maxSpeed: 22, gain: 0.55, timeLimit: 60
+      },
+      {
+        id: "maze", name: "障碍",
+        kicker: "障碍 · 赛道",
+        note: "绕开固定障碍块，撞墙、撞障碍或撞自己都结束",
+        hint: "绕开蓝色障碍块，给自己留出掉头空间",
+        speed: 8, maxSpeed: 19, gain: 0.35, obstacles: true
+      },
+      {
+        id: "sprint", name: "冲刺",
+        kicker: "冲刺 · 30 个",
+        note: "吃满 30 个食物即通关，起步速度很快",
+        hint: "吃满 30 个食物通关，起步就是高速",
+        speed: 12, maxSpeed: 26, gain: 0.5, target: 30
+      }
+    ];
+
+    var MODES = {};
+    MODE_LIST.forEach(function (mode) {
+      MODES[mode.id] = mode;
+    });
 
     var canvas = document.getElementById("game");
     var ctx = canvas.getContext("2d");
@@ -427,17 +606,25 @@
     var overlayHint = document.getElementById("overlayHint");
     var overlayBtn = document.getElementById("overlayBtn");
     var restartBtn = document.getElementById("restartBtn");
+    var modeRow = document.getElementById("modeRow");
+    var modeNote = document.getElementById("modeNote");
+    var extraLabel = document.getElementById("extraLabel");
+    var extraValue = document.getElementById("extraValue");
 
     var boardPx = 0;
     var dpr = 1;
 
     var state = {
       phase: "ready",
+      mode: "classic",
       snake: [],
       prevSnake: [],
       dir: { x: 1, y: 0 },
       turnQueue: [],
       food: null,
+      obstacles: [],
+      timeLeft: 0,
+      target: 0,
       score: 0,
       highScore: 0,
       accumulator: 0,
@@ -476,29 +663,50 @@
       return body;
     }
 
-    function loadHighScore() {
-      var stored = 0;
+    function readScores() {
       try {
-        stored = parseInt(window.localStorage.getItem(HIGH_SCORE_KEY), 10);
+        var raw = JSON.parse(window.localStorage.getItem(MODE_KEY) || "{}");
+        return raw && typeof raw === "object" ? raw : {};
       } catch (err) {
-        stored = 0;
+        return {};
       }
+    }
+
+    function loadHighScore(modeId) {
+      var scores = readScores();
+      var stored = parseInt(scores[modeId], 10);
       if (isFinite(stored) && stored > 0) {
         return stored;
+      }
+      if (modeId === "classic") {
+        try {
+          stored = parseInt(window.localStorage.getItem(HIGH_SCORE_KEY), 10);
+        } catch (err) {
+          stored = 0;
+        }
+        if (isFinite(stored) && stored > 0) {
+          return stored;
+        }
       }
       return 0;
     }
 
     function saveHighScore() {
+      var scores = readScores();
+      scores[state.mode] = state.highScore;
       try {
-        window.localStorage.setItem(HIGH_SCORE_KEY, String(state.highScore));
+        window.localStorage.setItem(MODE_KEY, JSON.stringify(scores));
+        if (state.mode === "classic") {
+          window.localStorage.setItem(HIGH_SCORE_KEY, String(state.highScore));
+        }
       } catch (err) {
         /* 本地存储不可用时，高分仍然在当前页面内生效。 */
       }
     }
 
     function currentSpeed() {
-      return Math.min(MAX_SPEED, INITIAL_SPEED + state.score * SPEED_PER_FOOD);
+      var mode = MODES[state.mode];
+      return Math.min(mode.maxSpeed, mode.speed + state.score * mode.gain);
     }
 
     function stepDuration() {
@@ -509,6 +717,23 @@
       scoreEl.textContent = String(state.score);
       highScoreEl.textContent = String(state.highScore);
       speedEl.textContent = currentSpeed().toFixed(1);
+      var mode = MODES[state.mode];
+      if (mode.timeLimit) {
+        extraLabel.textContent = "剩余时间";
+        extraValue.textContent = Math.max(0, state.timeLeft).toFixed(1) + " s";
+      } else if (mode.target) {
+        extraLabel.textContent = "目标进度";
+        extraValue.textContent = Math.min(state.score, mode.target) + " / " + mode.target;
+      } else {
+        extraLabel.textContent = "模式";
+        extraValue.textContent = mode.name;
+      }
+    }
+
+    function updateTimerHud() {
+      if (MODES[state.mode].timeLimit) {
+        extraValue.textContent = Math.max(0, state.timeLeft).toFixed(1) + " s";
+      }
     }
 
     function findFreeCell() {
@@ -517,6 +742,9 @@
       for (i = 0; i < state.snake.length; i++) {
         var segment = state.snake[i];
         occupied[segment.y * COLS + segment.x] = true;
+      }
+      for (i = 0; i < state.obstacles.length; i++) {
+        occupied[state.obstacles[i].y * COLS + state.obstacles[i].x] = true;
       }
 
       var freeCells = [];
@@ -534,15 +762,74 @@
       return freeCells[Math.floor(Math.random() * freeCells.length)];
     }
 
+    function buildObstacles() {
+      var list = [];
+      var i;
+      function add(x, y) {
+        list.push({ x: x, y: y });
+      }
+      for (i = 5; i <= 7; i++) {
+        add(5, i);
+        add(16, i);
+        add(5, 21 - i);
+        add(16, 21 - i);
+      }
+      for (i = 8; i <= 10; i++) {
+        add(i, 5);
+        add(21 - i, 5);
+        add(i, 16);
+        add(21 - i, 16);
+      }
+      return list;
+    }
+
+    function setModeChipsDisabled(disabled) {
+      var chips = modeRow.querySelectorAll(".mode-chip");
+      for (var i = 0; i < chips.length; i++) {
+        chips[i].disabled = disabled;
+      }
+    }
+
+    function syncModeUI() {
+      var mode = MODES[state.mode];
+      var chips = modeRow.querySelectorAll(".mode-chip");
+      for (var i = 0; i < chips.length; i++) {
+        var on = chips[i].getAttribute("data-mode") === state.mode;
+        chips[i].classList.toggle("is-on", on);
+        chips[i].setAttribute("aria-pressed", on ? "true" : "false");
+      }
+      modeNote.textContent = mode.note;
+      overlayKicker.textContent = mode.kicker;
+      updateHud();
+    }
+
+    function setMode(modeId) {
+      if (!MODES[modeId]) {
+        return;
+      }
+      if (state.phase === "playing") {
+        modeNote.textContent = "先暂停（空格）再切换模式";
+        return;
+      }
+      if (modeId === state.mode && state.phase === "ready") {
+        return;
+      }
+      state.mode = modeId;
+      state.highScore = loadHighScore(modeId);
+      syncModeUI();
+      resetToReady();
+    }
+
     function hideOverlay() {
       overlay.classList.add("is-hidden");
     }
 
     function showReadyOverlay() {
-      overlayKicker.textContent = "离线街机";
+      var mode = MODES[state.mode];
+      overlayKicker.textContent = mode.kicker;
       overlayTitle.textContent = "贪吃蛇";
-      overlayText.textContent = "按方向键 / WASD 开始游戏";
-      overlayHint.textContent = "吃到一个食物 +1 分，速度会慢慢变快";
+      overlayText.textContent = mode.hint;
+      overlayHint.textContent = "手机滑动屏幕控制方向 · 本模式最高 " + state.highScore + " 分";
       overlayBtn.textContent = "开始游戏";
       overlay.classList.remove("is-hidden");
     }
@@ -551,16 +838,16 @@
       overlayKicker.textContent = "暂停";
       overlayTitle.textContent = "已暂停";
       overlayText.textContent = "按空格键或点击按钮继续";
-      overlayHint.textContent = "方向键 / WASD 控制方向，不能直接掉头";
+      overlayHint.textContent = "本模式最高 " + state.highScore + " 分 · 暂停时可以切换模式";
       overlayBtn.textContent = "继续游戏";
       overlay.classList.remove("is-hidden");
     }
 
     function showGameOverOverlay() {
       overlayKicker.textContent = state.won ? "完美通关" : state.reason;
-      overlayTitle.textContent = state.won ? "你赢啦" : "游戏结束";
-      overlayText.textContent = "本局得分 " + state.score + " 分";
-      overlayHint.textContent = "历史最高 " + state.highScore + " 分";
+      overlayTitle.textContent = state.won ? "你赢啦" : (state.reason === "时间到" ? "时间到" : "游戏结束");
+      overlayText.textContent = MODES[state.mode].name + "模式 · 本局得分 " + state.score + " 分";
+      overlayHint.textContent = "本模式最高 " + state.highScore + " 分";
       overlayBtn.textContent = "重新开始";
       overlay.classList.remove("is-hidden");
     }
@@ -575,8 +862,13 @@
       state.accumulator = 0;
       state.reason = "";
       state.won = false;
+      var mode = MODES[state.mode];
+      state.obstacles = mode.obstacles ? buildObstacles() : [];
+      state.timeLeft = mode.timeLimit || 0;
+      state.target = mode.target || 0;
       state.food = findFreeCell();
-      updateHud();
+      setModeChipsDisabled(false);
+      syncModeUI();
       showReadyOverlay();
     }
 
@@ -590,7 +882,12 @@
       state.accumulator = 0;
       state.reason = "";
       state.won = false;
+      var mode = MODES[state.mode];
+      state.obstacles = mode.obstacles ? buildObstacles() : [];
+      state.timeLeft = mode.timeLimit || 0;
+      state.target = mode.target || 0;
       state.food = findFreeCell();
+      setModeChipsDisabled(true);
       updateHud();
       hideOverlay();
     }
@@ -604,12 +901,14 @@
         return;
       }
       state.phase = "playing";
+      setModeChipsDisabled(true);
       hideOverlay();
     }
 
     function togglePause() {
       if (state.phase === "playing") {
         state.phase = "paused";
+        setModeChipsDisabled(false);
         showPauseOverlay();
         return;
       }
@@ -634,6 +933,7 @@
       state.reason = reason;
       state.won = won === true;
       state.accumulator = 0;
+      setModeChipsDisabled(false);
       updateHud();
       showGameOverOverlay();
     }
@@ -648,10 +948,21 @@
       var head = state.snake[0];
       var nextX = head.x + state.dir.x;
       var nextY = head.y + state.dir.y;
+      var mode = MODES[state.mode];
 
-      if (nextX < 0 || nextX >= COLS || nextY < 0 || nextY >= ROWS) {
+      if (mode.wrap) {
+        nextX = (nextX + COLS) % COLS;
+        nextY = (nextY + ROWS) % ROWS;
+      } else if (nextX < 0 || nextX >= COLS || nextY < 0 || nextY >= ROWS) {
         endRun("撞到墙壁", false);
         return;
+      }
+
+      for (var o = 0; o < state.obstacles.length; o++) {
+        if (state.obstacles[o].x === nextX && state.obstacles[o].y === nextY) {
+          endRun("撞到障碍", false);
+          return;
+        }
       }
 
       var eating = state.food !== null &&
@@ -673,6 +984,11 @@
         if (state.score > state.highScore) {
           state.highScore = state.score;
           saveHighScore();
+        }
+        if (mode.target && state.score >= mode.target) {
+          state.food = null;
+          endRun("达成 " + mode.target + " 个", true);
+          return;
         }
         state.food = findFreeCell();
         if (state.food === null) {
@@ -712,7 +1028,7 @@
 
     function resizeCanvas() {
       var availableWidth = window.innerWidth - 48;
-      var availableHeight = window.innerHeight - 228;
+      var availableHeight = window.innerHeight - 292;
       var size = Math.floor(Math.min(660, availableWidth, availableHeight));
       if (size < 180) {
         size = 180;
@@ -744,7 +1060,7 @@
       return Math.min(1, state.accumulator / stepDuration());
     }
 
-    function drawBoard(cell) {
+    function drawBoard(cell, now) {
       var background = ctx.createLinearGradient(0, 0, boardPx, boardPx);
       background.addColorStop(0, "#071a20");
       background.addColorStop(0.52, "#051116");
@@ -760,6 +1076,15 @@
       halo.addColorStop(0.48, "rgba(20, 196, 214, 0.022)");
       halo.addColorStop(1, "rgba(0, 0, 0, 0)");
       ctx.fillStyle = halo;
+      ctx.fillRect(0, 0, boardPx, boardPx);
+
+      var halo2 = ctx.createRadialGradient(
+        boardPx * 0.84, boardPx * 0.9, 0,
+        boardPx * 0.84, boardPx * 0.9, boardPx * 0.7
+      );
+      halo2.addColorStop(0, "rgba(43, 145, 255, 0.07)");
+      halo2.addColorStop(1, "rgba(43, 145, 255, 0)");
+      ctx.fillStyle = halo2;
       ctx.fillRect(0, 0, boardPx, boardPx);
 
       for (var y = 0; y < ROWS; y++) {
@@ -786,9 +1111,67 @@
       }
       ctx.stroke();
 
+      /* 漂浮的浮游微粒，让深水盘面有呼吸感 */
+      var t = (now || 0) * 0.001;
+      for (var p = 0; p < 26; p++) {
+        var seed = p * 127.1;
+        var px = ((Math.sin(seed + t * (0.16 + (p % 5) * 0.025)) * 0.5 + 0.5) * boardPx);
+        var py = ((Math.cos(seed * 1.7 + t * (0.11 + (p % 7) * 0.02)) * 0.5 + 0.5) * boardPx);
+        var twinkle = 0.35 + 0.65 * (Math.sin(seed * 3.1 + t * (0.9 + (p % 4) * 0.25)) * 0.5 + 0.5);
+        var size = Math.max(0.8, cell * (p % 4 === 0 ? 0.055 : 0.032));
+        ctx.fillStyle = p % 3 === 0
+          ? "rgba(120, 255, 214, " + (0.16 * twinkle).toFixed(3) + ")"
+          : "rgba(120, 216, 255, " + (0.13 * twinkle).toFixed(3) + ")";
+        ctx.beginPath();
+        ctx.arc(px, py, size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
       ctx.strokeStyle = "rgba(119, 255, 222, 0.16)";
       ctx.lineWidth = 1;
       ctx.strokeRect(0.5, 0.5, boardPx - 1, boardPx - 1);
+    }
+
+    function roundRect(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    }
+
+    function drawObstacles(cell, now) {
+      if (!state.obstacles.length) {
+        return;
+      }
+      var pulse = 0.5 + 0.5 * Math.sin(now * 0.0035);
+      for (var i = 0; i < state.obstacles.length; i++) {
+        var o = state.obstacles[i];
+        var x = o.x * cell + cell * 0.09;
+        var y = o.y * cell + cell * 0.09;
+        var size = cell * 0.82;
+
+        ctx.save();
+        ctx.shadowColor = "rgba(84, 190, 255, 0.6)";
+        ctx.shadowBlur = cell * (0.18 + pulse * 0.12);
+        ctx.fillStyle = "rgba(52, 122, 168, 0.34)";
+        roundRect(x, y, size, size, cell * 0.18);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = "rgba(118, 214, 255, " + (0.42 + pulse * 0.22).toFixed(3) + ")";
+        ctx.lineWidth = Math.max(1, cell * 0.035);
+        roundRect(x, y, size, size, cell * 0.18);
+        ctx.stroke();
+        ctx.fillStyle = "rgba(190, 245, 255, " + (0.14 + pulse * 0.12).toFixed(3) + ")";
+        ctx.fillRect(x + size * 0.34, y + size * 0.34, size * 0.32, size * 0.32);
+        ctx.restore();
+      }
     }
 
     function drawFood(cell, now) {
@@ -1009,7 +1392,8 @@
       var cell = boardPx / COLS;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, boardPx, boardPx);
-      drawBoard(cell);
+      drawBoard(cell, now);
+      drawObstacles(cell, now);
       drawFood(cell, now);
       drawSnake(cell);
       drawVignette();
@@ -1031,6 +1415,16 @@
 
       if (state.phase === "playing") {
         state.accumulator += delta;
+        if (MODES[state.mode].timeLimit) {
+          state.timeLeft -= delta / 1000;
+          if (state.timeLeft <= 0) {
+            state.timeLeft = 0;
+            updateTimerHud();
+            endRun("时间到", false);
+          } else {
+            updateTimerHud();
+          }
+        }
         var guard = 0;
         while (
           state.phase === "playing" &&
@@ -1061,6 +1455,14 @@
         direction = KEY_DIRECTIONS[key.toLowerCase()];
       }
 
+      if (typeof key === "string" && /^[1-5]$/.test(key)) {
+        event.preventDefault();
+        if (!event.repeat) {
+          setMode(MODE_LIST[parseInt(key, 10) - 1].id);
+        }
+        return;
+      }
+
       if (!isSpace && !direction) {
         return;
       }
@@ -1081,6 +1483,49 @@
       }
     });
 
+    /* ── 触屏滑动控制 ───────────────────────────── */
+    var SWIPE_MIN = 20;
+    var swipeOrigin = null;
+
+    function directionFromSwipe(dx, dy) {
+      if (Math.abs(dx) < SWIPE_MIN && Math.abs(dy) < SWIPE_MIN) {
+        return null;
+      }
+      if (Math.abs(dx) >= Math.abs(dy)) {
+        return { x: dx > 0 ? 1 : -1, y: 0 };
+      }
+      return { x: 0, y: dy > 0 ? 1 : -1 };
+    }
+
+    function onSwipeStart(event) {
+      if (event.pointerType === "mouse") {
+        return;
+      }
+      swipeOrigin = { x: event.clientX, y: event.clientY };
+    }
+
+    function onSwipeEnd(event) {
+      if (!swipeOrigin) {
+        return;
+      }
+      var origin = swipeOrigin;
+      swipeOrigin = null;
+      var direction = directionFromSwipe(event.clientX - origin.x, event.clientY - origin.y);
+      if (!direction) {
+        return;
+      }
+      if (event.cancelable) {
+        event.preventDefault();
+      }
+      queueDirection(direction);
+    }
+
+    canvas.addEventListener("pointerdown", onSwipeStart);
+    canvas.addEventListener("pointerup", onSwipeEnd);
+    canvas.addEventListener("pointercancel", function () {
+      swipeOrigin = null;
+    });
+
     overlayBtn.addEventListener("click", function () {
       if (state.phase === "paused") {
         resumeRun();
@@ -1095,7 +1540,31 @@
       restartRun();
     });
 
-    state.highScore = loadHighScore();
+    modeRow.addEventListener("click", function (event) {
+      var target = event.target;
+      while (target && target !== modeRow && !target.classList.contains("mode-chip")) {
+        target = target.parentNode;
+      }
+      if (!target || target === modeRow) {
+        return;
+      }
+      setMode(target.getAttribute("data-mode"));
+    });
+
+    window.__snake = {
+      state: state,
+      MODES: MODES,
+      MODE_LIST: MODE_LIST,
+      setMode: setMode,
+      start: startRun,
+      tick: tick,
+      frame: frame,
+      queue: queueDirection,
+      reset: resetToReady,
+      obstacles: function () { return state.obstacles.length; }
+    };
+
+    state.highScore = loadHighScore(state.mode);
     resizeCanvas();
     resetToReady();
     window.requestAnimationFrame(frame);

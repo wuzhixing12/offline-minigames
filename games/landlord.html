@@ -1,0 +1,1539 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>运气出租屋 · Luck Lodger</title>
+<style>
+  :root{
+    --bg:#040a10;
+    --panel:#0a1720;
+    --ink:#eef6f2;
+    --muted:#7f97a3;
+    --brass:#e8b45a;
+    --brass2:#f8dfa6;
+    --teal:#2f9a8f;
+    --green:#9fe0b4;
+    --red:#f2736b;
+    --line:rgba(232,180,90,.18);
+    --body:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    --mono:ui-monospace,"Cascadia Mono",Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{
+    background:
+      radial-gradient(900px 720px at 50% -14%,#153a45 0%,#0a1c25 42%,#03070b 100%),
+      radial-gradient(620px 460px at 8% 108%,rgba(47,154,143,.10),transparent 68%),
+      radial-gradient(620px 460px at 100% 108%,rgba(232,180,90,.08),transparent 68%);
+    color:var(--ink);font-family:var(--body);overflow:hidden;
+    -webkit-tap-highlight-color:transparent;user-select:none;
+    display:flex;align-items:center;justify-content:center;
+  }
+  #app{width:100%;height:100%;max-width:860px;display:flex;flex-direction:column;
+    padding:8px 10px;gap:7px}
+
+  header{display:flex;flex-direction:column;gap:6px;padding:7px 9px;border-radius:16px;
+    background:linear-gradient(180deg,rgba(20,42,50,.94),rgba(7,15,21,.96));
+    border:1px solid var(--line);box-shadow:0 12px 36px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.045)}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+  .stat{display:flex;flex-direction:column;align-items:center;gap:1px;padding:3px 2px;border-radius:9px;
+    background:rgba(255,255,255,.025)}
+  .stat span{font-size:9px;letter-spacing:.16em;color:var(--muted)}
+  .stat b{font-family:var(--mono);font-size:17px;line-height:1.15;color:#f2f7f3}
+  .stat small{font-size:9px;color:var(--muted)}
+  .stat.coin b{color:var(--brass2)}
+  .stat.rent b{color:#ff9d8f}
+  .stat.warn b{color:var(--red)}
+  .heat{display:flex;align-items:center;gap:7px;padding:0 3px}
+  .heat>span{font-size:8px;letter-spacing:.2em;color:var(--muted);white-space:nowrap}
+  .track{flex:1;height:6px;border-radius:99px;background:rgba(255,255,255,.06);overflow:hidden;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.04)}
+  .track i{display:block;height:100%;width:0;border-radius:99px;
+    background:linear-gradient(90deg,#2f9a8f,#e8b45a 62%,#f8dfa6);transition:width .35s}
+  .heat b{font-family:var(--mono);font-size:10px;color:#f6d79a;min-width:44px;text-align:right}
+  .heat.full .track i{animation:heatPulse .9s infinite}
+  .heat.full b{color:#fff0c7;text-shadow:0 0 12px rgba(248,223,166,.6)}
+  .modeMini{margin-left:auto;font-size:8px;letter-spacing:.12em;color:#a8c3c3;border:1px solid rgba(47,154,143,.35);
+    background:rgba(47,154,143,.10);padding:2px 7px;border-radius:99px;white-space:nowrap}
+  @keyframes heatPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.45)}}
+
+  .stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;position:relative}
+  canvas{display:block;max-width:100%;max-height:100%;border-radius:20px;touch-action:manipulation;background:#040b10;
+    box-shadow:0 28px 74px rgba(0,0,0,.68),0 0 0 1px rgba(232,180,90,.10),0 0 60px rgba(47,154,143,.08)}
+
+  .bar{display:grid;grid-template-columns:1.45fr 1fr;gap:8px}
+  .btn{border:0;border-radius:12px;padding:11px 10px;font-family:var(--body);font-size:14px;font-weight:800;
+    letter-spacing:.12em;cursor:pointer;transition:.14s;color:#21180a;position:relative;overflow:hidden;
+    background:linear-gradient(100deg,#f8dfa6,#e8b45a 55%,#c98f3c);
+    box-shadow:0 10px 26px rgba(232,180,90,.18)}
+  .btn:before{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 20%,rgba(255,255,255,.42),transparent 78%);
+    transform:translateX(-130%);transition:transform .45s}
+  .btn:hover:before{transform:translateX(130%)}
+  .btn:hover{filter:brightness(1.06);transform:translateY(-1px)}
+  .btn:active{transform:translateY(1px)}
+  .btn.ghost{background:rgba(232,180,90,.08);color:#e8cf9f;border:1px solid rgba(232,180,90,.32);box-shadow:none}
+  .btn.ghost:hover{background:rgba(232,180,90,.15)}
+  .btn:disabled{opacity:.38;cursor:default;transform:none;filter:none}
+  .btn:disabled:before{display:none}
+
+  .items{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+  .item{position:relative;display:flex;flex-direction:column;align-items:center;gap:1px;
+    padding:6px 4px 5px;border-radius:10px;cursor:pointer;color:#d9e7e2;
+    background:linear-gradient(180deg,rgba(27,52,60,.82),rgba(8,19,24,.9));
+    border:1px solid rgba(232,180,90,.14);transition:.14s}
+  .item span{font-size:16px;line-height:1.1}
+  .item em{font-style:normal;font-size:8px;letter-spacing:.08em;color:#93abb0}
+  .item b{position:absolute;top:-5px;right:-2px;min-width:16px;padding:0 4px;border-radius:8px;
+    background:linear-gradient(180deg,#f8dfa6,#e8b45a);color:#241a08;font-family:var(--mono);font-size:9px;line-height:15px}
+  .item:hover:not(:disabled){border-color:rgba(232,180,90,.55);transform:translateY(-1px)}
+  .item:disabled{opacity:.34;cursor:default}
+  .item:disabled b{opacity:.6}
+
+  .hint{text-align:center;font-size:10px;color:#6d848f;letter-spacing:.05em;min-height:13px;line-height:1.35}
+  .hint b{color:#c9d9cf;font-weight:600}
+  .hint .gold{color:#f6d79a}
+
+  .overlay{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:16px;
+    background:radial-gradient(720px 580px at 50% 38%,rgba(10,28,34,.84),rgba(2,5,8,.96));backdrop-filter:blur(9px)}
+  .overlay.hide{display:none}
+  .panel{width:min(540px,94vw);max-height:94vh;overflow:auto;padding:22px 22px 18px;border-radius:22px;text-align:center;
+    background:linear-gradient(180deg,rgba(17,36,43,.99),rgba(4,10,14,.99));
+    border:1px solid rgba(232,180,90,.24);box-shadow:0 42px 100px rgba(0,0,0,.76),inset 0 1px 0 rgba(255,255,255,.05)}
+  .panel.wide{width:min(900px,96vw)}
+  .logo{width:78px;height:78px;margin:0 auto 11px;border-radius:21px;position:relative;
+    background:radial-gradient(circle at 32% 25%,#365a62,#12242c 58%,#081116);
+    border:1px solid rgba(232,180,90,.38);
+    box-shadow:0 0 36px rgba(232,180,90,.16),inset 0 1px 0 rgba(255,255,255,.09)}
+  .logo:before{content:"🏠";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:39px;
+    filter:drop-shadow(0 4px 10px rgba(0,0,0,.55))}
+  h1{margin:0 0 2px;font-size:clamp(25px,6.4vw,33px);letter-spacing:.2em;line-height:1.2;
+     background:linear-gradient(96deg,var(--brass2),var(--brass) 52%,var(--green));
+     -webkit-background-clip:text;background-clip:text;color:transparent}
+  h2{margin:0}
+  .sub{font-size:9px;letter-spacing:.38em;color:#5f7783;margin-bottom:12px}
+  .rules{text-align:left;font-size:11.5px;line-height:1.78;color:#b9ccd1;margin:0 0 12px;padding:11px 14px;border-radius:12px;
+    background:rgba(5,13,18,.78);border:1px solid rgba(232,180,90,.13)}
+  .rules b{color:#f4e6c6}
+  .rules em{color:var(--brass);font-style:normal;font-family:var(--mono)}
+
+  .modes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:11px 0 10px}
+  .mode{border-radius:14px;padding:10px 6px 8px;cursor:pointer;text-align:center;color:var(--ink);
+    background:linear-gradient(180deg,rgba(25,47,56,.92),rgba(8,18,23,.96));
+    border:1px solid rgba(232,180,90,.14);transition:.16s;font-family:inherit}
+  .mode .mi{font-size:22px;line-height:1.15;display:block}
+  .mode b{display:block;font-size:11px;margin-top:2px;letter-spacing:.05em}
+  .mode em{display:block;font-style:normal;font-family:var(--mono);font-size:8.5px;color:var(--brass);margin-top:1px}
+  .mode small{display:block;font-size:8.5px;line-height:1.45;color:#83989c;margin-top:4px;min-height:24px}
+  .mode i{display:block;font-style:normal;font-size:8px;color:#6f8b90;margin-top:4px}
+  .mode:hover{border-color:rgba(232,180,90,.5);transform:translateY(-2px)}
+  .mode.on{border-color:rgba(232,180,90,.8);background:linear-gradient(180deg,rgba(232,180,90,.18),rgba(47,154,143,.10));
+    box-shadow:0 0 0 1px rgba(232,180,90,.35),0 10px 28px rgba(232,180,90,.12)}
+
+  .legend{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:8px 0 2px}
+  .legend div{background:rgba(255,255,255,.032);border:1px solid rgba(232,180,90,.08);border-radius:8px;
+    padding:3px 1px;text-align:center}
+  .legend span{display:block;font-size:15px;line-height:1.25}
+  .legend b{display:block;font-size:7.5px;color:#93a9ae;font-weight:500;letter-spacing:0}
+
+  .cta{width:100%;padding:12px 18px;border-radius:13px;border:0;cursor:pointer;font-family:var(--body);
+    font-size:14px;letter-spacing:.16em;font-weight:800;color:#20170a;
+    background:linear-gradient(96deg,#f8dfa6,#e8b45a 52%,#c98f3c);
+    box-shadow:0 14px 34px rgba(232,180,90,.2);transition:.16s}
+  .cta:hover{filter:brightness(1.08)}
+  .cta:active{transform:translateY(1px)}
+  .cta.ghost{background:rgba(232,180,90,.07);color:#e8cf9f;border:1px solid rgba(232,180,90,.28);box-shadow:none;
+    font-size:11px;letter-spacing:.12em;padding:9px}
+  .bestline{font-size:10.5px;color:#7e969c;margin-top:9px;line-height:1.7}
+  .bestline b{color:#f0e8d4}
+  .bigscore{font-family:var(--mono);font-size:46px;line-height:1;color:var(--brass);
+    text-shadow:0 0 30px rgba(232,180,90,.35);margin:10px 0 2px}
+  .rankline{font-size:11.5px;color:#b9ccd1;margin:10px 0 14px;line-height:1.72}
+
+  .shop-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:10px;text-align:left}
+  .shop-top h2{font-size:20px;letter-spacing:.14em}
+  .shop-top p{margin:3px 0 0;font-size:9.5px;color:#84999e;line-height:1.5}
+  .wallet{font-family:var(--mono);font-size:11px;color:#8fa6ab;white-space:nowrap;padding-top:3px}
+  .wallet b{color:var(--brass2);font-size:14px}
+  .shop-grid{display:grid;grid-template-columns:1.55fr 1fr;gap:14px;text-align:left}
+  .sec-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+  .sec-head h3{margin:0;font-size:9px;letter-spacing:.24em;color:#789197;font-weight:600}
+  .mini-btn{border:1px solid rgba(232,180,90,.28);background:rgba(232,180,90,.08);color:#e8cf9f;
+    border-radius:7px;padding:4px 8px;font-size:9px;cursor:pointer;font-family:inherit;letter-spacing:.05em}
+  .mini-btn:disabled{opacity:.35;cursor:default}
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+  .card{position:relative;border-radius:12px;padding:9px 5px 8px;cursor:pointer;overflow:hidden;text-align:center;
+    background:linear-gradient(180deg,rgba(25,46,55,.95),rgba(10,21,27,.97));
+    border:1px solid rgba(232,180,90,.18);transition:.14s}
+  .card:hover{border-color:rgba(232,180,90,.6);transform:translateY(-2px)}
+  .card .ico{font-size:27px;line-height:1.1;filter:drop-shadow(0 4px 8px rgba(0,0,0,.5))}
+  .card .nm{font-size:10.5px;color:#e6efe9;margin-top:2px;letter-spacing:.04em}
+  .card .ds{font-size:8px;color:#7f969b;line-height:1.4;margin-top:2px;min-height:22px}
+  .card .pr{font-family:var(--mono);font-size:12px;color:var(--brass2);margin-top:4px}
+  .card.sold{opacity:.35;pointer-events:none;filter:grayscale(.7)}
+  .card.sold:after{content:"已放入";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-size:10px;letter-spacing:.16em;color:#cfe0d4;background:rgba(4,10,13,.58)}
+  .card.poor .pr{color:#f2736b}
+  .card.poor{opacity:.66}
+  .icards{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  .icard{display:flex;align-items:center;gap:6px;border-radius:11px;padding:7px 7px;cursor:pointer;text-align:left;
+    background:linear-gradient(180deg,rgba(25,46,55,.95),rgba(10,21,27,.97));
+    border:1px solid rgba(47,154,143,.28);transition:.14s;color:inherit;font-family:inherit}
+  .icard:hover{border-color:rgba(47,154,143,.7);transform:translateY(-1px)}
+  .icard .ii{font-size:20px;flex:0 0 auto}
+  .icard b{display:block;font-size:9.5px;color:#e6efe9;font-weight:700}
+  .icard small{display:block;font-size:7.5px;line-height:1.35;color:#7f969b;margin-top:1px}
+  .icard em{margin-left:auto;font-style:normal;font-family:var(--mono);font-size:10px;color:var(--brass2);white-space:nowrap}
+  .icard.sold{opacity:.35;pointer-events:none;filter:grayscale(.7)}
+  .icard.poor{opacity:.66}
+  .icard.poor em{color:#f2736b}
+  .poolinfo{font-size:8.5px;color:#6f8b90;margin-top:6px;line-height:1.55}
+  #btnNext{margin-top:11px}
+
+  .ev .ev-icon{width:66px;height:66px;margin:0 auto 8px;border-radius:20px;display:flex;align-items:center;justify-content:center;
+    font-size:34px;background:radial-gradient(circle at 32% 24%,#3d6269,#13262e 62%,#081115);
+    border:1px solid rgba(232,180,90,.32);box-shadow:0 0 30px rgba(232,180,90,.12)}
+  .ev h2{font-size:23px;letter-spacing:.14em;
+    background:linear-gradient(96deg,var(--brass2),var(--brass) 60%,var(--green));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .ev p{font-size:11.5px;line-height:1.72;color:#adc1c5;margin:7px 0 12px}
+  .ev-choices{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .ev-choice{text-align:left;padding:10px 11px;border-radius:11px;cursor:pointer;font-family:inherit;color:#eef6f2;
+    background:linear-gradient(180deg,rgba(28,52,60,.9),rgba(8,18,23,.96));
+    border:1px solid rgba(232,180,90,.2);transition:.14s}
+  .ev-choice:hover:not(:disabled){border-color:rgba(232,180,90,.65);transform:translateY(-1px)}
+  .ev-choice:disabled{opacity:.4;cursor:default}
+  .ev-choice b{display:block;font-size:11.5px;letter-spacing:.04em}
+  .ev-choice small{display:block;font-size:8.5px;line-height:1.45;color:#8fa6ab;margin-top:3px}
+
+  .statgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:9px 0}
+  .statbox{background:rgba(255,255,255,.03);border:1px solid rgba(232,180,90,.1);border-radius:10px;padding:7px 4px}
+  .statbox span{display:block;font-size:8px;letter-spacing:.12em;color:#7f969b}
+  .statbox b{display:block;font-family:var(--mono);font-size:14px;color:var(--brass2);margin-top:2px}
+  .endbtns{display:grid;grid-template-columns:1.4fr 1fr;gap:8px}
+
+  @media (max-height:680px){
+    .legend{display:none}
+    .rules{line-height:1.6;font-size:10.5px;padding:9px 12px}
+    .logo{width:60px;height:60px;margin-bottom:8px}
+    .logo:before{font-size:30px}
+    h1{font-size:24px}
+    .modes{margin:8px 0}
+    .mode small{display:none}
+    .mode{padding:8px 4px 6px}
+    .mode i{margin-top:2px}
+    .bestline{margin-top:6px}
+  }
+
+  /* short landscape: main stage left, control column right */
+  @media (max-height:560px) and (orientation:landscape){
+    #app{max-width:none;height:100%;display:grid;grid-template-columns:minmax(0,1fr) 250px;
+      grid-template-rows:auto auto auto minmax(0,1fr);
+      grid-template-areas:"stage header" "stage bar" "stage items" "stage hint";
+      padding:6px 8px;gap:5px 10px}
+    header{grid-area:header;display:flex;flex-direction:column;gap:4px;padding:5px 6px;border-radius:11px}
+    .stats{grid-template-columns:1fr 1fr;gap:3px}
+    .stat{padding:2px}
+    .stat span{font-size:7.5px;letter-spacing:.08em}
+    .stat b{font-size:13px}
+    .stat small{font-size:7.5px}
+    .heat{padding:2px 3px 0;gap:4px}
+    .heat>span{font-size:7px;letter-spacing:.1em}
+    .heat b{font-size:8px;min-width:34px}
+    .modeMini{display:none}
+    .stage{grid-area:stage;height:100%;min-height:0}
+    canvas{max-width:100%;max-height:100%;border-radius:14px}
+    .bar{grid-area:bar;display:flex;flex-direction:column;gap:4px}
+    .btn{padding:7px 5px;font-size:11px;border-radius:8px;letter-spacing:.08em}
+    .items{grid-area:items;gap:3px}
+    .item{padding:3px 1px;border-radius:7px}
+    .item span{font-size:13px}
+    .item em{font-size:7px}
+    .item b{font-size:8px;top:-3px;right:-1px}
+    .hint{grid-area:hint;font-size:8px;min-height:0;align-self:center}
+    .panel{padding:11px 13px;max-height:calc(100vh - 12px)}
+    .panel.wide{width:96vw}
+    .logo{display:none}
+    h1{font-size:21px}
+    .sub{font-size:8px;margin-bottom:6px}
+    .rules{font-size:9px;line-height:1.45;padding:7px 9px;margin-bottom:7px}
+    .modes{margin:5px 0}
+    .mode{padding:6px 3px}
+    .mode .mi{font-size:17px}
+    .mode b{font-size:9px}
+    .mode small{display:none}
+    .cta{padding:8px 12px;font-size:12px}
+    .bigscore{font-size:34px;margin:5px 0 0}
+    .rankline{font-size:10px;margin:6px 0 9px}
+    .shop-top{margin-bottom:6px}
+    .shop-top h2{font-size:16px}
+    .shop-top p{font-size:8.5px}
+    .shop-grid{grid-template-columns:1.55fr 1fr;gap:10px}
+    .card{padding:6px 3px 5px}
+    .card .ico{font-size:21px}
+    .card .nm{font-size:9px}
+    .card .ds{display:none}
+    .card .pr{font-size:10.5px;margin-top:2px}
+    .icard{padding:5px 6px}
+    .icard .ii{font-size:17px}
+    .icard b{font-size:8.5px}
+    .icard small{display:none}
+    .icard em{font-size:9px}
+    .poolinfo{margin-top:3px;font-size:7.5px}
+    #btnNext{margin-top:7px;padding:7px}
+    .ev-icon{width:42px !important;height:42px !important;font-size:24px !important;margin-bottom:5px !important;border-radius:13px !important}
+    .ev h2{font-size:17px}
+    .ev p{font-size:9.5px;line-height:1.5;margin:4px 0 7px}
+    .ev-choice{padding:6px 8px}
+    .ev-choice b{font-size:10px}
+    .ev-choice small{font-size:7.5px}
+    .statbox{padding:5px 3px}
+    .statbox b{font-size:12px}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="stats">
+      <div class="stat"><span>回合</span><b id="hRound">1</b><small id="hRoundMax">/ 10</small></div>
+      <div class="stat coin"><span>硬币</span><b id="hCoins">25</b><small>COIN</small></div>
+      <div class="stat rent"><span>本期房租</span><b id="hRent">85</b><small>RENT</small></div>
+      <div class="stat" id="spinStat"><span>剩余旋转</span><b id="hSpins">5</b><small>SPIN</small></div>
+    </div>
+    <div class="heat" id="heatWrap">
+      <span>欧气</span>
+      <div class="track"><i id="heatBar"></i></div>
+      <b id="heatTxt">0%</b>
+      <span class="modeMini" id="modeMini">标准租约</span>
+    </div>
+  </header>
+
+  <div class="stage"><canvas id="cv"></canvas></div>
+
+  <div class="bar">
+    <button class="btn" id="btnSpin" type="button">旋 转</button>
+    <button class="btn ghost" id="btnPay" type="button">交 租 · 85</button>
+  </div>
+
+  <div class="items" id="itemBar">
+    <button class="item" data-item="reroll" type="button" title="重摇券：不消耗旋转次数，重摇当前图案"><span>🔄</span><em>重摇</em><b id="it-reroll">0</b></button>
+    <button class="item" data-item="spin" type="button" title="加班券：本期增加 1 次旋转"><span>⏱️</span><em>加班</em><b id="it-spin">0</b></button>
+    <button class="item" data-item="luck" type="button" title="幸运符：立即充满欧气，下次旋转翻倍"><span>🍀</span><em>幸运</em><b id="it-luck">0</b></button>
+    <button class="item" data-item="coupon" type="button" title="房租券：本期房租减免 20%"><span>🎟️</span><em>房租券</em><b id="it-coupon">0</b></button>
+  </div>
+
+  <div class="hint" id="hint">空格旋转 · 相邻图案会互相加成 · 1–4 使用道具</div>
+</div>
+
+<div class="overlay" id="ovStart">
+  <div class="panel">
+    <div class="logo"></div>
+    <h1>运气出租屋</h1>
+    <div class="sub">LUCK LODGER · ROOM 404</div>
+
+    <div class="modes" id="modeCards">
+      <button class="mode on" data-mode="standard" type="button">
+        <span class="mi">🏠</span><b>标准租约</b><em>10 期</em>
+        <small>稳步经营，付清十期拿回押金。</small><i id="best-standard">最佳 0 期</i>
+      </button>
+      <button class="mode" data-mode="endless" type="button">
+        <span class="mi">♾️</span><b>无尽涨租</b><em>一直撑</em>
+        <small>房租没有上限，比谁住得更久。</small><i id="best-endless">最佳 0 期</i>
+      </button>
+      <button class="mode" data-mode="rush" type="button">
+        <span class="mi">💥</span><b>暴富赌局</b><em>6 期</em>
+        <small>只有 4 次旋转，但收益 ×1.5。</small><i id="best-rush">最佳 0 期</i>
+      </button>
+    </div>
+
+    <div class="rules">
+      你租下海底小屋 <b>404</b>，房东只收硬币。每期摇出图案换钱，交完房租才能继续住。<br>
+      相邻图案会互相加成；<em>欧气</em>攒满后，下一次旋转收益 <b>×2</b>。<br>
+      交租后会遇到房东事件，做出选择；商店里可以买图案和道具。<br>
+      硬币不够交租，就会被赶出去。
+      <div class="legend">
+        <div><span>🪙</span><b>硬币</b></div>
+        <div><span>🐚</span><b>贝壳</b></div>
+        <div><span>🐟</span><b>小鱼</b></div>
+        <div><span>🪸</span><b>珊瑚</b></div>
+        <div><span>🌿</span><b>海草</b></div>
+        <div><span>⚡</span><b>电鳗</b></div>
+        <div><span>💎</span><b>珍珠</b></div>
+        <div><span>🦀</span><b>螃蟹</b></div>
+        <div><span>🐡</span><b>河豚</b></div>
+        <div><span>🏆</span><b>金杯</b></div>
+        <div><span>⚓</span><b>船锚</b></div>
+        <div><span>🌟</span><b>海星</b></div>
+        <div><span>🧰</span><b>宝箱</b></div>
+      </div>
+    </div>
+
+    <button class="cta" id="btnStart" type="button">入住 404</button>
+    <div class="bestline" id="startBest">最佳：<b>0 期</b> · 单次 <b>0 币</b></div>
+  </div>
+</div>
+
+<div class="overlay hide" id="ovEvent">
+  <div class="panel ev">
+    <div class="ev-icon" id="evIcon">🔎</div>
+    <h2 id="evTitle">房东查房</h2>
+    <p id="evDesc">门外传来钥匙声。</p>
+    <div class="ev-choices" id="evChoices"></div>
+  </div>
+</div>
+
+<div class="overlay hide" id="ovShop">
+  <div class="panel wide shop">
+    <div class="shop-top">
+      <div>
+        <h2>房东的储藏室</h2>
+        <p id="shopSub">买下图案塞进摇奖机，也可以备点应急道具。</p>
+      </div>
+      <div class="wallet">余额 <b id="shopCoins">0</b> 币</div>
+    </div>
+    <div class="shop-grid">
+      <section>
+        <div class="sec-head"><h3>图案货架</h3><button class="mini-btn" id="btnRefresh" type="button">刷新 · 6</button></div>
+        <div class="cards" id="shopCards"></div>
+        <div class="poolinfo" id="poolInfo"></div>
+      </section>
+      <section>
+        <div class="sec-head"><h3>应急道具</h3></div>
+        <div class="icards" id="shopItems"></div>
+      </section>
+    </div>
+    <button class="cta" id="btnNext" type="button">下一期 · 房租 <span id="nextRent">0</span></button>
+  </div>
+</div>
+
+<div class="overlay hide" id="ovEnd">
+  <div class="panel">
+    <div class="logo" id="endIcon"></div>
+    <h1 id="endTitle" style="font-size:27px;letter-spacing:.2em">被赶出去了</h1>
+    <div class="sub" id="endSub">EVICTION NOTICE</div>
+    <div class="bigscore" id="endScore">0</div>
+    <div class="bestline">已付房租 <b id="endPaid">0</b> 期 · 模式最佳 <b id="endBest">0</b> 期</div>
+    <div class="statgrid">
+      <div class="statbox"><span>总收益</span><b id="endGain">0</b></div>
+      <div class="statbox"><span>最高单次</span><b id="endBestGain">0</b></div>
+      <div class="statbox"><span>模式</span><b id="endMode">标准</b></div>
+    </div>
+    <div class="rankline" id="endLine">房东收走了你的摇奖机。</div>
+    <div class="endbtns">
+      <button class="cta" id="btnAgain" type="button">再租一次</button>
+      <button class="cta ghost" id="btnMode" type="button">换个模式</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var cv = document.getElementById('cv');
+  var ctx = cv.getContext('2d');
+  var W = 500, H = 480;
+  var DPR = Math.min(2, window.devicePixelRatio || 1);
+  cv.width = W*DPR; cv.height = H*DPR;
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+
+  var COLS = 5, ROWS = 3, CELL = 80, GAP = 8;
+  var GW = COLS*CELL + (COLS-1)*GAP;
+  var GH = ROWS*CELL + (ROWS-1)*GAP;
+  var GX = (W-GW)/2, GY = (H-GH)/2 + 6;
+
+  var SYM = {
+    coin:  { e:'🪙', name:'硬币', base:1, desc:'每相邻硬币 +1' },
+    shell: { e:'🐚', name:'贝壳', base:2, desc:'稳定 2 币' },
+    fish:  { e:'🐟', name:'小鱼', base:2, desc:'每相邻硬币 +1' },
+    coral: { e:'🪸', name:'珊瑚', base:1, desc:'每相邻珊瑚 +1' },
+    weed:  { e:'🌿', name:'海草', base:1, desc:'每相邻海草 +2' },
+    eel:   { e:'⚡', name:'电鳗', base:2, desc:'每相邻小鱼 +2' },
+    pearl: { e:'💎', name:'珍珠', base:5, desc:'稀有 · 5 币' },
+    crab:  { e:'🦀', name:'螃蟹', base:3, desc:'每相邻贝壳 +1' },
+    puffer:{ e:'🐡', name:'河豚', base:2, desc:'相邻格各 +1' },
+    trophy:{ e:'🏆', name:'金杯', base:9, desc:'传说 · 9 币' },
+    anchor:{ e:'⚓', name:'船锚', base:3, desc:'每相邻贝壳 +2' },
+    star:  { e:'🌟', name:'海星', base:3, desc:'相邻不同图案各 +1' },
+    chest: { e:'🧰', name:'宝箱', base:5, desc:'相邻格各 +2' }
+  };
+  var IDS = Object.keys(SYM);
+  var PRICE = { shell:8, coin:8, weed:9, fish:10, coral:10, crab:12, eel:14, puffer:15, anchor:16, star:14, pearl:18, chest:26, trophy:30 };
+  var SHOP_W = { shell:5, coin:5, fish:18, coral:18, weed:16, crab:12, eel:10, puffer:8, pearl:12, trophy:4, anchor:8, star:10, chest:3 };
+
+  var MODES = {
+    standard: { name:'标准租约', tag:'10 期', rounds:10, spins:5, start:25, rentBase:85,  rentStep:16, payMult:1.0,  extra:[] },
+    endless:  { name:'无尽涨租', tag:'一直撑', rounds:Infinity, spins:5, start:30, rentBase:78, rentStep:22, payMult:1.05, extra:['shell','shell'] },
+    rush:     { name:'暴富赌局', tag:'6 期', rounds:6, spins:4, start:40, rentBase:95, rentStep:30, payMult:1.5, extra:['pearl'] }
+  };
+  var ITEM = {
+    reroll: { e:'🔄', name:'重摇券', desc:'不耗次数重摇一次', price:12 },
+    spin:   { e:'⏱️', name:'加班券', desc:'本期 +1 次旋转', price:15 },
+    luck:   { e:'🍀', name:'幸运符', desc:'欧气立即充满', price:16 },
+    coupon: { e:'🎟️', name:'房租券', desc:'本期房租 -20%', price:14 }
+  };
+  var BASE_POOL = ['shell','shell','shell','coin','coin','fish','coral','weed'];
+
+  var EVENTS = [
+    { icon:'🔎', title:'房东查房', desc:'门外传来钥匙声。房东说最近房价涨了，看你表现。', choices:[
+      { label:'塞个红包', cost:18, tip:'-18 币 · 下期房租 -10%', eff:{ rentMod:0.9 } },
+      { label:'坦然接受', tip:'欧气 +25', eff:{ heat:25 } }
+    ]},
+    { icon:'💧', title:'屋顶漏水', desc:'水滴正好落在摇奖机上。修不修，得马上决定。', choices:[
+      { label:'自费修好', cost:22, tip:'-22 币 · 下期收益 +15%', eff:{ payoutMod:1.15 } },
+      { label:'拿盆接着', tip:'下期房租 +8% · 欧气 +15', eff:{ rentMod:1.08, heat:15 } }
+    ]},
+    { icon:'🌃', title:'海底夜市', desc:'楼下临时摆起了夜市，摊主在兜售奇怪的小玩意。', choices:[
+      { label:'抽个盲盒', cost:12, tip:'-12 币 · 随机获得一件道具', eff:{ randomItem:true } },
+      { label:'卖点旧货', tip:'+18 币', eff:{ coins:18 } }
+    ]},
+    { icon:'🎭', title:'神秘房客', desc:'一位戴面具的房客想借住一晚，他说会用运气付账。', choices:[
+      { label:'收留一晚', tip:'+30 币 · 欧气 -15', eff:{ coins:30, heat:-15 } },
+      { label:'请他离开', tip:'欧气 +12', eff:{ heat:12 } }
+    ]},
+    { icon:'🔧', title:'零件商人', desc:'商人掀开箱子，里面是深海打捞上来的摇奖机零件。', choices:[
+      { label:'买下零件', cost:26, tip:'-26 币 · 随机稀有图案入池', eff:{ randomRare:true } },
+      { label:'只聊不买', tip:'+10 币 · 欧气 +8', eff:{ coins:10, heat:8 } }
+    ]},
+    { icon:'⚡', title:'电费催缴', desc:'电表转得飞快。房东说，要么交钱，要么限电。', choices:[
+      { label:'把电费交了', cost:16, tip:'-16 币 · 下期旋转 +1', eff:{ spinsMod:1 } },
+      { label:'先欠着', tip:'下期收益 -10% · 欧气 +20', eff:{ payoutMod:0.9, heat:20 } }
+    ]},
+    { icon:'🐚', title:'海底集市', desc:'集市尽头有个摊位，只收硬币，不问来路。', choices:[
+      { label:'抽幸运袋', cost:12, tip:'-12 币 · 随机道具', eff:{ randomItem:true } },
+      { label:'卖贝壳', tip:'+18 币', eff:{ coins:18 } }
+    ]},
+    { icon:'🍵', title:'房东心情好', desc:'房东端来一杯热茶，说今天可以聊点别的。', choices:[
+      { label:'陪他喝茶', tip:'欧气 +40', eff:{ heat:40 } },
+      { label:'收下红包', tip:'+12 币', eff:{ coins:12 } }
+    ]},
+    { icon:'🌀', title:'台风夜', desc:'海面翻涌，整栋楼都在晃。摇奖机需要加固。', choices:[
+      { label:'花钱加固', cost:20, tip:'-20 币 · 下期收益 +20%', eff:{ payoutMod:1.2 } },
+      { label:'听天由命', tip:'欧气 +30 · 下期房租 +10%', eff:{ heat:30, rentMod:1.1 } }
+    ]},
+    { icon:'👵', title:'老邻居', desc:'隔壁老太太说你的摇奖机声音太吵，但她会修机器。', choices:[
+      { label:'请她帮忙', cost:24, tip:'-24 币 · 随机图案 + 欧气 +20', eff:{ randomRare:true, heat:20 } },
+      { label:'送点水果', tip:'+8 币 · 欧气 +10', eff:{ coins:8, heat:10 } }
+    ]},
+    { icon:'🛡️', title:'保险推销', desc:'一只穿西装的章鱼敲门，说能保你下一期不破产。', choices:[
+      { label:'买一份保险', cost:15, tip:'-15 币 · 获得房租券', eff:{ item:'coupon' } },
+      { label:'礼貌拒绝', tip:'+8 币', eff:{ coins:8 } }
+    ]},
+    { icon:'📦', title:'深海快递', desc:'一个没有寄件人的包裹被送到门口。', choices:[
+      { label:'付运费收下', cost:10, tip:'-10 币 · 随机道具', eff:{ randomItem:true } },
+      { label:'原路退回', tip:'+10 币', eff:{ coins:10 } }
+    ]}
+  ];
+
+  var records = { standard:{rounds:0,gain:0}, endless:{rounds:0,gain:0}, rush:{rounds:0,gain:0} };
+  try {
+    var rawRec = localStorage.getItem('tx_landlord_records_v2');
+    if (rawRec){
+      var rr = JSON.parse(rawRec);
+      ['standard','endless','rush'].forEach(function(k){
+        if (rr[k]) { records[k].rounds = Math.max(0, parseInt(rr[k].rounds,10)||0); records[k].gain = Math.max(0, parseInt(rr[k].gain,10)||0); }
+      });
+    } else {
+      records.standard.rounds = parseInt(localStorage.getItem('tx_landlord_best_v1') || '0', 10) || 0;
+    }
+  } catch(e){}
+
+  var state = 'boot';
+  var mode = 'standard', selectedMode = 'standard';
+  var round = 1, coins = 25, spinsLeft = 5, rent = 85;
+  var pool = BASE_POOL.slice();
+  var grid = [], display = [], payoutVals = [], badges = [], floats = [];
+  var spinStart = 0, stopTimes = [], spinDone = 0, totalWin = 0;
+  var totalEarned = 0, bestGainThisRun = 0, paidRounds = 0;
+  var heat = 0, feverArmed = false, feverSpin = false;
+  var items = { reroll:0, spin:0, luck:0, coupon:0 };
+  var couponUsed = false;
+  var pendingRentMod = 1, pendingSpinsMod = 0, pendingPayoutMod = 1, roundPayoutMod = 1;
+  var eventBag = [], currentEvent = null, eventResult = '';
+  var shopSymOffers = [], shopItemOffers = [], shopSymSold = [], shopItemSold = [], shopRefreshed = false;
+  var timers = [], ac = null;
+  var t = 0, lastT = 0, frameDt = 0.016;
+  var bubbles = [], fishes = [], particles = [], shake = 0, flash = 0;
+
+  try { var sm = localStorage.getItem('tx_landlord_mode_v1'); if (sm && MODES[sm]){ mode = sm; selectedMode = sm; } } catch(e){}
+
+  function rnd(n){ return Math.floor(Math.random()*n); }
+  function pick(list){ return list[rnd(list.length)]; }
+  function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+  function modeCfg(){ return MODES[mode]; }
+  function setTxt(id,v){ var el=document.getElementById(id); if(el) el.textContent=v; }
+  function later(fn,ms){ var id=setTimeout(function(){ timers=timers.filter(function(x){return x!==id;}); fn(); }, ms); timers.push(id); return id; }
+  function clearTimers(){ timers.forEach(function(id){ clearTimeout(id); clearInterval(id); }); timers=[]; }
+
+  function sfx(freq,dur,type,vol,slide){
+    try {
+      if (!ac){ var AC = window.AudioContext || window.webkitAudioContext; if (!AC) return; ac = new AC(); }
+      if (ac.state === 'suspended') ac.resume();
+      var o = ac.createOscillator(), g = ac.createGain();
+      o.type = type || 'sine';
+      o.frequency.setValueAtTime(freq, ac.currentTime);
+      if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, freq+slide), ac.currentTime+dur);
+      g.gain.setValueAtTime(0.0001, ac.currentTime);
+      g.gain.exponentialRampToValueAtTime(vol || 0.04, ac.currentTime+0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime+dur);
+      o.connect(g); g.connect(ac.destination);
+      o.start(); o.stop(ac.currentTime+dur+0.02);
+    } catch(e){}
+  }
+
+  function idx(x,y){ return y*COLS+x; }
+  function neighbors(i){
+    var x=i%COLS, y=Math.floor(i/COLS), out=[];
+    if (x>0) out.push(i-1);
+    if (x<COLS-1) out.push(i+1);
+    if (y>0) out.push(i-COLS);
+    if (y<ROWS-1) out.push(i+COLS);
+    return out;
+  }
+  function randomGrid(){ var g=[]; for (var i=0;i<COLS*ROWS;i++) g.push(pick(pool)); return g; }
+
+  function calcPayout(g){
+    var val = g.map(function(s){ return SYM[s].base; });
+    for (var i=0;i<g.length;i++){
+      var s = g[i], nb = neighbors(i), k;
+      if (s === 'coin' || s === 'fish'){
+        k=0; nb.forEach(function(j){ if (g[j]==='coin') k++; }); val[i]+=k;
+      } else if (s === 'coral'){
+        k=0; nb.forEach(function(j){ if (g[j]==='coral') k++; }); val[i]+=k;
+      } else if (s === 'weed'){
+        k=0; nb.forEach(function(j){ if (g[j]==='weed') k++; }); val[i]+=k*2;
+      } else if (s === 'eel'){
+        k=0; nb.forEach(function(j){ if (g[j]==='fish') k++; }); val[i]+=k*2;
+      } else if (s === 'crab'){
+        k=0; nb.forEach(function(j){ if (g[j]==='shell') k++; }); val[i]+=k;
+      } else if (s === 'puffer'){
+        nb.forEach(function(j){ val[j]+=1; });
+      } else if (s === 'anchor'){
+        k=0; nb.forEach(function(j){ if (g[j]==='shell') k++; }); val[i]+=k*2;
+      } else if (s === 'star'){
+        var seen = {};
+        nb.forEach(function(j){ seen[g[j]] = 1; });
+        val[i] += Object.keys(seen).length;
+      } else if (s === 'chest'){
+        nb.forEach(function(j){ val[j]+=2; });
+      }
+    }
+    var total=0; val.forEach(function(v){ total+=v; });
+    return { total: total, vals: val };
+  }
+
+  function rentBaseFor(r){
+    var M = MODES[mode];
+    return Math.round(M.rentBase + (r-1)*M.rentStep);
+  }
+  function nextRentPreview(){
+    return Math.max(10, Math.round(rentBaseFor(round+1)*pendingRentMod));
+  }
+  function saveRecords(){
+    try { localStorage.setItem('tx_landlord_records_v2', JSON.stringify(records)); } catch(e){}
+  }
+  function itemTotal(){ return items.reroll + items.spin + items.luck + items.coupon; }
+  function addItem(k){
+    if (itemTotal() >= 9) return false;
+    items[k] = (items[k]||0) + 1;
+    return true;
+  }
+
+  function updateHud(){
+    var M = MODES[mode];
+    setTxt('hRound', round);
+    setTxt('hRoundMax', M.rounds === Infinity ? '/ ∞' : '/ ' + M.rounds);
+    setTxt('hCoins', coins);
+    setTxt('hRent', rent);
+    setTxt('hSpins', spinsLeft);
+    setTxt('modeMini', M.name);
+    var pct = Math.round(clamp(heat,0,100));
+    var bar = document.getElementById('heatBar');
+    if (bar) bar.style.width = pct + '%';
+    setTxt('heatTxt', feverArmed ? '×2 就绪' : pct + '%');
+    var hw = document.getElementById('heatWrap');
+    if (hw) hw.classList.toggle('full', feverArmed);
+    var ss = document.getElementById('spinStat');
+    if (ss) ss.className = 'stat' + (spinsLeft <= 1 ? ' warn' : '');
+    var bs = document.getElementById('btnSpin'), bp = document.getElementById('btnPay');
+    if (bs){ bs.disabled = state !== 'idle' || spinsLeft <= 0; bs.textContent = spinsLeft > 0 ? (feverArmed ? '欧气旋转 ×2' : '旋 转') : '本回合已用完'; }
+    if (bp){ bp.disabled = state !== 'idle'; bp.textContent = '交 租 · ' + rent; }
+    updateItemButtons();
+  }
+
+  function updateItemButtons(){
+    ['reroll','spin','luck','coupon'].forEach(function(k){
+      var b = document.querySelector('.item[data-item="'+k+'"]');
+      var n = document.getElementById('it-'+k);
+      if (n) n.textContent = items[k];
+      if (!b) return;
+      var usable = state === 'idle' && items[k] > 0;
+      if (k === 'reroll') usable = usable && spinsLeft > 0;
+      if (k === 'spin') usable = usable && spinsLeft > 0;
+      if (k === 'luck') usable = usable && !feverArmed;
+      if (k === 'coupon') usable = usable && !couponUsed && rent > 10;
+      b.disabled = !usable;
+      b.classList.toggle('on', items[k] > 0);
+    });
+  }
+
+  function setHint(txt,bad){
+    var el = document.getElementById('hint');
+    el.innerHTML = txt;
+    el.style.color = bad ? '#f2736b' : '';
+  }
+
+  function initAmbient(){
+    bubbles = [];
+    for (var i=0;i<20;i++){
+      bubbles.push({ x: Math.random()*W, y: Math.random()*H, r: 1+Math.random()*3.2, sp: 8+Math.random()*18, ph: Math.random()*6.28 });
+    }
+    fishes = [
+      { x: 60, y: 70, sp: 20, dir: 1, s: 0.9, ph: 0 },
+      { x: 440, y: 150, sp: 14, dir: -1, s: 0.7, ph: 2.1 },
+      { x: 180, y: 420, sp: 17, dir: 1, s: 0.6, ph: 4.2 }
+    ];
+    particles = [];
+  }
+
+  function startGame(m){
+    clearTimers();
+    mode = (m && MODES[m]) ? m : selectedMode;
+    selectedMode = mode;
+    try { localStorage.setItem('tx_landlord_mode_v1', mode); } catch(e){}
+    var M = MODES[mode];
+    round = 1; coins = M.start; paidRounds = 0; totalEarned = 0; bestGainThisRun = 0;
+    heat = 0; feverArmed = false; feverSpin = false;
+    items = { reroll:0, spin:0, luck:0, coupon:0 };
+    couponUsed = false;
+    pendingRentMod = 1; pendingSpinsMod = 0; pendingPayoutMod = 1; roundPayoutMod = 1;
+    eventBag = []; currentEvent = null; eventResult = '';
+    pool = BASE_POOL.slice();
+    M.extra.forEach(function(s){ pool.push(s); });
+    rent = rentBaseFor(1);
+    spinsLeft = M.spins;
+    grid = randomGrid(); display = grid.slice();
+    payoutVals = grid.map(function(){ return 0; });
+    badges = []; floats = []; totalWin = 0;
+    state = 'idle';
+    document.getElementById('ovStart').classList.add('hide');
+    document.getElementById('ovShop').classList.add('hide');
+    document.getElementById('ovEvent').classList.add('hide');
+    document.getElementById('ovEnd').classList.add('hide');
+    setHint('空格旋转 · 相邻图案会互相加成 · 1–4 使用道具');
+    updateHud();
+    draw();
+    sfx(440,0.08,'sine',0.03);
+  }
+
+  function spin(){
+    if (state !== 'idle' || spinsLeft <= 0) return;
+    state = 'spinning';
+    spinsLeft--;
+    feverSpin = feverArmed;
+    badges = []; floats = []; payoutVals = grid.map(function(){ return 0; });
+    totalWin = 0;
+    var final = randomGrid();
+    var raw = calcPayout(final);
+    display = grid.slice();
+    stopTimes = [0,1,2,3,4].map(function(c){ return 430 + c*112; });
+    spinStart = performance.now();
+    spinDone = 0;
+    setHint(feverSpin ? '<span class="gold">欧气爆发！本次收益 ×2</span>' : '摇奖机转动中……');
+    sfx(300,0.12,'triangle',0.035,120);
+    updateHud();
+
+    var tick = setInterval(function(){
+      if (state !== 'spinning') { clearInterval(tick); return; }
+      sfx(600 + rnd(140), 0.022, 'square', 0.010);
+    }, 95);
+    timers.push(tick);
+
+    for (var c=0;c<COLS;c++){
+      (function(col){
+        later(function(){
+          if (state !== 'spinning') return;
+          for (var r=0;r<ROWS;r++) display[idx(col,r)] = final[idx(col,r)];
+          sfx(230 + col*36, 0.07, 'triangle', 0.03);
+          spinDone++;
+          if (spinDone === COLS) later(function(){ resolveSpin(final, raw); }, 170);
+        }, stopTimes[col]);
+      })(c);
+    }
+  }
+
+  function resolveSpin(final, raw){
+    if (state !== 'spinning') return;
+    grid = final.slice(); display = final.slice();
+    var mult = roundPayoutMod * MODES[mode].payMult * (feverSpin ? 2 : 1);
+    var vals = raw.vals.map(function(v){ return Math.max(0, Math.round(v*mult)); });
+    var gain = 0;
+    vals.forEach(function(v){ gain += v; });
+    payoutVals = vals;
+    coins += gain;
+    totalWin = gain;
+    totalEarned += gain;
+    if (gain > bestGainThisRun) bestGainThisRun = gain;
+    if (gain > records[mode].gain){ records[mode].gain = gain; saveRecords(); }
+
+    badges = [];
+    for (var i=0;i<grid.length;i++){
+      var baseAdj = SYM[grid[i]].base * mult;
+      if (vals[i] > baseAdj + 0.01 || vals[i] >= 10) badges.push({ i:i, v:vals[i] });
+    }
+
+    var feverNow = feverSpin;
+    if (feverNow){ heat = 0; feverArmed = false; feverSpin = false; }
+    else { heat = Math.min(100, heat + Math.round(gain*0.9)); if (heat >= 100){ heat = 100; feverArmed = true; } }
+
+    floats.push({ x:W/2, y:GY+GH/2, txt:'+'+gain, t:0, life:1.3, size:30, color:'#f8dfa6' });
+    if (feverNow) floats.push({ x:W/2, y:GY+GH/2-44, txt:'欧气爆发 ×2', t:0, life:1.5, size:22, color:'#ffe9b0' });
+    spawnWinParticles(gain, badges);
+    state = 'idle';
+    setHint('本期收入 <b>+'+gain+'</b> 硬币' + (feverNow ? ' · <span class="gold">欧气爆发</span>' : ''));
+    sfx(660,0.1,'sine',0.05); later(function(){ sfx(880,0.12,'sine',0.045); },80);
+    if (gain >= 55) later(function(){ sfx(1100,0.2,'sine',0.04); },150);
+    if (feverNow){ shake = 9; flash = 0.9; }
+    else if (gain >= 70){ shake = 5; }
+    updateHud();
+    draw();
+    if (spinsLeft <= 0) later(function(){ if (state === 'idle'){ setHint('旋转次数用完了，自动交租……'); settle(); } }, 1150);
+  }
+
+  function settle(){
+    if (state !== 'idle') return;
+    state = 'settling';
+    updateHud();
+    if (coins >= rent){
+      coins -= rent;
+      paidRounds++;
+      if (paidRounds > records[mode].rounds){ records[mode].rounds = paidRounds; }
+      saveRecords();
+      sfx(520,0.16,'sine',0.05); later(function(){ sfx(780,0.24,'sine',0.05); },120);
+      setHint('房租已付清 · 已付 <b>'+paidRounds+'</b> 期');
+      updateHud();
+      if (MODES[mode].rounds !== Infinity && round >= MODES[mode].rounds){ later(winGame, 760); }
+      else { later(showEvent, 700); }
+    } else {
+      sfx(180,0.35,'sawtooth',0.06,-90);
+      later(gameOver, 650);
+    }
+  }
+
+  function nextEvent(){
+    if (!eventBag.length){
+      eventBag = EVENTS.map(function(_,i){ return i; });
+      for (var i=eventBag.length-1;i>0;i--){ var j=rnd(i+1); var tmp=eventBag[i]; eventBag[i]=eventBag[j]; eventBag[j]=tmp; }
+    }
+    return EVENTS[eventBag.pop()];
+  }
+
+  function showEvent(){
+    if (state === 'over') return;
+    state = 'event';
+    currentEvent = nextEvent();
+    var def = currentEvent;
+    document.getElementById('evIcon').textContent = def.icon;
+    document.getElementById('evTitle').textContent = def.title;
+    document.getElementById('evDesc').textContent = def.desc;
+    var wrap = document.getElementById('evChoices');
+    wrap.innerHTML = '';
+    def.choices.forEach(function(ch, i){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'ev-choice';
+      if (ch.cost && coins < ch.cost) b.disabled = true;
+      b.innerHTML = '<b>' + ch.label + '</b><small>' + (ch.cost && coins < ch.cost ? '硬币不足 · ' : '') + ch.tip + '</small>';
+      b.addEventListener('click', function(){ chooseEvent(i); });
+      wrap.appendChild(b);
+    });
+    document.getElementById('ovEvent').classList.remove('hide');
+    updateHud();
+    sfx(420,0.12,'sine',0.025,60);
+  }
+
+  function chooseEvent(i){
+    if (state !== 'event' || !currentEvent) return;
+    var ch = currentEvent.choices[i];
+    if (!ch) return;
+    if (ch.cost && coins < ch.cost){ setHint('硬币不够，先选另一个。', true); return; }
+    if (ch.cost) coins -= ch.cost;
+    eventResult = applyEffect(ch.eff) || currentEvent.title;
+    document.getElementById('ovEvent').classList.add('hide');
+    currentEvent = null;
+    setHint('房东事件：<b>' + eventResult + '</b>');
+    updateHud();
+    later(openShop, 340);
+  }
+
+  function applyEffect(e){
+    if (!e) return '';
+    var bits = [];
+    if (e.coins){ coins = Math.max(0, coins + e.coins); bits.push((e.coins>0?'+':'') + e.coins + ' 币'); }
+    if (e.heat){ heat = clamp(heat + e.heat, 0, 100); if (heat >= 100){ feverArmed = true; } bits.push('欧气 ' + (e.heat>0?'+':'') + e.heat); }
+    if (e.rentMod){
+      pendingRentMod *= e.rentMod;
+      bits.push('下期房租 ' + (e.rentMod < 1 ? '-' : '+') + Math.round(Math.abs(1-e.rentMod)*100) + '%');
+    }
+    if (e.spinsMod){ pendingSpinsMod += e.spinsMod; bits.push('下期旋转 ' + (e.spinsMod>0?'+':'') + e.spinsMod); }
+    if (e.payoutMod){
+      pendingPayoutMod *= e.payoutMod;
+      bits.push('下期收益 ' + (e.payoutMod < 1 ? '-' : '+') + Math.round(Math.abs(1-e.payoutMod)*100) + '%');
+    }
+    if (e.item){ if (addItem(e.item)) bits.push('获得 ' + ITEM[e.item].name); else bits.push('道具已满'); }
+    if (e.randomItem){
+      var k = pick(['reroll','spin','luck','coupon']);
+      if (addItem(k)) bits.push('获得 ' + ITEM[k].name); else bits.push('道具已满');
+    }
+    if (e.randomRare){
+      var s = pick(['pearl','trophy','anchor','star','chest']);
+      pool.push(s); bits.push('摇奖机加入 ' + SYM[s].e + SYM[s].name);
+    }
+    return bits.join(' · ');
+  }
+
+  function modsPreview(){
+    var bits = [];
+    if (Math.abs(pendingRentMod-1) > 0.001) bits.push('下期房租 ' + (pendingRentMod<1?'-':'+') + Math.round(Math.abs(1-pendingRentMod)*100) + '%');
+    if (pendingSpinsMod) bits.push('下期旋转 ' + (pendingSpinsMod>0?'+':'') + pendingSpinsMod);
+    if (Math.abs(pendingPayoutMod-1) > 0.001) bits.push('下期收益 ' + (pendingPayoutMod<1?'-':'+') + Math.round(Math.abs(1-pendingPayoutMod)*100) + '%');
+    return bits.join(' · ');
+  }
+
+  function shopOffers(){
+    var out=[], bag=[];
+    IDS.forEach(function(k){ for (var i=0;i<SHOP_W[k];i++) bag.push(k); });
+    var guard=0;
+    while (out.length < 3 && bag.length && guard++ < 80){
+      var s = pick(bag);
+      if (out.indexOf(s) < 0) out.push(s);
+    }
+    return out;
+  }
+  function itemOffers(){
+    var keys = Object.keys(ITEM).slice(), out=[];
+    while (out.length < 2 && keys.length){ var k=pick(keys); keys.splice(keys.indexOf(k),1); out.push(k); }
+    return out;
+  }
+
+  function openShop(){
+    if (state === 'over') return;
+    state = 'shop';
+    shopSymOffers = shopOffers();
+    shopItemOffers = itemOffers();
+    shopSymSold = [false,false,false];
+    shopItemSold = [false,false];
+    shopRefreshed = false;
+    renderShop();
+    document.getElementById('ovShop').classList.remove('hide');
+    updateHud();
+    sfx(560,0.09,'sine',0.03);
+  }
+
+  function renderShop(){
+    var wrap = document.getElementById('shopCards');
+    wrap.innerHTML = '';
+    shopSymOffers.forEach(function(sym, i){
+      var el = document.createElement('div');
+      var sold = shopSymSold[i];
+      el.className = 'card' + (sold ? ' sold' : '') + (!sold && coins < PRICE[sym] ? ' poor' : '');
+      el.innerHTML = '<div class="ico">' + SYM[sym].e + '</div><div class="nm">' + SYM[sym].name +
+        '</div><div class="ds">' + SYM[sym].desc + '</div><div class="pr">' + PRICE[sym] + ' 币</div>';
+      el.addEventListener('click', function(){ buySymbol(i); });
+      wrap.appendChild(el);
+    });
+    var iw = document.getElementById('shopItems');
+    iw.innerHTML = '';
+    shopItemOffers.forEach(function(k, i){
+      var sold = shopItemSold[i];
+      var el = document.createElement('div');
+      el.className = 'icard' + (sold ? ' sold' : '') + (!sold && coins < ITEM[k].price ? ' poor' : '');
+      el.innerHTML = '<span class="ii">' + ITEM[k].e + '</span><div><b>' + ITEM[k].name + '</b><small>' + ITEM[k].desc + '</small></div><em>' + ITEM[k].price + '</em>';
+      el.addEventListener('click', function(){ buyItem(i); });
+      iw.appendChild(el);
+    });
+    document.getElementById('shopCoins').textContent = coins;
+    document.getElementById('nextRent').textContent = nextRentPreview();
+    var preview = modsPreview();
+    document.getElementById('shopSub').textContent = preview ? ('已生效：' + preview) : '买下图案塞进摇奖机，也可以备点应急道具。';
+    document.getElementById('poolInfo').textContent = '摇奖机池：' + pool.length + ' 格 · 图案越多，组合越丰富';
+    var rb = document.getElementById('btnRefresh');
+    rb.disabled = shopRefreshed || coins < 6;
+    rb.textContent = shopRefreshed ? '已刷新' : '刷新 · 6';
+  }
+
+  function buySymbol(i){
+    var sym = shopSymOffers[i];
+    if (!sym || shopSymSold[i]) return;
+    if (coins < PRICE[sym]){ setHint('硬币不够，先记着。', true); return; }
+    coins -= PRICE[sym];
+    pool.push(sym);
+    shopSymSold[i] = true;
+    sfx(590,0.08,'sine',0.04);
+    renderShop();
+    updateHud();
+  }
+
+  function buyItem(i){
+    var k = shopItemOffers[i];
+    if (!k || shopItemSold[i]) return;
+    if (coins < ITEM[k].price){ setHint('硬币不够，先记着。', true); return; }
+    if (itemTotal() >= 9){ setHint('道具栏已满（9 件）。', true); return; }
+    coins -= ITEM[k].price;
+    addItem(k);
+    shopItemSold[i] = true;
+    sfx(640,0.09,'sine',0.04,60);
+    renderShop();
+    updateHud();
+  }
+
+  function refreshShop(){
+    if (state !== 'shop' || shopRefreshed || coins < 6) return;
+    coins -= 6;
+    shopRefreshed = true;
+    shopSymOffers = shopOffers();
+    shopSymSold = [false,false,false];
+    sfx(500,0.1,'triangle',0.035,80);
+    renderShop();
+    updateHud();
+  }
+
+  function nextRound(){
+    if (state !== 'shop') return;
+    document.getElementById('ovShop').classList.add('hide');
+    round++;
+    rent = Math.max(10, Math.round(rentBaseFor(round)*pendingRentMod));
+    spinsLeft = MODES[mode].spins + pendingSpinsMod;
+    roundPayoutMod = pendingPayoutMod;
+    pendingRentMod = 1; pendingSpinsMod = 0; pendingPayoutMod = 1;
+    couponUsed = false;
+    state = 'idle';
+    grid = randomGrid(); display = grid.slice();
+    payoutVals = grid.map(function(){ return 0; });
+    badges = []; floats = []; totalWin = 0;
+    var extra = modsPreview();
+    setHint('第 <b>' + round + '</b> 期 · 房租 <b>' + rent + '</b> 硬币' + (extra ? ' · ' + extra : ''));
+    updateHud();
+    draw();
+  }
+
+  function useItem(k){
+    if (state !== 'idle' || items[k] <= 0) return;
+    if (k === 'reroll'){
+      if (spinsLeft <= 0) return;
+      items.reroll--;
+      grid = randomGrid(); display = grid.slice();
+      badges = []; floats = []; payoutVals = grid.map(function(){ return 0; }); totalWin = 0;
+      setHint('重摇券用掉了：重新摇出一组图案，不消耗旋转次数。');
+      sfx(460,0.09,'triangle',0.04,90);
+    } else if (k === 'spin'){
+      if (spinsLeft <= 0) return;
+      items.spin--;
+      spinsLeft++;
+      setHint('加班券：本期多 <b>1</b> 次旋转。');
+      sfx(520,0.1,'sine',0.04,80);
+    } else if (k === 'luck'){
+      if (feverArmed) return;
+      items.luck--;
+      heat = 100; feverArmed = true;
+      setHint('<span class="gold">幸运符：欧气已满，下次旋转收益 ×2。</span>');
+      sfx(720,0.12,'sine',0.045,120);
+    } else if (k === 'coupon'){
+      if (couponUsed || rent <= 10) return;
+      items.coupon--;
+      var before = rent;
+      rent = Math.max(10, Math.round(rent*0.8));
+      couponUsed = true;
+      setHint('房租券：本期房租 <b>' + before + ' → ' + rent + '</b>。');
+      sfx(430,0.1,'sine',0.04,60);
+    }
+    updateHud();
+    draw();
+  }
+
+  function showStart(){
+    state = 'boot';
+    document.getElementById('ovEnd').classList.add('hide');
+    document.getElementById('ovShop').classList.add('hide');
+    document.getElementById('ovEvent').classList.add('hide');
+    document.getElementById('ovStart').classList.remove('hide');
+    selectedMode = mode;
+    highlightModes();
+    updateStartBest();
+    updateHud();
+  }
+
+  function updateStartBest(){
+    ['standard','endless','rush'].forEach(function(k){
+      var el = document.getElementById('best-'+k);
+      if (el) el.textContent = '最佳 ' + records[k].rounds + ' 期';
+    });
+    var r = records[selectedMode];
+    var el = document.getElementById('startBest');
+    el.innerHTML = '最佳：<b>' + r.rounds + ' 期</b> · 单次 <b>' + r.gain + ' 币</b>';
+  }
+
+  function highlightModes(){
+    Array.prototype.forEach.call(document.querySelectorAll('.mode'), function(b){
+      b.classList.toggle('on', b.getAttribute('data-mode') === selectedMode);
+    });
+  }
+
+  function winGame(){
+    state = 'over';
+    records[mode].rounds = Math.max(records[mode].rounds, paidRounds);
+    saveRecords();
+    var M = MODES[mode];
+    document.getElementById('endIcon').style.display = '';
+    document.getElementById('endIcon').innerHTML = '';
+    document.getElementById('endTitle').textContent = mode === 'rush' ? '赌赢离场' : '自由身';
+    document.getElementById('endSub').textContent = mode === 'rush' ? 'HIGH ROLLER' : 'LEASE TERMINATED';
+    document.getElementById('endScore').textContent = paidRounds;
+    document.getElementById('endPaid').textContent = paidRounds + ' / ' + M.rounds;
+    document.getElementById('endBest').textContent = records[mode].rounds;
+    document.getElementById('endGain').textContent = totalEarned;
+    document.getElementById('endBestGain').textContent = bestGainThisRun;
+    document.getElementById('endMode').textContent = M.name;
+    document.getElementById('endLine').textContent = mode === 'rush'
+      ? '六期赌局全部撑过。你带着满袋硬币离开 404，房东第一次没敢开口。'
+      : '十期房租全部付清。你抱着摇奖机走进海沟，再也没人收租。';
+    document.getElementById('ovEnd').classList.remove('hide');
+    sfx(523,0.18,'sine',0.05); later(function(){ sfx(659,0.18,'sine',0.045); },130); later(function(){ sfx(784,0.34,'sine',0.045); },260);
+    updateHud();
+  }
+
+  function gameOver(){
+    state = 'over';
+    saveRecords();
+    document.getElementById('endIcon').style.display = '';
+    document.getElementById('endTitle').textContent = '被赶出去了';
+    document.getElementById('endSub').textContent = 'EVICTION NOTICE';
+    document.getElementById('endScore').textContent = paidRounds;
+    document.getElementById('endPaid').textContent = paidRounds;
+    document.getElementById('endBest').textContent = records[mode].rounds;
+    document.getElementById('endGain').textContent = totalEarned;
+    document.getElementById('endBestGain').textContent = bestGainThisRun;
+    document.getElementById('endMode').textContent = MODES[mode].name;
+    document.getElementById('endLine').textContent = '第 ' + round + ' 期房租还差 ' + Math.max(0, rent-coins) + ' 硬币。你的摇奖机被贴上了封条。';
+    document.getElementById('ovEnd').classList.remove('hide');
+    updateHud();
+  }
+
+  /* ---------- drawing ---------- */
+  function roundRect(x,y,w,h,r){
+    ctx.beginPath();
+    if (ctx.roundRect){ ctx.roundRect(x,y,w,h,r); return; }
+    ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+  }
+  function drawEmoji(e,x,y,size){
+    ctx.font = size + 'px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle='#fff';
+    ctx.fillText(e,x,y+2);
+  }
+
+  function drawPorthole(x,y,r){
+    ctx.save();
+    ctx.beginPath(); ctx.arc(x,y,r,0,6.283);
+    var g = ctx.createRadialGradient(x-8,y-8,2,x,y,r);
+    g.addColorStop(0,'#2b6b72'); g.addColorStop(.58,'#0d303a'); g.addColorStop(1,'#041018');
+    ctx.fillStyle=g; ctx.fill();
+    ctx.globalAlpha=.55; ctx.fillStyle='#8fe4d4';
+    ctx.beginPath(); ctx.ellipse(x+2,y,r*0.34,r*0.18,-0.18,0,6.283); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(x-r*0.2,y); ctx.lineTo(x-r*0.52,y-r*0.2); ctx.lineTo(x-r*0.52,y+r*0.2); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.arc(x+r*0.2,y-r*0.03,r*0.035,0,6.283); ctx.fillStyle='#062027'; ctx.fill();
+    ctx.globalAlpha=.26; ctx.strokeStyle='#e5fff9'; ctx.lineWidth=2.2;
+    ctx.beginPath(); ctx.arc(x,y,r*0.78,-2.2,-0.35); ctx.stroke();
+    ctx.globalAlpha=1; ctx.lineWidth=5; ctx.strokeStyle='#7c5d2f'; ctx.beginPath(); ctx.arc(x,y,r,0,6.283); ctx.stroke();
+    ctx.lineWidth=1.4; ctx.strokeStyle='rgba(248,223,166,.55)'; ctx.beginPath(); ctx.arc(x,y,r-1,0,6.283); ctx.stroke();
+    for (var i=0;i<4;i++){
+      var a = i*Math.PI/2 + Math.PI/4;
+      ctx.beginPath(); ctx.arc(x+Math.cos(a)*r*0.92, y+Math.sin(a)*r*0.92, 1.9, 0, 6.283);
+      ctx.fillStyle='rgba(248,223,166,.62)'; ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawLamp(){
+    ctx.save();
+    ctx.strokeStyle='rgba(232,180,90,.35)'; ctx.lineWidth=1.2;
+    ctx.beginPath(); ctx.moveTo(W/2,0); ctx.lineTo(W/2,28); ctx.stroke();
+    var lg = ctx.createLinearGradient(W/2-30,28,W/2+30,48);
+    lg.addColorStop(0,'#3b4f50'); lg.addColorStop(.5,'#d6a658'); lg.addColorStop(1,'#4b3d22');
+    ctx.beginPath(); ctx.moveTo(W/2-30,46); ctx.lineTo(W/2+30,46); ctx.lineTo(W/2+17,27); ctx.lineTo(W/2-17,27); ctx.closePath();
+    ctx.fillStyle=lg; ctx.fill(); ctx.strokeStyle='rgba(248,223,166,.4)'; ctx.lineWidth=1; ctx.stroke();
+    var glow = ctx.createRadialGradient(W/2,52,2,W/2,52,130);
+    glow.addColorStop(0,'rgba(248,223,166,.24)'); glow.addColorStop(1,'rgba(248,223,166,0)');
+    ctx.fillStyle=glow; ctx.fillRect(W/2-140,20,280,260);
+    ctx.beginPath(); ctx.moveTo(W/2-22,48); ctx.lineTo(W/2+22,48); ctx.lineTo(W/2+110,H); ctx.lineTo(W/2-110,H); ctx.closePath();
+    ctx.fillStyle='rgba(248,223,166,.028)'; ctx.fill();
+    ctx.restore();
+  }
+
+  function drawKelp(){
+    ctx.save(); ctx.globalAlpha=.20; ctx.strokeStyle='#2f9a8f'; ctx.lineWidth=5; ctx.lineCap='round';
+    [[18,1],[W-18,-1]].forEach(function(p){
+      var x=p[0], d=p[1];
+      ctx.beginPath(); ctx.moveTo(x,H);
+      ctx.bezierCurveTo(x+18*d,H-24,x-14*d,H-54,x+12*d,H-86);
+      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x+8*d,H);
+      ctx.bezierCurveTo(x+30*d,H-18,x+2*d,H-40,x+26*d,H-62);
+      ctx.stroke();
+    });
+    ctx.restore();
+  }
+
+  function updateAmbient(){
+    var dt = frameDt;
+    for (var i=0;i<bubbles.length;i++){
+      var b=bubbles[i];
+      b.y -= b.sp*dt;
+      b.x += Math.sin(t*1.4+b.ph)*7*dt;
+      if (b.y < -8){ b.y = H+8; b.x = Math.random()*W; }
+    }
+    for (var f=0;f<fishes.length;f++){
+      var fi=fishes[f];
+      fi.x += fi.sp*fi.dir*dt;
+      if (fi.x < -30){ fi.x = W+30; fi.dir = 1; }
+      if (fi.x > W+30){ fi.x = -30; fi.dir = -1; }
+    }
+    for (var p=particles.length-1;p>=0;p--){
+      var pt=particles[p]; pt.age += dt;
+      if (pt.age > pt.life){ particles.splice(p,1); continue; }
+      pt.x += pt.vx*dt; pt.y += pt.vy*dt; pt.vy += pt.g*dt;
+    }
+  }
+
+  function drawRoom(){
+    var bg = ctx.createLinearGradient(0,0,0,H);
+    bg.addColorStop(0,'#0e2b35'); bg.addColorStop(.52,'#081a23'); bg.addColorStop(1,'#03070c');
+    ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+
+    ctx.save(); ctx.globalAlpha=.06; ctx.fillStyle='#c9fff3';
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(120,0); ctx.lineTo(300,H); ctx.lineTo(150,H); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(190,0); ctx.lineTo(250,0); ctx.lineTo(410,H); ctx.lineTo(330,H); ctx.closePath(); ctx.fill();
+    ctx.restore();
+
+    drawPorthole(W-52,34,23);
+    drawLamp();
+    drawKelp();
+
+    for (var i=0;i<fishes.length;i++){
+      var f=fishes[i];
+      ctx.save(); ctx.globalAlpha=.16; ctx.fillStyle='#7fd8cb'; ctx.translate(f.x,f.y); ctx.scale(f.s*f.dir,f.s);
+      ctx.beginPath(); ctx.ellipse(0,0,16,7,0,0,6.283); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-14,0); ctx.lineTo(-27,-7); ctx.lineTo(-27,7); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.arc(9,-2,1.4,0,6.283); ctx.fillStyle='#032128'; ctx.fill();
+      ctx.restore();
+    }
+
+    for (var b=0;b<bubbles.length;b++){
+      var bb=bubbles[b];
+      ctx.beginPath(); ctx.arc(bb.x,bb.y,bb.r,0,6.283);
+      ctx.strokeStyle='rgba(180,240,230,.16)'; ctx.lineWidth=1; ctx.stroke();
+      ctx.fillStyle='rgba(180,240,230,.045)'; ctx.fill();
+    }
+
+    var vg = ctx.createRadialGradient(W/2,H/2,90,W/2,H/2,W*0.72);
+    vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,.58)');
+    ctx.fillStyle=vg; ctx.fillRect(0,0,W,H);
+  }
+
+  function drawMachine(){
+    var x0 = GX-18, y0 = GY-48, mw = GW+36, mh = GH+96;
+
+    ctx.save();
+    ctx.beginPath(); ctx.ellipse(W/2, y0+mh+12, mw*0.42, 15, 0, 0, 6.283);
+    ctx.fillStyle='rgba(0,0,0,.34)'; ctx.fill();
+    ctx.restore();
+
+    roundRect(x0,y0,mw,mh,24);
+    var fg = ctx.createLinearGradient(x0,y0,x0,y0+mh);
+    fg.addColorStop(0,'#334c52'); fg.addColorStop(.35,'#1c3037'); fg.addColorStop(1,'#0a151a');
+    ctx.fillStyle=fg; ctx.fill();
+    ctx.strokeStyle='rgba(232,180,90,.34)'; ctx.lineWidth=1.6; ctx.stroke();
+
+    roundRect(x0+14,y0+8,mw-28,32,11);
+    var mg = ctx.createLinearGradient(x0,y0+8,x0,y0+40);
+    mg.addColorStop(0,'#4b5f5d'); mg.addColorStop(.5,'#24383d'); mg.addColorStop(1,'#111f24');
+    ctx.fillStyle=mg; ctx.fill();
+    ctx.strokeStyle='rgba(248,223,166,.30)'; ctx.lineWidth=1; ctx.stroke();
+
+    var marquee = feverArmed || feverSpin ? '欧气爆发 ×2' : 'LUCK LODGER · ROOM 404';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.font='700 10px ui-monospace,Consolas,monospace';
+    ctx.fillStyle = feverArmed || feverSpin ? '#ffe9b0' : '#d9c08a';
+    ctx.fillText(marquee, W/2, y0+24);
+
+    for (var i=0;i<9;i++){
+      var bx = x0+30 + i*(mw-60)/8;
+      var on = feverArmed || feverSpin ? true : (Math.floor(t*6)+i)%3===0;
+      ctx.beginPath(); ctx.arc(bx, y0+38, 1.8, 0, 6.283);
+      ctx.fillStyle = on ? 'rgba(248,223,166,.9)' : 'rgba(232,180,90,.16)';
+      ctx.fill();
+    }
+
+    ['tl','tr','bl','br'].forEach(function(p){
+      var rx = p[0]==='t' ? x0+10 : x0+mw-10;
+      var ry = p[1]==='l' ? y0+10 : y0+mh-10;
+      ctx.beginPath(); ctx.arc(rx,ry,2.3,0,6.283);
+      ctx.fillStyle='rgba(232,180,90,.55)'; ctx.fill();
+    });
+
+    roundRect(GX-10,GY-10,GW+20,GH+20,16);
+    ctx.fillStyle='rgba(4,12,16,.62)'; ctx.fill();
+    ctx.strokeStyle='rgba(232,180,90,.14)'; ctx.lineWidth=1; ctx.stroke();
+
+    for (var r=0;r<ROWS;r++){
+      for (var c=0;c<COLS;c++){
+        var id = idx(c,r);
+        var x = GX + c*(CELL+GAP), y = GY + r*(CELL+GAP);
+        roundRect(x,y,CELL,CELL,11);
+        var cg = ctx.createLinearGradient(x,y,x,y+CELL);
+        cg.addColorStop(0,'#1a3841'); cg.addColorStop(.55,'#10262e'); cg.addColorStop(1,'#08161c');
+        ctx.fillStyle=cg; ctx.fill();
+        ctx.strokeStyle='rgba(232,180,90,.14)'; ctx.lineWidth=1; ctx.stroke();
+
+        var sym = display[id] || 'shell';
+        var spinningCol = state === 'spinning' && performance.now()-spinStart < stopTimes[c]-45;
+        var jitter = 0;
+        if (spinningCol){
+          display[id] = pick(pool);
+          sym = display[id];
+          jitter = Math.sin((performance.now()-spinStart)/38 + c*1.7)*2.5;
+          ctx.globalAlpha = 0.48 + 0.28*Math.sin((performance.now()-spinStart)/70 + c);
+        }
+        if (state === 'spinning' && performance.now()-spinStart >= stopTimes[c]){
+          display[id] = grid[id];
+          sym = grid[id];
+        }
+
+        var b = null;
+        for (var bi=0;bi<badges.length;bi++) if (badges[bi].i === id) b = badges[bi];
+        if (b){
+          var pulse = 0.35 + 0.25*Math.sin(t*6 + id);
+          ctx.save();
+          ctx.shadowColor='rgba(232,180,90,.9)'; ctx.shadowBlur=17;
+          roundRect(x+1.5,y+1.5,CELL-3,CELL-3,10);
+          ctx.strokeStyle='rgba(248,223,166,'+(0.42+pulse*0.42)+')'; ctx.lineWidth=2; ctx.stroke();
+          ctx.restore();
+        }
+
+        drawEmoji(SYM[sym].e, x+CELL/2, y+CELL/2-2+jitter, 36);
+        ctx.globalAlpha=1;
+
+        if (b){
+          var bw=33, bh=17, bx=x+CELL-bw-4, by=y+4;
+          ctx.fillStyle='rgba(8,16,20,.9)';
+          roundRect(bx,by,bw,bh,8); ctx.fill();
+          ctx.strokeStyle='rgba(232,180,90,.55)'; ctx.lineWidth=1; ctx.stroke();
+          ctx.fillStyle='#f8dfa6'; ctx.font='700 10px ui-monospace,Consolas,monospace';
+          ctx.textAlign='center'; ctx.textBaseline='middle';
+          ctx.fillText('+'+b.v, bx+bw/2, by+bh/2+0.5);
+        }
+      }
+    }
+
+    ctx.save();
+    ctx.globalAlpha=.07; ctx.fillStyle='#ffffff';
+    ctx.beginPath(); ctx.moveTo(GX+20,GY+20); ctx.lineTo(GX+150,GY+20); ctx.lineTo(GX+55,GY+GH-20); ctx.lineTo(GX+20,GY+GH-20); ctx.closePath(); ctx.fill();
+    ctx.restore();
+
+    roundRect(GX+34, GY+GH+12, GW-68, 28, 10);
+    ctx.fillStyle='rgba(4,11,15,.72)'; ctx.fill();
+    ctx.strokeStyle='rgba(232,180,90,.16)'; ctx.lineWidth=1; ctx.stroke();
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.font='700 9px ui-monospace,Consolas,monospace';
+    ctx.fillStyle='rgba(232,180,90,.7)';
+    ctx.fillText('ROOM 404 · 押金 ' + (MODES[mode].rounds === Infinity ? '∞' : MODES[mode].rounds) + ' 期', W/2, GY+GH+26);
+
+    if (feverArmed || feverSpin){
+      var a = 0.28 + 0.24*Math.sin(t*5.2);
+      ctx.save();
+      ctx.shadowColor='rgba(248,223,166,.85)'; ctx.shadowBlur=22;
+      roundRect(x0,y0,mw,mh,24);
+      ctx.strokeStyle='rgba(248,223,166,'+a+')'; ctx.lineWidth=3; ctx.stroke();
+      ctx.restore();
+    }
+
+    if (state === 'idle' && totalWin > 0){
+      ctx.fillStyle='rgba(159,224,180,.9)';
+      ctx.font='600 11px -apple-system,"Segoe UI","Microsoft YaHei",sans-serif';
+      ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+      ctx.fillText('上期收入 +' + totalWin, W/2, H-10);
+    } else if (state === 'idle' && spinsLeft > 0){
+      ctx.fillStyle='rgba(127,151,163,.65)';
+      ctx.font='10px -apple-system,"Segoe UI","Microsoft YaHei",sans-serif';
+      ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+      ctx.fillText('ROOM 404 · 本期房租 ' + rent, W/2, H-10);
+    }
+  }
+
+  function spawnWinParticles(gain, bs){
+    if (gain <= 0) return;
+    var list = bs.slice(0, 10);
+    if (!list.length) list.push({ i: idx(2,1) });
+    var count = Math.min(46, 8 + Math.round(gain/3));
+    for (var n=0;n<count;n++){
+      var b = list[n % list.length];
+      var x = GX + (b.i%COLS)*(CELL+GAP) + CELL/2;
+      var y = GY + Math.floor(b.i/COLS)*(CELL+GAP) + CELL/2;
+      particles.push({
+        x:x, y:y, vx:(Math.random()-.5)*150, vy:-70-Math.random()*140,
+        g:260, age:0, life:0.45+Math.random()*0.5, r:1.4+Math.random()*2.4,
+        c: Math.random()<0.3 ? '#9fe0b4' : (Math.random()<0.5 ? '#f8dfa6' : '#e8b45a')
+      });
+    }
+  }
+
+  function drawParticles(){
+    for (var i=0;i<particles.length;i++){
+      var p=particles[i], k=1-p.age/p.life;
+      if (k <= 0) continue;
+      ctx.globalAlpha = k;
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,6.283);
+      ctx.fillStyle=p.c; ctx.fill();
+    }
+    ctx.globalAlpha=1;
+  }
+
+  function drawFloats(){
+    for (var i=floats.length-1;i>=0;i--){
+      var f=floats[i];
+      f.t += frameDt;
+      if (f.t > f.life){ floats.splice(i,1); continue; }
+      var k=f.t/f.life;
+      ctx.globalAlpha = 1-k;
+      ctx.fillStyle = f.color;
+      ctx.font = '800 ' + f.size + 'px ui-monospace,Consolas,monospace';
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.shadowColor='rgba(232,180,90,.8)'; ctx.shadowBlur=18;
+      ctx.fillText(f.txt, f.x, f.y - 48*k);
+      ctx.shadowBlur=0; ctx.globalAlpha=1;
+    }
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    ctx.save();
+    if (shake > 0.2) ctx.translate((Math.random()-.5)*shake, (Math.random()-.5)*shake);
+    updateAmbient();
+    drawRoom();
+    drawMachine();
+    drawParticles();
+    drawFloats();
+    ctx.restore();
+    if (flash > 0.02){
+      ctx.fillStyle='rgba(248,223,166,'+(flash*0.32)+')';
+      ctx.fillRect(0,0,W,H);
+      flash *= 0.87;
+    }
+    shake *= 0.88;
+  }
+
+  function loop(now){
+    var dt = Math.min(0.05, (now-lastT)/1000 || 0.016);
+    lastT = now; t += dt; frameDt = dt;
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  function fitCanvas(){
+    var stage = document.querySelector('.stage');
+    if (!stage) return;
+    var r = stage.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    var s = Math.min(r.width/W, r.height/H);
+    if (s <= 0) return;
+    cv.style.width = (W*s) + 'px';
+    cv.style.height = (H*s) + 'px';
+  }
+  window.addEventListener('resize', fitCanvas);
+  window.addEventListener('orientationchange', function(){ setTimeout(fitCanvas, 60); });
+  if (window.ResizeObserver){
+    try { new ResizeObserver(fitCanvas).observe(document.querySelector('.stage')); } catch(e){}
+  }
+
+  /* ---------- wiring ---------- */
+  document.getElementById('btnStart').addEventListener('click', function(){ startGame(selectedMode); });
+  document.getElementById('btnSpin').addEventListener('click', spin);
+  document.getElementById('btnPay').addEventListener('click', function(){ if (state === 'idle') settle(); });
+  document.getElementById('btnNext').addEventListener('click', nextRound);
+  document.getElementById('btnAgain').addEventListener('click', function(){ startGame(mode); });
+  document.getElementById('btnMode').addEventListener('click', showStart);
+  document.getElementById('btnRefresh').addEventListener('click', refreshShop);
+
+  Array.prototype.forEach.call(document.querySelectorAll('.item'), function(b){
+    b.addEventListener('click', function(){ useItem(b.getAttribute('data-item')); });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('.mode'), function(b){
+    b.addEventListener('click', function(){
+      selectedMode = b.getAttribute('data-mode');
+      highlightModes();
+      updateStartBest();
+      sfx(480,0.06,'sine',0.025);
+    });
+  });
+
+  window.addEventListener('keydown', function(e){
+    if (e.repeat) return;
+    if (e.key === ' ' || e.key === 'Enter'){ e.preventDefault(); if (state === 'idle') spin(); }
+    else if (e.key === 'p' || e.key === 'P'){ if (state === 'idle') settle(); }
+    else if (e.key >= '1' && e.key <= '4'){
+      var keys = ['reroll','spin','luck','coupon'];
+      useItem(keys[+e.key-1]);
+    }
+  });
+
+  window.__LORD__ = {
+    start: function(m){ startGame(m || selectedMode); },
+    spin: spin,
+    settle: function(){ if (state === 'idle') settle(); },
+    forceSettle: function(){ if (state === 'idle') settle(); },
+    chooseEvent: chooseEvent,
+    buySymbol: buySymbol,
+    buyItem: buyItem,
+    refreshShop: refreshShop,
+    nextRound: nextRound,
+    useItem: useItem,
+    grantItem: function(k){ if (ITEM[k]){ addItem(k); updateHud(); return true; } return false; },
+    selectMode: function(m){ if (MODES[m]){ selectedMode = m; highlightModes(); updateStartBest(); } },
+    showStart: showStart,
+    get state(){ return state; },
+    get mode(){ return mode; },
+    get selectedMode(){ return selectedMode; },
+    get coins(){ return coins; },
+    set coins(v){ coins = v; updateHud(); renderShopIfOpen(); },
+    get rent(){ return rent; },
+    get round(){ return round; },
+    get spinsLeft(){ return spinsLeft; },
+    set spinsLeft(v){ spinsLeft = v; updateHud(); },
+    get heat(){ return heat; },
+    set heat(v){ heat = clamp(v,0,100); feverArmed = heat >= 100; updateHud(); },
+    get feverArmed(){ return feverArmed; },
+    get items(){ return { reroll:items.reroll, spin:items.spin, luck:items.luck, coupon:items.coupon }; },
+    get pool(){ return pool.slice(); },
+    get grid(){ return grid.slice(); },
+    get paid(){ return paidRounds; },
+    get event(){ return currentEvent ? { title:currentEvent.title, choices:currentEvent.choices.map(function(c){ return { label:c.label, tip:c.tip, cost:c.cost||0 }; }) } : null; },
+    get shop(){ return state === 'shop' ? { symbols:shopSymOffers.slice(), items:shopItemOffers.slice(), coins:coins } : null; }
+  };
+
+  function renderShopIfOpen(){
+    if (state === 'shop') renderShop();
+  }
+
+  initAmbient();
+  grid = randomGrid(); display = grid.slice();
+  payoutVals = grid.map(function(){ return 0; });
+  highlightModes();
+  updateStartBest();
+  updateHud();
+  fitCanvas();
+  draw();
+  requestAnimationFrame(function(n){ lastT = n; fitCanvas(); requestAnimationFrame(loop); });
+})();
+</script>
+</body>
+</html>

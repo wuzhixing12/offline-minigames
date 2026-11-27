@@ -181,6 +181,27 @@
     .foot{display:none;}
   }
 </style>
+<style id="tx-aurora-skin">
+/* tx-aurora-skin:pipes */
+:root{--tx-a1:#38bdf8;--tx-a2:#5eead4;}
+html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+::selection{background:rgba(56,189,248,0.38);color:#fff}
+*::-webkit-scrollbar{width:8px;height:8px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:rgba(56,189,248,0.26);border-radius:99px;border:2px solid transparent;background-clip:content-box}
+*::-webkit-scrollbar-thumb:hover{background:rgba(56,189,248,0.46);background-clip:content-box}
+body{background-color:#070d18!important;background-image:radial-gradient(1100px 640px at 6% -12%, rgba(56,189,248,0.16), transparent 62%), radial-gradient(900px 680px at 104% 112%, rgba(94,234,212,0.12), transparent 62%)!important}
+button{transition:transform .14s ease,filter .16s ease,box-shadow .2s ease,border-color .16s ease,background-color .16s ease}
+button:hover{filter:brightness(1.07)}
+button:active{transform:translateY(1px) scale(.995)}
+button:focus-visible{outline:2px solid rgba(56,189,248,0.72);outline-offset:2px}
+.overlay,.modal,.dialog,.sheet,#levels,#loading{background-image:radial-gradient(900px 520px at 50% 0%,rgba(56,189,248,0.15),transparent 62%),radial-gradient(720px 520px at 50% 100%,rgba(94,234,212,0.08),transparent 60%)!important}
+.overlay,.modal,.dialog,.sheet{backdrop-filter:blur(9px) saturate(1.1)}
+.overlay h1,.modal h1,.screen h1,.overlay-card h1,.win-card h1,.result-card h1,.bcard .btitle,.loadcard .ltitle{text-shadow:0 2px 30px rgba(56,189,248,0.45)}
+.overlay .screen,.overlay .panel,.overlay-card,.modal .panel,.win-card,.result-card,.bcard,.loadcard,.rules-dialog,.panel{box-shadow:0 38px 96px -34px rgba(0,0,0,.95), inset 0 1px 0 rgba(255,255,255,.07)!important}
+.bcard,.loadcard{border-color:rgba(56,189,248,0.34)!important}
+.overlay .panel,.overlay-card,.win-card,.result-card,.modal .panel{backdrop-filter:blur(10px) saturate(1.08);border-color:rgba(56,189,248,0.26)!important}
+</style>
 </head>
 <body>
 <div class="app">

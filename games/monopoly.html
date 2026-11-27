@@ -1,0 +1,2176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>环城大亨 · 城市地产争霸</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family:"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+  color:#d9e8f5;
+  background:
+    radial-gradient(900px 620px at 82% -12%,rgba(94,234,212,.11),transparent 62%),
+    radial-gradient(760px 520px at 4% 108%,rgba(167,139,250,.11),transparent 60%),
+    linear-gradient(180deg,#07121d 0%,#050c14 55%,#04090f 100%);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(rgba(148,197,225,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(148,197,225,.035) 1px,transparent 1px);
+  background-size:46px 46px;
+  mask-image:radial-gradient(75% 65% at 50% 40%,#000 0%,transparent 100%);
+  -webkit-mask-image:radial-gradient(75% 65% at 50% 40%,#000 0%,transparent 100%);
+}
+.wrap{position:relative;z-index:1;max-width:1420px;margin:0 auto;padding:16px 22px 8px}
+.bar{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:10px 4px 14px}
+.brand{display:flex;align-items:center;gap:11px;margin-right:auto}
+.logo{
+  width:42px;height:42px;border-radius:13px;display:grid;place-items:center;
+  font-size:19px;color:#04161a;
+  background:linear-gradient(150deg,#a7f3e6,#2dd4bf 55%,#0d9488);
+  box-shadow:0 10px 24px -10px rgba(45,212,191,.85),inset 0 1px 0 rgba(255,255,255,.5);
+}
+.brand h1{margin:0;font-size:19px;letter-spacing:.06em;font-weight:700;color:#ecf8ff}
+.brand p{margin:2px 0 0;font-size:11px;letter-spacing:.18em;color:#6e93ab;text-transform:uppercase}
+.bar-stats{display:flex;gap:9px}
+.stat{
+  min-width:86px;padding:7px 12px;border-radius:11px;
+  background:rgba(16,38,56,.62);border:1px solid rgba(148,197,225,.12);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.045);
+}
+.stat span{display:block;font-size:10px;letter-spacing:.12em;color:#6e93ab}
+.stat b{font-size:15px;font-variant-numeric:tabular-nums;color:#e8f6ff}
+.stat em{font-style:normal;font-size:10px;color:#5d7f95}
+.bar-actions{display:flex;gap:8px}
+main{display:flex;gap:18px;align-items:flex-start}
+.stage{flex:1 1 auto;min-width:0;display:flex;justify-content:center}
+.board{
+  --u:100px;
+  position:relative;width:100%;max-width:min(940px,max(640px,calc(100vh - 100px)));aspect-ratio:1/1;
+  display:grid;grid-template-columns:repeat(10,minmax(0,1fr));grid-template-rows:repeat(10,minmax(0,1fr));
+  gap:3px;padding:5px;border-radius:20px;
+  background:linear-gradient(160deg,rgba(17,42,61,.75),rgba(6,14,22,.88));
+  border:1px solid rgba(148,197,225,.10);
+  box-shadow:0 30px 70px -34px rgba(0,0,0,.95),inset 0 1px 0 rgba(255,255,255,.05);
+}
+.tile{
+  position:relative;min-width:0;min-height:0;overflow:hidden;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:1px;padding:7px 4px 14px;border-radius:9px;
+  background:linear-gradient(168deg,rgba(23,50,72,.9),rgba(9,23,36,.96));
+  border:1px solid rgba(148,197,225,.10);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.045);
+  transition:box-shadow .18s,transform .18s,background .18s;
+}
+.tile .band{position:absolute;top:0;left:0;right:0;height:3px;background:var(--gc,#2dd4bf);opacity:.95;box-shadow:0 0 10px var(--gc,#2dd4bf)}
+.tile .tname{
+  font-size:clamp(7px,calc(var(--u)*.135),13px);line-height:1.15;text-align:center;
+  color:#d8ecf9;font-weight:600;letter-spacing:.01em;max-width:100%;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.tile .tmeta{
+  font-size:clamp(6px,calc(var(--u)*.115),11px);line-height:1;color:#7fa3ba;
+  font-variant-numeric:tabular-nums;
+}
+.tile .tmeta.rent{color:#fbbf24}
+.tile .glyph{
+  font-size:clamp(9px,calc(var(--u)*.21),21px);line-height:1;font-weight:800;
+  letter-spacing:.02em;color:#8fe3d3;
+}
+.tile .glyph.big{font-size:clamp(11px,calc(var(--u)*.27),28px)}
+.tile.special{background:linear-gradient(168deg,rgba(30,61,84,.9),rgba(10,25,38,.97))}
+.tile.special .tname{color:#bcd6e7}
+.tile.corner{background:linear-gradient(150deg,rgba(38,74,96,.92),rgba(9,23,36,.98));border-color:rgba(94,234,212,.2)}
+.tile.corner .glyph{color:#5eead4;text-shadow:0 0 14px rgba(94,234,212,.5)}
+.tile.chance .glyph{color:#fbbf24;text-shadow:0 0 14px rgba(251,191,36,.45)}
+.tile.community .glyph{color:#5eead4;text-shadow:0 0 14px rgba(94,234,212,.45)}
+.tile.station .glyph{color:#93c5fd;text-shadow:0 0 14px rgba(147,197,253,.45)}
+.tile.utility .glyph{color:#fbbf24;text-shadow:0 0 14px rgba(251,191,36,.4)}
+.tile.tax .glyph{color:#fb7185;text-shadow:0 0 12px rgba(251,113,133,.4)}
+.tile.mortgaged{filter:saturate(.5);opacity:.82}
+.tile.mortgaged .band{opacity:.18;box-shadow:none}
+.tile.mortgaged .tmeta{color:#fb7185}
+.tile.owned{box-shadow:inset 0 0 0 1px var(--oc),inset 0 1px 0 rgba(255,255,255,.05)}
+.tile.owned::before{content:"";position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 120%,var(--oc),transparent 65%);opacity:.13;pointer-events:none}
+.tile.here{box-shadow:inset 0 0 0 2px var(--hc,#5eead4),0 0 22px -6px var(--hc,#5eead4)}
+.tile.hot{animation:hotpulse 1.2s ease-in-out infinite}
+@keyframes hotpulse{0%,100%{box-shadow:inset 0 0 0 1px rgba(251,191,36,.35),0 0 0 0 rgba(251,191,36,.25)}50%{box-shadow:inset 0 0 0 1px rgba(251,191,36,.8),0 0 18px -3px rgba(251,191,36,.55)}}
+.flag{
+  position:absolute;top:4px;right:4px;width:clamp(10px,calc(var(--u)*.15),16px);
+  height:clamp(10px,calc(var(--u)*.15),16px);border-radius:50%;display:none;
+  align-items:center;justify-content:center;font-size:clamp(6px,calc(var(--u)*.085),9px);
+  font-weight:800;color:#04121a;background:var(--oc,#5eead4);
+  box-shadow:0 0 10px -1px var(--oc,#5eead4);
+}
+.lvl{display:flex;gap:2px;margin-top:1px;height:5px;align-items:center}
+.lvl i{width:clamp(3px,calc(var(--u)*.042),5px);height:clamp(3px,calc(var(--u)*.042),5px);border-radius:1px;background:rgba(148,197,225,.18)}
+.lvl i.on{background:var(--oc,#fbbf24);box-shadow:0 0 6px var(--oc,#fbbf24)}
+.tokens{position:absolute;left:3px;right:3px;bottom:3px;display:flex;justify-content:center;gap:2px;flex-wrap:wrap;pointer-events:none}
+.tk{
+  width:clamp(9px,calc(var(--u)*.135),15px);height:clamp(9px,calc(var(--u)*.135),15px);
+  border-radius:50%;display:grid;place-items:center;
+  font-size:clamp(5px,calc(var(--u)*.072),8px);font-weight:800;color:#05131c;font-style:normal;
+  box-shadow:0 0 0 1px rgba(4,15,24,.75),0 2px 6px rgba(0,0,0,.5);
+  animation:tokIn .18s ease-out;
+}
+@keyframes tokIn{from{transform:scale(.4);opacity:0}to{transform:none;opacity:1}}
+.center{
+  grid-area:2/2/10/10;position:relative;min-width:0;min-height:0;
+  border-radius:15px;padding:clamp(30px,calc(var(--u)*.45),48px) clamp(8px,calc(var(--u)*.1),16px);
+  background:
+    radial-gradient(120% 90% at 50% 0%,rgba(45,212,191,.12),transparent 62%),
+    linear-gradient(180deg,rgba(10,27,42,.85),rgba(5,14,23,.92));
+  border:1px solid rgba(94,234,212,.16);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),inset 0 0 48px rgba(3,10,17,.7);
+  display:flex;flex-direction:column;justify-content:center;gap:clamp(4px,calc(var(--u)*.05),9px);overflow:hidden;
+}
+.center::after{
+  content:"";position:absolute;inset:auto 0 0 0;height:36%;pointer-events:none;opacity:.5;
+  background:
+    repeating-linear-gradient(90deg,transparent 0 9px,rgba(94,234,212,.10) 9px 10px),
+    linear-gradient(180deg,transparent,rgba(94,234,212,.07));
+  mask-image:linear-gradient(180deg,transparent,#000 85%);
+  -webkit-mask-image:linear-gradient(180deg,transparent,#000 85%);
+}
+.c-top{position:absolute;top:clamp(8px,calc(var(--u)*.1),16px);left:clamp(8px,calc(var(--u)*.1),16px);right:clamp(8px,calc(var(--u)*.1),16px);display:flex;align-items:center;justify-content:space-between;gap:6px;z-index:2}
+.potbox{display:flex;align-items:center;gap:6px;padding:3px 9px;border-radius:99px;background:rgba(251,191,36,.09);border:1px solid rgba(251,191,36,.22)}
+.potbox span{font-size:clamp(7px,calc(var(--u)*.09),10px);color:#b99a5b;letter-spacing:.08em}
+.potbox b{font-size:clamp(9px,calc(var(--u)*.12),13px);color:#fbbf24;font-variant-numeric:tabular-nums}
+.turnchip{display:flex;align-items:center;gap:5px;font-size:clamp(8px,calc(var(--u)*.1),11px);color:#9dc2d8}
+.turnchip i{width:8px;height:8px;border-radius:50%;background:#5eead4;box-shadow:0 0 9px #5eead4}
+.dicewrap{display:flex;justify-content:center;align-items:center;gap:clamp(14px,calc(var(--u)*.2),30px);position:relative;z-index:1;flex:0 0 auto;padding:clamp(4px,calc(var(--u)*.05),10px) 0}
+.dicewrap::before{
+  content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:min(66%,250px);aspect-ratio:1/1;border-radius:50%;
+  border:1px solid rgba(94,234,212,.13);
+  box-shadow:inset 0 0 60px rgba(45,212,191,.07),0 0 50px rgba(45,212,191,.04);
+  pointer-events:none;
+}
+.dicewrap::after{
+  content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:min(46%,174px);aspect-ratio:1/1;border-radius:50%;
+  border:1px dashed rgba(94,234,212,.09);pointer-events:none;
+}
+.die{
+  width:clamp(40px,calc(var(--u)*.78),96px);aspect-ratio:1/1;border-radius:clamp(8px,calc(var(--u)*.09),16px);
+  background:linear-gradient(150deg,#fffdf4,#e4dcc8 70%,#cfc6ae);
+  display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);
+  padding:clamp(6px,calc(var(--u)*.1),13px);gap:clamp(3px,calc(var(--u)*.04),7px);
+  box-shadow:0 10px 22px -10px rgba(0,0,0,.95),inset 0 -2px 5px rgba(120,100,60,.35),inset 0 2px 3px #fff;
+  transition:transform .1s;
+}
+.die.roll{animation:droll .28s linear infinite}
+@keyframes droll{0%{transform:rotate(0) scale(1)}50%{transform:rotate(9deg) scale(1.05)}100%{transform:rotate(0) scale(1)}}
+.die i{border-radius:50%;background:radial-gradient(circle at 35% 30%,#435266,#0b131d 70%);opacity:0;transition:opacity .06s}
+.die i.on{opacity:1}
+.status{
+  text-align:center;font-size:clamp(9px,calc(var(--u)*.13),16px);line-height:1.4;color:#c9e2f2;
+  min-height:1.4em;position:relative;z-index:1;padding:0 6px;
+}
+.leadline{
+  text-align:center;font-size:clamp(7px,calc(var(--u)*.108),13px);color:#7fa3ba;
+  position:relative;z-index:1;letter-spacing:.02em;margin-top:-2px;
+}
+.leadline b{color:#fbbf24;font-weight:600}
+.status b{color:#fbbf24;font-weight:600}
+.actions{display:flex;flex-wrap:wrap;gap:clamp(4px,calc(var(--u)*.05),8px);justify-content:center;position:relative;z-index:1;min-height:1px}
+.thinking{font-size:clamp(7px,calc(var(--u)*.095),11px);color:#7fa3ba;text-align:center;position:relative;z-index:1;letter-spacing:.06em}
+.thinking::after{content:"";animation:dots 1.2s steps(4,end) infinite}
+@keyframes dots{0%{content:""}25%{content:"."}50%{content:".."}75%{content:"..."}}
+.minilog{
+  position:absolute;left:clamp(8px,calc(var(--u)*.1),16px);right:clamp(8px,calc(var(--u)*.1),16px);bottom:clamp(8px,calc(var(--u)*.1),16px);
+  z-index:2;
+  font-size:clamp(7px,calc(var(--u)*.09),11.5px);line-height:1.55;color:#6d92a9;
+  padding:5px 8px;border-radius:7px;background:rgba(2,9,15,.5);border:1px solid rgba(148,197,225,.08);
+  min-height:calc(2 * 1.55em + 12px);height:calc(2 * 1.55em + 12px);overflow:hidden;
+}
+.minilog div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.minilog div:first-child{color:#a9cadf}
+.btn{
+  border:0;cursor:pointer;font:inherit;font-weight:650;font-size:clamp(9px,calc(var(--u)*.118),14px);
+  padding:clamp(5px,calc(var(--u)*.065),10px) clamp(9px,calc(var(--u)*.14),19px);
+  border-radius:9px;color:#04171c;
+  background:linear-gradient(180deg,#93f2df,#2dd4bf);
+  box-shadow:0 8px 18px -9px rgba(45,212,191,.9),inset 0 1px 0 rgba(255,255,255,.5);
+  transition:transform .1s,filter .1s;letter-spacing:.02em;
+}
+.btn:hover{filter:brightness(1.08)}
+.btn:active{transform:translateY(1px) scale(.985)}
+.btn.gold{background:linear-gradient(180deg,#ffe28f,#f5b93c);color:#2d1c02;box-shadow:0 8px 18px -9px rgba(245,185,60,.9),inset 0 1px 0 rgba(255,255,255,.55)}
+.btn.ghost{background:rgba(148,197,225,.14);color:#dceefb;box-shadow:inset 0 0 0 1px rgba(148,197,225,.3)}
+.btn.big{font-size:15px;padding:12px 26px;border-radius:12px}
+.side{
+  flex:0 0 348px;width:348px;display:flex;flex-direction:column;gap:12px;
+}
+.panel{
+  border-radius:15px;background:linear-gradient(180deg,rgba(15,36,53,.72),rgba(6,16,26,.8));
+  border:1px solid rgba(148,197,225,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.045),0 18px 44px -30px #000;
+  padding:12px;
+}
+.panel h2{margin:0 0 9px;font-size:11px;letter-spacing:.18em;color:#6e93ab;font-weight:600;text-transform:uppercase}
+#players{display:flex;flex-direction:column;gap:7px}
+.pcard{
+  --pc:#5eead4;position:relative;display:flex;align-items:center;gap:9px;padding:8px 9px;border-radius:11px;
+  background:rgba(11,28,43,.62);border:1px solid rgba(148,197,225,.08);
+  border-left:3px solid var(--pc);transition:background .2s,box-shadow .2s,opacity .2s;
+}
+.pcard.active{background:rgba(23,52,74,.72);box-shadow:0 0 0 1px var(--pc),0 10px 22px -14px var(--pc)}
+.pcard.dead{opacity:.42;filter:grayscale(.6)}
+.pcard .who{min-width:0;flex:1}
+.pcard .pname{font-size:12px;font-weight:650;color:#e5f4ff;display:flex;align-items:center;gap:5px;white-space:nowrap}
+.pcard .pname em{font-style:normal;font-size:9px;color:#6e93ab;padding:1px 5px;border-radius:99px;background:rgba(148,197,225,.09)}
+.pcard .sub{font-size:10px;color:#6e93ab;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pcard .cash{font-size:13px;font-weight:700;color:#fbbf24;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pcard .avatar{
+  width:26px;height:26px;border-radius:50%;display:grid;place-items:center;flex:none;
+  font-size:11px;font-weight:800;color:#04131c;background:var(--pc);box-shadow:0 0 12px -2px var(--pc);
+}
+.chipjail{font-size:9px;color:#fb7185;border:1px solid rgba(251,113,133,.35);border-radius:99px;padding:0 5px;margin-left:2px}
+.legend{display:flex;flex-wrap:wrap;gap:6px}
+.lgitem{display:flex;align-items:center;gap:5px;font-size:10px;color:#8fb0c5;padding:3px 7px;border-radius:99px;background:rgba(148,197,225,.06)}
+.lgitem i{width:8px;height:8px;border-radius:2px}
+.lgitem b{margin-left:auto;font-size:9px;color:#6e93ab;font-weight:600;font-variant-numeric:tabular-nums}
+.lgitem.full{background:rgba(45,212,191,.1);color:#c9efe7}
+.lgitem.full b{color:#5eead4}
+.tile-tip{
+  position:fixed;z-index:60;pointer-events:none;min-width:180px;max-width:250px;
+  padding:10px 12px;border-radius:11px;font-size:11px;line-height:1.55;color:#c6dfef;
+  background:linear-gradient(180deg,rgba(12,30,45,.97),rgba(5,14,23,.98));
+  border:1px solid rgba(94,234,212,.28);box-shadow:0 18px 46px -18px #000;
+  opacity:0;transform:translateY(4px);transition:opacity .12s,transform .12s;
+}
+.tile-tip.show{opacity:1;transform:none}
+.tile-tip h4{margin:0 0 4px;font-size:12.5px;color:#eaf8ff;font-weight:700}
+.tile-tip .tt-k{color:#6e93ab}
+.tile-tip .tt-v{color:#fbbf24;font-weight:600}
+.tile-tip .tt-row{display:flex;justify-content:space-between;gap:14px}
+.tile-tip .tt-desc{margin-top:5px;padding-top:5px;border-top:1px dashed rgba(148,197,225,.15);color:#8fb0c5;font-size:10.5px}
+.logpanel{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+#log{overflow-y:auto;max-height:300px;display:flex;flex-direction:column;gap:4px;padding-right:2px}
+#log::-webkit-scrollbar{width:5px}
+#log::-webkit-scrollbar-thumb{background:rgba(148,197,225,.18);border-radius:99px}
+#log div{font-size:10.5px;line-height:1.4;color:#89aabf;padding-bottom:4px;border-bottom:1px dashed rgba(148,197,225,.07)}
+#log div:first-child{color:#cfe6f5}
+.overlay{
+  position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:18px;
+  background:radial-gradient(700px 500px at 50% 30%,rgba(16,48,66,.55),rgba(2,7,12,.88));
+  backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);
+  animation:fadeIn .22s ease-out;
+}
+.overlay.hide{display:none}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.ov-card{
+  width:min(460px,100%);border-radius:20px;padding:26px 26px 22px;text-align:center;
+  background:
+    radial-gradient(120% 80% at 50% 0%,rgba(45,212,191,.14),transparent 60%),
+    linear-gradient(180deg,#0d2436,#060f18 75%);
+  border:1px solid rgba(94,234,212,.22);
+  box-shadow:0 40px 90px -30px #000,inset 0 1px 0 rgba(255,255,255,.08);
+  animation:rise .28s cubic-bezier(.2,.9,.3,1);
+}
+@keyframes rise{from{transform:translateY(14px) scale(.98);opacity:0}to{transform:none;opacity:1}}
+.ov-kicker{font-size:10px;letter-spacing:.34em;color:#4f7e92;margin-bottom:6px}
+.ov-card h1{margin:0 0 8px;font-size:27px;letter-spacing:.1em;color:#effbff;font-weight:700}
+.ov-sub{margin:0 auto 18px;max-width:330px;font-size:12px;line-height:1.6;color:#87a9bf}
+.seg{display:flex;gap:6px;justify-content:center;margin-bottom:14px;background:rgba(3,12,19,.55);padding:5px;border-radius:12px;border:1px solid rgba(148,197,225,.09)}
+.seg button{
+  border:0;background:transparent;color:#7fa3ba;font:inherit;font-size:12px;font-weight:600;
+  padding:8px 18px;border-radius:8px;cursor:pointer;transition:background .16s,color .16s;
+}
+.seg button.on{background:linear-gradient(180deg,rgba(94,234,212,.22),rgba(94,234,212,.1));color:#a7f3e6;box-shadow:inset 0 0 0 1px rgba(94,234,212,.35)}
+.preview{display:flex;justify-content:center;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+.pv{display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:99px;background:rgba(148,197,225,.06);border:1px solid rgba(148,197,225,.1);font-size:11px;color:#bcd6e7}
+.pv i{width:9px;height:9px;border-radius:50%}
+.ov-tip{margin-top:12px;font-size:10.5px;color:#5d7f95}
+.ov-resume{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.ov-resume[hidden]{display:none}
+.ov-save{font-size:11px;color:#7e94ac;letter-spacing:.02em}
+.row2{display:flex;gap:9px;justify-content:center;margin-top:18px}
+.rank{display:flex;flex-direction:column;gap:7px;margin:6px 0 4px;text-align:left}
+.rrow{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:11px;background:rgba(11,28,43,.7);border:1px solid rgba(148,197,225,.09)}
+.rrow.win{background:linear-gradient(90deg,rgba(251,191,36,.14),rgba(11,28,43,.7));border-color:rgba(251,191,36,.35)}
+.rpos{width:18px;text-align:center;font-size:12px;font-weight:800;color:#79a0b8}
+.rrow.win .rpos{color:#fbbf24}
+.rdot{width:10px;height:10px;border-radius:50%;flex:none}
+.rname{flex:1;font-size:13px;color:#e5f4ff;font-weight:600}
+.rnet{font-size:13px;color:#fbbf24;font-variant-numeric:tabular-nums;font-weight:700}
+.rtag{font-size:9.5px;color:#6e93ab;min-width:62px;text-align:right}
+.asset-list{display:flex;flex-direction:column;gap:7px;max-height:50vh;overflow-y:auto;margin:4px 0 16px;text-align:left;padding-right:3px}
+.asset-row{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:10px;background:rgba(11,28,43,.72);border:1px solid rgba(148,197,225,.09)}
+.asset-row .an{flex:1;min-width:0;font-size:12px;color:#e5f4ff}
+.asset-row .an small{display:block;font-size:9.5px;color:#6e93ab;margin-top:2px}
+.asset-row .ab{font-size:10.5px;padding:5px 9px;border-radius:7px;border:0;cursor:pointer;font-family:inherit;font-weight:600;background:rgba(148,197,225,.14);color:#dceefb}
+.asset-row .ab.gold{background:linear-gradient(180deg,#ffe28f,#f5b93c);color:#2d1c02}
+.asset-row .ab:disabled{opacity:.38;cursor:not-allowed}
+.asset-empty{font-size:11.5px;color:#6e93ab;text-align:center;padding:14px 0}
+.auction-bid{font-size:25px;font-weight:800;color:#fbbf24;letter-spacing:.04em;margin:4px 0 10px;font-variant-numeric:tabular-nums}
+.auction-line{font-size:11px;color:#7fa3ba;margin-bottom:14px;line-height:1.6}
+.auction-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.auction-actions .btn{width:100%}
+.card-ov{padding-top:11vh;align-items:flex-start;background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;pointer-events:none}
+.card-ov.hide{display:none}
+.card-ov .ov-card{width:min(320px,90vw);padding:20px 22px 18px;pointer-events:none}
+.card-ov .ov-kicker{margin-bottom:4px}
+.card-ov h1{font-size:20px;margin-bottom:6px}
+.card-ov p{margin:0;font-size:12px;line-height:1.65;color:#a9c7da}
+.rules-body{text-align:left;font-size:12px;line-height:1.72;color:#9dbdd0;max-height:56vh;overflow-y:auto;padding-right:4px}
+.rules-body b{color:#e8f6ff}
+.rules-body li{margin-bottom:6px}
+.rules-body ul{padding-left:18px;margin:0 0 12px}
+.rules-body h3{font-size:12px;letter-spacing:.1em;color:#5eead4;margin:14px 0 6px}
+@media (max-width:1180px){
+  .wrap{padding:12px 12px 20px}
+  main{flex-direction:column;align-items:stretch}
+  .side{width:auto;flex:0 0 auto}
+  #players{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  #log{max-height:150px}
+  .stage{width:100%}
+}
+@media (max-width:620px){
+  .bar{gap:10px}
+  .brand h1{font-size:16px}
+  .brand p{display:none}
+  .bar-stats{order:3;width:100%}
+  .stat{flex:1;min-width:0}
+  .bar-actions{margin-left:auto}
+  .bar-actions .btn{padding:6px 10px;font-size:11px}
+  .board{gap:3px;padding:3px;border-radius:14px}
+  .center{padding:28px 7px;gap:4px}
+  .center .c-top{margin-bottom:1px}
+  .tile{border-radius:5px;padding:4px 2px 9px}
+  .tile .tname{font-size:8px}
+  .tile .tmeta{font-size:7px}
+  .tile .glyph{font-size:11px}
+  .tile .glyph.big{font-size:14px}
+  .tile .lvl{height:4px}
+  .dicewrap::before{width:44%}
+  #players{grid-template-columns:1fr}
+  .ov-card{padding:22px 18px}
+  .ov-card h1{font-size:23px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="bar">
+    <div class="brand">
+      <div class="logo">◆</div>
+      <div>
+        <h1>环城大亨</h1>
+        <p>City Tycoon</p>
+      </div>
+    </div>
+    <div class="bar-stats">
+      <div class="stat"><span>回合</span><b id="hudRound">1</b><em>/45</em></div>
+      <div class="stat"><span>当前</span><b id="hudTurn">—</b></div>
+    </div>
+    <div class="bar-actions">
+      <button class="btn ghost" id="btnAssets">资产</button>
+      <button class="btn ghost" id="btnRules">规则</button>
+      <button class="btn ghost" id="btnSound">音效 开</button>
+      <button class="btn ghost" id="btnRestart">重开</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="stage">
+      <div class="board" id="board"></div>
+    </section>
+    <aside class="side">
+      <div class="panel">
+        <h2>玩家</h2>
+        <div id="players"></div>
+      </div>
+      <div class="panel">
+        <h2>地产分区</h2>
+        <div class="legend" id="legend"></div>
+      </div>
+      <div class="panel logpanel">
+        <h2>事件记录</h2>
+        <div id="log"></div>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<div class="overlay" id="startOv">
+  <div class="ov-card">
+    <div class="ov-kicker">CITY TYCOON</div>
+    <h1>环城大亨</h1>
+    <p class="ov-sub">36 格城市棋盘，20 处地产、3 座车站、2 家公用事业，五大分区。买地、抵押、拍卖、收租，用 45 个回合把对手挤出城市。</p>
+    <div class="seg" id="segCount">
+      <button data-n="2">2 人</button>
+      <button data-n="3" class="on">3 人</button>
+      <button data-n="4">4 人</button>
+    </div>
+    <div class="preview" id="rosterPreview"></div>
+    <button class="btn primary big" id="btnStart">开始游戏</button>
+    <div class="ov-resume" id="resumeRow" hidden>
+      <button class="btn ghost" id="btnResume" type="button">继续上一局</button>
+      <span class="ov-save" id="saveMeta"></span>
+    </div>
+    <div class="ov-tip">你执青色棋子，其余为电脑对手。鼠标悬停格子可查看租金明细；R 掷骰、B 买地、U 升级、A 资产、H 规则。</div>
+  </div>
+</div>
+
+<div class="overlay hide" id="endOv">
+  <div class="ov-card">
+    <div class="ov-kicker">FINAL STANDINGS</div>
+    <h1 id="endTitle">对局结束</h1>
+    <p class="ov-sub" id="endReason"></p>
+    <div class="rank" id="rankList"></div>
+    <div class="row2">
+      <button class="btn ghost" id="btnSetup">重新设置</button>
+      <button class="btn primary" id="btnAgain">再来一局</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hide" id="rulesOv">
+  <div class="ov-card">
+    <div class="ov-kicker">HOW TO PLAY</div>
+    <h1>规则</h1>
+    <div class="rules-body">
+      <h3>基本流程</h3>
+      <ul>
+        <li>36 格棋盘，每回合掷两颗骰子，经过起点领取 <b>$200</b>；双数可再掷一次，连续三次双数入狱。</li>
+        <li>棋盘包含 <b>20 处地产</b>（五大分区）、<b>3 座车站</b>、<b>2 家公用事业</b>，停留时可购买或竞拍。</li>
+        <li>停在自有地产上可以升级（最高 Lv.4）；集齐同一分区 4 处地产，未升级时租金翻倍。</li>
+        <li>对局上限 <b>45 回合</b>，结束后按「现金 + 产业价值」结算总资产。</li>
+      </ul>
+      <h3>车站与公用事业</h3>
+      <ul>
+        <li><b>车站</b>：一座租金 $25，两座 $50，三座 $100。</li>
+        <li><b>公用事业</b>：单家租金为骰子点数 ×4，集齐两家为 ×10。</li>
+      </ul>
+      <h3>抵押</h3>
+      <ul>
+        <li>点击顶部「资产」可以把地产抵押，立即获得 <b>地价 50%</b> 的现金；赎回需要支付 <b>55%</b>。</li>
+        <li>抵押期间不产生租金；有建筑的地产需要先保持无建筑状态才能抵押（本作中仅 Lv.0 可抵押）。</li>
+        <li>现金不足以支付账单时会自动抵押，仍不足才宣告破产。</li>
+      </ul>
+      <h3>拍卖</h3>
+      <ul>
+        <li>你放弃购买，或任何玩家现金不足时，该产业进入<b>暗标拍卖</b>：所有存活玩家同时出价，最高者得。</li>
+        <li>起拍价为地价的 10%，出价不会超过自己的现金；无人达到起拍价则流拍，产业继续留在市场。</li>
+        <li>电脑放弃购买时只是跳过，不会主动发起拍卖。</li>
+      </ul>
+      <h3>特殊格子</h3>
+      <ul>
+        <li><b>机会 / 社区基金</b>：抽取卡牌，触发奖励、罚款、移动或押送。</li>
+        <li><b>监牢</b>：缴 <b>$80</b> 保释，或等待一回合自动离开。</li>
+        <li><b>城市税</b>：税款进入中央奖池；<b>免费停车</b>拿走全部奖池。</li>
+      </ul>
+      <h3>电脑性格（4 种）</h3>
+      <ul>
+        <li><b>激进</b>：抢地积极、出价高、升级快，但现金储备低。</li>
+        <li><b>稳健</b>：保留较多现金，谨慎竞拍，优先安全。</li>
+        <li><b>收藏家</b>：偏爱凑齐分区与公共事业，愿意为关键地块加价。</li>
+        <li><b>保守</b>：现金储备最高，只在高价值地块出手，很少参与竞拍。</li>
+      </ul>
+      <h3>破产</h3>
+      <ul>
+        <li>无法支付且无可抵押资产时破产，名下产业释放回市场。</li>
+        <li>只剩一名玩家时对局立即结束。</li>
+      </ul>
+    </div>
+    <div class="row2">
+      <button class="btn primary" id="btnCloseRules">知道了</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay passthrough card-ov hide" id="cardOv">
+  <div class="ov-card">
+    <div class="ov-kicker" id="cardKicker">CHANCE</div>
+    <h1 id="cardTitle">机会</h1>
+    <p id="cardText"></p>
+  </div>
+</div>
+
+<div class="overlay hide" id="auctionOv">
+  <div class="ov-card">
+    <div class="ov-kicker">SEALED AUCTION</div>
+    <h1 id="auctionName">拍卖</h1>
+    <p class="ov-sub" id="auctionSub"></p>
+    <div class="auction-bid" id="auctionBid">$0</div>
+    <div class="auction-line" id="auctionLine">所有存活玩家同时提交暗标，出价最高者获得产业。</div>
+    <div class="auction-actions" id="auctionActions"></div>
+  </div>
+</div>
+
+<div class="overlay hide" id="assetOv">
+  <div class="ov-card">
+    <div class="ov-kicker">PORTFOLIO</div>
+    <h1>我的资产</h1>
+    <p class="ov-sub" id="assetSub">抵押立即获得地价 50% 的现金，赎回需要支付 55%。</p>
+    <div class="asset-list" id="assetList"></div>
+    <div class="row2">
+      <button class="btn primary" id="btnCloseAssets">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div class="tile-tip" id="tileTip"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  var PASS_GO = 200;
+  var START_CASH = 1500;
+  var MAX_ROUNDS = 45;
+  var JAIL_FEE = 80;
+  var JAIL_POS = 9;
+  var RENT_MULT = [1, 2.3, 4, 6.5, 10];
+
+  var PLAYER_NAMES = ['你', '阿岚', '赤狐', '紫鲸'];
+  var PLAYER_COLORS = ['#5eead4', '#fb7185', '#fbbf24', '#a78bfa'];
+
+  var PERSONAS = {
+    aggr: { key:'aggr', name:'激进', reserve:100, buyChance:.55, upReserve:120, auction:.16, jailPay:220 },
+    balance: { key:'balance', name:'稳健', reserve:300, buyChance:.35, upReserve:320, auction:-.04, jailPay:380 },
+    collect: { key:'collect', name:'收藏家', reserve:180, buyChance:.45, upReserve:220, auction:.10, jailPay:300 },
+    cautious: { key:'cautious', name:'保守', reserve:420, buyChance:.25, upReserve:420, auction:-.12, jailPay:450 }
+  };
+  var AI_PERSONAS = [PERSONAS.aggr, PERSONAS.balance, PERSONAS.collect, PERSONAS.cautious];
+
+  var GROUPS = [
+    { name: '珊瑚海岸', color: '#2dd4bf' },
+    { name: '霓虹街区', color: '#a78bfa' },
+    { name: '旧城巷陌', color: '#fbbf24' },
+    { name: '云顶高地', color: '#fb7185' },
+    { name: '滨江新区', color: '#a3e635' }
+  ];
+
+  var TILES = [
+    { type: 'go', name: '起点' },
+    { type: 'prop', name: '珊瑚港', group: 0, price: 60 },
+    { type: 'prop', name: '灯塔街', group: 0, price: 70 },
+    { type: 'community', name: '社区基金' },
+    { type: 'prop', name: '潮汐巷', group: 0, price: 80 },
+    { type: 'station', name: '北环站', price: 140 },
+    { type: 'prop', name: '海风街', group: 0, price: 90 },
+    { type: 'tax', name: '城市税', amount: 100 },
+    { type: 'prop', name: '霓虹道', group: 1, price: 110 },
+    { type: 'jail', name: '监牢' },
+    { type: 'utility', name: '电力公司', price: 150 },
+    { type: 'prop', name: '电玩城', group: 1, price: 120 },
+    { type: 'chance', name: '机会' },
+    { type: 'prop', name: '午夜广场', group: 1, price: 130 },
+    { type: 'prop', name: '幻光里', group: 1, price: 140 },
+    { type: 'station', name: '东环站', price: 160 },
+    { type: 'prop', name: '旧城集市', group: 2, price: 170 },
+    { type: 'community', name: '社区基金' },
+    { type: 'free', name: '免费停车' },
+    { type: 'prop', name: '钟楼街', group: 2, price: 180 },
+    { type: 'utility', name: '自来水厂', price: 150 },
+    { type: 'prop', name: '石桥路', group: 2, price: 190 },
+    { type: 'chance', name: '机会' },
+    { type: 'prop', name: '旧码头', group: 2, price: 200 },
+    { type: 'tax', name: '城市税', amount: 120 },
+    { type: 'prop', name: '云顶台', group: 3, price: 220 },
+    { type: 'prop', name: '星河湾', group: 3, price: 240 },
+    { type: 'gojail', name: '入狱' },
+    { type: 'prop', name: '天穹里', group: 3, price: 260 },
+    { type: 'prop', name: '云端会所', group: 3, price: 280 },
+    { type: 'station', name: '南环站', price: 160 },
+    { type: 'prop', name: '滨江大道', group: 4, price: 300 },
+    { type: 'chance', name: '机会' },
+    { type: 'prop', name: '潮声码头', group: 4, price: 320 },
+    { type: 'prop', name: '玻璃塔', group: 4, price: 340 },
+    { type: 'prop', name: '夜市广场', group: 4, price: 360 }
+  ];
+
+  var CHANCE = [
+    { t: '股市红利到账，获得 200 元', f: function(p){ p.cash += 200; } },
+    { t: '产业例行检修，每处产业支付 25 元', f: function(p){ payTo(p, null, p.props.length * 25); } },
+    { t: '搭上顺风车回到起点，领取 200 元', f: function(p){ p.pos = 0; p.cash += 200; } },
+    { t: '违规经营被罚款 90 元', f: function(p){ payTo(p, null, 90); } },
+    { t: '对手们请你喝咖啡，每人支付 40 元', f: function(p){
+        G.players.forEach(function(o){ if(o !== p && !o.bankrupt && !G.over) payTo(o, p, 40); });
+      } },
+    { t: '夜巡队发现了你，直接押送监牢', f: function(p){ p.pos = JAIL_POS; p.inJail = true; G.extra = false; } },
+    { t: '城市创新大奖，获得 120 元', f: function(p){ p.cash += 120; } },
+    { t: '收到一张广告违规罚单，支付 70 元', f: function(p){ payTo(p, null, 70); } },
+    { t: '顺风车前进 3 格', f: function(p){ stepForward(p, 3); } },
+    { t: '银行返利，获得 90 元', f: function(p){ p.cash += 90; } },
+    { t: '环城高架直达东环站', f: function(p){ travelTo(p, 15); } },
+    { t: '城市更新补贴，每处产业获得 30 元', f: function(p){ p.cash += p.props.length * 30; } }
+  ];
+
+  var COMMUNITY = [
+    { t: '社区分红到账，获得 80 元', f: function(p){ p.cash += 80; } },
+    { t: '社区修缮，每处产业支付 20 元', f: function(p){ payTo(p, null, p.props.length * 20); } },
+    { t: '参加社区巡游，前进 2 格', f: function(p){ stepForward(p, 2); } },
+    { t: '教育捐赠，支付 100 元', f: function(p){ payTo(p, null, 100); } },
+    { t: '邻里互助，每位对手支付你 30 元', f: function(p){
+        G.players.forEach(function(o){ if(o !== p && !o.bankrupt && !G.over) payTo(o, p, 30); });
+      } },
+    { t: '医疗账单，支付 60 元', f: function(p){ payTo(p, null, 60); } },
+    { t: '城市绿化补贴，获得 120 元', f: function(p){ p.cash += 120; } },
+    { t: '社区巴士直达南环站', f: function(p){ travelTo(p, 30); } },
+    { t: '物业费上涨，支付 50 元', f: function(p){ payTo(p, null, 50); } },
+    { t: '社区抽奖中奖，获得 150 元', f: function(p){ p.cash += 150; } },
+    { t: '滨江新区开街庆典，获得 100 元', f: function(p){ p.cash += 100; } },
+    { t: '违规停车被贴条，支付 40 元', f: function(p){ payTo(p, null, 40); } }
+  ];
+
+  var G = {
+    players: [], turn: 0, round: 1, phase: 'idle', pot: 0, dice: [1, 1],
+    busy: false, dblChain: 0, extra: false, over: false, log: [], reason: '', n: 3,
+    auctioning: false, cardTimer: null
+  };
+
+  var SOUND = true;
+  var SAVE_KEY = 'mono.save.v1';
+  var PREF_KEY = 'mono.prefs.v1';
+  var AC = null;
+
+  var boardEl = document.getElementById('board');
+  var playersEl = document.getElementById('players');
+  var logEl = document.getElementById('log');
+  var legendEl = document.getElementById('legend');
+  var hudRound = document.getElementById('hudRound');
+  var hudTurn = document.getElementById('hudTurn');
+  var startOv = document.getElementById('startOv');
+  var endOv = document.getElementById('endOv');
+  var rulesOv = document.getElementById('rulesOv');
+  var rankList = document.getElementById('rankList');
+  var endTitle = document.getElementById('endTitle');
+  var endReason = document.getElementById('endReason');
+  var rosterEl = document.getElementById('rosterPreview');
+  var resumeRow = document.getElementById('resumeRow');
+  var saveMeta = document.getElementById('saveMeta');
+
+  var cardOv = document.getElementById('cardOv');
+  var cardKicker = document.getElementById('cardKicker');
+  var cardTitle = document.getElementById('cardTitle');
+  var cardText = document.getElementById('cardText');
+
+  var auctionOv = document.getElementById('auctionOv');
+  var auctionName = document.getElementById('auctionName');
+  var auctionSub = document.getElementById('auctionSub');
+  var auctionBid = document.getElementById('auctionBid');
+  var auctionLine = document.getElementById('auctionLine');
+  var auctionActions = document.getElementById('auctionActions');
+
+  var assetOv = document.getElementById('assetOv');
+  var assetList = document.getElementById('assetList');
+  var assetSub = document.getElementById('assetSub');
+
+  var dieEls = [];
+  var potValEl = null;
+  var leadlineEl = null;
+  var turnNameEl = null;
+  var turnDotEl = null;
+  var statusEl = null;
+  var actionsEl = null;
+  var minilogEl = null;
+
+  var pendingN = 3;
+  var personaShift = 0;
+
+  /* ---------- utils ---------- */
+  function sleep(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+  function rnd6(){ return 1 + Math.floor(Math.random() * 6); }
+  function cur(){ return G.players[G.turn]; }
+  function alive(){ return G.players.filter(function(p){ return !p.bankrupt; }); }
+  function money(v){ return '$' + Math.round(v); }
+
+  function sfx(kind){
+    if(!SOUND) return;
+    try {
+      if(!AC) AC = new (window.AudioContext || window.webkitAudioContext)();
+      if(AC.state === 'suspended') AC.resume();
+      var cfg = {
+        roll:  { f: [320, 170], d: .18, type: 'triangle', v: .05 },
+        coin:  { f: [880, 1250], d: .16, type: 'sine', v: .06 },
+        buy:   { f: [430, 680], d: .22, type: 'triangle', v: .06 },
+        bad:   { f: [240, 110], d: .3, type: 'sawtooth', v: .05 },
+        step:  { f: [520, 520], d: .05, type: 'sine', v: .022 },
+        win:   { f: [523, 880], d: .5, type: 'sine', v: .07 }
+      }[kind] || { f: [400, 400], d: .1, type: 'sine', v: .04 };
+      var t = AC.currentTime;
+      var o = AC.createOscillator();
+      var g = AC.createGain();
+      o.type = cfg.type;
+      o.frequency.setValueAtTime(cfg.f[0], t);
+      o.frequency.exponentialRampToValueAtTime(Math.max(40, cfg.f[1]), t + cfg.d);
+      g.gain.setValueAtTime(cfg.v, t);
+      g.gain.exponentialRampToValueAtTime(.0001, t + cfg.d + .03);
+      o.connect(g); g.connect(AC.destination);
+      o.start(t); o.stop(t + cfg.d + .06);
+    } catch(e){}
+  }
+
+  /* ---------- board ---------- */
+  function cellPos(i){
+    var N = 10;
+    if(i < N) return { r: 1, c: i + 1 };
+    if(i < 2 * N - 2) return { r: i - (N - 2), c: N };
+    if(i < 3 * N - 2) return { r: N, c: 3 * N - 2 - i };
+    return { r: 4 * N - 3 - i, c: 1 };
+  }
+
+  function isBuyable(t){ return t.type === 'prop' || t.type === 'station' || t.type === 'utility'; }
+
+  function tileInner(t){
+    if(t.type === 'prop'){
+      return '<div class="band" style="--gc:' + GROUPS[t.group].color + '"></div>' +
+        '<div class="flag"></div>' +
+        '<div class="tname">' + t.name + '</div>' +
+        '<div class="tmeta">$' + t.price + '</div>' +
+        '<div class="lvl"></div>' +
+        '<div class="tokens"></div>';
+    }
+    if(t.type === 'station' || t.type === 'utility'){
+      var gc = t.type === 'station' ? '#93c5fd' : '#fbbf24';
+      var glyph = t.type === 'station' ? 'M' : (t.name === '电力公司' ? '电' : '水');
+      return '<div class="band" style="--gc:' + gc + '"></div>' +
+        '<div class="flag"></div>' +
+        '<div class="glyph big">' + glyph + '</div>' +
+        '<div class="tname">' + t.name + '</div>' +
+        '<div class="tmeta">$' + t.price + '</div>' +
+        '<div class="lvl"></div>' +
+        '<div class="tokens"></div>';
+    }
+    if(t.type === 'community'){
+      return '<div class="flag"></div><div class="glyph big">C</div><div class="tname">社区基金</div><div class="tmeta">抽一张</div><div class="tokens"></div>';
+    }
+    if(t.type === 'go'){
+      return '<div class="flag"></div><div class="glyph big">GO</div><div class="tname">起点</div><div class="tmeta">+200</div><div class="tokens"></div>';
+    }
+    if(t.type === 'jail'){
+      return '<div class="flag"></div><div class="glyph big">JAIL</div><div class="tname">监牢</div><div class="tmeta">保释 $80</div><div class="tokens"></div>';
+    }
+    if(t.type === 'free'){
+      return '<div class="flag"></div><div class="glyph big">P</div><div class="tname">免费停车</div><div class="tmeta">领取奖池</div><div class="tokens"></div>';
+    }
+    if(t.type === 'gojail'){
+      return '<div class="flag"></div><div class="glyph big">→JAIL</div><div class="tname">入狱</div><div class="tmeta">押送</div><div class="tokens"></div>';
+    }
+    if(t.type === 'chance'){
+      return '<div class="flag"></div><div class="glyph big">?</div><div class="tname">机会</div><div class="tmeta">抽一张</div><div class="tokens"></div>';
+    }
+    if(t.type === 'tax'){
+      return '<div class="flag"></div><div class="glyph big">TAX</div><div class="tname">' + t.name + '</div><div class="tmeta">$' + t.amount + '</div><div class="tokens"></div>';
+    }
+    return '';
+  }
+
+  function buildBoard(){
+    boardEl.innerHTML = '';
+    var N = 10;
+    for(var i = 0; i < TILES.length; i++){
+      var t = TILES[i];
+      var pos = cellPos(i);
+      var el = document.createElement('div');
+      el.className = 'tile';
+      if(!isBuyable(t)) el.className += ' special';
+      if(i === 0 || i === N - 1 || i === 2 * N - 2 || i === 3 * N - 3) el.className += ' corner';
+      if(t.type === 'chance' || t.type === 'community' || t.type === 'tax' ||
+         t.type === 'station' || t.type === 'utility') el.className += ' ' + t.type;
+      el.dataset.i = i;
+      el.style.gridRow = pos.r;
+      el.style.gridColumn = pos.c;
+      el.innerHTML = tileInner(t);
+      boardEl.appendChild(el);
+    }
+
+    var center = document.createElement('div');
+    center.className = 'center';
+    center.innerHTML =
+      '<div class="c-top">' +
+        '<div class="potbox"><span>奖池</span><b id="potVal">$0</b></div>' +
+        '<div class="turnchip"><i id="turnDot"></i><span id="turnName">—</span></div>' +
+      '</div>' +
+      '<div class="dicewrap">' +
+        '<div class="die" id="die0"></div>' +
+        '<div class="die" id="die1"></div>' +
+      '</div>' +
+      '<div class="leadline" id="leadline"></div>' +
+      '<div class="status" id="status">选择人数，开始游戏</div>' +
+      '<div class="actions" id="actions"></div>' +
+      '<div class="minilog" id="minilog"></div>';
+    boardEl.appendChild(center);
+
+    dieEls = [document.getElementById('die0'), document.getElementById('die1')];
+    potValEl = document.getElementById('potVal');
+    leadlineEl = document.getElementById('leadline');
+    turnNameEl = document.getElementById('turnName');
+    turnDotEl = document.getElementById('turnDot');
+    statusEl = document.getElementById('status');
+    actionsEl = document.getElementById('actions');
+    minilogEl = document.getElementById('minilog');
+    dieEls.forEach(function(d){ for(var k = 0; k < 9; k++) d.appendChild(document.createElement('i')); });
+
+    legendEl.innerHTML = '';
+    renderLegend();
+    bindTileTip();
+
+    var ro = null;
+    if(window.ResizeObserver){
+      ro = new ResizeObserver(function(){
+        var w = boardEl.clientWidth;
+        if(w) boardEl.style.setProperty('--u', (w / 10) + 'px');
+      });
+      ro.observe(boardEl);
+    }
+    syncUnit();
+    window.addEventListener('resize', syncUnit);
+
+    renderAll();
+  }
+
+  function syncUnit(){
+    var w = boardEl.clientWidth;
+    if(w) boardEl.style.setProperty('--u', (w / 10) + 'px');
+  }
+
+  /* ---------- 分区进度与悬浮明细 ---------- */
+  function renderLegend(){
+    if(!legendEl) return;
+    legendEl.innerHTML = GROUPS.map(function(g, gi){
+      var total = groupSize(gi);
+      var sold = 0;
+      TILES.forEach(function(t){ if(t.type === 'prop' && t.group === gi && t.owner >= 0) sold++; });
+      return '<div class="lgitem' + (total > 0 && sold === total ? ' full' : '') + '">' +
+        '<i style="background:' + g.color + '"></i>' + g.name +
+        '<b>' + sold + '/' + total + '</b></div>';
+    }).join('') +
+      '<div class="lgitem"><i style="background:#93c5fd"></i>车站</div>' +
+      '<div class="lgitem"><i style="background:#fbbf24"></i>公用事业</div>';
+  }
+
+  function tileTipHtml(i){
+    var t = TILES[i];
+    if(!t) return '';
+    var owner = t.owner >= 0 ? G.players[t.owner] : null;
+    var rows = '';
+    var desc = '';
+    function row(k, v){
+      rows += '<div class="tt-row"><span class="tt-k">' + k + '</span><span class="tt-v">' + v + '</span></div>';
+    }
+    if(isBuyable(t)){
+      if(owner){ row('持有', owner.name); row('当前租金', money(rentOf(i))); }
+      else row('售价', money(t.price));
+      if(t.type === 'prop'){
+        row('等级', 'Lv.' + t.level);
+        if(t.level < 4) row('升级', money(upgradeCost(t)));
+        var total = groupSize(t.group), mine = 0;
+        if(owner){
+          TILES.forEach(function(q){
+            if(q.type === 'prop' && q.group === t.group && q.owner === t.owner) mine++;
+          });
+        }
+        desc = GROUPS[t.group].name + ' ' + mine + '/' + total +
+          (owner && mine >= total ? ' · 整区在手，未升级租金翻倍' : ' · 集齐 4 处租金翻倍');
+      } else if(t.type === 'station'){
+        desc = '车站租金：1 座 $25 · 2 座 $50 · 3 座 $100';
+      } else {
+        desc = '公用事业：骰子点数 ×4 · 两家 ×10';
+      }
+      if(t.mortgaged) desc += ' · 已抵押，免租';
+    } else if(t.type === 'go'){
+      desc = '经过或停留领取 ' + money(PASS_GO);
+    } else if(t.type === 'jail'){
+      desc = '探监无事；被押送进来需缴 ' + money(JAIL_FEE) + ' 保释或停一回合';
+    } else if(t.type === 'free'){
+      desc = '拿走全部奖池，当前 ' + money(G.pot);
+    } else if(t.type === 'gojail'){
+      desc = '立即押送监牢';
+    } else if(t.type === 'chance' || t.type === 'community'){
+      desc = '抽取一张' + (t.type === 'chance' ? '机会' : '社区基金') + '卡';
+    } else if(t.type === 'tax'){
+      desc = '支付 ' + money(t.amount) + '，税款进入奖池';
+    }
+    return '<h4>' + t.name + '</h4>' + rows +
+      (desc ? '<div class="tt-desc">' + desc + '</div>' : '');
+  }
+
+  var tileTipEl = document.getElementById('tileTip');
+  var tipIdx = -1;
+
+  function bindTileTip(){
+    if(!boardEl || !tileTipEl) return;
+    boardEl.addEventListener('mousemove', function(e){
+      var el = e.target && e.target.closest ? e.target.closest('.tile') : null;
+      if(!el){ hideTileTip(); return; }
+      var i = parseInt(el.dataset.i, 10);
+      if(!(i >= 0)){ hideTileTip(); return; }
+      if(i !== tipIdx){
+        tipIdx = i;
+        tileTipEl.innerHTML = tileTipHtml(i);
+      }
+      tileTipEl.classList.add('show');
+      var w = tileTipEl.offsetWidth, h = tileTipEl.offsetHeight;
+      var x = e.clientX + 16, y = e.clientY + 16;
+      if(x + w > window.innerWidth - 10) x = e.clientX - w - 14;
+      if(y + h > window.innerHeight - 10) y = Math.max(8, window.innerHeight - h - 10);
+      tileTipEl.style.left = x + 'px';
+      tileTipEl.style.top = y + 'px';
+    });
+    boardEl.addEventListener('mouseleave', hideTileTip);
+  }
+
+  function hideTileTip(){
+    tipIdx = -1;
+    if(tileTipEl) tileTipEl.classList.remove('show');
+  }
+
+  /* ---------- rules ---------- */
+  function groupSize(g){
+    return TILES.filter(function(t){ return t.type === 'prop' && t.group === g; }).length;
+  }
+  function countType(owner, type){
+    if(owner < 0) return 0;
+    return TILES.filter(function(t){
+      return t.type === type && t.owner === owner && !t.mortgaged;
+    }).length;
+  }
+  function rentOf(i){
+    var t = TILES[i];
+    if(!isBuyable(t) || t.owner < 0 || t.mortgaged) return 0;
+    if(t.type === 'station'){
+      var sn = countType(t.owner, 'station');
+      return sn >= 3 ? 100 : (sn >= 2 ? 50 : 25);
+    }
+    if(t.type === 'utility'){
+      var d = (G.dice[0] || 1) + (G.dice[1] || 1);
+      return d * (countType(t.owner, 'utility') >= 2 ? 10 : 4);
+    }
+    var base = t.price * 0.22;
+    var m = RENT_MULT[t.level] || 1;
+    if(t.level === 0 && ownsGroup(t.owner, t.group)) m *= 2;
+    return Math.round(base * m);
+  }
+  function upgradeBase(t){ return Math.round(t.price * 0.55); }
+  function upgradeCost(t){ return upgradeBase(t); }
+  function ownsGroup(idx, group){
+    if(idx < 0) return false;
+    var total = groupSize(group);
+    if(!total) return false;
+    var n = 0;
+    TILES.forEach(function(t){
+      if(t.type === 'prop' && t.group === group && t.owner === idx) n++;
+    });
+    return n >= total;
+  }
+  function netWorth(p){
+    if(p.bankrupt) return 0;
+    var w = p.cash;
+    p.props.forEach(function(i){
+      var t = TILES[i];
+      if(!t || !isBuyable(t) || t.mortgaged) return;
+      w += t.price + t.level * upgradeBase(t);
+    });
+    return Math.round(w);
+  }
+
+  function mortgageValue(t){ return Math.round(t.price * 0.5); }
+  function redeemCost(t){ return Math.round(t.price * 0.55); }
+
+  function raiseCash(p, need){
+    var guard = 0;
+    while(p.cash < need && guard++ < 40){
+      var best = null;
+      TILES.forEach(function(t, i){
+        if(!isBuyable(t) || t.owner !== p.idx || t.mortgaged || t.level > 0) return;
+        if(!best || t.price > best.price) best = { t: t, i: i };
+      });
+      if(!best) break;
+      best.t.mortgaged = true;
+      var loan = mortgageValue(best.t);
+      p.cash += loan;
+      addLog(p.name + ' 抵押 ' + best.t.name + '，周转 ' + money(loan));
+      sfx('coin');
+    }
+  }
+
+  /* ---------- movement / money ---------- */
+  function payTo(from, to, amount){
+    if(!from || amount <= 0) return 0;
+    if(from.cash < amount) raiseCash(from, amount);
+    var pay = Math.min(from.cash, amount);
+    from.cash -= pay;
+    if(to) to.cash += pay; else G.pot += pay;
+    if(pay < amount){
+      addLog(from.name + ' 无力支付 ' + money(amount) + '，宣告破产');
+      bankrupt(from);
+    }
+    return pay;
+  }
+
+  function bankrupt(p){
+    if(p.bankrupt) return;
+    p.bankrupt = true;
+    p.cash = 0;
+    p.inJail = false;
+    TILES.forEach(function(t){
+      if(isBuyable(t) && t.owner === p.idx){
+        t.owner = -1; t.level = 0; t.mortgaged = false;
+      }
+    });
+    p.props = [];
+    sfx('bad');
+    addLog(p.name + ' 破产退出，名下产业全部回到市场');
+    renderAll();
+    checkFinish();
+  }
+
+  function checkFinish(){
+    var a = alive();
+    if(a.length <= 1){
+      finishGame(a.length === 1 ? a[0].name + ' 成为最后的赢家' : '全员破产');
+    }
+  }
+
+  async function movePlayer(p, steps){
+    for(var i = 0; i < steps; i++){
+      p.pos = (p.pos + 1) % TILES.length;
+      if(p.pos === 0){
+        p.cash += PASS_GO;
+        addLog(p.name + ' 经过起点，领取 ' + money(PASS_GO));
+        sfx('coin');
+      } else {
+        sfx('step');
+      }
+      renderTokens();
+      await sleep(108);
+    }
+  }
+
+  /* ---------- turn flow ---------- */
+  function startTurn(){
+    if(G.over) return;
+    var p = cur();
+    if(!p || p.bankrupt){ endTurn(); return; }
+    G.busy = false;
+    saveGame();
+    if(p.inJail){
+      G.phase = 'jail';
+      renderAll();
+      if(p.ai) setTimeout(aiJail, 720);
+      return;
+    }
+    G.phase = 'roll';
+    renderAll();
+    if(p.ai) setTimeout(doRoll, 700);
+  }
+
+  async function doRoll(){
+    if(G.busy || G.over || G.phase !== 'roll') return;
+    var p = cur();
+    if(!p || p.bankrupt) return;
+    G.busy = true;
+    G.phase = 'rolling';
+    renderAll();
+
+    var a = rnd6(), b = rnd6();
+    await animateDice(a, b);
+
+    var dbl = (a === b);
+    G.dblChain = dbl ? G.dblChain + 1 : 0;
+
+    if(G.dblChain >= 3){
+      addLog(p.name + ' 连掷三次双数，被送进监牢');
+      p.pos = JAIL_POS;
+      p.inJail = true;
+      G.dblChain = 0;
+      G.extra = false;
+      sfx('bad');
+      G.busy = false;
+      renderAll();
+      await sleep(320);
+      settleStep();
+      return;
+    }
+
+    G.extra = dbl;
+    addLog(p.name + ' 掷出 ' + a + ' + ' + b + ' = ' + (a + b) + (dbl ? '（双数）' : ''));
+    await movePlayer(p, a + b);
+
+    G.phase = 'moving';
+    renderAll();
+    await sleep(80);
+    await resolveTile(p);
+    G.busy = false;
+  }
+
+  async function animateDice(a, b){
+    dieEls.forEach(function(d){ d.classList.add('roll'); });
+    for(var k = 0; k < 7; k++){
+      G.dice = [rnd6(), rnd6()];
+      renderDice();
+      await sleep(52);
+    }
+    dieEls.forEach(function(d){ d.classList.remove('roll'); });
+    G.dice = [a, b];
+    renderDice();
+    sfx('roll');
+    await sleep(80);
+  }
+
+  async function resolveTile(p){
+    var t = TILES[p.pos];
+    renderAll();
+
+    if(isBuyable(t)){
+      if(t.owner === -1){
+        if(p.cash >= t.price){
+          G.phase = 'buy';
+          renderAll();
+          if(p.ai) setTimeout(function(){ aiBuy(p); }, 680);
+        } else {
+          addLog(p.name + ' 现金不足，' + t.name + ' 转入拍卖');
+          await auctionProperty(p.pos, p);
+          if(!G.over) settleStep();
+        }
+        return;
+      }
+      if(t.owner === p.idx){
+        if(t.type === 'prop' && t.level < 4 && !t.mortgaged && p.cash >= upgradeCost(t)){
+          G.phase = 'upgrade';
+          renderAll();
+          if(p.ai) setTimeout(function(){ aiUpgrade(p); }, 640);
+        } else {
+          if(t.level >= 4) addLog(p.name + ' 回到 ' + t.name + '（已满级）');
+          else if(t.mortgaged) addLog(p.name + ' 回到 ' + t.name + '（抵押中，不能升级）');
+          else addLog(p.name + ' 回到 ' + t.name);
+          settleStep();
+        }
+        return;
+      }
+      var owner = G.players[t.owner];
+      if(t.mortgaged){
+        addLog(p.name + ' 停在 ' + t.name + '，产业处于抵押状态，免租');
+        settleStep();
+        return;
+      }
+      var rent = rentOf(p.pos);
+      addLog(p.name + ' 停在 ' + t.name + '，向 ' + owner.name + ' 支付租金 ' + money(rent));
+      payTo(p, owner, rent);
+      sfx('coin');
+      if(!G.over) settleStep();
+      return;
+    }
+
+    if(t.type === 'chance' || t.type === 'community'){
+      await drawCard(p, t.type);
+      return;
+    }
+
+    if(t.type === 'tax'){
+      addLog(p.name + ' 缴纳城市税 ' + money(t.amount));
+      payTo(p, null, t.amount);
+      sfx('bad');
+      if(!G.over) settleStep();
+      return;
+    }
+
+    if(t.type === 'free'){
+      if(G.pot > 0){
+        addLog(p.name + ' 在免费停车拿走奖池 ' + money(G.pot));
+        p.cash += G.pot;
+        G.pot = 0;
+        sfx('win');
+      } else {
+        addLog(p.name + ' 停在免费停车，奖池还是空的');
+      }
+      settleStep();
+      return;
+    }
+
+    if(t.type === 'gojail'){
+      p.pos = JAIL_POS;
+      p.inJail = true;
+      G.extra = false;
+      addLog(p.name + ' 被押送进监牢');
+      sfx('bad');
+      renderAll();
+      settleStep();
+      return;
+    }
+
+    settleStep();
+  }
+
+  function stepForward(p, n){
+    for(var i = 0; i < n; i++){
+      p.pos = (p.pos + 1) % TILES.length;
+      if(p.pos === 0){
+        p.cash += PASS_GO;
+        addLog(p.name + ' 经过起点，领取 ' + money(PASS_GO));
+      }
+    }
+    renderTokens();
+  }
+
+  function travelTo(p, idx){
+    if(idx < p.pos){
+      p.cash += PASS_GO;
+      addLog(p.name + ' 途经起点，领取 ' + money(PASS_GO));
+    }
+    p.pos = idx;
+    renderTokens();
+  }
+
+  function showCardUI(kind, text){
+    if(!cardOv) return;
+    cardKicker.textContent = kind === 'chance' ? 'CHANCE' : 'COMMUNITY';
+    cardTitle.textContent = kind === 'chance' ? '机会' : '社区基金';
+    cardText.textContent = text;
+    cardOv.classList.remove('hide');
+    if(G.cardTimer) clearTimeout(G.cardTimer);
+    G.cardTimer = setTimeout(function(){ cardOv.classList.add('hide'); }, 3400);
+  }
+
+  async function drawCard(p, kind){
+    var deck = kind === 'chance' ? CHANCE : COMMUNITY;
+    var c = deck[Math.floor(Math.random() * deck.length)];
+    addLog((kind === 'chance' ? '机会：' : '社区：') + c.t);
+    showCardUI(kind, c.t);
+    sfx(kind === 'chance' ? 'coin' : 'buy');
+    await sleep(1450);
+    if(G.over) return;
+    c.f(p);
+    if(p.inJail) G.extra = false;
+    renderAll();
+    await sleep(650);
+    if(cardOv) cardOv.classList.add('hide');
+    if(G.over) return;
+    settleStep();
+  }
+
+  /* ---------- auction ---------- */
+  function tileValue(p, t){
+    var v = t.price;
+    if(t.type === 'prop'){
+      var total = groupSize(t.group);
+      var n = 0;
+      TILES.forEach(function(q){
+        if(q.type === 'prop' && q.group === t.group && q.owner === p.idx) n++;
+      });
+      if(total > 1 && n >= total - 1) v *= 1.5;
+      else if(n > 0) v *= 1.18;
+    } else if(t.type === 'station'){
+      v *= countType(p.idx, 'station') >= 1 ? 1.42 : 1.05;
+    } else if(t.type === 'utility'){
+      v *= countType(p.idx, 'utility') >= 1 ? 1.35 : 1.05;
+    }
+    return v;
+  }
+
+  function aiAuctionBid(p, t, minBid){
+    var per = p.persona || PERSONAS.balance;
+    var v = tileValue(p, t);
+    var cap = p.cash - Math.max(0, Math.round(per.reserve * 0.3));
+    var max = Math.min(cap, Math.round(v * (1 + per.auction + Math.random() * 0.16)));
+    max = Math.floor(max / 10) * 10;
+    if(max < minBid) return 0;
+    if(Math.random() < 0.12) return 0;
+    return max;
+  }
+
+  function auctionProperty(idx, initiator){
+    var t = TILES[idx];
+    var human = G.players[0];
+    var minBid = Math.max(10, Math.round(t.price * 0.1 / 10) * 10);
+    if(G.over || !isBuyable(t) || t.owner !== -1 || G.auctioning){
+      return Promise.resolve();
+    }
+    G.auctioning = true;
+    G.phase = 'auction';
+    renderAll();
+
+    var humanIn = !!(human && !human.bankrupt && human.cash >= minBid);
+    var aiBids = [];
+    alive().forEach(function(p){
+      if(p.idx === 0) return;
+      aiBids.push({ p: p, v: aiAuctionBid(p, t, minBid) });
+    });
+
+    return new Promise(function(resolve){
+      function finish(humanBid){
+        var best = 0, winner = null;
+        aiBids.forEach(function(b){
+          if(b.v > best){ best = b.v; winner = b.p; }
+        });
+        if(humanBid > best){ best = humanBid; winner = human; }
+
+        var reveal = aiBids.filter(function(b){ return b.v > 0; })
+          .sort(function(x, y){ return y.v - x.v; })
+          .slice(0, 3)
+          .map(function(b){ return b.p.name + ' ' + money(b.v); })
+          .join(' · ');
+
+        if(winner && best >= minBid){
+          var pay = Math.min(winner.cash, best);
+          winner.cash -= pay;
+          t.owner = winner.idx;
+          t.level = 0;
+          t.mortgaged = false;
+          if(winner.props.indexOf(idx) < 0) winner.props.push(idx);
+          addLog(winner.name + ' 以 ' + money(pay) + ' 拍得 ' + t.name);
+          sfx('buy');
+          auctionLine.textContent = (reveal ? '开标：' + reveal + ' — ' : '') +
+            winner.name + ' 以 ' + money(pay) + ' 胜出';
+        } else {
+          addLog(t.name + ' 流拍，继续留在市场');
+          auctionLine.textContent = '无人达到起拍价，' + t.name + ' 流拍。';
+        }
+        auctionBid.textContent = winner ? money(best) : '—';
+        renderAll();
+        setTimeout(function(){
+          auctionOv.classList.add('hide');
+          G.auctioning = false;
+          G.phase = 'idle';
+          resolve();
+        }, 1250);
+      }
+
+      auctionName.textContent = t.name;
+      auctionActions.innerHTML = '';
+      auctionBid.textContent = '—';
+
+      if(humanIn){
+        var bid = minBid;
+        var cap = human.cash;
+        auctionSub.textContent = '起拍 ' + money(minBid) + ' · 你的现金 ' + money(human.cash);
+        auctionLine.textContent = '暗标拍卖：所有出价同时揭晓，价高者得。';
+
+        function paint(){
+          auctionBid.textContent = money(bid);
+          auctionActions.innerHTML = '';
+          var minus = document.createElement('button');
+          minus.className = 'btn ghost';
+          minus.textContent = '− $20';
+          minus.disabled = bid <= minBid;
+          minus.addEventListener('click', function(){ bid = Math.max(minBid, bid - 20); paint(); });
+
+          var plus = document.createElement('button');
+          plus.className = 'btn ghost';
+          plus.textContent = '+ $20';
+          plus.disabled = bid + 20 > cap;
+          plus.addEventListener('click', function(){ bid = Math.min(cap, bid + 20); paint(); });
+
+          var submit = document.createElement('button');
+          submit.className = 'btn gold';
+          submit.textContent = '出价 ' + money(bid);
+          submit.addEventListener('click', function(){
+            auctionActions.innerHTML = '';
+            auctionBid.textContent = money(bid);
+            auctionLine.textContent = '你的暗标已封存，等待对手开标…';
+            setTimeout(function(){ finish(bid); }, 750);
+          });
+
+          var pass = document.createElement('button');
+          pass.className = 'btn ghost';
+          pass.textContent = '放弃';
+          pass.addEventListener('click', function(){
+            auctionActions.innerHTML = '';
+            auctionBid.textContent = '—';
+            auctionLine.textContent = '你放弃了本次竞拍，等待开标…';
+            setTimeout(function(){ finish(0); }, 650);
+          });
+
+          auctionActions.appendChild(minus);
+          auctionActions.appendChild(plus);
+          auctionActions.appendChild(submit);
+          auctionActions.appendChild(pass);
+        }
+        paint();
+      } else {
+        auctionSub.textContent = '起拍 ' + money(minBid) + ' · 你无法参与本次拍卖';
+        auctionLine.textContent = '对手们正在提交暗标…';
+        setTimeout(function(){ finish(0); }, 1200);
+      }
+
+      auctionOv.classList.remove('hide');
+    });
+  }
+
+  function settleStep(){
+    if(G.over) return;
+    var p = cur();
+    if(p && p.bankrupt){ G.extra = false; endTurn(); return; }
+    if(G.extra){
+      G.extra = false;
+      G.phase = 'roll';
+      addLog(p.name + ' 掷出双数，再掷一次');
+      renderAll();
+      if(p.ai) setTimeout(doRoll, 620);
+      return;
+    }
+    endTurn();
+  }
+
+  function endTurn(){
+    if(G.over) return;
+    G.dblChain = 0;
+    G.extra = false;
+    var n = G.players.length;
+    if(!n) return;
+    var prev = G.turn;
+    var guard = 0;
+    do {
+      G.turn = (G.turn + 1) % n;
+      guard++;
+    } while(G.players[G.turn].bankrupt && guard <= n);
+
+    if(guard > n || !alive().length){ finishGame('全员破产'); return; }
+    if(G.turn <= prev){
+      G.round++;
+      if(G.round > MAX_ROUNDS){ finishGame('回合上限已到，按总资产结算'); return; }
+    }
+    startTurn();
+  }
+
+  /* ---------- actions ---------- */
+  function buyTile(p){
+    var t = TILES[p.pos];
+    if(!t || !isBuyable(t) || t.owner !== -1 || p.cash < t.price) return false;
+    p.cash -= t.price;
+    t.owner = p.idx;
+    t.level = 0;
+    t.mortgaged = false;
+    if(p.props.indexOf(p.pos) < 0) p.props.push(p.pos);
+    addLog(p.name + ' 买下 ' + t.name + '，花费 ' + money(t.price));
+    sfx('buy');
+    renderAll();
+    return true;
+  }
+
+  function upgradeTile(p){
+    var t = TILES[p.pos];
+    if(!t || t.type !== 'prop' || t.owner !== p.idx || t.level >= 4 || t.mortgaged) return false;
+    var cost = upgradeCost(t);
+    if(p.cash < cost) return false;
+    p.cash -= cost;
+    t.level++;
+    addLog(p.name + ' 把 ' + t.name + ' 升到 Lv.' + t.level + '，花费 ' + money(cost));
+    sfx('buy');
+    renderAll();
+    return true;
+  }
+
+  function humanBuy(){
+    if(G.phase !== 'buy' || G.over) return;
+    var p = cur();
+    if(!p || p.ai) return;
+    buyTile(p);
+    settleStep();
+  }
+  function humanSkipBuy(){
+    if(G.phase !== 'buy' || G.over) return;
+    var p = cur();
+    if(!p || p.ai) return;
+    var t = TILES[p.pos];
+    if(!isBuyable(t) || t.owner !== -1){ settleStep(); return; }
+    addLog(p.name + ' 放弃购买 ' + t.name + '，转入拍卖');
+    var idx = p.pos;
+    auctionProperty(idx, p).then(function(){
+      if(!G.over) settleStep();
+    });
+  }
+  function humanUpgrade(){
+    if(G.phase !== 'upgrade' || G.over) return;
+    var p = cur();
+    if(!p || p.ai) return;
+    upgradeTile(p);
+    settleStep();
+  }
+  function humanSkipUpgrade(){
+    if(G.phase !== 'upgrade' || G.over) return;
+    settleStep();
+  }
+  function humanRoll(){
+    if(G.phase === 'roll' && !G.busy) doRoll();
+  }
+
+  function aiBuy(p){
+    if(G.phase !== 'buy' || G.over) return;
+    var t = TILES[p.pos];
+    var per = p.persona || PERSONAS.balance;
+    var freeLeft = TILES.filter(function(q){ return isBuyable(q) && q.owner === -1; }).length;
+    var reserve = p.cash - t.price;
+    var want;
+    if(t.type === 'prop'){
+      var total = groupSize(t.group);
+      var n = 0;
+      TILES.forEach(function(q){
+        if(q.type === 'prop' && q.group === t.group && q.owner === p.idx) n++;
+      });
+      want = reserve >= per.reserve ||
+        (total > 1 && n >= total - 1 && reserve >= 40) ||
+        (n > 0 && reserve >= per.reserve * 0.5) ||
+        freeLeft <= 4 ||
+        Math.random() < per.buyChance;
+      if(per.key === 'collect' && n > 0) want = want || reserve >= 80;
+    } else {
+      want = reserve >= per.reserve * 0.6 || Math.random() < per.buyChance;
+      if(per.key === 'collect' && reserve >= 60) want = true;
+    }
+    if(want && buyTile(p)){
+      settleStep();
+      return;
+    }
+    addLog(p.name + ' 斟酌片刻，放弃购买 ' + t.name);
+    settleStep();
+  }
+
+  function ownsGroupAfter(p, t){
+    var total = groupSize(t.group);
+    var n = 0;
+    TILES.forEach(function(q){
+      if(q.type === 'prop' && q.group === t.group && q.owner === p.idx) n++;
+    });
+    return total > 1 && n === total - 1;
+  }
+
+  function aiUpgrade(p){
+    if(G.phase !== 'upgrade' || G.over) return;
+    var t = TILES[p.pos];
+    var per = p.persona || PERSONAS.balance;
+    var cost = upgradeCost(t);
+    var floor = ownsGroup(p.idx, t.group) ? per.upReserve * 0.45 : per.upReserve;
+    if(p.cash - cost >= floor){
+      upgradeTile(p);
+    } else {
+      addLog(p.name + ' 暂时不升级 ' + t.name);
+    }
+    settleStep();
+  }
+
+  function aiJail(){
+    if(G.over || G.phase !== 'jail') return;
+    var p = cur();
+    var per = p.persona || PERSONAS.balance;
+    if(p.cash >= per.jailPay && p.cash >= JAIL_FEE) doJailPay(); else doJailWait();
+  }
+  function doJailPay(){
+    if(G.over || G.phase !== 'jail') return;
+    var p = cur();
+    if(p.cash < JAIL_FEE){ addLog(p.name + ' 现金不足，无法保释'); doJailWait(); return; }
+    p.cash -= JAIL_FEE;
+    G.pot += JAIL_FEE;
+    p.inJail = false;
+    addLog(p.name + ' 缴纳 ' + money(JAIL_FEE) + ' 保释金，走出监牢');
+    sfx('coin');
+    G.phase = 'roll';
+    renderAll();
+    if(p.ai) setTimeout(doRoll, 620);
+  }
+  function doJailWait(){
+    if(G.over || G.phase !== 'jail') return;
+    var p = cur();
+    p.inJail = false;
+    addLog(p.name + ' 选择在监牢里等一回合');
+    endTurn();
+  }
+
+  /* ---------- finish ---------- */
+  function finishGame(reason){
+    if(G.over) return;
+    G.over = true;
+    G.phase = 'over';
+    G.reason = reason || '对局结束';
+    addLog('对局结束：' + G.reason);
+    clearSave();
+    renderAll();
+    sfx('win');
+    showEnd();
+  }
+
+  function showEnd(){
+    var a = alive().slice().sort(function(x, y){ return netWorth(y) - netWorth(x); });
+    var d = G.players.filter(function(p){ return p.bankrupt; }).sort(function(x, y){
+      return x.name.localeCompare(y.name);
+    });
+    var order = a.concat(d);
+    var html = '';
+    order.forEach(function(p, i){
+      var tag = p.ai && p.persona ? '电脑 · ' + p.persona.name : (p.ai ? '电脑' : '玩家');
+      html += '<div class="rrow' + (i === 0 && !p.bankrupt ? ' win' : '') + '">' +
+        '<span class="rpos">' + (i + 1) + '</span>' +
+        '<i class="rdot" style="background:' + p.color + '"></i>' +
+        '<span class="rname">' + p.name + ' <em style="font-style:normal;font-size:9px;color:#6e93ab">' + tag + '</em></span>' +
+        '<span class="rnet">' + money(netWorth(p)) + '</span>' +
+        '<span class="rtag">' + (p.bankrupt ? '破产' : p.props.length + ' 处产业') + '</span>' +
+      '</div>';
+    });
+    rankList.innerHTML = html;
+    endTitle.textContent = (a.length && !a[0].bankrupt) ? a[0].name + ' 赢得这座城市' : '对局结束';
+    endReason.textContent = G.reason;
+    endOv.classList.remove('hide');
+  }
+
+  /* ---------- render ---------- */
+  function renderAll(){
+    tipIdx = -1;
+    renderTiles();
+    renderTokens();
+    renderDice();
+    renderHUD();
+    renderPlayers();
+    renderActions();
+    renderLegend();
+    renderLog();
+  }
+
+  function renderTiles(){
+    TILES.forEach(function(t, i){
+      var el = boardEl.querySelector('.tile[data-i="' + i + '"]');
+      if(!el) return;
+      el.classList.remove('hot');
+      if(!isBuyable(t)) return;
+      var flag = el.querySelector('.flag');
+      var meta = el.querySelector('.tmeta');
+      var lvl = el.querySelector('.lvl');
+      if(!flag || !meta || !lvl) return;
+      el.classList.toggle('mortgaged', !!t.mortgaged);
+
+      if(t.owner >= 0){
+        var owner = G.players[t.owner];
+        el.classList.add('owned');
+        if(owner){
+          el.style.setProperty('--oc', owner.color);
+          flag.style.display = 'flex';
+          flag.textContent = owner.name.charAt(0);
+        }
+        if(t.mortgaged){
+          meta.textContent = '抵押';
+          meta.classList.remove('rent');
+        } else {
+          meta.textContent = t.type === 'utility'
+            ? '骰×' + (countType(t.owner, 'utility') >= 2 ? 10 : 4)
+            : money(rentOf(i));
+          meta.classList.add('rent');
+        }
+        var s = '';
+        if(t.type === 'prop'){
+          for(var k = 0; k < 4; k++) s += '<i class="' + (k < t.level ? 'on' : '') + '"></i>';
+        }
+        lvl.innerHTML = s;
+        el.title = t.name + ' · ' + (t.mortgaged ? '已抵押' : '租金 ' + money(rentOf(i)));
+      } else {
+        el.classList.remove('owned');
+        el.style.removeProperty('--oc');
+        flag.style.display = 'none';
+        meta.textContent = '$' + t.price;
+        meta.classList.remove('rent');
+        lvl.innerHTML = '';
+        el.title = t.name + ' · 售价 ' + money(t.price);
+      }
+    });
+
+    var p = cur();
+    if(p && !G.over && (G.phase === 'buy' || G.phase === 'auction')){
+      var hotEl = boardEl.querySelector('.tile[data-i="' + p.pos + '"]');
+      if(hotEl) hotEl.classList.add('hot');
+    }
+  }
+
+  function renderTokens(){
+    var els = boardEl.querySelectorAll('.tile .tokens');
+    for(var i = 0; i < els.length; i++) els[i].innerHTML = '';
+    var hereEl = boardEl.querySelector('.tile.here');
+    if(hereEl){
+      hereEl.classList.remove('here');
+      hereEl.style.removeProperty('--hc');
+    }
+    G.players.forEach(function(p){
+      if(p.bankrupt) return;
+      var el = boardEl.querySelector('.tile[data-i="' + p.pos + '"] .tokens');
+      if(!el) return;
+      var d = document.createElement('i');
+      d.className = 'tk';
+      d.style.background = p.color;
+      d.textContent = p.name.charAt(0);
+      el.appendChild(d);
+    });
+    var p2 = cur();
+    if(p2 && !G.over){
+      var tEl = boardEl.querySelector('.tile[data-i="' + p2.pos + '"]');
+      if(tEl){
+        tEl.classList.add('here');
+        tEl.style.setProperty('--hc', p2.color);
+      }
+    }
+  }
+
+  function renderDice(){
+    var faces = [
+      [4], [0, 8], [0, 4, 8], [0, 2, 6, 8], [0, 2, 4, 6, 8], [0, 2, 3, 5, 6, 8]
+    ];
+    dieEls.forEach(function(d, di){
+      var v = G.dice[di] || 1;
+      var on = faces[v - 1] || [4];
+      var pips = d.children;
+      for(var k = 0; k < 9; k++) pips[k].className = on.indexOf(k) >= 0 ? 'on' : '';
+    });
+  }
+
+  function renderHUD(){
+    hudRound.textContent = Math.min(G.round, MAX_ROUNDS);
+    potValEl.textContent = money(G.pot);
+    var p = cur();
+    hudTurn.textContent = p ? p.name : '—';
+    turnNameEl.textContent = p ? p.name + (p.ai ? ' · 电脑' : '') : '—';
+    turnDotEl.style.background = p ? p.color : '#5eead4';
+    turnDotEl.style.boxShadow = '0 0 9px ' + (p ? p.color : '#5eead4');
+
+    var a = alive();
+    if(!a.length){
+      leadlineEl.textContent = '';
+    } else {
+      var lead = a.slice().sort(function(x, y){ return netWorth(y) - netWorth(x); })[0];
+      leadlineEl.innerHTML = '领先 <b>' + lead.name + '</b> · 总资产 ' + money(netWorth(lead));
+    }
+
+    if(G.over){
+      statusEl.textContent = '对局结束';
+    } else if(!p){
+      statusEl.textContent = '选择人数，开始游戏';
+    } else if(G.phase === 'jail'){
+      statusEl.textContent = p.name + ' 在监牢中，可以缴纳 ' + money(JAIL_FEE) + ' 保释';
+    } else if(G.phase === 'buy'){
+      var t = TILES[p.pos];
+      statusEl.innerHTML = '购买 <b>' + t.name + '</b> · ' + money(t.price) + '？';
+    } else if(G.phase === 'auction'){
+      statusEl.innerHTML = '<b>' + TILES[p.pos].name + '</b> 正在暗标拍卖';
+    } else if(G.phase === 'upgrade'){
+      var t2 = TILES[p.pos];
+      statusEl.innerHTML = '升级 <b>' + t2.name + '</b> 到 Lv.' + (t2.level + 1) + ' · ' + money(upgradeCost(t2)) + '？';
+    } else if(G.phase === 'rolling' || G.phase === 'moving'){
+      statusEl.textContent = p.name + ' 行动中…';
+    } else {
+      statusEl.textContent = p.ai ? p.name + ' 正在掷骰子' : '轮到你行动，掷两颗骰子';
+    }
+  }
+
+  function renderPlayers(){
+    var html = '';
+    G.players.forEach(function(p){
+      var tag = '';
+      if(p.inJail) tag = '<span class="chipjail">监牢</span>';
+      var persona = p.ai ? (p.persona ? '电脑 · ' + p.persona.name : '电脑') : '';
+      html += '<div class="pcard' + (p.idx === G.turn && !G.over ? ' active' : '') + (p.bankrupt ? ' dead' : '') + '" style="--pc:' + p.color + '">' +
+        '<div class="avatar">' + p.name.charAt(0) + '</div>' +
+        '<div class="who">' +
+          '<div class="pname">' + p.name + (persona ? ' <em>' + persona + '</em>' : '') + tag + '</div>' +
+          '<div class="sub">' + (p.bankrupt ? '已破产' : p.props.length + ' 处产业 · 总资产 ' + money(netWorth(p))) + '</div>' +
+        '</div>' +
+        '<div class="cash">' + money(p.cash) + '</div>' +
+      '</div>';
+    });
+    playersEl.innerHTML = html || '<div class="sub" style="font-size:11px;color:#6e93ab">尚未开始</div>';
+  }
+
+  function mortgageTile(idx, p){
+    var t = TILES[idx];
+    if(!t || t.owner !== p.idx || t.mortgaged || t.level > 0) return false;
+    t.mortgaged = true;
+    var loan = mortgageValue(t);
+    p.cash += loan;
+    addLog(p.name + ' 抵押 ' + t.name + '，获得 ' + money(loan));
+    sfx('coin');
+    renderAll();
+    renderAssets();
+    return true;
+  }
+
+  function redeemTile(idx, p){
+    var t = TILES[idx];
+    if(!t || t.owner !== p.idx || !t.mortgaged) return false;
+    var cost = redeemCost(t);
+    if(p.cash < cost) return false;
+    p.cash -= cost;
+    t.mortgaged = false;
+    addLog(p.name + ' 赎回 ' + t.name + '，支付 ' + money(cost));
+    sfx('buy');
+    renderAll();
+    renderAssets();
+    return true;
+  }
+
+  function renderAssets(){
+    if(!assetList) return;
+    var p = G.players[0];
+    if(!p || p.bankrupt){
+      assetList.innerHTML = '<div class="asset-empty">你没有可管理的产业。</div>';
+      assetSub.textContent = '抵押立即获得地价 50% 的现金，赎回需要支付 55%。';
+      return;
+    }
+    var rows = p.props.filter(function(i){ return isBuyable(TILES[i]); }).slice().sort(function(a, b){
+      return TILES[a].price - TILES[b].price;
+    }).map(function(idx){
+      var t = TILES[idx];
+      var kind = t.type === 'prop'
+        ? GROUPS[t.group].name + ' · Lv.' + t.level
+        : (t.type === 'station' ? '车站' : '公用事业');
+      var btn;
+      if(t.mortgaged){
+        var rc = redeemCost(t);
+        btn = '<button class="ab gold" data-act="redeem" data-i="' + idx + '"' +
+          (p.cash < rc ? ' disabled' : '') + '>赎回 ' + money(rc) + '</button>';
+      } else {
+        var mv = mortgageValue(t);
+        btn = '<button class="ab" data-act="mortgage" data-i="' + idx + '"' +
+          (t.level > 0 ? ' disabled' : '') + '>抵押 ' + money(mv) + '</button>';
+      }
+      return '<div class="asset-row"><div class="an">' + t.name +
+        '<small>' + kind + (t.mortgaged ? ' · 抵押中' : '') + '</small></div>' + btn + '</div>';
+    }).join('');
+    assetList.innerHTML = rows || '<div class="asset-empty">还没有产业，先去买地吧。</div>';
+    assetSub.textContent = '现金 ' + money(p.cash) + ' · 抵押获得地价 50%，赎回支付 55%。';
+  }
+
+  function renderActions(){
+    actionsEl.innerHTML = '';
+    var p = cur();
+    if(G.over || !p || p.ai) {
+      if(p && p.ai && !G.over){
+        var th = document.createElement('div');
+        th.className = 'thinking';
+        th.textContent = '对手思考中';
+        actionsEl.appendChild(th);
+      }
+      return;
+    }
+    if(G.phase === 'roll'){
+      addAction('掷骰子', 'primary', humanRoll);
+    } else if(G.phase === 'buy'){
+      addAction('买下 ' + money(TILES[p.pos].price), 'gold', humanBuy);
+      addAction('放弃', 'ghost', humanSkipBuy);
+    } else if(G.phase === 'upgrade'){
+      addAction('升级 ' + money(upgradeCost(TILES[p.pos])), 'gold', humanUpgrade);
+      addAction('算了', 'ghost', humanSkipUpgrade);
+    } else if(G.phase === 'jail'){
+      if(p.cash >= JAIL_FEE){
+        addAction('缴 ' + money(JAIL_FEE) + ' 保释', 'primary', doJailPay);
+      }
+      addAction('等一回合', 'ghost', doJailWait);
+    }
+  }
+
+  function addAction(label, cls, fn){
+    var b = document.createElement('button');
+    b.className = 'btn' + (cls === 'primary' ? '' : ' ' + cls);
+    b.textContent = label;
+    b.addEventListener('click', function(e){ e.preventDefault(); fn(); });
+    actionsEl.appendChild(b);
+  }
+
+  function renderLog(){
+    if(!G.log.length){ logEl.innerHTML = ''; minilogEl.innerHTML = ''; return; }
+    logEl.innerHTML = G.log.slice(0, 40).map(function(x){ return '<div>' + x + '</div>'; }).join('');
+    minilogEl.innerHTML = G.log.slice(0, 2).map(function(x){ return '<div>' + x + '</div>'; }).join('');
+  }
+
+  function addLog(text){
+    G.log.unshift(text);
+    if(G.log.length > 60) G.log.length = 60;
+    renderLog();
+  }
+
+  /* ---------- setup ---------- */
+  function rosterPreview(n){
+    var html = '';
+    for(var i = 0; i < n; i++){
+      var tag = i === 0 ? '（你）' : '（' + AI_PERSONAS[(i - 1 + personaShift) % AI_PERSONAS.length].name + '）';
+      html += '<div class="pv"><i style="background:' + PLAYER_COLORS[i] + '"></i>' +
+        PLAYER_NAMES[i] + tag + '</div>';
+    }
+    rosterEl.innerHTML = html;
+  }
+
+  function initGame(n){
+    clearSave();
+    G = {
+      players: [], turn: 0, round: 1, phase: 'idle', pot: 0, dice: [rnd6(), rnd6()],
+      busy: false, dblChain: 0, extra: false, over: false, log: [], reason: '', n: n,
+      auctioning: false, cardTimer: null
+    };
+    for(var i = 0; i < n; i++){
+      G.players.push({
+        idx: i, name: PLAYER_NAMES[i], color: PLAYER_COLORS[i], ai: i > 0,
+        persona: i > 0 ? AI_PERSONAS[(i - 1 + personaShift) % AI_PERSONAS.length] : null,
+        cash: START_CASH, pos: 0, inJail: false, bankrupt: false, props: []
+      });
+    }
+    personaShift = (personaShift + 1) % AI_PERSONAS.length;
+    TILES.forEach(function(t){
+      if(isBuyable(t)){ t.owner = -1; t.level = 0; t.mortgaged = false; }
+    });
+    addLog('环城大亨开局，' + n + ' 位玩家各持 ' + money(START_CASH));
+    startOv.classList.add('hide');
+    endOv.classList.add('hide');
+    rulesOv.classList.add('hide');
+    cardOv.classList.add('hide');
+    auctionOv.classList.add('hide');
+    assetOv.classList.add('hide');
+    renderAll();
+    setUnitSoon();
+    startTurn();
+  }
+
+  function setUnitSoon(){ setTimeout(syncUnit, 30); setTimeout(syncUnit, 260); }
+
+  /* ---------- save / prefs ---------- */
+  function loadPrefs(){
+    try{
+      var p = JSON.parse(localStorage.getItem(PREF_KEY) || 'null');
+      if(!p || typeof p !== 'object') return;
+      var n = parseInt(p.n, 10);
+      if(n >= 2 && n <= 4) pendingN = n;
+      if(typeof p.sound === 'boolean') SOUND = p.sound;
+    }catch(e){}
+  }
+  function savePrefs(){
+    try{ localStorage.setItem(PREF_KEY, JSON.stringify({ n: pendingN, sound: SOUND })); }catch(e){}
+  }
+  function saveGame(){
+    if(G.over || !G.players.length) return;
+    try{
+      var data = {
+        v: 1, n: G.players.length, turn: G.turn, round: G.round, pot: G.pot,
+        dice: (G.dice || [1, 1]).slice(0, 2), dblChain: G.dblChain || 0,
+        log: G.log.slice(0, 24),
+        players: G.players.map(function(p){
+          return {
+            ai: !!p.ai, persona: p.persona ? p.persona.key : null, cash: p.cash,
+            pos: p.pos, inJail: !!p.inJail, bankrupt: !!p.bankrupt,
+            props: p.props.slice()
+          };
+        }),
+        tiles: TILES.map(function(t){
+          return isBuyable(t) ? { o: t.owner, l: t.level, m: t.mortgaged ? 1 : 0 } : null;
+        })
+      };
+      localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+      updateResumeUI();
+    }catch(e){}
+  }
+  function readSave(){
+    try{
+      var d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
+      if(!d || d.v !== 1) return null;
+      if(!Array.isArray(d.players) || d.players.length < 2 || d.players.length > 4) return null;
+      if(!Array.isArray(d.tiles) || d.tiles.length !== TILES.length) return null;
+      if(!(d.turn >= 0 && d.turn < d.players.length)) return null;
+      if(!(d.round >= 1 && d.round <= MAX_ROUNDS)) return null;
+      return d;
+    }catch(e){ return null; }
+  }
+  function clearSave(){
+    try{ localStorage.removeItem(SAVE_KEY); }catch(e){}
+    updateResumeUI();
+  }
+  function updateResumeUI(){
+    if(!resumeRow || !saveMeta) return;
+    var d = readSave();
+    if(!d){ resumeRow.hidden = true; return; }
+    var p = d.players[0] || {};
+    resumeRow.hidden = false;
+    saveMeta.textContent = '第 ' + d.round + ' 回合 · ' + d.players.length + ' 人 · 你的现金 ' + money(p.cash || 0);
+  }
+  function restoreGame(){
+    var d = readSave();
+    if(!d) return false;
+    TILES.forEach(function(t, i){
+      if(!isBuyable(t)) return;
+      var s = d.tiles[i];
+      t.owner = s && s.o >= 0 ? s.o : -1;
+      t.level = s ? (s.l | 0) : 0;
+      t.mortgaged = !!(s && s.m);
+    });
+    G = {
+      players: [], turn: d.turn, round: d.round, phase: 'idle', pot: d.pot || 0,
+      dice: (d.dice && d.dice.length === 2) ? d.dice.slice(0, 2) : [1, 1],
+      busy: false, dblChain: d.dblChain || 0, extra: false, over: false,
+      log: (d.log || []).slice(), reason: '', n: d.players.length,
+      auctioning: false, cardTimer: null
+    };
+    d.players.forEach(function(p, i){
+      G.players.push({
+        idx: i, name: PLAYER_NAMES[i], color: PLAYER_COLORS[i], ai: !!p.ai,
+        persona: p.ai ? (PERSONAS[p.persona] || PERSONAS.balance) : null,
+        cash: isFinite(p.cash) ? p.cash : START_CASH, pos: (p.pos | 0),
+        inJail: !!p.inJail, bankrupt: !!p.bankrupt,
+        props: Array.isArray(p.props) ? p.props.slice() : []
+      });
+    });
+    startOv.classList.add('hide');
+    endOv.classList.add('hide');
+    rulesOv.classList.add('hide');
+    cardOv.classList.add('hide');
+    auctionOv.classList.add('hide');
+    assetOv.classList.add('hide');
+    renderAll();
+    setUnitSoon();
+    addLog('已读取存档 · 第 ' + G.round + ' 回合，从 ' + G.players[G.turn].name + ' 继续');
+    startTurn();
+    return true;
+  }
+
+
+  /* ---------- events ---------- */
+  document.getElementById('segCount').addEventListener('click', function(e){
+    var b = e.target.closest('button[data-n]');
+    if(!b) return;
+    pendingN = parseInt(b.dataset.n, 10) || 3;
+    Array.prototype.forEach.call(this.querySelectorAll('button'), function(x){
+      x.classList.toggle('on', x === b);
+    });
+    rosterPreview(pendingN);
+    savePrefs();
+  });
+
+  document.getElementById('btnStart').addEventListener('click', function(){
+    sfx('coin');
+    initGame(pendingN);
+  });
+
+  document.getElementById('btnResume').addEventListener('click', function(){
+    if(restoreGame()) sfx('coin');
+  });
+
+  document.getElementById('btnAgain').addEventListener('click', function(){
+    initGame(G.n || pendingN);
+  });
+
+  document.getElementById('btnSetup').addEventListener('click', function(){
+    endOv.classList.add('hide');
+    startOv.classList.remove('hide');
+    rosterPreview(pendingN);
+    updateResumeUI();
+  });
+
+  document.getElementById('btnRules').addEventListener('click', function(){
+    rulesOv.classList.remove('hide');
+  });
+  document.getElementById('btnCloseRules').addEventListener('click', function(){
+    rulesOv.classList.add('hide');
+  });
+  rulesOv.addEventListener('click', function(e){
+    if(e.target === rulesOv) rulesOv.classList.add('hide');
+  });
+
+  document.getElementById('btnAssets').addEventListener('click', function(){
+    if(G.auctioning) return;
+    renderAssets();
+    assetOv.classList.remove('hide');
+  });
+  document.getElementById('btnCloseAssets').addEventListener('click', function(){
+    assetOv.classList.add('hide');
+  });
+  assetOv.addEventListener('click', function(e){
+    if(e.target === assetOv) assetOv.classList.add('hide');
+  });
+  assetList.addEventListener('click', function(e){
+    var b = e.target.closest('button[data-act]');
+    if(!b || b.disabled) return;
+    var p = G.players[0];
+    if(!p || p.bankrupt || G.over) return;
+    var idx = parseInt(b.dataset.i, 10);
+    if(b.dataset.act === 'mortgage') mortgageTile(idx, p);
+    else redeemTile(idx, p);
+  });
+
+  document.getElementById('btnSound').addEventListener('click', function(){
+    SOUND = !SOUND;
+    this.textContent = '音效 ' + (SOUND ? '开' : '关');
+    if(SOUND) sfx('step');
+    savePrefs();
+  });
+
+  document.getElementById('btnRestart').addEventListener('click', function(){
+    if(G.players.length && !G.over){
+      if(!window.confirm('重新开始会丢失当前进度，确定吗？')) return;
+    }
+    clearSave();
+    endOv.classList.add('hide');
+    cardOv.classList.add('hide');
+    auctionOv.classList.add('hide');
+    assetOv.classList.add('hide');
+    startOv.classList.remove('hide');
+    rosterPreview(pendingN);
+  });
+
+  document.addEventListener('keydown', function(e){
+    var tag = e.target && e.target.tagName;
+    if(tag === 'INPUT' || tag === 'TEXTAREA' || (e.target && e.target.isContentEditable)) return;
+    if(e.key === 'Escape'){
+      rulesOv.classList.add('hide');
+      assetOv.classList.add('hide');
+      return;
+    }
+    if(e.key === '?' || e.key === 'h' || e.key === 'H'){
+      if(!G.players.length || G.over) return;
+      rulesOv.classList.toggle('hide');
+      return;
+    }
+    if(e.key === 'a' || e.key === 'A'){
+      if(!G.auctioning && G.players.length){
+        renderAssets();
+        assetOv.classList.remove('hide');
+      }
+      return;
+    }
+    var p = cur();
+    if(!p || p.ai || G.busy) return;
+    if(G.phase === 'auction' || G.auctioning) return;
+    if(e.key === ' ' || e.key === 'Enter' || e.key === 'r' || e.key === 'R'){
+      if(G.phase === 'roll'){ e.preventDefault(); humanRoll(); }
+      else if(G.phase === 'buy' && (e.key === ' ' || e.key === 'Enter')){ e.preventDefault(); humanBuy(); }
+    } else if(e.key === 'b' || e.key === 'B'){
+      if(G.phase === 'buy'){ e.preventDefault(); humanBuy(); }
+    } else if(e.key === 'u' || e.key === 'U'){
+      if(G.phase === 'upgrade'){ e.preventDefault(); humanUpgrade(); }
+    }
+  });
+
+  /* ---------- boot ---------- */
+  window.__MONO__ = {
+    get G(){ return G; },
+    tiles: TILES,
+    rentOf: rentOf,
+    netWorth: netWorth,
+    mortgageTile: mortgageTile,
+    redeemTile: redeemTile,
+    auctionProperty: auctionProperty,
+    aiAuctionBid: aiAuctionBid,
+    drawCard: drawCard,
+    payTo: payTo,
+    renderAll: renderAll,
+    saveNow: saveGame,
+    restoreSave: restoreGame,
+    hasSave: function(){ return !!readSave(); },
+    readSave: readSave,
+    clearSave: clearSave
+  };
+  loadPrefs();
+  Array.prototype.forEach.call(document.querySelectorAll('#segCount button'), function(b){
+    b.classList.toggle('on', parseInt(b.dataset.n, 10) === pendingN);
+  });
+  (function(){
+    var sb = document.getElementById('btnSound');
+    if(sb) sb.textContent = '音效 ' + (SOUND ? '开' : '关');
+  })();
+  buildBoard();
+  rosterPreview(pendingN);
+  renderPlayers();
+  updateResumeUI();
+  TILES.forEach(function(t){
+    if(isBuyable(t)){ t.owner = -1; t.level = 0; t.mortgaged = false; }
+  });
+})();
+</script>
+</body>
+</html>

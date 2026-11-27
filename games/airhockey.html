@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>极光冰球</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden;background:#040814;color:#eaf2ff;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+  #cv{display:block;width:100%;height:100%;touch-action:none;cursor:none}
+  .score{position:fixed;left:50%;top:10px;transform:translateX(-50%);display:flex;gap:26px;align-items:center;font-size:13px;color:#8fa6c4;pointer-events:none;z-index:2;letter-spacing:.08em}
+  .score b{font-size:26px;color:#7ee0ff;margin-left:6px;font-weight:700}
+  .score .ai b{color:#ff8fb1}
+  .hint{position:fixed;left:50%;bottom:8px;transform:translateX(-50%);font-size:12px;color:#6c83a2;pointer-events:none;white-space:nowrap}
+  .msg{position:fixed;left:50%;top:42%;transform:translate(-50%,-50%);font-size:22px;color:#c9f2ff;text-shadow:0 0 18px rgba(126,224,255,.6);opacity:0;transition:opacity .18s;pointer-events:none;z-index:2;white-space:nowrap}
+  .msg.show{opacity:1}
+  .overlay{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(3,6,14,.88);z-index:3;text-align:center;padding:24px}
+  .overlay.hide{display:none}
+  .overlay h1{margin:0 0 8px;font-size:30px;letter-spacing:.08em;color:#c9f2ff}
+  .overlay p{margin:0 0 20px;color:#8ea3bd;font-size:13px;line-height:1.8}
+  .overlay button{border:1px solid rgba(126,224,255,.45);background:rgba(126,224,255,.12);color:#c8f3ff;padding:11px 30px;border-radius:999px;font-size:15px;cursor:pointer}
+  .overlay button:active{transform:scale(.97)}
+</style>
+<style id="tx-aurora-skin">
+/* tx-aurora-skin:airhockey */
+:root{--tx-a1:#7ee0ff;--tx-a2:#ff8fb1;}
+html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+::selection{background:rgba(126,224,255,0.38);color:#fff}
+*::-webkit-scrollbar{width:8px;height:8px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:rgba(126,224,255,0.26);border-radius:99px;border:2px solid transparent;background-clip:content-box}
+*::-webkit-scrollbar-thumb:hover{background:rgba(126,224,255,0.46);background-clip:content-box}
+body{background-color:#040814!important;background-image:radial-gradient(1100px 640px at 6% -12%, rgba(126,224,255,0.16), transparent 62%), radial-gradient(900px 680px at 104% 112%, rgba(255,143,177,0.12), transparent 62%)!important}
+button{transition:transform .14s ease,filter .16s ease,box-shadow .2s ease,border-color .16s ease,background-color .16s ease}
+button:hover{filter:brightness(1.07)}
+button:active{transform:translateY(1px) scale(.995)}
+button:focus-visible{outline:2px solid rgba(126,224,255,0.72);outline-offset:2px}
+.overlay,.modal,.dialog,.sheet,#levels,#loading{background-image:radial-gradient(900px 520px at 50% 0%,rgba(126,224,255,0.15),transparent 62%),radial-gradient(720px 520px at 50% 100%,rgba(255,143,177,0.08),transparent 60%)!important}
+.overlay,.modal,.dialog,.sheet{backdrop-filter:blur(9px) saturate(1.1)}
+.overlay h1,.modal h1,.screen h1,.overlay-card h1,.win-card h1,.result-card h1,.bcard .btitle,.loadcard .ltitle{text-shadow:0 2px 30px rgba(126,224,255,0.45)}
+.overlay .screen,.overlay .panel,.overlay-card,.modal .panel,.win-card,.result-card,.bcard,.loadcard,.rules-dialog,.panel{box-shadow:0 38px 96px -34px rgba(0,0,0,.95), inset 0 1px 0 rgba(255,255,255,.07)!important}
+.bcard,.loadcard{border-color:rgba(126,224,255,0.34)!important}
+.overlay .panel,.overlay-card,.win-card,.result-card,.modal .panel{backdrop-filter:blur(10px) saturate(1.08);border-color:rgba(126,224,255,0.26)!important}
+.overlay h1{letter-spacing:.1em}
+.overlay p{color:#9db4cf}
+.overlay button{border:0!important;background:linear-gradient(135deg,#c8f7ff,#7ee0ff 48%,#ff9fbe)!important;color:#04101d!important;font-weight:700;padding:12px 34px!important;box-shadow:0 16px 44px -14px rgba(110,220,255,.65),inset 0 1px 0 rgba(255,255,255,.7)!important}
+</style>
+<style id="ah-ui">
+  .mini-hud{position:fixed;left:16px;bottom:10px;display:flex;gap:16px;font-size:10px;color:#7f97b5;z-index:2;pointer-events:none;letter-spacing:.08em}
+  .mini-hud b{margin-left:5px;font-size:13px;color:#b8e8ff;font-weight:700;font-variant-numeric:tabular-nums}
+  .opts{display:flex;flex-direction:column;gap:9px;width:min(340px,86vw);margin:2px 0 14px;text-align:left}
+  .optrow{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12.5px;color:#8ea3bd;letter-spacing:.06em}
+  .seg{display:flex;gap:4px;padding:3px;border-radius:10px;background:rgba(255,255,255,.045);border:1px solid rgba(126,224,255,.16)}
+  .seg button{border:0!important;background:transparent!important;color:#8ea3bd!important;padding:6px 12px!important;border-radius:7px!important;font-size:12px!important;font-weight:500!important;box-shadow:none!important;letter-spacing:0}
+  .seg button.on{background:rgba(126,224,255,.2)!important;color:#d9f8ff!important;box-shadow:inset 0 0 0 1px rgba(126,224,255,.42)!important}
+  .record{font-size:11.5px;color:#7f97b5;line-height:1.85;margin:0 0 16px;min-height:16px}
+  .record b{color:#ffd166}
+  .overlay button.ghost{background:rgba(148,163,184,.1)!important;color:#b8c8dd!important;border:1px solid rgba(148,163,184,.32)!important;margin-top:9px;padding:9px 22px!important;box-shadow:none!important;font-weight:500!important;font-size:13px!important}
+  .overlay .stats{display:flex;gap:20px;justify-content:center;margin:6px 0 14px;font-size:10.5px;color:#8ea3bd}
+  .overlay .stats b{display:block;font-size:18px;color:#d9f8ff;margin-top:2px}
+  .overlay .stats .gold b{color:#ffd166}
+  .toastx{position:fixed;left:50%;top:58%;transform:translate(-50%,0);font-size:13px;color:#a9f0ff;text-shadow:0 0 16px rgba(126,224,255,.7);opacity:0;transition:opacity .16s;pointer-events:none;z-index:2;white-space:nowrap;letter-spacing:.1em}
+  .toastx.show{opacity:1}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div class="score">
+  <span>你<b id="ps">0</b></span>
+  <span class="ai">AI<b id="as">0</b></span>
+</div>
+<div class="mini-hud">
+  <span>回合<b id="rally">0</b></span>
+  <span>球速<b id="spd">0</b></span>
+</div>
+<div class="hint">拖动球拍击球 · 按住蓄力打出重击 · P / Esc 暂停</div>
+<div class="msg" id="msg"></div>
+<div class="toastx" id="toastx"></div>
+<div class="overlay" id="over">
+  <h1 id="ovTitle">极光冰球</h1>
+  <p id="ovDesc">控制下方球拍把冰球打回对面。<br>先得目标分者获胜，球速会越打越快。</p>
+  <div class="opts" id="opts">
+    <div class="optrow"><span>难度</span>
+      <div class="seg" id="diffSeg">
+        <button data-diff="easy" type="button">休闲</button>
+        <button data-diff="normal" class="on" type="button">标准</button>
+        <button data-diff="hard" type="button">竞技</button>
+      </div>
+    </div>
+    <div class="optrow"><span>赛制</span>
+      <div class="seg" id="lenSeg">
+        <button data-len="5" type="button">5 分</button>
+        <button data-len="7" class="on" type="button">7 分</button>
+        <button data-len="11" type="button">11 分</button>
+      </div>
+    </div>
+  </div>
+  <div class="record" id="record"></div>
+  <button id="start" type="button">开始比赛</button>
+  <button id="menuBtn" class="ghost" type="button" style="display:none">返回菜单</button>
+</div>
+<script>
+(function(){
+  var cv = document.getElementById('cv');
+  var ctx = cv.getContext('2d');
+  var psEl = document.getElementById('ps');
+  var asEl = document.getElementById('as');
+  var rallyEl = document.getElementById('rally');
+  var spdEl = document.getElementById('spd');
+  var over = document.getElementById('over');
+  var btn = document.getElementById('start');
+  var menuBtn = document.getElementById('menuBtn');
+  var ovTitle = document.getElementById('ovTitle');
+  var ovDesc = document.getElementById('ovDesc');
+  var optsBox = document.getElementById('opts');
+  var recordEl = document.getElementById('record');
+  var msgEl = document.getElementById('msg');
+  var toastEl = document.getElementById('toastx');
+
+  var W = 0, H = 0, dpr = 1, sc = 1, ox = 0, oy = 0;
+  var WW = 600, WH = 900;
+
+  var PR = 13, PAD = 34;
+  var puck = { x: 300, y: 450, vx: 0, vy: 0 };
+  var player = { x: 300, y: 780 };
+  var ai = { x: 300, y: 120 };
+  var target = { x: 300, y: 780 };
+  var ps = 0, as = 0;
+  var state = 'menu';
+  var resumeState = 'play';
+  var serveTimer = 0;
+  var trail = [];
+  var last = 0;
+
+  var DIFFS = {
+    easy:   { label:'休闲', speed:300, drift:200, lead:0.10, err:72, boost:360, max:980 },
+    normal: { label:'标准', speed:388, drift:250, lead:0.17, err:34, boost:432, max:1180 },
+    hard:   { label:'竞技', speed:470, drift:310, lead:0.24, err:12, boost:510, max:1420 }
+  };
+  var diff = 'normal';
+  var winScore = 7;
+  var aiErr = 0, aiErrT = 0;
+  var elapsed = 0, rally = 0, longestRally = 0, topSpeed = 0;
+  var charging = false, charge = 0, shake = 0, goalFlash = 0;
+  var best = { winTime: 0, rally: 0 };
+  try {
+    var rec = JSON.parse(localStorage.getItem('tx_airhockey_best_v1') || 'null');
+    if (rec && typeof rec === 'object'){
+      best.winTime = rec.winTime || 0;
+      best.rally = rec.rally || 0;
+    }
+  } catch(e){}
+  function saveBest(){
+    try { localStorage.setItem('tx_airhockey_best_v1', JSON.stringify(best)); } catch(e){}
+  }
+  function fmtTime(t){ return t.toFixed(1) + 's'; }
+  function renderRecord(){
+    if (!recordEl) return;
+    recordEl.innerHTML = (best.winTime ? '最快获胜 <b>' + fmtTime(best.winTime) + '</b> · ' : '') +
+      (best.rally ? '最长回合 <b>' + best.rally + '</b> 拍' : (best.winTime ? '' : '还没有纪录，先打一场。'));
+  }
+
+  function resize(){
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = cv.clientWidth || window.innerWidth;
+    H = cv.clientHeight || window.innerHeight;
+    cv.width = Math.round(W * dpr);
+    cv.height = Math.round(H * dpr);
+    sc = Math.min(W / WW, H / WH);
+    ox = (W - WW * sc) / 2;
+    oy = (H - WH * sc) / 2;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  function showMsg(text, ms){
+    msgEl.textContent = text;
+    msgEl.classList.add('show');
+    setTimeout(function(){ msgEl.classList.remove('show'); }, ms || 900);
+  }
+  function showToast(text){
+    toastEl.textContent = text;
+    toastEl.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(function(){ toastEl.classList.remove('show'); }, 700);
+  }
+
+  function toWorld(e){
+    var r = cv.getBoundingClientRect();
+    return { x: (e.clientX - r.left - ox) / sc, y: (e.clientY - r.top - oy) / sc };
+  }
+
+  cv.addEventListener('pointermove', function(e){
+    var p = toWorld(e);
+    target.x = Math.max(PAD + 6, Math.min(WW - PAD - 6, p.x));
+    target.y = Math.max(WH / 2 + PAD + 10, Math.min(WH - PAD - 6, p.y));
+  });
+  cv.addEventListener('pointerdown', function(e){
+    var p = toWorld(e);
+    target.x = Math.max(PAD + 6, Math.min(WW - PAD - 6, p.x));
+    target.y = Math.max(WH / 2 + PAD + 10, Math.min(WH - PAD - 6, p.y));
+    charging = true;
+    charge = 0;
+  });
+  window.addEventListener('pointerup', function(){ charging = false; charge = 0; });
+  window.addEventListener('pointercancel', function(){ charging = false; charge = 0; });
+
+  function resetPuck(dir){
+    puck.x = 300;
+    puck.y = 450;
+    puck.vx = dir * 150 + (Math.random() * 80 - 40);
+    puck.vy = dir > 0 ? 190 : -190;
+    trail = [];
+    state = 'play';
+  }
+
+  function scorePoint(who){
+    if (who === 'p'){ ps++; psEl.textContent = ps; showMsg('得分！'); showToast('破门'); }
+    else { as++; asEl.textContent = as; showMsg('AI 得分'); showToast('被破门'); }
+    shake = 12; goalFlash = 1;
+
+    if (ps >= winScore || as >= winScore){ finishMatch(); return; }
+
+    state = 'serve';
+    serveTimer = 0.9;
+    puck.vx = 0;
+    puck.vy = 0;
+    trail = [];
+    rally = 0;
+    rallyEl.textContent = '0';
+  }
+
+  function finishMatch(){
+    state = 'over';
+    var win = ps >= winScore;
+    if (win && (!best.winTime || elapsed < best.winTime)) best.winTime = elapsed;
+    if (longestRally > best.rally) best.rally = longestRally;
+    saveBest();
+    ovTitle.textContent = win ? '你赢了' : 'AI 获胜';
+    ovDesc.innerHTML = '比分 ' + ps + ' : ' + as + ' · ' + DIFFS[diff].label +
+      '<span class="stats"><span>用时<b>' + fmtTime(elapsed) + '</b></span>' +
+      '<span>最长回合<b>' + longestRally + ' 拍</b></span>' +
+      '<span class="gold">最高球速<b>' + Math.round(topSpeed) + '</b></span></span>' +
+      (win ? '换一档难度，下一场会更快。' : '再来一局，试着把回合拖长一点。');
+    optsBox.style.display = 'none';
+    btn.textContent = '再来一场';
+    menuBtn.style.display = 'inline-block';
+    over.classList.remove('hide');
+    renderRecord();
+  }
+
+  function startMatch(){
+    ps = 0; as = 0; elapsed = 0; rally = 0; longestRally = 0; topSpeed = 0;
+    charge = 0; charging = false; shake = 0; goalFlash = 0;
+    psEl.textContent = '0'; asEl.textContent = '0';
+    rallyEl.textContent = '0'; spdEl.textContent = '0';
+    aiErr = 0; aiErrT = 0;
+    puck.x = 300; puck.y = 450; puck.vx = 0; puck.vy = 0;
+    player.x = target.x = 300; player.y = target.y = 780;
+    ai.x = 300; trail = [];
+    over.classList.add('hide');
+    menuBtn.style.display = 'none';
+    state = 'serve';
+    serveTimer = 1.0;
+  }
+
+  function returnToMenu(){
+    state = 'menu';
+    ps = 0; as = 0;
+    psEl.textContent = '0'; asEl.textContent = '0';
+    rallyEl.textContent = '0'; spdEl.textContent = '0';
+    puck.x = 300; puck.y = 450; puck.vx = 0; puck.vy = 0; trail = [];
+    ovTitle.textContent = '极光冰球';
+    ovDesc.innerHTML = '控制下方球拍把冰球打回对面。<br>先得目标分者获胜，按住球拍可以蓄力重击。';
+    optsBox.style.display = 'flex';
+    recordEl.style.display = 'block';
+    btn.textContent = '开始比赛';
+    menuBtn.style.display = 'none';
+    over.classList.remove('hide');
+    renderRecord();
+  }
+
+  function togglePause(){
+    if (state === 'play' || state === 'serve'){
+      resumeState = state;
+      state = 'paused';
+      ovTitle.textContent = '暂停';
+      ovDesc.innerHTML = '当前比分 ' + ps + ' : ' + as + ' · ' + DIFFS[diff].label + ' ' + winScore + ' 分制' +
+        '<span class="stats"><span>用时<b>' + fmtTime(elapsed) + '</b></span>' +
+        '<span>最长回合<b>' + longestRally + ' 拍</b></span>' +
+        '<span class="gold">球速<b>' + Math.round(Math.hypot(puck.vx, puck.vy)) + '</b></span></span>';
+      optsBox.style.display = 'none';
+      recordEl.style.display = 'none';
+      btn.textContent = '继续比赛';
+      menuBtn.style.display = 'inline-block';
+      over.classList.remove('hide');
+    } else if (state === 'paused'){
+      over.classList.add('hide');
+      recordEl.style.display = 'block';
+      state = resumeState;
+      last = 0;
+    }
+  }
+
+  function update(dt){
+    if (state === 'serve'){
+      serveTimer -= dt;
+      if (serveTimer <= 0) resetPuck(Math.random() < .5 ? 1 : -1);
+      return;
+    }
+    if (state !== 'play') return;
+
+    elapsed += dt;
+    if (charging && charge < 1) charge = Math.min(1, charge + dt / 0.72);
+
+    var cfg = DIFFS[diff];
+    aiErrT -= dt;
+    if (aiErrT <= 0){ aiErrT = 0.55 + Math.random() * 0.5; aiErr = (Math.random() * 2 - 1) * cfg.err; }
+
+    var k = Math.min(1, dt * 18);
+    player.x += (target.x - player.x) * k;
+    player.y += (target.y - player.y) * k;
+
+    var goalX = 300, goalW = 96;
+    if (puck.y < ai.y - PAD * .2 && puck.vy < 0){
+      var ax = puck.x + puck.vx * cfg.lead + aiErr;
+      ax = Math.max(PAD + 6, Math.min(WW - PAD - 6, ax));
+      ai.x += Math.max(-cfg.speed * dt, Math.min(cfg.speed * dt, ax - ai.x));
+    } else {
+      ai.x += Math.max(-cfg.drift * dt, Math.min(cfg.drift * dt, 300 - ai.x));
+    }
+
+    puck.vx *= Math.pow(.9992, dt * 60);
+    puck.vy *= Math.pow(.9992, dt * 60);
+    var sp = Math.hypot(puck.vx, puck.vy);
+    if (sp > cfg.max){ puck.vx *= cfg.max / sp; puck.vy *= cfg.max / sp; sp = cfg.max; }
+    puck.x += puck.vx * dt;
+    puck.y += puck.vy * dt;
+    if (sp > topSpeed) topSpeed = sp;
+    spdEl.textContent = Math.round(sp);
+
+    if (puck.x < PR + 20){ puck.x = PR + 20; puck.vx = Math.abs(puck.vx) * .96; }
+    if (puck.x > WW - PR - 20){ puck.x = WW - PR - 20; puck.vx = -Math.abs(puck.vx) * .96; }
+
+    if (puck.y < 16 && Math.abs(puck.x - goalX) < goalW){
+      scorePoint('p');
+      return;
+    }
+    if (puck.y > WH - 16 && Math.abs(puck.x - goalX) < goalW){
+      scorePoint('a');
+      return;
+    }
+    if (puck.y < PR + 16){ puck.y = PR + 16; puck.vy = Math.abs(puck.vy) * .96; }
+    if (puck.y > WH - PR - 16){ puck.y = WH - PR - 16; puck.vy = -Math.abs(puck.vy) * .96; }
+
+    hitPaddle(player, cfg.boost, true);
+    hitPaddle(ai, cfg.boost * 0.86, false);
+
+    trail.push({ x: puck.x, y: puck.y });
+    if (trail.length > 14) trail.shift();
+  }
+
+  function hitPaddle(pad, boost, isPlayer){
+    var dx = puck.x - pad.x, dy = puck.y - pad.y;
+    var d = Math.hypot(dx, dy);
+    var minD = PAD + PR;
+    if (d >= minD || d === 0) return;
+    var nx = dx / d, ny = dy / d;
+    puck.x = pad.x + nx * minD;
+    puck.y = pad.y + ny * minD;
+    var speed = Math.max(boost, Math.hypot(puck.vx, puck.vy) * 1.05);
+    if (isPlayer && charge > 0.15){
+      var mul = 1 + charge * 0.55;
+      speed *= mul;
+      showToast('重击 ×' + mul.toFixed(2));
+      shake = Math.min(7, 2 + charge * 5);
+      charge = 0;
+    }
+    puck.vx = nx * speed;
+    puck.vy = ny * speed;
+    rally++;
+    if (rally > longestRally) longestRally = rally;
+    rallyEl.textContent = rally;
+  }
+
+  function rr(x, y, w, h, r){
+    r = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+  function pr(i){ var v = Math.sin(i * 91.7 + 47.3) * 43758.5453; return v - Math.floor(v); }
+
+  function draw(){
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    var bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#050b1a');
+    bg.addColorStop(.5, '#030713');
+    bg.addColorStop(1, '#040a18');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+
+    var halo = ctx.createRadialGradient(W * .5, H * .42, 0, W * .5, H * .5, Math.max(W, H) * .75);
+    halo.addColorStop(0, 'rgba(60,150,255,.14)');
+    halo.addColorStop(.5, 'rgba(30,70,160,.06)');
+    halo.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = halo;
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.save();
+    ctx.translate(ox, oy);
+    ctx.scale(sc, sc);
+    if (shake > 0.4) ctx.translate((Math.random() - .5) * shake, (Math.random() - .5) * shake);
+
+    var t = performance.now() / 1000;
+
+    /* 外框阴影 */
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,.7)';
+    ctx.shadowBlur = 50;
+    ctx.shadowOffsetY = 20;
+    rr(20, 20, WW - 40, WH - 40, 34);
+    ctx.fillStyle = '#071126';
+    ctx.fill();
+    ctx.restore();
+
+    /* 冰面 */
+    rr(20, 20, WW - 40, WH - 40, 34);
+    var ice = ctx.createLinearGradient(40, 20, WW - 40, WH - 20);
+    ice.addColorStop(0, '#0d2246');
+    ice.addColorStop(.35, '#081a36');
+    ice.addColorStop(.62, '#0a1e3d');
+    ice.addColorStop(1, '#0d2448');
+    ctx.fillStyle = ice;
+    ctx.fill();
+
+    ctx.save();
+    rr(20, 20, WW - 40, WH - 40, 34);
+    ctx.clip();
+
+    /* 冰面反光带 */
+    var sheen = ctx.createLinearGradient(20, 20, WW - 20, WH - 20);
+    sheen.addColorStop(0, 'rgba(255,255,255,.055)');
+    sheen.addColorStop(.22, 'rgba(255,255,255,.012)');
+    sheen.addColorStop(.5, 'rgba(120,220,255,.04)');
+    sheen.addColorStop(.78, 'rgba(255,255,255,.012)');
+    sheen.addColorStop(1, 'rgba(255,255,255,.05)');
+    ctx.fillStyle = sheen;
+    ctx.fillRect(20, 20, WW - 40, WH - 40);
+
+    /* 冰刀划痕 */
+    for (var i = 0; i < 60; i++){
+      var x1 = 26 + pr(i * 3.7) * (WW - 52);
+      var y1 = 26 + pr(i * 8.1) * (WH - 52);
+      var len = 12 + pr(i * 2.3) * 52;
+      var ang = pr(i * 5.9) * 6.2832;
+      ctx.strokeStyle = 'rgba(210,240,255,' + (0.018 + pr(i) * 0.035) + ')';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x1 + Math.cos(ang) * len, y1 + Math.sin(ang) * len);
+      ctx.stroke();
+    }
+
+    /* 中线 */
+    var lineG = ctx.createLinearGradient(20, 0, WW - 20, 0);
+    lineG.addColorStop(0, 'rgba(126,224,255,0)');
+    lineG.addColorStop(.5, 'rgba(126,224,255,.55)');
+    lineG.addColorStop(1, 'rgba(126,224,255,0)');
+    ctx.strokeStyle = lineG;
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(20, WH / 2); ctx.lineTo(WW - 20, WH / 2); ctx.stroke();
+
+    /* 中圈 */
+    ctx.strokeStyle = 'rgba(126,224,255,.32)';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.arc(300, WH / 2, 74, 0, 6.2832); ctx.stroke();
+    ctx.strokeStyle = 'rgba(126,224,255,.13)';
+    ctx.lineWidth = 8;
+    ctx.beginPath(); ctx.arc(300, WH / 2, 74, 0, 6.2832); ctx.stroke();
+    ctx.fillStyle = 'rgba(126,224,255,.10)';
+    ctx.beginPath(); ctx.arc(300, WH / 2, 7, 0, 6.2832); ctx.fill();
+
+    /* 争球点 */
+    for (var d = 0; d < 4; d++){
+      var dx = 170 + (d % 2) * 260;
+      var dy = WH * .30 + Math.floor(d / 2) * WH * .40;
+      ctx.fillStyle = 'rgba(255,143,177,.16)';
+      ctx.beginPath(); ctx.arc(dx, dy, 5, 0, 6.2832); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,143,177,.22)';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(dx, dy, 15, 0, 6.2832); ctx.stroke();
+    }
+
+    /* 球门区 */
+    ctx.strokeStyle = 'rgba(255,143,177,.34)';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(300, 20, 70, 0, 3.1416); ctx.stroke();
+    ctx.strokeStyle = 'rgba(126,224,255,.34)';
+    ctx.beginPath(); ctx.arc(300, WH - 20, 70, 3.1416, 6.2832); ctx.stroke();
+
+    /* 球门网 */
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(300 - 96, 20, 192, 22);
+    ctx.clip();
+    ctx.strokeStyle = 'rgba(255,190,215,.28)';
+    ctx.lineWidth = 1;
+    for (var nx = 300 - 96; nx <= 300 + 96; nx += 10){
+      ctx.beginPath(); ctx.moveTo(nx, 20); ctx.lineTo(nx, 42); ctx.stroke();
+    }
+    for (var ny = 22; ny <= 42; ny += 8){
+      ctx.beginPath(); ctx.moveTo(300 - 96, ny); ctx.lineTo(300 + 96, ny); ctx.stroke();
+    }
+    ctx.restore();
+    ctx.fillStyle = 'rgba(255,120,165,.15)';
+    ctx.fillRect(300 - 96, 20, 192, 22);
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(300 - 96, WH - 42, 192, 22);
+    ctx.clip();
+    ctx.strokeStyle = 'rgba(150,235,255,.30)';
+    ctx.lineWidth = 1;
+    for (var nx2 = 300 - 96; nx2 <= 300 + 96; nx2 += 10){
+      ctx.beginPath(); ctx.moveTo(nx2, WH - 42); ctx.lineTo(nx2, WH - 20); ctx.stroke();
+    }
+    for (var ny2 = WH - 40; ny2 <= WH - 20; ny2 += 8){
+      ctx.beginPath(); ctx.moveTo(300 - 96, ny2); ctx.lineTo(300 + 96, ny2); ctx.stroke();
+    }
+    ctx.restore();
+    ctx.fillStyle = 'rgba(120,220,255,.16)';
+    ctx.fillRect(300 - 96, WH - 42, 192, 22);
+
+    /* 门柱光 */
+    ctx.strokeStyle = 'rgba(255,143,177,.9)';
+    ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(300 - 96, 22); ctx.lineTo(300 - 96, 40); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(300 + 96, 22); ctx.lineTo(300 + 96, 40); ctx.stroke();
+    ctx.strokeStyle = 'rgba(126,224,255,.9)';
+    ctx.beginPath(); ctx.moveTo(300 - 96, WH - 40); ctx.lineTo(300 - 96, WH - 22); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(300 + 96, WH - 40); ctx.lineTo(300 + 96, WH - 22); ctx.stroke();
+
+    /* 冰面暗角 */
+    var vig = ctx.createRadialGradient(WW * .5, WH * .5, WW * .26, WW * .5, WH * .5, WW * .78);
+    vig.addColorStop(0, 'rgba(0,0,0,0)');
+    vig.addColorStop(1, 'rgba(0,5,18,.42)');
+    ctx.fillStyle = vig;
+    ctx.fillRect(20, 20, WW - 40, WH - 40);
+
+    ctx.restore();
+
+    /* 围栏 */
+    rr(20, 20, WW - 40, WH - 40, 34);
+    ctx.strokeStyle = 'rgba(126,224,255,.40)';
+    ctx.lineWidth = 2.4;
+    ctx.stroke();
+    rr(26, 26, WW - 52, WH - 52, 29);
+    ctx.strokeStyle = 'rgba(255,255,255,.06)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    /* 冰球拖尾 */
+    for (var j = 0; j < trail.length; j++){
+      var a = (j + 1) / trail.length;
+      ctx.fillStyle = 'rgba(190,235,255,' + (a * a * .20) + ')';
+      ctx.beginPath();
+      ctx.arc(trail[j].x, trail[j].y, PR * a * .9, 0, 6.2832);
+      ctx.fill();
+    }
+
+    /* AI 球拍 */
+    drawPad(ai.x, ai.y, '#ff8fb1', '#ffd3e2', 'rgba(255,143,177,.78)');
+    /* 玩家球拍 */
+    drawPad(player.x, player.y, '#7ee0ff', '#d9f8ff', 'rgba(126,224,255,.85)');
+
+    /* 蓄力环 */
+    if (state === 'play' && charge > 0.02){
+      ctx.save();
+      ctx.strokeStyle = 'rgba(126,224,255,' + (0.28 + charge * 0.6) + ')';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(player.x, player.y, PAD + 8, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * charge);
+      ctx.stroke();
+      if (charge >= 0.99){
+        ctx.fillStyle = 'rgba(200,247,255,.85)';
+        ctx.font = '600 13px system-ui,sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('MAX', player.x, player.y - PAD - 16);
+      }
+      ctx.restore();
+    }
+
+    /* 冰球 */
+    ctx.save();
+    ctx.shadowColor = 'rgba(190,240,255,.9)';
+    ctx.shadowBlur = 20;
+    ctx.beginPath(); ctx.arc(puck.x, puck.y, PR, 0, 6.2832);
+    var pg = ctx.createRadialGradient(puck.x - PR * .35, puck.y - PR * .4, 1, puck.x, puck.y, PR);
+    pg.addColorStop(0, '#ffffff');
+    pg.addColorStop(.55, '#e8f7ff');
+    pg.addColorStop(1, '#a9c8dc');
+    ctx.fillStyle = pg; ctx.fill();
+    ctx.restore();
+    ctx.strokeStyle = 'rgba(255,255,255,.85)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(puck.x, puck.y, PR, 0, 6.2832); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,.9)';
+    ctx.beginPath(); ctx.arc(puck.x - PR * .3, puck.y - PR * .35, PR * .3, 0, 6.2832); ctx.fill();
+
+    if (goalFlash > 0){
+      ctx.fillStyle = 'rgba(160,235,255,' + (goalFlash * 0.12) + ')';
+      ctx.fillRect(20, 20, WW - 40, WH - 40);
+    }
+
+    ctx.restore();
+  }
+
+  function drawPad(x, y, color, rim, glow){
+    ctx.save();
+    ctx.shadowColor = glow;
+    ctx.shadowBlur = 22;
+    ctx.beginPath(); ctx.arc(x, y + 3, PAD, 0, 6.2832);
+    ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fill();
+    ctx.restore();
+
+    var g = ctx.createRadialGradient(x - PAD * .32, y - PAD * .38, 2, x, y, PAD);
+    g.addColorStop(0, rim);
+    g.addColorStop(.42, color);
+    g.addColorStop(1, color);
+    ctx.beginPath(); ctx.arc(x, y, PAD, 0, 6.2832);
+    ctx.fillStyle = g;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.55)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(4,12,26,.55)';
+    ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.arc(x, y, PAD - 7, 0, 6.2832); ctx.stroke();
+    ctx.strokeStyle = rim;
+    ctx.globalAlpha = .8;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.arc(x, y, PAD - 7, 0, 6.2832); ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = 'rgba(255,255,255,.55)';
+    ctx.beginPath(); ctx.arc(x - PAD * .28, y - PAD * .34, PAD * .22, 0, 6.2832); ctx.fill();
+  }
+
+  function frame(t){
+    if (!last) last = t;
+    var dt = Math.min(.033, (t - last) / 1000);
+    last = t;
+    update(dt);
+    if (shake > 0) shake = Math.max(0, shake - dt * 42);
+    if (goalFlash > 0) goalFlash = Math.max(0, goalFlash - dt * 2.2);
+    draw();
+    requestAnimationFrame(frame);
+  }
+
+  function bindSeg(id, attr, onPick){
+    var box = document.getElementById(id);
+    if (!box) return;
+    box.addEventListener('click', function(e){
+      var b = e.target.closest('button[' + attr + ']');
+      if (!b) return;
+      Array.prototype.forEach.call(box.querySelectorAll('button'), function(x){
+        x.classList.toggle('on', x === b);
+      });
+      onPick(b.getAttribute(attr));
+    });
+  }
+  bindSeg('diffSeg', 'data-diff', function(v){ if (DIFFS[v]) diff = v; });
+  bindSeg('lenSeg', 'data-len', function(v){ winScore = parseInt(v, 10) || 7; });
+
+  btn.addEventListener('click', function(){
+    if (state === 'paused'){ togglePause(); return; }
+    startMatch();
+  });
+  menuBtn.addEventListener('click', returnToMenu);
+
+  window.addEventListener('keydown', function(e){
+    if (e.key === 'p' || e.key === 'P' || e.key === 'Escape'){
+      if (state === 'menu' || state === 'over') return;
+      e.preventDefault();
+      togglePause();
+    }
+  });
+
+  renderRecord();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

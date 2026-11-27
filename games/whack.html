@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#070d18">
-<title>打地鼠 · 离线小游戏</title>
+<title>打地鼠 · 模式挑战</title>
 <style>
   :root{
     --text:#eaf2ff;--muted:#8ea3bd;--line:rgba(148,163,184,.16);
-    --cyan:#38bdf8;--amber:#fbbf24;--pink:#f472b6;
+    --cyan:#38bdf8;--amber:#fbbf24;--pink:#f472b6;--rose:#fb7185;
     --board:min(84vw, 478px);
   }
   *{box-sizing:border-box;}
@@ -42,13 +42,15 @@
   }
   .brand p{margin:4px 0 0;font-size:12.5px;color:var(--muted);}
   .stats{display:flex;gap:8px;flex-wrap:wrap;}
-  .stat{min-width:70px;padding:8px 12px;border-radius:13px;background:rgba(255,255,255,.045);border:1px solid var(--line);}
+  .stat{min-width:68px;padding:7px 11px;border-radius:13px;background:rgba(255,255,255,.045);border:1px solid var(--line);}
   .stat span{display:block;font-size:10.5px;color:var(--muted);letter-spacing:.08em;}
   .stat b{display:block;margin-top:2px;font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;}
   .stat.hot b{color:var(--amber);}
+  .stat.life b{color:var(--rose);font-size:16px;letter-spacing:1px;}
 
   .timebar{height:7px;border-radius:999px;background:rgba(255,255,255,.06);overflow:hidden;border:1px solid rgba(255,255,255,.06);}
   .timebar i{display:block;height:100%;width:100%;border-radius:inherit;background:linear-gradient(90deg,#22d3ee,#fbbf24 62%,#fb7185);transition:width .12s linear;}
+  .timebar.life i{background:linear-gradient(90deg,#fb7185,#f472b6);}
 
   .stage{display:flex;justify-content:center;padding:2px 0;}
   .board-shell{
@@ -71,7 +73,7 @@
       radial-gradient(circle at 24% 12%, rgba(251,191,36,.10), transparent 56%),
       linear-gradient(160deg,#1a2415,#0b1510 58%,#0a1210);
     box-shadow:inset 0 0 0 1px rgba(148,163,184,.10), inset 0 18px 40px rgba(0,0,0,.34);
-    user-select:none;touch-action:manipulation;
+    user-select:none;touch-action:manipulation;transition:box-shadow .3s ease;
   }
   .board.shake{animation:shake .3s ease;}
   @keyframes shake{
@@ -79,6 +81,19 @@
     20%{transform:translate(-6px,2px);}40%{transform:translate(5px,-2px);}
     60%{transform:translate(-4px,1px);}80%{transform:translate(3px,-1px);}
   }
+  .board.fever{
+    box-shadow:inset 0 0 0 1px rgba(251,191,36,.55), inset 0 18px 40px rgba(0,0,0,.34), 0 0 46px rgba(251,191,36,.22);
+  }
+  .board-tag,.fever-tag{
+    position:absolute;z-index:4;pointer-events:none;font-size:10.5px;font-weight:800;letter-spacing:.08em;
+    padding:3px 9px;border-radius:999px;backdrop-filter:blur(4px);
+  }
+  .board-tag{left:10px;top:10px;color:#dbeafe;background:rgba(10,18,28,.62);border:1px solid rgba(148,163,184,.22);}
+  .fever-tag{
+    right:10px;top:10px;color:#2b1904;background:linear-gradient(135deg,#fde68a,#f59e0b);
+    box-shadow:0 4px 16px rgba(245,158,11,.4);opacity:0;transform:translateY(-6px);transition:.22s;
+  }
+  .fever-tag.on{opacity:1;transform:translateY(0);}
 
   .hole{
     position:relative;border:0;padding:0;border-radius:50%;cursor:pointer;overflow:hidden;
@@ -103,6 +118,7 @@
     pointer-events:none;will-change:transform;
   }
   .hole.up .mole{transform:translate(-50%,0);}
+  .hole.bomb-hole .mole{transform:translate(-50%,112%);}
   .mole .ear{
     position:absolute;top:6%;width:27%;aspect-ratio:1/1;border-radius:50%;
     background:linear-gradient(160deg,#a86b42,#74452a);
@@ -139,6 +155,9 @@
     position:absolute;left:50%;bottom:18%;width:22%;height:20%;transform:translateX(-50%);
     border-radius:0 0 5px 5px;background:#fff7ed;
   }
+  .mole .helmet{display:none;}
+  .mole .crown{display:none;}
+
   .hole.gold .mole .face{
     background:
       radial-gradient(circle at 36% 18%, rgba(255,255,255,.35), transparent 36%),
@@ -154,8 +173,57 @@
   }
   @keyframes twinkle{from{opacity:.45;transform:scale(.86);}to{opacity:1;transform:scale(1.08);}}
 
+  /* 铁盔鼠 */
+  .hole.armor .mole .face{
+    background:
+      radial-gradient(circle at 36% 20%, rgba(255,255,255,.25), transparent 34%),
+      linear-gradient(160deg,#aab7c9,#6f7f93 58%,#455264);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.34), 0 8px 16px rgba(0,0,0,.3);
+  }
+  .hole.armor .mole .ear{background:linear-gradient(160deg,#94a3b8,#475569);}
+  .hole.armor .mole .snout{background:linear-gradient(180deg,#dbe4ee,#9dacbd);}
+  .hole.armor .mole .tooth{background:#f1f5f9;}
+  .hole.armor .mole .helmet{
+    display:block;position:absolute;left:5%;right:5%;top:1%;height:32%;z-index:2;
+    border-radius:50% 50% 8% 8%;
+    background:linear-gradient(180deg,#f1f5f9,#94a3b8 52%,#475569);
+    border-bottom:2px solid rgba(255,255,255,.28);
+    box-shadow:0 3px 9px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.7);
+  }
+  .hole.armor .mole .helmet::after{
+    content:"";position:absolute;left:50%;top:-2px;width:18%;height:18%;transform:translateX(-50%);
+    border-radius:50%;background:#dbeafe;box-shadow:0 0 8px rgba(219,234,254,.8);
+  }
+
+  /* 地鼠王 */
+  .hole.king .mole .face{
+    background:
+      radial-gradient(circle at 36% 18%, rgba(255,255,255,.3), transparent 36%),
+      linear-gradient(160deg,#c4b5fd,#7c3aed 56%,#3b1d78);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.4), 0 0 24px rgba(124,58,237,.35);
+  }
+  .hole.king .mole .ear{background:linear-gradient(160deg,#a78bfa,#5b21b6);}
+  .hole.king .mole .snout{background:linear-gradient(180deg,#ede9fe,#c4b5fd);}
+  .hole.king .mole .tooth{background:#faf5ff;}
+  .hole.king .mole .crown{
+    display:block;position:absolute;left:50%;top:-13%;transform:translateX(-50%);z-index:3;
+    font-size:19px;line-height:1;color:#fbbf24;
+    text-shadow:0 0 10px rgba(251,191,36,.85);animation:twinkle .9s ease-in-out infinite alternate;
+  }
+  .hole.king .mole::before{
+    content:"";position:absolute;inset:-8% -6% 0;border-radius:50%;
+    background:radial-gradient(circle,rgba(251,191,36,.18),transparent 66%);pointer-events:none;
+  }
+
+  .hp{
+    position:absolute;left:50%;bottom:5%;transform:translateX(-50%);display:none;gap:4px;z-index:4;
+  }
+  .hole.armor .hp,.hole.king .hp{display:flex;}
+  .hp i{width:6px;height:6px;border-radius:50%;background:#fef3c7;box-shadow:0 0 5px rgba(251,191,36,.95),0 0 0 1px rgba(0,0,0,.35);}
+  .hp i.off{background:rgba(255,255,255,.16);box-shadow:none;}
+
   .bomb{
-    position:absolute;left:50%;bottom:-3%;width:62%;height:62%;
+    position:absolute;left:50%;bottom:2%;width:66%;height:70%;
     transform:translate(-50%,112%);transition:transform .15s cubic-bezier(.18,1.35,.4,1);
     pointer-events:none;
   }
@@ -174,11 +242,17 @@
     background:#fde68a;box-shadow:0 0 12px 4px rgba(251,191,36,.8);animation:twinkle .32s ease-in-out infinite alternate;
   }
   .hole.up:active .mole,.hole.up:active .bomb{filter:brightness(1.12);}
+  .hole.crack .mole{animation:crack .3s ease;}
+  @keyframes crack{
+    0%,100%{transform:translate(-50%,0);}
+    30%{transform:translate(calc(-50% - 5px),0) rotate(-3deg);}
+    65%{transform:translate(calc(-50% + 5px),0) rotate(3deg);}
+  }
 
   .float{
     position:absolute;left:50%;top:24%;transform:translate(-50%,0);z-index:5;
     font-size:clamp(16px,3.2vw,22px);font-weight:900;color:#fef3c7;
-    text-shadow:0 2px 10px rgba(0,0,0,.6);pointer-events:none;opacity:0;
+    text-shadow:0 2px 10px rgba(0,0,0,.6);pointer-events:none;opacity:0;white-space:nowrap;
   }
   .float.go{animation:floatUp .65s ease-out forwards;}
   @keyframes floatUp{
@@ -195,9 +269,9 @@
   @keyframes ring{0%{opacity:.9;transform:translate(-50%,-50%) scale(.35);}100%{opacity:0;transform:translate(-50%,-50%) scale(2.1);}}
 
   .panel{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
-  .hint{font-size:12.5px;color:var(--muted);}
+  .hint{font-size:12px;color:var(--muted);line-height:1.6;}
   .hint b{color:#c7d2fe;}
-  .actions{display:flex;gap:8px;}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;}
   .btn{
     border:1px solid rgba(255,255,255,.11);border-radius:11px;padding:8px 14px;cursor:pointer;
     background:rgba(255,255,255,.055);color:#dbeafe;font-size:12.5px;font-weight:600;
@@ -212,43 +286,83 @@
   .foot{font-size:11.5px;color:#5f7286;letter-spacing:.03em;text-align:center;}
 
   .overlay{
-    position:absolute;inset:0;z-index:9;display:none;align-items:center;justify-content:center;padding:18px;
-    background:rgba(3,8,18,.74);backdrop-filter:blur(7px);
+    position:absolute;inset:0;z-index:9;display:none;align-items:center;justify-content:center;padding:14px;
+    background:rgba(3,8,18,.76);backdrop-filter:blur(7px);
   }
   .overlay.on{display:flex;animation:fadeIn .25s ease;}
   @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
   .card{
-    width:min(100%,330px);padding:24px 22px 20px;border-radius:22px;text-align:center;
+    width:min(100%,330px);max-height:100%;overflow:auto;padding:20px 18px 17px;border-radius:22px;text-align:center;
     background:linear-gradient(180deg,rgba(20,28,20,.98),rgba(8,14,12,.98));
     border:1px solid rgba(251,191,36,.24);
     box-shadow:0 26px 70px rgba(0,0,0,.55), 0 0 44px rgba(251,191,36,.10);
+    scrollbar-width:none;
   }
-  .kicker{font-size:11.5px;letter-spacing:.22em;color:#fbbf24;font-weight:700;}
+  .card::-webkit-scrollbar{display:none;}
+  .kicker{font-size:10.5px;letter-spacing:.2em;color:#fbbf24;font-weight:700;}
   .card h2{
-    margin:10px 0 5px;font-size:30px;font-weight:900;letter-spacing:.08em;
+    margin:7px 0 4px;font-size:30px;font-weight:900;letter-spacing:.08em;
     background:linear-gradient(100deg,#fef3c7,#fbbf24,#f9a8d4);
     -webkit-background-clip:text;background-clip:text;color:transparent;
   }
-  .card p{margin:0 0 16px;font-size:12.5px;line-height:1.65;color:var(--muted);}
-  .res-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
-  .res-grid div{padding:9px 8px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid var(--line);}
-  .res-grid span{display:block;font-size:10.5px;color:var(--muted);}
-  .res-grid b{display:block;margin-top:2px;font-size:17px;font-variant-numeric:tabular-nums;}
-  .card .btn.primary{width:100%;padding:11px 14px;font-size:13.5px;}
+  .card p{margin:0 0 10px;font-size:12px;line-height:1.6;color:var(--muted);}
+  .mode-list{display:grid;gap:6px;margin:8px 0 4px;text-align:left;}
+  .mode-btn{
+    display:flex;align-items:center;justify-content:space-between;gap:8px;
+    padding:7px 10px;border-radius:11px;border:1px solid var(--line);cursor:pointer;
+    background:rgba(255,255,255,.045);transition:.16s;
+  }
+  .mode-btn:hover{background:rgba(251,191,36,.10);border-color:rgba(251,191,36,.36);transform:translateY(-1px);}
+  .mode-btn .m-txt{display:flex;flex-direction:column;gap:1px;min-width:0;}
+  .mode-btn b{font-size:12.5px;letter-spacing:.02em;}
+  .mode-btn span{font-size:10.5px;color:var(--muted);}
+  .mode-btn em{font-style:normal;font-size:10.5px;color:var(--amber);white-space:nowrap;font-weight:700;}
+  .res-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px;}
+  .res-grid div{padding:7px 6px;border-radius:11px;background:rgba(255,255,255,.05);border:1px solid var(--line);}
+  .res-grid span{display:block;font-size:10px;color:var(--muted);}
+  .res-grid b{display:block;margin-top:1px;font-size:16px;font-variant-numeric:tabular-nums;}
+  .ov-actions{display:flex;gap:7px;}
+  .ov-actions .btn{flex:1;padding:9px 6px;font-size:12.5px;}
+  .card .btn.primary{width:100%;padding:10px 12px;font-size:13px;}
 
   @media (max-width:620px){
     body{padding:14px 12px 18px;}
     .app{gap:10px;}
     .logo{width:46px;height:46px;border-radius:14px;font-size:21px;}
-    .stat{min-width:60px;padding:7px 10px;}
+    .stat{min-width:58px;padding:6px 9px;}
     .stat b{font-size:15px;}
     .brand p{font-size:11.5px;}
+    .card{padding:16px 14px 14px;}
+    .card h2{font-size:26px;}
+    .card p{font-size:11.5px;margin-bottom:8px;}
+    .mode-btn{padding:6px 9px;}
   }
   @media (max-height:760px) and (min-width:700px){
     :root{--board:min(70vh,470px);}
     .brand p{display:none;}
     .foot{display:none;}
   }
+</style>
+<style id="tx-aurora-skin">
+/* tx-aurora-skin:whack */
+:root{--tx-a1:#fbbf24;--tx-a2:#fb7185;}
+html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+::selection{background:rgba(251,191,36,0.38);color:#fff}
+*::-webkit-scrollbar{width:8px;height:8px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:rgba(251,191,36,0.26);border-radius:99px;border:2px solid transparent;background-clip:content-box}
+*::-webkit-scrollbar-thumb:hover{background:rgba(251,191,36,0.46);background-clip:content-box}
+body{background-color:#070d18!important;background-image:radial-gradient(1100px 640px at 6% -12%, rgba(251,191,36,0.16), transparent 62%), radial-gradient(900px 680px at 104% 112%, rgba(251,113,133,0.12), transparent 62%)!important}
+button{transition:transform .14s ease,filter .16s ease,box-shadow .2s ease,border-color .16s ease,background-color .16s ease}
+button:hover{filter:brightness(1.07)}
+button:active{transform:translateY(1px) scale(.995)}
+button:focus-visible{outline:2px solid rgba(251,191,36,0.72);outline-offset:2px}
+.overlay,.modal,.dialog,.sheet,#levels,#loading{background-image:radial-gradient(900px 520px at 50% 0%,rgba(251,191,36,0.15),transparent 62%),radial-gradient(720px 520px at 50% 100%,rgba(251,113,133,0.08),transparent 60%)!important}
+.overlay,.modal,.dialog,.sheet{backdrop-filter:blur(9px) saturate(1.1)}
+.overlay h1,.modal h1,.screen h1,.overlay-card h1,.win-card h1,.result-card h1,.bcard .btitle,.loadcard .ltitle{text-shadow:0 2px 30px rgba(251,191,36,0.45)}
+.overlay .screen,.overlay .panel,.overlay-card,.modal .panel,.win-card,.result-card,.bcard,.loadcard,.rules-dialog,.panel{box-shadow:0 38px 96px -34px rgba(0,0,0,.95), inset 0 1px 0 rgba(255,255,255,.07)!important}
+.bcard,.loadcard{border-color:rgba(251,191,36,0.34)!important}
+.overlay .panel,.overlay-card,.win-card,.result-card,.modal .panel{backdrop-filter:blur(10px) saturate(1.08);border-color:rgba(251,191,36,0.26)!important}
 </style>
 </head>
 <body>
@@ -258,59 +372,103 @@
       <div class="logo">🔨</div>
       <div>
         <h1>打地鼠</h1>
-        <p>45 秒内敲中冒头的地鼠，金鼠更值钱，炸弹会扣时间</p>
+        <p>三种模式 · 五种目标 · 连击狂热加倍</p>
       </div>
     </div>
     <div class="stats">
       <div class="stat"><span>得分</span><b id="score">0</b></div>
-      <div class="stat"><span>时间</span><b id="time">45.0</b></div>
+      <div class="stat" id="timeStat"><span id="timeLabel">时间</span><b id="time">45.0</b></div>
       <div class="stat hot"><span>连击</span><b id="combo">0</b></div>
       <div class="stat"><span>最佳</span><b id="best">—</b></div>
     </div>
   </div>
 
-  <div class="timebar"><i id="timefill"></i></div>
+  <div class="timebar" id="timebar"><i id="timefill"></i></div>
 
   <div class="stage">
     <div class="board-shell">
-      <div class="board" id="board"></div>
+      <div class="board" id="board">
+        <div class="board-tag" id="levelTag">Lv.1</div>
+        <div class="fever-tag" id="feverTag">狂热 ×2</div>
+      </div>
     </div>
   </div>
 
   <div class="panel">
-    <div class="hint">敲中 <b>地鼠 +10</b> · <b>金鼠 +30</b> · <b>炸弹 -3 秒</b></div>
+    <div class="hint">
+      普通 <b>+10</b> · 金鼠 <b>+30</b> · 铁盔鼠 <b>2 击 +25</b> · 地鼠王 <b>3 击 +80</b> · 炸弹 <b>-3 秒</b>
+    </div>
     <div class="actions">
+      <button class="btn" id="modeBtn">模式</button>
       <button class="btn" id="pause">暂停</button>
       <button class="btn" id="restart">重开</button>
     </div>
   </div>
-  <p class="foot">支持鼠标、触屏和数字键 1-9 · 空格暂停</p>
+  <p class="foot">支持鼠标、触屏和数字键 1-9 · 空格暂停 · 连击 8 次进入狂热</p>
 </div>
 
 <script>
 (function () {
   'use strict';
 
-  var BEST_KEY = 'tx_whack_best_v1';
-  var TOTAL = 45000;
+  var BEST_PREFIX = 'tx_whack_best_v2_';
+  var OLD_BEST_KEY = 'tx_whack_best_v1';
+
+  var MODES = {
+    classic: { name: '经典 45 秒', short: '经典', time: 45000, spawn: [430, 720], maxActive: 3, lives: 0,
+               desc: '节奏均衡，稳稳冲分' },
+    blitz:   { name: '疾风 30 秒', short: '疾风', time: 30000, spawn: [300, 520], maxActive: 4, lives: 0,
+               desc: '地鼠更密，狂热更快' },
+    survival:{ name: '生存挑战', short: '生存', time: 0, spawn: [520, 820], maxActive: 3, lives: 3,
+               desc: '漏掉 3 只就收工' }
+  };
+
+  var TYPES = {
+    mole:   { points: 10, hp: 1, dur: [680, 1000], color: '#e0f2fe' },
+    gold:   { points: 30, hp: 1, dur: [600, 880],  color: '#fde68a' },
+    bomb:   { points: -15, hp: 1, dur: [900, 1250], color: '#fda4af', bomb: true, time: -3000 },
+    armor:  { points: 25, hp: 2, dur: [1200, 1600], color: '#dbeafe' },
+    king:   { points: 80, hp: 3, dur: [1700, 2200], color: '#fde68a', timeBonus: 2000 }
+  };
+
   var boardEl = document.getElementById('board');
   var scoreEl = document.getElementById('score');
   var timeEl = document.getElementById('time');
+  var timeLabel = document.getElementById('timeLabel');
+  var timeStat = document.getElementById('timeStat');
+  var timebar = document.getElementById('timebar');
   var comboEl = document.getElementById('combo');
   var bestEl = document.getElementById('best');
   var fillEl = document.getElementById('timefill');
+  var levelTag = document.getElementById('levelTag');
+  var feverTag = document.getElementById('feverTag');
   var pauseBtn = document.getElementById('pause');
   var restartBtn = document.getElementById('restart');
+  var modeBtn = document.getElementById('modeBtn');
 
   var holes = [];
+  var modeKey = 'classic';
+  var cfg = MODES[modeKey];
+  var bests = {};
+
   var running = false, paused = false, over = true;
   var elapsed = 0, lastTs = 0, raf = 0;
-  var score = 0, combo = 0, maxCombo = 0, hits = 0, clicks = 0;
+  var score = 0, combo = 0, maxCombo = 0, hits = 0, clicks = 0, lives = 0;
   var spawnClock = 0, lastHole = -1;
-  var best = 0;
+  var feverUntil = 0, feverActive = false;
+  var level = 1;
 
-  try { best = parseInt(localStorage.getItem(BEST_KEY) || '0', 10) || 0; } catch (e) { best = 0; }
-  bestEl.textContent = best > 0 ? best : '—';
+  function readInt(k) {
+    try { return parseInt(localStorage.getItem(k) || '0', 10) || 0; } catch (e) { return 0; }
+  }
+  (function loadBests() {
+    for (var k in MODES) bests[k] = readInt(BEST_PREFIX + k);
+    if (!bests.classic) bests.classic = readInt(OLD_BEST_KEY);
+  })();
+
+  function saveBest(k, v) {
+    try { localStorage.setItem(BEST_PREFIX + k, String(v)); } catch (e) {}
+  }
 
   function rand(a, b) { return a + Math.random() * (b - a); }
   function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
@@ -323,11 +481,14 @@
     hole.setAttribute('aria-label', '第 ' + (i + 1) + ' 个洞');
     hole.innerHTML =
       '<span class="mole" aria-hidden="true">' +
+        '<span class="crown">♛</span>' +
+        '<span class="helmet"></span>' +
         '<span class="ear l"></span><span class="ear r"></span>' +
         '<span class="face">' +
           '<span class="eye l"></span><span class="eye r"></span>' +
           '<span class="snout"><span class="nose"></span><span class="tooth"></span></span>' +
         '</span>' +
+        '<span class="hp"></span>' +
       '</span>' +
       '<span class="bomb" aria-hidden="true"><span class="ball"></span><span class="fuse"></span><span class="spark"></span></span>' +
       '<span class="float"></span><span class="hit-ring"></span>';
@@ -338,7 +499,7 @@
   for (var i = 0; i < 9; i++) {
     var h = makeHole(i);
     boardEl.appendChild(h);
-    holes.push({ el: h, type: '', until: 0, token: 0 });
+    holes.push({ el: h, type: '', until: 0, token: 0, hp: 0 });
   }
 
   var overlay = document.createElement('div');
@@ -346,56 +507,130 @@
   overlay.id = 'overlay';
   overlay.innerHTML =
     '<div class="card">' +
-      '<div class="kicker" id="ov-kicker">45 秒挑战</div>' +
+      '<div class="kicker" id="ov-kicker">选择模式</div>' +
       '<h2 id="ov-title">打地鼠</h2>' +
-      '<p id="ov-text">敲中地鼠得分，金鼠三倍，炸弹会扣 3 秒。连击越高，单次得分越多。</p>' +
+      '<p id="ov-text">普通鼠、金鼠、铁盔鼠、地鼠王和炸弹都会出洞。连击 8 次进入狂热，得分翻倍。</p>' +
+      '<div class="mode-list" id="mode-list">' +
+        '<button class="mode-btn" type="button" data-mode="classic">' +
+          '<span class="m-txt"><b>经典 45 秒</b><span>节奏均衡，稳稳冲分</span></span><em id="mb-classic">最佳 —</em>' +
+        '</button>' +
+        '<button class="mode-btn" type="button" data-mode="blitz">' +
+          '<span class="m-txt"><b>疾风 30 秒</b><span>地鼠更密，狂热更快</span></span><em id="mb-blitz">最佳 —</em>' +
+        '</button>' +
+        '<button class="mode-btn" type="button" data-mode="survival">' +
+          '<span class="m-txt"><b>生存挑战</b><span>漏掉 3 只就收工</span></span><em id="mb-survival">最佳 —</em>' +
+        '</button>' +
+      '</div>' +
       '<div class="res-grid" id="ov-grid" style="display:none"></div>' +
-      '<button class="btn primary" id="ov-btn">开始</button>' +
+      '<div class="ov-actions">' +
+        '<button class="btn primary" id="ov-btn" hidden>继续</button>' +
+        '<button class="btn" id="ov-alt" hidden>换模式</button>' +
+      '</div>' +
     '</div>';
   boardEl.appendChild(overlay);
   var ovKicker = document.getElementById('ov-kicker');
   var ovTitle = document.getElementById('ov-title');
   var ovText = document.getElementById('ov-text');
   var ovGrid = document.getElementById('ov-grid');
+  var modeList = document.getElementById('mode-list');
   var ovBtn = document.getElementById('ov-btn');
+  var ovAlt = document.getElementById('ov-alt');
+
+  function fmtBest(v) { return v > 0 ? String(v) : '—'; }
+
+  function refreshModeBests() {
+    for (var k in MODES) {
+      var el = document.getElementById('mb-' + k);
+      if (el) el.textContent = '最佳 ' + fmtBest(bests[k]);
+    }
+  }
 
   function hud() {
     scoreEl.textContent = score;
     comboEl.textContent = combo;
-    var left = Math.max(0, TOTAL - elapsed);
-    timeEl.textContent = (left / 1000).toFixed(1);
-    fillEl.style.width = (left / TOTAL * 100) + '%';
+    if (cfg.time > 0) {
+      var left = Math.max(0, cfg.time - elapsed);
+      timeEl.textContent = (left / 1000).toFixed(1);
+      fillEl.style.width = (left / cfg.time * 100) + '%';
+      timebar.classList.remove('life');
+      timeStat.classList.remove('life');
+      timeLabel.textContent = '时间';
+    } else {
+      var hearts = '';
+      for (var i = 0; i < Math.max(0, lives); i++) hearts += '♥';
+      timeEl.textContent = hearts || '—';
+      fillEl.style.width = Math.min(100, Math.max(0, lives / 5 * 100)) + '%';
+      timebar.classList.add('life');
+      timeStat.classList.add('life');
+      timeLabel.textContent = '生命';
+    }
+    levelTag.textContent = 'Lv.' + level;
+    var f = elapsed < feverUntil;
+    if (f !== feverActive) {
+      feverActive = f;
+      boardEl.classList.toggle('fever', f);
+      feverTag.classList.toggle('on', f);
+    }
+    if (f) {
+      feverTag.textContent = '狂热 ×2 · ' + Math.max(0, Math.ceil((feverUntil - elapsed) / 1000)) + 's';
+    }
   }
 
   function setType(h, type) {
     h.type = type;
     var el = h.el;
-    el.classList.remove('mole-hole', 'gold', 'bomb-hole');
+    el.classList.remove('mole-hole', 'gold', 'bomb-hole', 'armor', 'king', 'crack');
     if (type === 'mole') el.classList.add('mole-hole');
     else if (type === 'gold') el.classList.add('mole-hole', 'gold');
     else if (type === 'bomb') el.classList.add('bomb-hole');
+    else if (type === 'armor') el.classList.add('mole-hole', 'armor');
+    else if (type === 'king') el.classList.add('mole-hole', 'king');
   }
 
-  function pop(h, type, duration) {
+  function renderHp(h) {
+    var box = h.el.querySelector('.hp');
+    if (!box) return;
+    box.innerHTML = '';
+    var max = TYPES[h.type] ? TYPES[h.type].hp : 1;
+    if (max <= 1) return;
+    for (var i = 0; i < max; i++) {
+      var pip = document.createElement('i');
+      if (i >= h.hp) pip.className = 'off';
+      box.appendChild(pip);
+    }
+  }
+
+  function pop(h, type, duration, hp) {
     h.token++;
-    var token = h.token;
     setType(h, type);
+    h.hp = hp || 1;
     h.el.classList.remove('up');
     void h.el.offsetWidth;
     h.el.classList.add('up');
     h.until = elapsed + duration;
-    h.el.dataset.token = String(token);
+    h.el.dataset.token = String(h.token);
+    renderHp(h);
   }
 
   function down(h, escaped) {
     if (!h.type) return;
-    var wasBomb = h.type === 'bomb';
+    var wasMole = h.type !== 'bomb';
     h.type = '';
+    h.hp = 0;
     h.el.classList.remove('up');
-    h.el.classList.remove('mole-hole', 'gold', 'bomb-hole');
+    h.el.classList.remove('mole-hole', 'gold', 'bomb-hole', 'armor', 'king', 'crack');
     h.until = 0;
-    if (escaped && !wasBomb) {
+    if (escaped && wasMole) {
       combo = 0;
+      if (modeKey === 'survival') {
+        lives = Math.max(0, lives - 1);
+        floatText(h, '-1 ♥', '#fb7185');
+        if (lives <= 0) {
+          hud();
+          finish('生命耗尽');
+          return;
+        }
+      }
       hud();
     }
   }
@@ -409,6 +644,20 @@
     f.classList.add('go');
   }
 
+  function shakeBoard(ms) {
+    boardEl.classList.add('shake');
+    setTimeout(function () { boardEl.classList.remove('shake'); }, ms || 320);
+  }
+
+  function maybeFever() {
+    if (combo > 0 && combo % 8 === 0) {
+      feverUntil = elapsed + 5500;
+      feverActive = true;
+      boardEl.classList.add('fever');
+      feverTag.classList.add('on');
+    }
+  }
+
   function whack(i) {
     if (!running || paused) return;
     var h = holes[i];
@@ -419,30 +668,88 @@
       return;
     }
     if (h.type === 'bomb') {
-      elapsed = Math.min(TOTAL, elapsed + 3000);
-      score = Math.max(0, score - 15);
+      var t = TYPES.bomb;
+      elapsed = Math.min(cfg.time || Infinity, elapsed + Math.abs(t.time));
+      score = Math.max(0, score + t.points);
       combo = 0;
-      floatText(h, '-3s', '#fda4af');
+      floatText(h, cfg.time > 0 ? '-3s' : '-15', '#fda4af');
       h.el.classList.add('hit');
-      boardEl.classList.add('shake');
-      setTimeout(function () { boardEl.classList.remove('shake'); }, 320);
+      setTimeout(function () { h.el.classList.remove('hit'); }, 440);
+      shakeBoard(320);
       down(h, false);
       hud();
-      if (elapsed >= TOTAL) finish();
+      if (cfg.time > 0 && elapsed >= cfg.time) finish('时间到');
       return;
     }
+
     hits++;
     combo++;
     if (combo > maxCombo) maxCombo = combo;
-    var base = h.type === 'gold' ? 30 : 10;
-    var bonus = Math.min(combo - 1, 5) * 2;
-    score += base + bonus;
-    floatText(h, '+' + (base + bonus), h.type === 'gold' ? '#fde68a' : '#e0f2fe');
+    h.hp--;
+    var typ = TYPES[h.type];
+    var type = h.type;
+
+    if (h.hp > 0) {
+      floatText(h, '叮!', '#cbd5e1');
+      h.el.classList.add('crack');
+      setTimeout(function () { h.el.classList.remove('crack'); }, 320);
+      h.until = Math.max(h.until, elapsed + 320);
+      renderHp(h);
+      maybeFever();
+      hud();
+      return;
+    }
+
+    var base = typ.points;
+    var bonus = Math.min(combo - 1, 8) * 2;
+    var gain = base + bonus;
+    if (feverActive) gain *= 2;
+    score += gain;
+    floatText(h, '+' + gain, feverActive ? '#fbbf24' : typ.color);
     h.el.classList.add('hit');
     setTimeout(function () { h.el.classList.remove('hit'); }, 440);
+
+    if (type === 'king') {
+      if (cfg.time > 0) {
+        elapsed = Math.max(0, elapsed - (typ.timeBonus || 2000));
+        floatText(h, '+' + gain + ' · +2s', '#fde68a');
+      } else {
+        lives = Math.min(5, lives + 1);
+        floatText(h, '+' + gain + ' · +1♥', '#fde68a');
+      }
+    }
+
     down(h, false);
+    maybeFever();
     hud();
-    spawnClock = Math.min(spawnClock, 90);
+    if (cfg.time > 0 && elapsed >= cfg.time) finish('时间到');
+    else if (modeKey === 'survival' && lives <= 0) finish('生命耗尽');
+  }
+
+  function pickType() {
+    var t = elapsed / 1000;
+    var bag = [
+      ['mole', 56],
+      ['gold', 18],
+      ['bomb', 11]
+    ];
+    if (t > 6) bag.push(['armor', 13]);
+    if (t > 16 || modeKey === 'blitz') bag.push(['king', 4]);
+    if (feverActive) bag.push(['gold', 8]);
+
+    var kingActive = false;
+    for (var i = 0; i < holes.length; i++) if (holes[i].type === 'king') kingActive = true;
+    var total = 0, j;
+    for (j = 0; j < bag.length; j++) total += bag[j][1];
+    var r = Math.random() * total;
+    for (j = 0; j < bag.length; j++) {
+      r -= bag[j][1];
+      if (r <= 0) {
+        if (bag[j][0] === 'king' && kingActive) return 'gold';
+        return bag[j][0];
+      }
+    }
+    return 'mole';
   }
 
   function spawn() {
@@ -456,10 +763,11 @@
     if (!free.length) return;
     var idx = pick(free);
     lastHole = idx;
-    var r = Math.random();
-    var type = r < 0.12 ? 'bomb' : (r < 0.30 ? 'gold' : 'mole');
-    var duration = type === 'bomb' ? rand(900, 1250) : rand(650, 1000);
-    pop(holes[idx], type, duration);
+    var type = pickType();
+    var typ = TYPES[type];
+    var scale = Math.max(0.72, 1 - elapsed * 0.000006);
+    var duration = rand(typ.dur[0], typ.dur[1]) * scale;
+    pop(holes[idx], type, duration, typ.hp);
   }
 
   function loop(ts) {
@@ -468,35 +776,62 @@
     lastTs = ts;
     if (running && !paused) {
       elapsed += dt;
-      spawnClock -= dt;
+      feverActive = elapsed < feverUntil;
+
+      level = 1 + Math.floor((modeKey === 'survival' ? hits : elapsed) / (modeKey === 'survival' ? 10 : 12000));
+      if (level > 9) level = 9;
+
+      var speed = feverActive ? 1.45 : 1;
+      spawnClock -= dt * speed;
       if (spawnClock <= 0) {
         var active = 0;
         for (var i = 0; i < holes.length; i++) if (holes[i].type) active++;
-        if (active < 3) spawn();
-        spawnClock = Math.max(250, rand(430, 720) - elapsed * 0.006);
+        var maxActive = cfg.maxActive + (level >= 3 ? 1 : 0);
+        if (active < maxActive) spawn();
+        var lo = Math.max(220, cfg.spawn[0] - elapsed * 0.006);
+        var hi = Math.max(340, cfg.spawn[1] - elapsed * 0.006);
+        spawnClock = rand(lo, hi) * (feverActive ? 0.68 : 1);
       }
       for (var k = 0; k < holes.length; k++) {
         var h = holes[k];
         if (h.type && elapsed >= h.until) down(h, true);
       }
       hud();
-      if (elapsed >= TOTAL) { finish(); return; }
+      if (cfg.time > 0 && elapsed >= cfg.time) { finish('时间到'); return; }
     }
     raf = requestAnimationFrame(loop);
   }
 
   function clearBoard() {
     for (var i = 0; i < holes.length; i++) {
-      holes[i].type = '';
-      holes[i].until = 0;
-      holes[i].el.classList.remove('up', 'mole-hole', 'gold', 'bomb-hole', 'hit');
+      var h = holes[i];
+      h.type = '';
+      h.hp = 0;
+      h.until = 0;
+      h.el.classList.remove('up', 'mole-hole', 'gold', 'bomb-hole', 'armor', 'king', 'hit', 'crack');
+      var box = h.el.querySelector('.hp');
+      if (box) box.innerHTML = '';
     }
+    boardEl.classList.remove('fever', 'shake');
+    feverTag.classList.remove('on');
   }
 
-  function start() {
+  function resetHud() {
+    score = 0; combo = 0; maxCombo = 0; hits = 0; clicks = 0;
+    elapsed = 0; feverUntil = 0; feverActive = false; level = 1;
+    bestEl.textContent = fmtBest(bests[modeKey]);
+    hud();
+  }
+
+  function start(mode) {
+    if (mode && MODES[mode]) modeKey = mode;
+    cfg = MODES[modeKey];
     clearBoard();
-    elapsed = 0; score = 0; combo = 0; maxCombo = 0; hits = 0; clicks = 0;
-    spawnClock = 260; lastHole = -1; lastTs = 0;
+    resetHud();
+    lives = cfg.lives || 3;
+    spawnClock = 260;
+    lastHole = -1;
+    lastTs = 0;
     running = true; paused = false; over = false;
     pauseBtn.textContent = '暂停';
     overlay.classList.remove('on');
@@ -505,29 +840,53 @@
     raf = requestAnimationFrame(loop);
   }
 
-  function finish() {
+  function finish(reason) {
     if (over) return;
     over = true; running = false;
     cancelAnimationFrame(raf);
     clearBoard();
-    if (score > best) {
-      best = score;
-      try { localStorage.setItem(BEST_KEY, String(best)); } catch (e) {}
-      bestEl.textContent = best;
+    var isBest = score > bests[modeKey];
+    if (isBest) {
+      bests[modeKey] = score;
+      saveBest(modeKey, score);
     }
+    bestEl.textContent = fmtBest(bests[modeKey]);
+
     var acc = clicks ? Math.round(hits / clicks * 100) : 0;
-    ovKicker.textContent = '时间到';
+    ovKicker.textContent = cfg.name + ' · ' + (reason || '时间到');
     ovTitle.textContent = score + ' 分';
-    ovText.textContent = score >= best && score > 0 ? '新纪录，手感不错。' : '再来一局，试试把连击拉高。';
+    ovText.textContent = isBest && score > 0
+      ? '新纪录，这局手感很稳。'
+      : (modeKey === 'survival' ? '再撑一轮，先护住生命再谈连击。' : '再来一局，试试把连击拉到 8 次进狂热。');
     ovGrid.style.display = 'grid';
     ovGrid.innerHTML =
       '<div><span>命中</span><b>' + hits + '</b></div>' +
       '<div><span>最高连击</span><b>' + maxCombo + '</b></div>' +
       '<div><span>命中率</span><b>' + acc + '%</b></div>' +
-      '<div><span>历史最佳</span><b>' + best + '</b></div>';
+      '<div><span>历史最佳</span><b>' + fmtBest(bests[modeKey]) + '</b></div>';
+    modeList.style.display = 'none';
+    ovBtn.hidden = false;
+    ovAlt.hidden = false;
     ovBtn.textContent = '再来一局';
+    ovAlt.textContent = '换模式';
     overlay.classList.add('on');
     hud();
+  }
+
+  function showMenu() {
+    running = false; paused = false; over = true;
+    cancelAnimationFrame(raf);
+    clearBoard();
+    resetHud();
+    ovKicker.textContent = '选择模式';
+    ovTitle.textContent = '打地鼠';
+    ovText.textContent = '普通鼠、金鼠、铁盔鼠、地鼠王和炸弹都会出洞。连击 8 次进入狂热，得分翻倍。';
+    refreshModeBests();
+    modeList.style.display = 'grid';
+    ovGrid.style.display = 'none';
+    ovBtn.hidden = true;
+    ovAlt.hidden = true;
+    overlay.classList.add('on');
   }
 
   function togglePause() {
@@ -539,28 +898,51 @@
       ovKicker.textContent = '已暂停';
       ovTitle.textContent = '歇一下';
       ovText.textContent = '时间已经停住，回来后继续敲。';
+      modeList.style.display = 'none';
       ovGrid.style.display = 'none';
+      ovBtn.hidden = false;
       ovBtn.textContent = '继续';
+      ovAlt.hidden = true;
       overlay.classList.add('on');
     } else {
       overlay.classList.remove('on');
     }
   }
 
+  modeList.addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('.mode-btn') : null;
+    if (!b) return;
+    var m = b.getAttribute('data-mode');
+    if (MODES[m]) start(m);
+  });
+
   ovBtn.addEventListener('click', function () {
     if (paused) togglePause();
-    else start();
+    else start(modeKey);
   });
-  pauseBtn.addEventListener('click', togglePause);
+
+  ovAlt.addEventListener('click', function () {
+    if (running || paused) return;
+    showMenu();
+  });
+
+  pauseBtn.addEventListener('click', function () {
+    if (over) { showMenu(); return; }
+    togglePause();
+  });
+
   restartBtn.addEventListener('click', function () {
-    if (running) finish();
-    start();
+    start(modeKey);
+  });
+
+  modeBtn.addEventListener('click', function () {
+    showMenu();
   });
 
   document.addEventListener('keydown', function (e) {
     if (e.key === ' ') {
       e.preventDefault();
-      if (!running || over) { if (over) start(); return; }
+      if (over) { start(modeKey); return; }
       togglePause();
       return;
     }
@@ -574,7 +956,8 @@
     if (document.hidden && running && !paused) togglePause();
   });
 
-  overlay.classList.add('on');
+  refreshModeBests();
+  showMenu();
   hud();
 })();
 </script>

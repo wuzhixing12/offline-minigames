@@ -1,0 +1,2470 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="theme-color" content="#1a2416">
+<title>桃源乡 · 田园小记</title>
+<style>
+  :root{
+    --bg:#141d13;--panel:#1e2a1c;--text:#f3f0e2;--muted:#a9b59b;--line:rgba(220,230,200,.14);
+    --green:#8ed17a;--gold:#ffd166;--orange:#ff9c5b;--sky:#8fd8e8;--rose:#f28b82;--violet:#c3a6ff;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{margin:0;overflow:hidden;background:#10170f;color:var(--text);
+    font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;user-select:none;touch-action:none;
+    display:flex;justify-content:center;}
+  #wrap{width:100%;max-width:1000px;height:100%;display:flex;flex-direction:column;padding:9px 12px 6px;position:relative;min-width:0;}
+  body.embed #wrap{padding-top:54px;}
+  @media (max-height:600px){body.embed #wrap{padding-top:48px;}}
+  header{display:flex;align-items:center;gap:8px;flex:0 0 auto;z-index:4;flex-wrap:nowrap;}
+  .brand{font-weight:800;font-size:16px;letter-spacing:.08em;white-space:nowrap;}
+  .brand b{color:var(--green);}
+  .brand small{display:block;font-size:9px;color:var(--muted);letter-spacing:.2em;font-weight:500;}
+  .hud{margin-left:auto;display:flex;gap:5px;align-items:center;font-variant-numeric:tabular-nums;flex-wrap:nowrap;}
+  .chip{display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.05);border:1px solid var(--line);
+    padding:3px 7px;border-radius:8px;font-size:11.5px;white-space:nowrap;}
+  .chip i{font-style:normal;opacity:.9;font-size:11px;}
+  .chip b{font-weight:700;font-size:12px;}
+  #lvlChip{color:var(--green);}
+  #soundBtn,#resetBtn{border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--muted);
+    width:30px;height:30px;border-radius:9px;font-size:13px;cursor:pointer;flex:0 0 auto;}
+  #soundBtn.on{color:var(--gold);border-color:rgba(255,209,102,.35);}
+  #resetBtn{line-height:1;font-size:15px;}
+  #resetBtn:hover{color:var(--text);border-color:rgba(255,255,255,.24);}
+  #resetBtn.arm,button.primary.arm{color:#ffb4a2;border-color:rgba(255,120,90,.7);background:rgba(255,90,60,.15);
+    animation:resetPulse .9s ease-in-out infinite;}
+  @keyframes resetPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,120,90,.35)}50%{box-shadow:0 0 0 5px rgba(255,120,90,0)}}
+  #xpbar{height:3px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden;margin:5px 2px 0;flex:0 0 auto;}
+  #xpfill{height:100%;width:0;background:linear-gradient(90deg,var(--green),var(--gold));transition:width .35s;}
+  #chapterBar{flex:0 0 auto;display:flex;align-items:center;gap:7px;margin-top:5px;padding:4px 9px;
+    border:1px solid var(--line);background:rgba(255,255,255,.03);border-radius:8px;font-size:11px;cursor:pointer;
+    overflow:hidden;white-space:nowrap;}
+  #chapterBar .tag{font-size:9px;letter-spacing:.1em;color:#0f2008;background:var(--green);
+    padding:2px 6px;border-radius:5px;white-space:nowrap;font-weight:700;}
+  #chapterText{color:#dfe7cf;overflow:hidden;text-overflow:ellipsis;}
+  #chapterMore{margin-left:auto;color:#7f8f70;font-size:10px;flex:0 0 auto;}
+  #stage{position:relative;flex:1 1 auto;min-height:0;margin-top:5px;display:flex;align-items:center;justify-content:center;}
+  canvas{display:block;border-radius:14px;background:#2a3d1f;box-shadow:0 0 0 1px rgba(142,209,122,.14),0 24px 60px -26px #000;cursor:pointer;}
+  #orderBar{flex:0 0 auto;display:flex;align-items:center;gap:7px;padding:5px 8px;margin-top:5px;
+    background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:10px;font-size:11px;min-height:36px;overflow:hidden;}
+  #orderBar .tag{font-size:9.5px;letter-spacing:.1em;color:var(--muted);background:rgba(255,255,255,.05);
+    padding:2px 6px;border-radius:5px;white-space:nowrap;flex:0 0 auto;}
+  #orders{display:flex;gap:6px;overflow-x:auto;flex:1 1 auto;scrollbar-width:none;touch-action:pan-x;}
+  #orders::-webkit-scrollbar{display:none;}
+  .order{flex:0 0 auto;display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.045);
+    border:1px solid var(--line);border-radius:8px;padding:4px 7px;font-size:11px;white-space:nowrap;}
+  .order.done{opacity:.4;}
+  .order .oreward{color:var(--gold);font-weight:700;}
+  .order .mini{padding:3px 8px;font-size:10.5px;}
+  #toolbar{flex:0 0 auto;padding-top:5px;}
+  #seedRow{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;touch-action:pan-x;padding-bottom:1px;}
+  #seedRow::-webkit-scrollbar{display:none;}
+  .seed{flex:0 0 auto;min-width:82px;border:1px solid var(--line);background:rgba(255,255,255,.035);
+    color:var(--text);border-radius:9px;padding:4px 8px 3px;font-family:inherit;cursor:pointer;
+    display:flex;flex-direction:column;align-items:flex-start;gap:0;transition:.15s;position:relative;}
+  .seed .nm{font-size:11.5px;font-weight:700;display:flex;gap:4px;align-items:center;}
+  .seed .cost{font-size:9.5px;color:var(--gold);}
+  .seed .sk{position:absolute;right:4px;top:3px;font-size:8px;color:#64748b;}
+  .seed.sel{border-color:var(--green);background:rgba(142,209,122,.13);box-shadow:0 0 0 2px rgba(142,209,122,.14);}
+  .seed.lock{opacity:.42;cursor:not-allowed;}
+  .seed.lock .cost{color:var(--muted);}
+  .seed.far{opacity:.55;}
+  .seed.far .cost{color:#7f9e86;}
+  .seed .mk{font-size:8.5px;color:#9ad6a8;border:1px solid rgba(142,209,122,.35);
+    border-radius:3px;padding:0 2px;line-height:1.25;font-weight:400;}
+  #actionRow{display:flex;gap:6px;padding-top:5px;}
+  .act{border-radius:8px;border:1px solid var(--line);background:rgba(255,255,255,.045);
+    color:var(--text);font-family:inherit;font-size:11.5px;font-weight:700;padding:7px 6px;cursor:pointer;
+    white-space:nowrap;text-align:center;}
+  .act.end{border:0;background:linear-gradient(180deg,#a8e88f,#63b94b);color:#12280d;
+    box-shadow:0 8px 20px -10px rgba(99,185,75,.8);}
+  .act.map{border-color:rgba(142,209,122,.42);color:#c3e9b3;background:rgba(142,209,122,.10);}
+  .act:active{transform:translateY(1px);}
+  #hint{flex:0 0 auto;text-align:center;font-size:10px;color:#7f8f70;padding:4px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:6;
+    background:rgba(8,14,7,.8);backdrop-filter:blur(6px);border-radius:14px;padding:12px;}
+  .overlay.show{display:flex;}
+  .panel{width:min(400px,96%);max-height:94%;overflow:auto;text-align:center;
+    background:linear-gradient(180deg,rgba(34,50,29,.98),rgba(14,21,12,.99));
+    border:1px solid rgba(142,209,122,.25);border-radius:16px;padding:18px 16px;
+    box-shadow:0 26px 70px rgba(0,0,0,.6);touch-action:pan-y;}
+  .panel .kicker{font-size:10px;letter-spacing:.28em;color:var(--green);}
+  .panel .big{font-size:24px;font-weight:800;margin:4px 0 5px;letter-spacing:.04em;}
+  .panel p{margin:5px 0;font-size:12.5px;color:var(--muted);line-height:1.7;}
+  .panel .keys{font-size:11.5px;color:#b9c4ab;background:rgba(255,255,255,.035);border:1px solid var(--line);
+    border-radius:10px;padding:8px 10px;margin:10px 0 12px;line-height:1.85;text-align:left;}
+  .panel .keys b{color:var(--text);}
+  .panel .scoreline{font-size:12px;color:var(--muted);margin:9px 0 12px;line-height:1.8;}
+  .panel .scoreline b{color:var(--gold);font-size:17px;}
+  .panel .saveinfo{font-size:10.5px;color:#8a9a7c;margin:8px 0 0;}
+  button.primary{width:100%;border:0;border-radius:11px;padding:10px 14px;font-size:14px;font-weight:700;
+    color:#102407;background:linear-gradient(180deg,#b3ef9b,#6cc653);cursor:pointer;font-family:inherit;
+    box-shadow:0 10px 26px -10px rgba(108,198,83,.75);}
+  button.primary.ghost{background:rgba(255,255,255,.06);color:var(--text);box-shadow:none;margin-top:7px;border:1px solid var(--line);font-size:12px;}
+  button.primary:active{transform:translateY(1px);}
+  .toast{position:absolute;left:50%;top:12px;transform:translateX(-50%) translateY(-6px);z-index:8;
+    background:rgba(20,29,17,.96);border:1px solid rgba(142,209,122,.3);color:var(--text);
+    font-size:11.5px;padding:6px 13px;border-radius:12px;opacity:0;pointer-events:none;transition:.22s;
+    max-width:92%;text-align:center;line-height:1.5;box-shadow:0 10px 30px rgba(0,0,0,.35);}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* ---------- modal ---------- */
+  #screenModal{position:fixed;inset:0;z-index:30;border-radius:0;background:rgba(5,10,4,.78);}
+  #screenModal .panel{position:relative;}
+  .panel.wide{width:min(620px,96%);max-height:92%;display:flex;flex-direction:column;text-align:left;
+    padding:14px 14px 12px;overflow:hidden;}
+  .panel.wide .big{font-size:19px;margin:0 0 2px;text-align:left;}
+  #modalClose{position:absolute;right:8px;top:8px;width:28px;height:28px;border-radius:8px;border:1px solid var(--line);
+    background:rgba(255,255,255,.05);color:var(--muted);font-size:16px;cursor:pointer;line-height:1;z-index:2;}
+  #modalTabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 2px;flex:0 0 auto;}
+  .tabBtn{border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--muted);font-family:inherit;
+    font-size:11.5px;font-weight:700;padding:5px 11px;border-radius:8px;cursor:pointer;}
+  .tabBtn.on{background:rgba(142,209,122,.16);border-color:rgba(142,209,122,.5);color:var(--green);}
+  #modalBody{flex:1 1 auto;min-height:0;overflow:auto;margin-top:6px;padding-right:3px;touch-action:pan-y;font-size:12px;}
+  #modalBody::-webkit-scrollbar{width:6px;}
+  #modalBody::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:3px;}
+  .sum{font-size:11.5px;color:var(--muted);padding:2px 2px 7px;border-bottom:1px solid var(--line);margin-bottom:4px;}
+  .sum b{color:var(--gold);}
+  .empty{color:#7f8f70;font-size:11.5px;text-align:center;padding:20px 6px;line-height:1.7;}
+  .itemRow{display:flex;align-items:center;gap:7px;padding:6px 3px;border-bottom:1px solid rgba(255,255,255,.06);}
+  .itemRow .ii{font-size:16px;width:22px;text-align:center;}
+  .itemRow .nm{flex:1 1 auto;font-size:12px;color:#e9e5d3;min-width:0;}
+  .itemRow .nm small{display:block;font-size:9.5px;color:#8f9e80;font-weight:400;}
+  .itemRow .price{color:var(--gold);font-size:11px;white-space:nowrap;}
+  .mini{border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--text);border-radius:7px;
+    padding:4px 8px;font-size:10.5px;cursor:pointer;font-family:inherit;white-space:nowrap;}
+  .mini:disabled{opacity:.3;cursor:default;}
+  .mini.gold{border-color:rgba(255,209,102,.35);color:var(--gold);background:rgba(255,209,102,.1);}
+  .recipe{border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.03);padding:8px 9px;margin-bottom:7px;}
+  .recipe .rtop{display:flex;align-items:center;gap:6px;font-size:12.5px;}
+  .recipe .rtop b{font-size:12.5px;}
+  .recipe .rtop span{margin-left:auto;color:var(--gold);font-size:11px;}
+  .recipe .ring{font-size:11px;color:#b9c4ab;margin:4px 0 6px;line-height:1.6;}
+  .recipe .ring i{font-style:normal;color:#d9e2cc;}
+  .recipe .ring i.bad{color:var(--rose);}
+  .recipe .rbot{display:flex;align-items:center;gap:8px;justify-content:space-between;}
+  .recipe .rnote{font-size:10px;color:#7f8f70;}
+  .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+  .fcard{border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.03);padding:8px;display:flex;flex-direction:column;}
+  .fcard .ftop{display:flex;align-items:center;gap:5px;font-size:12px;}
+  .fcard .ftop b{font-size:12px;}
+  .fcard .fcost{margin-left:auto;color:var(--gold);font-size:10.5px;}
+  .fcard p{font-size:10.5px;color:#96a488;margin:4px 0 6px;line-height:1.5;flex:1 1 auto;}
+  .fcard .mini{width:100%;}
+  .fcard .owned{width:100%;text-align:center;font-size:10.5px;color:var(--green);padding:4px 0;border:1px dashed rgba(142,209,122,.3);border-radius:7px;}
+  .vcard{border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.03);padding:9px;margin-bottom:7px;}
+  .vcard .vtop{display:flex;align-items:center;gap:6px;font-size:13px;}
+  .vcard .vi{font-size:18px;}
+  .vcard .hearts{margin-left:auto;letter-spacing:1px;font-size:12px;}
+  .vcard .hearts .on{color:#ff8fa3;}
+  .vcard .hearts .off{color:#4d5a44;}
+  .vcard p{font-size:10.5px;color:#9aa88c;margin:3px 0;line-height:1.55;}
+  .vcard .perk{color:#c8b98a;}
+  .vbar{height:4px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden;margin:6px 0 7px;}
+  .vbar i{display:block;height:100%;background:linear-gradient(90deg,#ff8fa3,#ffd166);border-radius:99px;}
+  .vcard .rbot{display:flex;align-items:center;gap:7px;}
+  .vcard .rbot span{font-size:10px;color:#7f8f70;}
+  .cgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;}
+  .ccard{border:1px solid var(--line);border-radius:9px;background:rgba(255,255,255,.03);padding:7px 8px;font-size:11px;color:#cfd8c2;}
+  .ccard.lock{opacity:.4;}
+  .ccard b{display:block;font-size:12px;color:var(--text);margin-bottom:2px;}
+  .ccard small{display:block;font-size:9.5px;color:#8f9e80;line-height:1.5;}
+  .achRow{display:flex;align-items:center;gap:8px;padding:7px 4px;border-bottom:1px solid rgba(255,255,255,.06);}
+  .achRow .medal{font-size:15px;width:22px;text-align:center;filter:grayscale(1);opacity:.4;}
+  .achRow.on .medal{filter:none;opacity:1;}
+  .achRow .nm{flex:1 1 auto;font-size:11.5px;color:#b9c4ab;}
+  .achRow.on .nm{color:var(--text);}
+  .achRow .nm small{display:block;color:#7f8f70;font-size:9.5px;font-weight:400;margin-top:1px;}
+  .achRow .rw{font-size:10px;color:var(--gold);white-space:nowrap;}
+  .chapRow{border:1px solid var(--line);border-radius:10px;padding:8px 9px;margin-bottom:7px;background:rgba(255,255,255,.025);}
+  .chapRow.cur{border-color:rgba(142,209,122,.5);background:rgba(142,209,122,.08);}
+  .chapRow.done{opacity:.68;}
+  .chapRow .ch{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;}
+  .chapRow .ch span{margin-left:auto;font-size:10px;color:var(--green);font-weight:400;}
+  .chapRow p{font-size:10.5px;color:#9aa88c;margin:4px 0 0;line-height:1.6;}
+  .chapRow .story{font-size:10.5px;color:#b9c4ab;margin-top:4px;line-height:1.6;}
+
+  @media (max-width:720px){
+    .brand small{display:none}.brand{font-size:14px}
+    .chip{padding:2px 5px;font-size:10.5px}
+    .chip b{font-size:11px}
+    #lvlChip{display:none}
+    #orderBar .tag{display:none}
+    #hint{display:none}
+    .order{font-size:10.5px}
+    #actionRow .act{font-size:10.5px;padding:7px 4px}
+    #actionRow{gap:4px}
+    #actionRow .act{flex:1 1 0;min-width:0;font-size:10px;padding:7px 2px}
+    .fgrid{grid-template-columns:1fr}
+    .cgrid{grid-template-columns:1fr}
+  }
+  @media (max-height:600px){
+    #hint{display:none}
+    .panel .keys{margin:7px 0 9px;padding:6px 8px;line-height:1.7}
+  }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <header>
+    <div class="brand"><b>桃源乡</b><small>A QUIET VALLEY</small></div>
+    <div class="hud">
+      <div class="chip" title="铜钱"><i>◉</i><b id="coins">0</b></div>
+      <div class="chip" title="体力"><i>☀</i><b id="energy">14/14</b></div>
+      <div class="chip" title="季节与天数"><i id="seasonIcon">🌸</i><b id="day">1</b> 日</div>
+      <div class="chip" title="天气"><i id="weatherIcon">☀</i><b id="weatherText">晴</b></div>
+      <div class="chip" id="lvlChip">Lv.<b id="level">1</b></div>
+      <button id="resetBtn" type="button" aria-label="重新开始" title="重新开始（清空存档）" style="display:none">↺</button>
+      <button id="soundBtn" class="on" type="button" aria-label="音效开关">♪</button>
+    </div>
+  </header>
+  <div id="xpbar"><div id="xpfill"></div></div>
+  <div id="chapterBar" role="button" tabindex="0" title="查看主线">
+    <span class="tag">主线</span>
+    <span id="chapterText">住进桃源乡，开始第一天的农活</span>
+    <span id="chapterMore">查看 ›</span>
+  </div>
+  <div id="stage">
+    <canvas id="game"></canvas>
+    <div class="overlay show" id="screenStart">
+      <div class="panel">
+        <div class="kicker">A QUIET VALLEY</div>
+        <div class="big">桃源乡</div>
+        <p>8×8 的村口田，加上后山的 6×6 梯田。<br>十二种作物、四季轮转。种田、养殖、加工、赶集，和村里人处成知己。</p>
+        <div class="keys">
+          <b>点击地块</b>：开垦 → 播种 → 浇水 → 收获<br>
+          <b>1–0 / Q E</b> 选种子　·　<b>空格</b> 收工推进一天　·　<b>P</b> 暂停<br>
+          完成第二章后，按 <b>M</b> 或点「后山」走梯田小路<br>
+          订单、作坊、设施与村民都在下方按钮里，六章主线走完即是世外桃源
+        </div>
+        <button class="primary" id="startBtn" type="button">住进桃源乡</button>
+        <button class="primary ghost" id="newBtn" type="button" style="display:none">开始新的旅程</button>
+        <p class="saveinfo" id="saveInfo" style="display:none"></p>
+      </div>
+    </div>
+    <div class="overlay" id="screenPause">
+      <div class="panel">
+        <div class="big">歇一会儿</div>
+        <p>风吹过田埂，作物也停在了这一刻。</p>
+        <button class="primary" id="resumeBtn" type="button">继续</button>
+        <button class="primary ghost" id="pauseResetBtn" type="button">重新开始</button>
+      </div>
+    </div>
+    <div class="overlay" id="screenWin">
+      <div class="panel">
+        <div class="kicker">THE VALLEY IS THRIVING</div>
+        <div class="big">世外桃源</div>
+        <div class="scoreline">第 <b id="winDay">1</b> 天，六章主线全部完成<br><span id="winNote"></span></div>
+        <p id="winExtra"></p>
+        <button class="primary" id="continueBtn" type="button">继续经营</button>
+        <button class="primary ghost" id="restartBtn" type="button">重新开始</button>
+      </div>
+    </div>
+    <div class="toast" id="toast"></div>
+  </div>
+  <div id="orderBar">
+    <span class="tag">今日订单</span>
+    <div id="orders"></div>
+  </div>
+  <div id="toolbar">
+    <div id="seedRow"></div>
+    <div id="actionRow">
+      <button class="act" id="marketBtn" type="button">仓坊</button>
+      <button class="act" id="fishBtn" type="button">🎣 钓鱼</button>
+      <button class="act" id="villageBtn" type="button">村务</button>
+      <button class="act map" id="mapBtn" type="button" style="display:none">后山 ›</button>
+      <button class="act end" id="endBtn" type="button">收工 →</button>
+    </div>
+  </div>
+  <div id="hint">点地块：开垦 / 播种 / 浇水 / 收获　·　1–0 / Q E 选种子　·　空格 收工　·　P 暂停　·　点击主线查看目标</div>
+</div>
+
+<div class="overlay" id="screenModal">
+  <div class="panel wide">
+    <button id="modalClose" type="button" aria-label="关闭">×</button>
+    <div class="big" id="modalTitle">村务</div>
+    <div id="modalTabs"></div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  try { if (window.self !== window.top) document.body.classList.add('embed'); } catch (e) {}
+
+  var HOME_SIZE = 8, HILL_SIZE = 6;
+  var SIZE = HOME_SIZE;
+  var SEASONS = ['春', '夏', '秋', '冬'];
+  var SEASON_ICONS = ['🌸', '🌻', '🍁', '❄'];
+  var SEASON_DAYS = 12;
+  var SAVE_KEY = 'taoyuan.save.v4';
+  var SAVE_V = 5;
+
+  var CROPS = {
+    carrot:     { name: '萝卜',   icon: '🥕', cost: 3,  sell: 18,  days: 3, xp: 6,  unlock: 1,  shape: 'root',   fruit: '#f08a45', leaf: '#5fae4e', season: '春' },
+    wheat:      { name: '小麦',   icon: '🌾', cost: 5,  sell: 26,  days: 3, xp: 8,  unlock: 2,  shape: 'grain',  fruit: '#e8c96a', leaf: '#8fb14a', season: '夏' },
+    pumpkin:    { name: '南瓜',   icon: '🎃', cost: 8,  sell: 48,  days: 4, xp: 10, unlock: 3,  shape: 'vine',   fruit: '#ef9440', leaf: '#4f9a4a', season: '秋' },
+    strawberry: { name: '草莓',   icon: '🍓', cost: 12, sell: 36,  days: 4, xp: 12, unlock: 4,  shape: 'berry',  fruit: '#e8506a', leaf: '#4f9a4a', season: '春', regrow: 2, times: 3 },
+    rice:       { name: '水稻',   icon: '🍚', cost: 14, sell: 62,  days: 5, xp: 14, unlock: 5,  shape: 'rice',   fruit: '#e5d38a', leaf: '#7fb45c', season: '夏' },
+    tea:        { name: '茶叶',   icon: '🍃', cost: 22, sell: 44,  days: 5, xp: 16, unlock: 2,  shape: 'bush',   fruit: '#9fd16a', leaf: '#3f7f3a', season: '冬', regrow: 2, times: 4, hill: true },
+    sunflower:  { name: '向日葵', icon: '🌻', cost: 18, sell: 82,  days: 6, xp: 18, unlock: 7,  shape: 'tall',   fruit: '#ffd166', leaf: '#5f9a4a', season: '夏' },
+    grape:      { name: '葡萄',   icon: '🍇', cost: 28, sell: 70,  days: 6, xp: 20, unlock: 8,  shape: 'vine2',  fruit: '#a06ad6', leaf: '#4f9a4a', season: '秋', regrow: 3, times: 3 },
+    ginseng:    { name: '人参',   icon: '🌱', cost: 45, sell: 190, days: 8, xp: 26, unlock: 8,  shape: 'root2',  fruit: '#d9b380', leaf: '#4f8f3a', season: '冬', hill: true },
+    peach:      { name: '蜜桃',   icon: '🍑', cost: 70, sell: 160, days: 7, xp: 30, unlock: 10, shape: 'tree',   fruit: '#f79a8e', leaf: '#5a9a4a', season: '夏', regrow: 3, times: 5, hill: true },
+    mushroom:   { name: '香菇',   icon: '🍄', cost: 26, sell: 96,  days: 4, xp: 20, unlock: 4,  shape: 'mushroom', fruit: '#c08a58', leaf: '#8a6a4a', season: '秋', hill: true },
+    blueberry:  { name: '蓝莓',   icon: '🫐', cost: 34, sell: 120, days: 5, xp: 22, unlock: 5,  shape: 'berry2', fruit: '#5b6bd6', leaf: '#4f8a4a', season: '夏', regrow: 2, times: 3, hill: true }
+  };
+  var CROP_KEYS = ['carrot', 'wheat', 'pumpkin', 'strawberry', 'rice', 'sunflower', 'grape', 'tea', 'mushroom', 'blueberry', 'ginseng', 'peach'];
+
+  var ITEMS = {};
+  (function () {
+    for (var k in CROPS) {
+      ITEMS[k] = { name: CROPS[k].name, icon: CROPS[k].icon, sell: CROPS[k].sell, type: 'crop' };
+    }
+    var extra = {
+      egg:        { name: '鸡蛋',   icon: '🥚', sell: 26,  type: 'product' },
+      milk:       { name: '牛奶',   icon: '🥛', sell: 40,  type: 'product' },
+      honey:      { name: '蜂蜜',   icon: '🍯', sell: 52,  type: 'product' },
+      fish:       { name: '鲜鱼',   icon: '🐟', sell: 58,  type: 'product' },
+      flour:      { name: '面粉',   icon: '🥣', sell: 48,  type: 'craft' },
+      bread:      { name: '面包',   icon: '🍞', sell: 98,  type: 'craft' },
+      pie:        { name: '南瓜派', icon: '🥧', sell: 155, type: 'craft' },
+      jam:        { name: '草莓酱', icon: '🍓', sell: 135, type: 'craft' },
+      fishSoup:   { name: '鱼汤',   icon: '🍲', sell: 90,  type: 'craft' },
+      teaCake:    { name: '茶点',   icon: '🍡', sell: 175, type: 'craft' },
+      honeyCake:  { name: '蜜糕',   icon: '🍰', sell: 165, type: 'craft' },
+      wine:       { name: '葡萄酒', icon: '🍷', sell: 245, type: 'craft' },
+      ginsengTea: { name: '参茶',   icon: '🫖', sell: 430, type: 'craft' },
+      blueberryJam:  { name: '蓝莓酱', icon: '🥫', sell: 235, type: 'craft' },
+      mushroomSoup:  { name: '山菌炖鸡', icon: '🥘', sell: 265, type: 'craft' }
+    };
+    for (var e in extra) ITEMS[e] = extra[e];
+  })();
+
+  var FACILITIES = {
+    well:       { name: '水井',     icon: '💧', cost: 120, desc: '每天清晨自动浇灌所有作物，省下大量体力。' },
+    scarecrow:  { name: '稻草人',   icon: '🎃', cost: 90,  desc: '虫害概率从 10% 降到 2%，成熟的作物更安全。' },
+    barn:       { name: '谷仓',     icon: '🏚️', cost: 180, desc: '最大体力 +3。' },
+    coop:       { name: '鸡舍',     icon: '🐔', cost: 220, desc: '每天清晨收 1 枚鸡蛋。' },
+    cowbarn:    { name: '牛棚',     icon: '🐄', cost: 360, desc: '每天清晨收 1 桶牛奶。' },
+    beehive:    { name: '蜂箱',     icon: '🍯', cost: 260, desc: '每天清晨收 1 份蜂蜜。' },
+    boat:       { name: '小渔船',   icon: '⛵', cost: 320, desc: '每天可以钓鱼 2 次。' },
+    mill:       { name: '磨坊',     icon: '⚙️', cost: 280, desc: '解锁「面粉」加工。' },
+    kitchen:    { name: '厨房',     icon: '🍳', cost: 340, desc: '解锁面包、南瓜派、草莓酱、鱼汤、蜜糕。' },
+    winery:     { name: '酒窖',     icon: '🍷', cost: 440, desc: '解锁「葡萄酒」加工。' },
+    greenhouse: { name: '温室',     icon: '🌱', cost: 600, desc: '冬季作物不再减速生长。' },
+    teahouse:   { name: '茶馆',     icon: '🍵', cost: 520, desc: '解锁茶点与参茶；每天 +25 铜钱。' }
+  };
+  var FACILITY_KEYS = ['well', 'scarecrow', 'barn', 'coop', 'cowbarn', 'beehive', 'boat', 'mill', 'kitchen', 'winery', 'greenhouse', 'teahouse'];
+
+  var RECIPES = [
+    { id: 'flour',      name: '磨面粉',   fac: 'mill',     inp: { wheat: 2 },                     out: { flour: 1 },      xp: 6 },
+    { id: 'bread',      name: '烤面包',   fac: 'kitchen',  inp: { flour: 1, egg: 1 },              out: { bread: 1 },      xp: 10 },
+    { id: 'pie',        name: '南瓜派',   fac: 'kitchen',  inp: { pumpkin: 1, flour: 1, egg: 1 },  out: { pie: 1 },        xp: 14 },
+    { id: 'jam',        name: '草莓酱',   fac: 'kitchen',  inp: { strawberry: 3 },                 out: { jam: 1 },        xp: 12 },
+    { id: 'fishSoup',   name: '鱼汤',     fac: 'kitchen',  inp: { fish: 1, carrot: 1 },            out: { fishSoup: 1 },   xp: 8 },
+    { id: 'honeyCake',  name: '蜜糕',     fac: 'kitchen',  inp: { honey: 1, flour: 1 },            out: { honeyCake: 1 },  xp: 14 },
+    { id: 'teaCake',    name: '茶点',     fac: 'teahouse', inp: { tea: 1, flour: 1 },              out: { teaCake: 1 },    xp: 16 },
+    { id: 'berryJam',   name: '熬蓝莓酱', fac: 'kitchen',  inp: { blueberry: 3 },                  out: { blueberryJam: 1 }, xp: 16 },
+    { id: 'mushroomSoup', name: '山菌炖鸡', fac: 'kitchen', inp: { mushroom: 2, egg: 1 },           out: { mushroomSoup: 1 }, xp: 18 },
+    { id: 'wine',       name: '酿葡萄酒', fac: 'winery',   inp: { grape: 3 },                      out: { wine: 1 },       xp: 18 },
+    { id: 'ginsengTea', name: '参茶',     fac: 'teahouse', inp: { ginseng: 1, tea: 1 },            out: { ginsengTea: 1 }, xp: 26 }
+  ];
+
+  var VILLAGERS = {
+    grandma: { name: '阿婆',  icon: '👵', likes: ['carrot', 'teaCake', 'mushroomSoup'], perk: '知己后：最大体力 +2',   perkNote: '阿婆心疼你，每天多备一份饭' },
+    amu:     { name: '阿木',  icon: '🧑‍🌾', likes: ['pumpkin', 'bread', 'mushroom'],    perk: '知己后：25% 概率多收 1 份', perkNote: '阿木教你看苗情，收成更稳' },
+    xiaoman: { name: '小满',  icon: '👧', likes: ['strawberry', 'jam', 'blueberryJam'], perk: '知己后：订单铜钱 +15%',  perkNote: '小满认识镇上所有买主' },
+    laozhou: { name: '老周',  icon: '🎣', likes: ['fish', 'wine', 'mushroomSoup'],      perk: '知己后：35% 概率双倍渔获', perkNote: '老周把压箱底的钓点告诉了你' }
+  };
+  var VILLAGER_KEYS = ['grandma', 'amu', 'xiaoman', 'laozhou'];
+
+  var LEVEL_XP = [0, 0, 70, 180, 340, 560, 840, 1200, 1640, 2160, 2760];
+
+  var CHAPTERS = [
+    { title: '安家', reward: 100, xp: 40,
+      story: '把荒地翻成菜畦，桃源乡的日子就从第一把收成开始。',
+      goal: function () { return '收获 10 份作物（' + stats.harvests + '/10）'; },
+      check: function () { return stats.harvests >= 10; } },
+    { title: '开市', reward: 160, xp: 60,
+      story: '村里人开始把自家的菜送到集市，通往山后的荒径也被踩出了一条路。',
+      goal: function () { return '完成 5 个订单（' + stats.orders + '/5），并建起水井'; },
+      check: function () { return stats.orders >= 5 && !!facilities.well; } },
+    { title: '六畜', reward: 240, xp: 90,
+      story: '鸡鸣声在清晨响起，后山的梯田也开出了第一垄。',
+      goal: function () { return '建起鸡舍，收 5 枚鸡蛋（' + (stats.eggs || 0) + '/5），并在后山收获 5 份作物（' + (stats.hillHarvests || 0) + '/5）'; },
+      check: function () { return !!facilities.coop && (stats.eggs || 0) >= 5 && (stats.hillHarvests || 0) >= 5; } },
+    { title: '作坊', reward: 320, xp: 130,
+      story: '磨坊转起来，厨房飘出麦香，土产终于能卖上好价钱。',
+      goal: function () { return '建起磨坊与厨房，完成 5 次加工（' + stats.crafts + '/5）'; },
+      check: function () { return !!facilities.mill && !!facilities.kitchen && stats.crafts >= 5; } },
+    { title: '桃源茶', reward: 450, xp: 170,
+      story: '茶馆开张，往来的人多了，村里也有了说不完的闲话。',
+      goal: function () { return '建起茶馆，与 2 位村民成为知己（' + heartsCount() + '/2）'; },
+      check: function () { return !!facilities.teahouse && heartsCount() >= 2; } },
+    { title: '世外桃源', reward: 800, xp: 220,
+      story: '田成方，树成行，鸡犬相闻。你终于把这里过成了想要的样子。',
+      goal: function () { return '村庄 8 级（' + level + '/8），完成 25 个订单（' + stats.orders + '/25），建起 6 种设施（' + facilityCount() + '/6）'; },
+      check: function () { return level >= 8 && stats.orders >= 25 && facilityCount() >= 6; } }
+  ];
+
+  var ACHS = [
+    { id: 'first',   name: '第一把收成', desc: '收获 1 份作物',            reward: 40,  check: function () { return stats.harvests >= 1; } },
+    { id: 'h50',     name: '半百收成',   desc: '累计收获 50 份作物',        reward: 120, check: function () { return stats.harvests >= 50; } },
+    { id: 'h150',    name: '仓廪渐实',   desc: '累计收获 150 份作物',       reward: 260, check: function () { return stats.harvests >= 150; } },
+    { id: 'o10',     name: '跑腿小能手', desc: '完成 10 个订单',            reward: 100, check: function () { return stats.orders >= 10; } },
+    { id: 'o30',     name: '桃源商会',   desc: '完成 30 个订单',            reward: 280, check: function () { return stats.orders >= 30; } },
+    { id: 'c1000',   name: '粮仓有余',   desc: '持有 1000 铜钱',            reward: 100, check: function () { return coins >= 1000; } },
+    { id: 'c5000',   name: '富甲一方',   desc: '持有 5000 铜钱',            reward: 260, check: function () { return coins >= 5000; } },
+    { id: 'fac6',    name: '大兴土木',   desc: '建成 6 种设施',             reward: 160, check: function () { return facilityCount() >= 6; } },
+    { id: 'fac12',   name: '应有尽有',   desc: '建成全部 12 种设施',        reward: 420, check: function () { return facilityCount() >= 12; } },
+    { id: 'craft20', name: '作坊熟手',   desc: '完成 20 次加工',            reward: 180, check: function () { return stats.crafts >= 20; } },
+    { id: 'fish15',  name: '姜太公',     desc: '钓到 15 条鱼',              reward: 140, check: function () { return stats.fish >= 15; } },
+    { id: 'friend1', name: '桃源知己',   desc: '与一位村民成为知己',        reward: 160, check: function () { return heartsCount() >= 1; } },
+    { id: 'friend4', name: '高朋满座',   desc: '与四位村民都成为知己',      reward: 360, check: function () { return heartsCount() >= 4; } },
+    { id: 'allcrop', name: '五谷丰登',   desc: '收获过全部 12 种作物',      reward: 320, check: function () { return typeCount() >= 12; } },
+    { id: 'hill',    name: '后山来客',   desc: '解锁后山梯田',              reward: 120, check: function () { return hillUnlocked; } },
+    { id: 'hill40',  name: '梯田丰收',   desc: '在后山收获 40 份作物',      reward: 240, check: function () { return (stats.hillHarvests || 0) >= 40; } },
+    { id: 'lv10',    name: '十级村庄',   desc: '村庄升到 10 级',            reward: 500, check: function () { return level >= 10; } },
+    { id: 'story',   name: '世外桃源',   desc: '完成全部六章主线',          reward: 0,   check: function () { return chapter >= CHAPTERS.length; } }
+  ];
+
+  var cvs = document.getElementById('game');
+  var ctx = cvs.getContext('2d');
+  var $ = function (id) { return document.getElementById(id); };
+  var stage = $('stage');
+
+  var W = 800, H = 560, DPR = 1, TILE = 64, FX = 80, FY = 40;
+  var state = 'start';
+  var day = 1, coins = 120, energy = 14, maxEnergy = 14, xp = 0, level = 1;
+  var weather = 'sunny';
+  var inv = {};
+  var homePlots = [], hillPlots = [];
+  var mapId = 'home', hillUnlocked = false;
+  var plots = [];
+  var facilities = {};
+  var villagers = {};
+  var stats = {};
+  var chapter = 0;
+  var orders = [];
+  var fishLeft = 1;
+  var hotItem = null;
+  var wonOnce = false;
+  var selected = 'carrot';
+  var pendingSave = null;
+
+  var floats = [], particles = [], butterflies = [], clouds = [];
+  var hover = null, time = 0;
+  var toastTimer = 0, dayTimer = 0;
+  var ambientTimer = 0;
+  var soundOn = loadNum('taoyuan.sound', 1) === 1;
+  var modalKind = '', modalTab = '';
+
+  function loadNum(k, d) { try { var v = localStorage.getItem(k); return v === null ? d : parseFloat(v); } catch (e) { return d; } }
+  function saveNum(k, v) { try { localStorage.setItem(k, String(v)); } catch (e) {} }
+
+  /* ---------- audio ---------- */
+  var ac = null;
+  function audio() {
+    if (!soundOn) return null;
+    if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { ac = null; } }
+    if (ac && ac.state === 'suspended') { try { ac.resume(); } catch (e) {} }
+    return ac;
+  }
+  function tone(f, dur, type, vol, slide) {
+    var a = audio(); if (!a) return;
+    var o = a.createOscillator(), g = a.createGain();
+    o.type = type || 'sine';
+    o.frequency.setValueAtTime(f, a.currentTime);
+    if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, slide), a.currentTime + dur);
+    g.gain.setValueAtTime(vol == null ? 0.04 : vol, a.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + dur);
+    o.connect(g); g.connect(a.destination);
+    o.start(); o.stop(a.currentTime + dur + 0.01);
+  }
+  function sfxPlant() { tone(320, 0.08, 'triangle', 0.04, 420); }
+  function sfxWater() { tone(700, 0.1, 'sine', 0.035, 380); setTimeout(function () { tone(520, 0.08, 'sine', 0.03, 300); }, 80); }
+  function sfxHarvest() { tone(660, 0.08, 'sine', 0.045, 880); setTimeout(function () { tone(990, 0.1, 'sine', 0.04, 1180); }, 80); }
+  function sfxCoin() { tone(880, 0.06, 'sine', 0.035, 1100); setTimeout(function () { tone(1180, 0.07, 'sine', 0.03, 1320); }, 60); }
+  function sfxDay() { tone(392, 0.16, 'sine', 0.038, 523); setTimeout(function () { tone(523, 0.18, 'sine', 0.034, 659); }, 150); }
+  function sfxErr() { tone(150, 0.1, 'square', 0.035, 110); }
+  function sfxLevel() { tone(523, 0.12, 'sine', 0.04, 659); setTimeout(function () { tone(659, 0.12, 'sine', 0.04, 784); }, 120); setTimeout(function () { tone(784, 0.16, 'sine', 0.04, 988); }, 240); }
+  function sfxCraft() { tone(440, 0.07, 'triangle', 0.035, 520); setTimeout(function () { tone(660, 0.09, 'triangle', 0.03, 780); }, 70); }
+  function sfxFish() { tone(300, 0.06, 'sine', 0.04, 620); setTimeout(function () { tone(760, 0.1, 'sine', 0.03, 420); }, 80); }
+  function sfxAch() { tone(660, 0.08, 'sine', 0.04, 880); setTimeout(function () { tone(880, 0.12, 'sine', 0.035, 1100); }, 90); }
+
+  /* ---------- seasons / weather ---------- */
+  function seasonIdx() { return Math.floor(((day - 1) % (SEASON_DAYS * 4)) / SEASON_DAYS); }
+  function seasonName() { return SEASONS[seasonIdx()]; }
+  function isWinter() { return seasonIdx() === 3; }
+  function weatherText() {
+    if (weather === 'rain') return '雨';
+    if (weather === 'cloud') return '多云';
+    if (weather === 'snow') return '雪';
+    return '晴';
+  }
+  function weatherIcon() {
+    if (weather === 'rain') return '🌧';
+    if (weather === 'cloud') return '☁';
+    if (weather === 'snow') return '❄';
+    return '☀';
+  }
+  function rollWeather() {
+    var r = Math.random();
+    if (isWinter()) weather = r < 0.34 ? 'snow' : (r < 0.56 ? 'cloud' : 'sunny');
+    else weather = r < 0.22 ? 'rain' : (r < 0.38 ? 'cloud' : 'sunny');
+  }
+  function fishCap() { return facilities.boat ? 2 : 1; }
+  function facilityCount() {
+    var n = 0;
+    for (var i = 0; i < FACILITY_KEYS.length; i++) if (facilities[FACILITY_KEYS[i]]) n++;
+    return n;
+  }
+  function pickHotItem() {
+    var pool = [];
+    for (var i = 0; i < CROP_KEYS.length; i++) if (cropAvailable(CROP_KEYS[i])) pool.push(CROP_KEYS[i]);
+    pool.push('fish');
+    if (facilities.coop) pool.push('egg');
+    if (facilities.cowbarn) pool.push('milk');
+    if (facilities.beehive) pool.push('honey');
+    for (i = 0; i < RECIPES.length; i++) {
+      if (facilities[RECIPES[i].fac]) for (var ok in RECIPES[i].out) pool.push(ok);
+    }
+    if (!pool.length) return 'carrot';
+    return pool[(Math.random() * pool.length) | 0];
+  }
+  function heartsCount() {
+    var n = 0;
+    for (var i = 0; i < VILLAGER_KEYS.length; i++) if (villagers[VILLAGER_KEYS[i]] && villagers[VILLAGER_KEYS[i]].f >= 100) n++;
+    return n;
+  }
+  function typeCount() {
+    var n = 0;
+    for (var k in stats.types) if (stats.types[k] > 0) n++;
+    return n;
+  }
+  function cropAvailable(k) {
+    var c = CROPS[k];
+    return !!c && level >= c.unlock && (!c.hill || hillUnlocked);
+  }
+  function calcLevel(v) {
+    var lv = 1;
+    for (var i = 1; i <= 10; i++) if (v >= LEVEL_XP[i]) lv = i;
+    return lv;
+  }
+
+  /* ---------- setup ---------- */
+  function blankPlot() {
+    return { state: 'grass', crop: null, growth: 0, watered: false, regrown: 0, seed: Math.random() * 10 };
+  }
+  function makePlotGrid(n) {
+    var out = [];
+    for (var y = 0; y < n; y++) {
+      out.push([]);
+      for (var x = 0; x < n; x++) out[y].push(blankPlot());
+    }
+    return out;
+  }
+  function makeHomePlots() {
+    var g = makePlotGrid(HOME_SIZE);
+    // 开局送几块熟地，第一眼就有活可干
+    g[1][1] = { state: 'crop', crop: 'carrot', growth: 3, watered: true, regrown: 0, seed: 1.2 };
+    g[1][2] = { state: 'crop', crop: 'carrot', growth: 2, watered: true, regrown: 0, seed: 2.4 };
+    g[2][1] = { state: 'soil', crop: null, growth: 0, watered: false, regrown: 0, seed: 3.1 };
+    g[2][2] = { state: 'soil', crop: null, growth: 0, watered: false, regrown: 0, seed: 4.7 };
+    g[3][3] = { state: 'soil', crop: null, growth: 0, watered: false, regrown: 0, seed: 5.2 };
+    return g;
+  }
+  function makeHillPlots() {
+    var g = makePlotGrid(HILL_SIZE);
+    // 后山的老茶丛和几垄现成的土
+    g[2][2] = { state: 'crop', crop: 'tea', growth: CROPS.tea.days, watered: true, regrown: 0, seed: 1.7 };
+    g[1][1] = { state: 'soil', crop: null, growth: 0, watered: false, regrown: 0, seed: 2.9 };
+    g[1][2] = { state: 'soil', crop: null, growth: 0, watered: false, regrown: 0, seed: 3.6 };
+    g[2][1] = { state: 'soil', crop: null, growth: 0, watered: false, regrown: 0, seed: 4.2 };
+    g[3][3] = { state: 'soil', crop: null, growth: 0, watered: false, regrown: 0, seed: 5.8 };
+    return g;
+  }
+  function restorePlots(src, n) {
+    var g = makePlotGrid(n);
+    for (var y = 0; y < n; y++) {
+      for (var x = 0; x < n; x++) {
+        var q = src && src[y] && src[y][x];
+        var p = g[y][x];
+        if (q && (q.state === 'soil' || q.state === 'crop')) {
+          p.state = q.state;
+          if (q.state === 'crop' && CROPS[q.crop]) { p.crop = q.crop; p.growth = Math.max(0, q.growth || 0); }
+          p.watered = !!q.watered;
+          p.regrown = q.regrown || 0;
+          if (typeof q.seed === 'number') p.seed = q.seed;
+        }
+      }
+    }
+    return g;
+  }
+  function buildPlots() {
+    homePlots = makeHomePlots();
+    hillPlots = makeHillPlots();
+    mapId = 'home';
+    SIZE = HOME_SIZE;
+    plots = homePlots;
+  }
+  function resetRun() {
+    day = 1; coins = 120; energy = 14; maxEnergy = 14; xp = 0; level = 1;
+    weather = 'sunny'; inv = {}; facilities = {}; chapter = 0; wonOnce = false;
+    fishLeft = 1; selected = 'carrot'; hillUnlocked = false; mapId = 'home';
+    stats = { harvests: 0, hillHarvests: 0, orders: 0, crafts: 0, fish: 0, eggs: 0, coinsEarned: 0, gifts: 0, daysPlayed: 0, types: {}, ach: {} };
+    villagers = {};
+    for (var i = 0; i < VILLAGER_KEYS.length; i++) {
+      villagers[VILLAGER_KEYS[i]] = { f: 0, gifted: false, perkOn: false };
+    }
+    buildPlots();
+    makeOrders(true);
+    hotItem = pickHotItem();
+    energy = maxEnergy;
+  }
+  function applySave(s) {
+    xp = Math.max(0, s.xp || 0);
+    level = calcLevel(xp);
+    day = Math.max(1, s.day || 1);
+    coins = Math.max(0, s.coins || 0);
+    weather = s.weather || 'sunny';
+    inv = s.inv || {};
+    facilities = {};
+    for (var fk in s.facilities) if (s.facilities[fk]) facilities[fk] = true;
+    villagers = {};
+    for (var i = 0; i < VILLAGER_KEYS.length; i++) {
+      var k = VILLAGER_KEYS[i];
+      var sv = (s.villagers && s.villagers[k]) || {};
+      villagers[k] = { f: Math.max(0, Math.min(100, sv.f || 0)), gifted: !!sv.gifted, perkOn: !!sv.perkOn };
+    }
+    stats = {
+      harvests: (s.stats && s.stats.harvests) || 0,
+      hillHarvests: (s.stats && s.stats.hillHarvests) || 0,
+      orders: (s.stats && s.stats.orders) || 0,
+      crafts: (s.stats && s.stats.crafts) || 0,
+      fish: (s.stats && s.stats.fish) || 0,
+      eggs: (s.stats && s.stats.eggs) || 0,
+      coinsEarned: (s.stats && s.stats.coinsEarned) || 0,
+      gifts: (s.stats && s.stats.gifts) || 0,
+      daysPlayed: (s.stats && s.stats.daysPlayed) || 0,
+      types: (s.stats && s.stats.types) || {},
+      ach: (s.stats && s.stats.ach) || {}
+    };
+    chapter = Math.max(0, Math.min(CHAPTERS.length, s.chapter || 0));
+    hillUnlocked = !!s.hill || chapter >= 2;
+    wonOnce = !!s.wonOnce;
+    fishLeft = Math.max(0, s.fishLeft == null ? fishCap() : s.fishLeft);
+    selected = (s.selected && CROPS[s.selected]) ? s.selected : 'carrot';
+    if (level < CROPS[selected].unlock) selected = 'carrot';
+    maxEnergy = 14 + (level - 1) * 2 + (villagers.grandma.perkOn ? 2 : 0) + (facilities.barn ? 3 : 0);
+    energy = Math.max(0, Math.min(maxEnergy, s.energy == null ? maxEnergy : s.energy));
+    homePlots = restorePlots(s.plots, HOME_SIZE);
+    hillPlots = (s.plots2 && s.plots2.length === HILL_SIZE) ? restorePlots(s.plots2, HILL_SIZE) : makeHillPlots();
+    mapId = (s.map === 'hill' && hillUnlocked) ? 'hill' : 'home';
+    SIZE = mapId === 'hill' ? HILL_SIZE : HOME_SIZE;
+    plots = mapId === 'hill' ? hillPlots : homePlots;
+    autoSelectForMap();
+    orders = s.orders && s.orders.length ? s.orders : [];
+    if (!orders.length) makeOrders();
+    hotItem = (s.hot && ITEMS[s.hot]) ? s.hot : pickHotItem();
+  }
+  function saveGame() {
+    try {
+      localStorage.setItem(SAVE_KEY, JSON.stringify({
+        v: SAVE_V, day: day, coins: coins, energy: energy, xp: xp, weather: weather,
+        inv: inv, facilities: facilities, villagers: villagers, stats: stats,
+        chapter: chapter, orders: orders, fishLeft: fishLeft, hot: hotItem, wonOnce: wonOnce, selected: selected,
+        hill: hillUnlocked, map: mapId, plots: homePlots, plots2: hillPlots
+      }));
+    } catch (e) {}
+  }
+  var saveTimer = 0;
+  function saveSoon() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveGame, 400);
+  }
+  function loadSave() {
+    try {
+      var raw = localStorage.getItem(SAVE_KEY);
+      if (!raw) return null;
+      var s = JSON.parse(raw);
+      if (!s || (s.v !== 4 && s.v !== SAVE_V) || !s.plots || s.plots.length !== HOME_SIZE) return null;
+      if (typeof s.day !== 'number' || typeof s.coins !== 'number') return null;
+      return s;
+    } catch (e) { return null; }
+  }
+  function clearSave() {
+    pendingSave = null;
+    try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+  }
+  function isHill() { return mapId === 'hill'; }
+  function autoSelectForMap() {
+    if (isHill()) {
+      if (CROPS[selected] && CROPS[selected].hill && level >= CROPS[selected].unlock) return;
+      for (var i = 0; i < CROP_KEYS.length; i++) {
+        var k = CROP_KEYS[i];
+        if (CROPS[k].hill && level >= CROPS[k].unlock) { selected = k; return; }
+      }
+    } else if (CROPS[selected] && CROPS[selected].hill) {
+      selected = 'carrot';
+    }
+  }
+  function unlockHill() {
+    if (hillUnlocked) return false;
+    hillUnlocked = true;
+    syncMapBtn();
+    return true;
+  }
+  function syncMapBtn() {
+    var b = $('mapBtn');
+    if (!b) return;
+    var show = hillUnlocked && state !== 'start';
+    b.style.display = show ? '' : 'none';
+    b.textContent = isHill() ? '‹ 回村' : '后山 ›';
+    b.title = isHill() ? '回到村口田（M）' : '去后山梯田（M）';
+    var h = $('hint');
+    if (h) h.textContent = (isHill() ? '后山梯田 · 老茶丛与山泉 · ' : '') +
+      '点击地块：开垦/播种/浇水/收获 · 1–0/Q E 选种子 · ' + (hillUnlocked ? 'M 切换地图 · ' : '') + '空格 收工 · P 暂停';
+  }
+  function switchMap(id, silent) {
+    if (id === mapId) return;
+    if (id === 'hill' && !hillUnlocked) {
+      showToast('完成第二章后，后山的小路才会打开');
+      sfxErr();
+      return;
+    }
+    mapId = id;
+    SIZE = isHill() ? HILL_SIZE : HOME_SIZE;
+    plots = isHill() ? hillPlots : homePlots;
+    autoSelectForMap();
+    hover = null;
+    resize(); syncAll(); syncToolbar();
+    saveSoon();
+    if (!silent) showToast(isHill() ? '走进后山梯田 · 老茶丛已经结叶' : '回到村口田');
+  }
+
+  /* ---------- orders ---------- */
+  function orderValue(items) {
+    var v = 0;
+    for (var i = 0; i < items.length; i++) v += (ITEMS[items[i].k].sell || 10) * items[i].n;
+    return v;
+  }
+  function makeOrder(forceKey) {
+    var pool = [];
+    for (var i = 0; i < CROP_KEYS.length; i++) {
+      var ck = CROP_KEYS[i];
+      if (cropAvailable(ck)) pool.push(ck);
+    }
+    for (var j = 0; j < RECIPES.length; j++) {
+      if (facilities[RECIPES[j].fac]) {
+        for (var ok in RECIPES[j].out) if (pool.indexOf(ok) < 0) pool.push(ok);
+      }
+    }
+    if (forceKey && pool.indexOf(forceKey) < 0) pool.push(forceKey);
+    var keys = [];
+    var a = forceKey || pool[(Math.random() * pool.length) | 0];
+    keys.push(a);
+    if (pool.length > 1 && Math.random() < 0.45) {
+      var b = a, guard = 0;
+      while (b === a && guard++ < 12) b = pool[(Math.random() * pool.length) | 0];
+      if (b !== a) keys.push(b);
+    }
+    var items = [];
+    for (var n = 0; n < keys.length; n++) {
+      var sell = ITEMS[keys[n]].sell;
+      var maxN = sell >= 120 ? 1 : (sell >= 60 ? 2 : 3);
+      items.push({ k: keys[n], n: 1 + ((Math.random() * maxN) | 0) });
+    }
+    var val = orderValue(items);
+    return {
+      items: items,
+      reward: Math.round(val * 1.5 + level * 6 + 6 + Math.random() * 6),
+      xp: 8 + level * 2 + items.length * 4,
+      done: false
+    };
+  }
+  function makeOrders(firstCarrot) {
+    orders = [];
+    for (var i = 0; i < 3; i++) orders.push(makeOrder(i === 0 && firstCarrot ? 'carrot' : null));
+  }
+  function hasItems(items) {
+    for (var i = 0; i < items.length; i++) {
+      if ((inv[items[i].k] || 0) < items[i].n) return false;
+    }
+    return true;
+  }
+  function consumeItems(items) {
+    for (var i = 0; i < items.length; i++) inv[items[i].k] -= items[i].n;
+  }
+
+  /* ---------- progress ---------- */
+  function addXp(n) {
+    if (!n) return;
+    xp += n;
+    var leveled = false;
+    while (level < 10 && xp >= LEVEL_XP[level + 1]) {
+      level++;
+      maxEnergy += 2;
+      energy = Math.min(maxEnergy, energy + 2);
+      leveled = true;
+    }
+    if (leveled) {
+      showToast('村庄升到 ' + level + ' 级，体力上限提升');
+      sfxLevel();
+      syncToolbar();
+    }
+  }
+  function chapterText() {
+    if (chapter >= CHAPTERS.length) return '六章主线全部完成 · 桃源乡已是世外桃源';
+    var c = CHAPTERS[chapter];
+    return '第' + ['一', '二', '三', '四', '五', '六'][chapter] + '章 · ' + c.title + '：' + c.goal();
+  }
+  function checkChapter() {
+    var guard = 0;
+    while (chapter < CHAPTERS.length && CHAPTERS[chapter].check() && guard++ < 10) {
+      var c = CHAPTERS[chapter];
+      coins += c.reward;
+      stats.coinsEarned += c.reward;
+      addXp(c.xp);
+      chapter++;
+      var unlockNote = '';
+      if (chapter >= 2 && !hillUnlocked) {
+        hillUnlocked = true;
+        unlockNote = ' · 后山梯田解锁';
+        syncMapBtn();
+      }
+      showToast('主线完成 · ' + c.title + ' · +' + c.reward + ' 钱 +' + c.xp + ' 经验' + unlockNote);
+      sfxLevel();
+      if (chapter >= CHAPTERS.length) winGame();
+    }
+  }
+  function checkAch() {
+    var got = [];
+    for (var i = 0; i < ACHS.length; i++) {
+      var a = ACHS[i];
+      if (!stats.ach[a.id] && a.check()) {
+        stats.ach[a.id] = true;
+        if (a.reward) { coins += a.reward; stats.coinsEarned += a.reward; }
+        got.push(a.name + (a.reward ? ' +' + a.reward : ''));
+        sfxAch();
+      }
+    }
+    if (got.length) showToast('成就达成：' + got.join('、'));
+  }
+  function winGame() {
+    if (wonOnce) return;
+    wonOnce = true;
+    state = 'won';
+    closeModal();
+    $('winDay').textContent = day;
+    $('winNote').textContent = '村庄 ' + level + ' 级 · 收获 ' + stats.harvests + ' 份 · 订单 ' + stats.orders + ' 个 · 铜钱 ' + coins;
+    $('winExtra').textContent = '设施 ' + facilityCount() + '/12 · 知己 ' + heartsCount() + '/4 · 加工 ' + stats.crafts + ' 次 · 钓鱼 ' + stats.fish + ' 条 · 后山收成 ' + (stats.hillHarvests || 0) + ' 份';
+    $('screenWin').classList.add('show');
+    setTimeout(function () { tone(784, 0.16, 'sine', 0.045, 988); }, 260);
+    setTimeout(function () { tone(988, 0.24, 'sine', 0.04, 1175); }, 440);
+    saveGame();
+  }
+
+  /* ---------- actions ---------- */
+  function spendEnergy() {
+    if (energy < 1) {
+      showToast('体力用完了，点「收工」休息一下吧');
+      sfxErr();
+      return false;
+    }
+    energy--;
+    return true;
+  }
+  function act(x, y) {
+    if (state !== 'playing') return;
+    if (x < 0 || y < 0 || x >= SIZE || y >= SIZE) return;
+    var p = plots[y][x];
+    if (p.state === 'grass') {
+      p.state = 'soil'; p.crop = null; p.growth = 0; p.watered = false; p.regrown = 0;
+      particlesAt(x, y, '#8b6a43', 8, 90, 0.45);
+      sfxPlant();
+      addFloat('开垦', FX + x * TILE + TILE / 2, FY + y * TILE + 10, '#d8c39a');
+      syncAll(); saveSoon();
+    } else if (p.state === 'soil') {
+      var c = CROPS[selected];
+      if (level < c.unlock) { showToast('这种子要村庄 ' + c.unlock + ' 级才解锁'); sfxErr(); return; }
+      if (c.hill && !isHill()) { showToast('这种作物要种在后山梯田，点「后山」过去'); sfxErr(); return; }
+      if (coins < c.cost) { showToast('铜钱不够买种子，还差 ' + (c.cost - coins)); sfxErr(); return; }
+      if (!spendEnergy()) return;
+      coins -= c.cost;
+      p.state = 'crop'; p.crop = selected; p.growth = 0; p.watered = false; p.regrown = 0;
+      addFloat('-' + c.cost + ' 钱', FX + x * TILE + TILE / 2, FY + y * TILE + 10, '#ffb38a');
+      sfxPlant();
+      syncAll(); saveSoon();
+    } else if (p.state === 'crop') {
+      var cr = CROPS[p.crop];
+      if (!cr) { p.state = 'soil'; p.crop = null; return; }
+      if (p.growth >= cr.days) {
+        if (!spendEnergy()) return;
+        var got = 1;
+        if (villagers.amu.perkOn && Math.random() < 0.25) got = 2;
+        inv[p.crop] = (inv[p.crop] || 0) + got;
+        stats.harvests += got;
+        if (isHill()) stats.hillHarvests = (stats.hillHarvests || 0) + got;
+        stats.types[p.crop] = (stats.types[p.crop] || 0) + got;
+        addXp(cr.xp);
+        particlesAt(x, y, cr.fruit, 12, 110, 0.55);
+        addFloat('+' + cr.name + ' ×' + got, FX + x * TILE + TILE / 2, FY + y * TILE + 8, '#c8f0a8');
+        sfxHarvest();
+        if (cr.regrow && p.regrown < cr.times) {
+          p.regrown++;
+          p.growth = Math.max(0, cr.days - cr.regrow);
+          p.watered = false;
+        } else {
+          p.state = 'soil'; p.crop = null; p.growth = 0; p.watered = false; p.regrown = 0;
+        }
+        checkChapter(); checkAch();
+        syncAll(); saveSoon();
+      } else if (!p.watered) {
+        if (!spendEnergy()) return;
+        p.watered = true;
+        particlesAt(x, y, '#7fd4ee', 10, 80, 0.5);
+        sfxWater();
+        addFloat('浇水', FX + x * TILE + TILE / 2, FY + y * TILE + 10, '#bdefff');
+        syncAll(); saveSoon();
+      } else {
+        showToast('今天已经浇过了，收工推进一天吧');
+      }
+    }
+  }
+  function sellAllOf(key) {
+    var n = inv[key] || 0;
+    if (!n) return;
+    var price = sellPrice(key);
+    inv[key] = 0;
+    var gain = price * n;
+    coins += gain;
+    stats.coinsEarned += gain;
+    sfxCoin();
+    showToast('卖出 ' + n + ' 份' + ITEMS[key].name + '，进账 ' + gain + ' 钱');
+    checkAch();
+    syncAll(); saveSoon(); renderModal();
+  }
+  function sellOne(key) {
+    var n = inv[key] || 0;
+    if (!n) return;
+    var price = sellPrice(key);
+    inv[key] = n - 1;
+    coins += price;
+    stats.coinsEarned += price;
+    sfxCoin();
+    checkAch();
+    syncAll(); saveSoon(); renderModal();
+  }
+  function sellPrice(key) {
+    var base = ITEMS[key].sell;
+    var mult = 1;
+    if (ITEMS[key].type === 'crop' && CROPS[key] && CROPS[key].season === seasonName()) mult *= 1.3;
+    if (key === hotItem) mult *= 1.5;
+    return Math.round(base * mult);
+  }
+  function doFish() {
+    if (state !== 'playing') return;
+    if (fishLeft <= 0) { showToast('今天鱼儿歇着了，明天再来'); sfxErr(); return; }
+    if (!spendEnergy()) return;
+    fishLeft--;
+    var got = 1;
+    if (villagers.laozhou.perkOn && Math.random() < 0.35) got = 2;
+    inv.fish = (inv.fish || 0) + got;
+    stats.fish += got;
+    addXp(5);
+    var names = ['鲫鱼', '鲤鱼', '草鱼', '鳜鱼', '一尾锦鲤'];
+    var nm = names[(Math.random() * names.length) | 0];
+    showToast('钓到 ' + got + ' 条' + nm + '，鲜鱼 +' + got);
+    sfxFish();
+    checkChapter(); checkAch();
+    syncAll(); saveSoon();
+  }
+  function buildFacility(id) {
+    var f = FACILITIES[id];
+    if (!f || facilities[id]) return;
+    if (coins < f.cost) { showToast('铜钱不够，还差 ' + (f.cost - coins)); sfxErr(); return; }
+    coins -= f.cost;
+    facilities[id] = true;
+    if (id === 'barn') { maxEnergy += 3; energy = Math.min(maxEnergy, energy + 3); }
+    if (id === 'boat') fishLeft = Math.max(fishLeft, 2);
+    showToast('建成「' + f.name + '」');
+    tone(320, 0.1, 'triangle', 0.045, 480); setTimeout(function () { tone(480, 0.12, 'triangle', 0.04, 640); }, 110);
+    checkChapter(); checkAch();
+    syncAll(); saveSoon(); renderModal();
+  }
+  function craftRecipe(id) {
+    var r = null;
+    for (var i = 0; i < RECIPES.length; i++) if (RECIPES[i].id === id) r = RECIPES[i];
+    if (!r) return;
+    if (!facilities[r.fac]) { showToast('需要先建「' + FACILITIES[r.fac].name + '」'); sfxErr(); return; }
+    for (var k in r.inp) if ((inv[k] || 0) < r.inp[k]) { showToast('材料不够：' + ITEMS[k].name + ' 需要 ' + r.inp[k]); sfxErr(); return; }
+    if (!spendEnergy()) return;
+    for (k in r.inp) inv[k] -= r.inp[k];
+    var outKey = '';
+    for (var ok in r.out) outKey = ok;
+    inv[outKey] = (inv[outKey] || 0) + 1;
+    stats.crafts++;
+    addXp(r.xp);
+    showToast('做好了 1 份' + ITEMS[outKey].name);
+    sfxCraft();
+    checkChapter(); checkAch();
+    syncAll(); saveSoon(); renderModal();
+  }
+  function giftVillager(id) {
+    var v = villagers[id];
+    if (!v) return;
+    if (v.gifted) { showToast('今天已经送过礼了'); sfxErr(); return; }
+    if (v.f >= 100) { showToast('已经是知己了，不用再送啦'); return; }
+    var likes = VILLAGERS[id].likes;
+    var key = null;
+    for (var i = 0; i < likes.length; i++) if ((inv[likes[i]] || 0) > 0) { key = likes[i]; break; }
+    if (!key) { showToast('没有' + VILLAGERS[id].name + '喜欢的东西'); sfxErr(); return; }
+    inv[key]--;
+    v.gifted = true;
+    v.f = Math.min(100, v.f + 16);
+    stats.gifts++;
+    addXp(4);
+    showToast('送给' + VILLAGERS[id].name + ' 1 份' + ITEMS[key].name + '，好感 +16');
+    sfxCoin();
+    if (v.f >= 100 && !v.perkOn) {
+      v.perkOn = true;
+      applyPerk(id);
+    }
+    checkChapter(); checkAch();
+    syncAll(); saveSoon(); renderModal();
+  }
+  function applyPerk(id) {
+    if (id === 'grandma') { maxEnergy += 2; energy += 2; }
+    showToast('与' + VILLAGERS[id].name + '成为知己 · ' + VILLAGERS[id].perk);
+    sfxLevel();
+  }
+  function deliverOrder(idx) {
+    if (state !== 'playing' && state !== 'won') return;
+    var o = orders[idx];
+    if (!o || o.done) return;
+    if (!hasItems(o.items)) { showToast('存货还不够，先去田里收点东西'); sfxErr(); return; }
+    consumeItems(o.items);
+    var gain = o.reward;
+    if (villagers.xiaoman.perkOn) gain = Math.round(gain * 1.15);
+    coins += gain;
+    stats.orders++;
+    stats.coinsEarned += gain;
+    addXp(o.xp);
+    o.done = true;
+    sfxCoin();
+    addFloat('+' + gain + ' 钱', W / 2, FY + 20, '#ffd166');
+    showToast('订单完成，进账 ' + gain + ' 钱' + (villagers.xiaoman.perkOn ? '（小满加成）' : ''));
+    checkChapter(); checkAch();
+    syncAll(); saveSoon();
+  }
+
+  /* ---------- day cycle ---------- */
+  var dayMsgs = [];
+  function note(s) { dayMsgs.push(s); }
+  function plotGroups() {
+    var g = [{ pl: homePlots, n: HOME_SIZE, place: '' }];
+    if (hillUnlocked) g.push({ pl: hillPlots, n: HILL_SIZE, place: '后山' });
+    return g;
+  }
+  function waterAll() {
+    var gs = plotGroups();
+    for (var g = 0; g < gs.length; g++) {
+      for (var y = 0; y < gs[g].n; y++) for (var x = 0; x < gs[g].n; x++) {
+        if (gs[g].pl[y][x].state === 'crop') gs[g].pl[y][x].watered = true;
+      }
+    }
+  }
+  function pestEvent() {
+    var chance = facilities.scarecrow ? 0.02 : 0.10;
+    if (Math.random() >= chance) return;
+    var cand = [], gs = plotGroups();
+    for (var g = 0; g < gs.length; g++) {
+      for (var y = 0; y < gs[g].n; y++) for (var x = 0; x < gs[g].n; x++) {
+        var p = gs[g].pl[y][x];
+        if (p.state === 'crop' && CROPS[p.crop] && p.growth < CROPS[p.crop].days) cand.push({ p: p, place: gs[g].place });
+      }
+    }
+    if (!cand.length) return;
+    var t = cand[(Math.random() * cand.length) | 0];
+    t.p.growth = Math.max(0, t.p.growth - 1);
+    note('虫害：' + (t.place ? t.place + '一块' : '一块') + CROPS[t.p.crop].name + '地受了点影响');
+  }
+  function randomEvent() {
+    if (Math.random() >= 0.45) return;
+    var r = Math.random();
+    if (r < 0.18) {
+      var g = 30 + ((Math.random() * 31) | 0);
+      coins += g; stats.coinsEarned += g;
+      note('商队路过，+ ' + g + ' 钱');
+    } else if (r < 0.36) {
+      var pool = [];
+      for (var i = 0; i < CROP_KEYS.length; i++) if (cropAvailable(CROP_KEYS[i])) pool.push(CROP_KEYS[i]);
+      var k = pool[(Math.random() * pool.length) | 0];
+      inv[k] = (inv[k] || 0) + 1;
+      note('邻居送来 1 份' + CROPS[k].name);
+    } else if (r < 0.52) {
+      energy = Math.min(maxEnergy + 4, energy + 5);
+      note('阿婆送来热饭，体力 +5');
+    } else if (r < 0.68) {
+      if (facilities.beehive) { inv.honey = (inv.honey || 0) + 1; note('蜂箱多收 1 份蜂蜜'); }
+      else { coins += 20; stats.coinsEarned += 20; note('集市热闹，+ 20 钱'); }
+    } else if (r < 0.84) {
+      var gs = plotGroups();
+      for (var g = 0; g < gs.length; g++) {
+        for (var y = 0; y < gs[g].n; y++) for (var x = 0; x < gs[g].n; x++) {
+          var p = gs[g].pl[y][x];
+          if (p.state === 'crop' && CROPS[p.crop]) p.growth = Math.min(CROPS[p.crop].days, p.growth + 0.5);
+        }
+      }
+      note('夜里一场好雨，作物悄悄长了一截');
+    } else {
+      coins += 40; stats.coinsEarned += 40;
+      note('游客买走些土产，+ 40 钱');
+    }
+  }
+  function endDay() {
+    if (state !== 'playing' && state !== 'won') return;
+    if (state === 'won') { $('screenWin').classList.remove('show'); state = 'playing'; }
+    var ready = 0, readyHill = 0, prevSeason = seasonIdx(), groups = plotGroups();
+    for (var g = 0; g < groups.length; g++) {
+      for (var y = 0; y < groups[g].n; y++) {
+        for (var x = 0; x < groups[g].n; x++) {
+          var p = groups[g].pl[y][x];
+          if (p.state === 'crop' && CROPS[p.crop]) {
+            var c = CROPS[p.crop];
+            if (p.watered) {
+              var step = (isWinter() && !facilities.greenhouse) ? 0.5 : 1;
+              p.growth = Math.min(c.days, p.growth + step);
+            }
+            if (p.growth >= c.days) { ready++; if (groups[g].place) readyHill++; }
+            p.watered = false;
+          }
+        }
+      }
+    }
+    day++;
+    stats.daysPlayed++;
+    dayMsgs = [];
+    energy = maxEnergy;
+    for (var i = 0; i < VILLAGER_KEYS.length; i++) villagers[VILLAGER_KEYS[i]].gifted = false;
+    rollWeather();
+    if (weather === 'rain') note('下雨了，作物自动浇透');
+    if (weather === 'snow') note('下雪了，雪水渗进田里');
+    if (weather === 'rain' || weather === 'snow' || facilities.well) waterAll();
+    if (facilities.coop) { inv.egg = (inv.egg || 0) + 1; stats.eggs = (stats.eggs || 0) + 1; note('鸡舍收了 1 枚鸡蛋'); }
+    if (facilities.cowbarn) { inv.milk = (inv.milk || 0) + 1; note('牛棚收了 1 桶牛奶'); }
+    if (facilities.beehive) { inv.honey = (inv.honey || 0) + 1; note('蜂箱收了 1 份蜂蜜'); }
+    if (facilities.teahouse) { coins += 25; stats.coinsEarned += 25; note('茶馆进账 25 钱'); }
+    pestEvent();
+    randomEvent();
+    if (seasonIdx() !== prevSeason) note('换季了，' + SEASONS[seasonIdx()] + '天到了');
+    if ((day - 1) % SEASON_DAYS === SEASON_DAYS - 1) { coins += 80; stats.coinsEarned += 80; note('丰收节，村里发红包 + 80 钱'); }
+    if (ready > 0) note(ready + ' 块地可以收获' + (readyHill ? '（后山 ' + readyHill + '）' : ''));
+    makeOrders();
+    hotItem = pickHotItem();
+    if (hotItem) note('今日热销 ' + ITEMS[hotItem].name + ' +50%');
+    checkChapter(); checkAch();
+    if (dayMsgs.length) showToast('第 ' + day + ' 天 · ' + dayMsgs.join(' · '));
+    else showToast('第 ' + day + ' 天 · ' + seasonName() + ' · ' + weatherText());
+    sfxDay();
+    syncAll(); saveGame();
+  }
+
+  /* ---------- fx ---------- */
+  function particlesAt(x, y, color, n, spd, life) {
+    var cx = FX + x * TILE + TILE / 2, cy = FY + y * TILE + TILE / 2;
+    for (var i = 0; i < n; i++) {
+      var a = Math.random() * 6.2832, v = (0.3 + Math.random()) * spd;
+      particles.push({ x: cx, y: cy, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 30,
+        life: life * (0.5 + Math.random()), max: life, color: color, r: 1 + Math.random() * 2, grav: 70 });
+    }
+  }
+  function addFloat(text, x, y, color) {
+    floats.push({ text: text, x: x, y: y, color: color, t: 0 });
+  }
+  function showToast(msg) {
+    var el = $('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.classList.remove('show'); }, 2800);
+  }
+
+  /* ---------- HUD ---------- */
+  function syncAll() {
+    $('coins').textContent = coins;
+    $('energy').textContent = energy + '/' + maxEnergy;
+    $('day').textContent = day;
+    $('seasonIcon').textContent = SEASON_ICONS[seasonIdx()];
+    $('weatherIcon').textContent = weatherIcon();
+    $('weatherText').textContent = weatherText();
+    $('level').textContent = level;
+    var lo = LEVEL_XP[level], hi = level >= 10 ? LEVEL_XP[10] : LEVEL_XP[level + 1];
+    var pct = level >= 10 ? 100 : Math.min(100, ((xp - lo) / Math.max(1, hi - lo)) * 100);
+    $('xpfill').style.width = pct + '%';
+    $('chapterText').textContent = chapterText();
+    $('fishBtn').textContent = '🎣 钓鱼 ' + fishLeft + '/' + fishCap();
+    syncOrders();
+    syncMapBtn();
+  }
+  function syncOrders() {
+    var box = $('orders');
+    box.innerHTML = '';
+    if (state === 'start') {
+      var e = document.createElement('span');
+      e.style.cssText = 'font-size:11px;color:#7f8f70;padding:4px 2px;';
+      e.textContent = '住进桃源乡后，这里会出现村民的订单';
+      box.appendChild(e);
+      return;
+    }
+    for (var i = 0; i < orders.length; i++) {
+      (function (idx) {
+        var o = orders[idx];
+        var d = document.createElement('div');
+        d.className = 'order' + (o.done ? ' done' : '');
+        var parts = [];
+        for (var j = 0; j < o.items.length; j++) {
+          parts.push(ITEMS[o.items[j].k].icon + '×' + o.items[j].n);
+        }
+        d.innerHTML = '<span class="oitems">' + parts.join(' ') + '</span><span class="oreward">◉' + o.reward + '</span>';
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'mini' + (o.done ? '' : ' gold');
+        b.textContent = o.done ? '已交' : '交付';
+        b.disabled = o.done || !hasItems(o.items);
+        b.addEventListener('click', function () { deliverOrder(idx); });
+        d.appendChild(b);
+        box.appendChild(d);
+      })(i);
+    }
+  }
+  function syncToolbar() {
+    var row = $('seedRow');
+    row.innerHTML = '';
+    for (var i = 0; i < CROP_KEYS.length; i++) {
+      (function (k, idx) {
+        var c = CROPS[k];
+        var locked = level < c.unlock;
+        var far = !!c.hill && !isHill();
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'seed' + (selected === k ? ' sel' : '') + (locked ? ' lock' : '') + (far ? ' far' : '');
+        b.title = far ? '后山梯田专属作物' : '';
+        var key = idx < 9 ? String(idx + 1) : (idx === 9 ? '0' : (idx === 10 ? 'Q' : 'E'));
+        var sub = locked ? 'Lv.' + c.unlock + ' 解锁' : (far ? '后山专属' : '◉' + c.cost + ' · ' + c.days + '天');
+        b.innerHTML = (key ? '<span class="sk">' + key + '</span>' : '') +
+          (c.hill ? '<span class="mk">山</span>' : '') +
+          '<span class="nm">' + c.icon + ' ' + c.name + '</span><span class="cost">' + sub + '</span>';
+        b.addEventListener('click', function () {
+          if (locked) { showToast('这种子要村庄 ' + c.unlock + ' 级才解锁'); sfxErr(); return; }
+          if (far) {
+            showToast(hillUnlocked ? '「' + c.name + '」要种在后山梯田，点「后山」过去' : '完成第二章后，后山梯田才会打开');
+            sfxErr(); return;
+          }
+          selected = k; syncToolbar(); audio();
+        });
+        row.appendChild(b);
+      })(CROP_KEYS[i], i);
+    }
+    var selEl = row.querySelector('.seed.sel');
+    if (selEl) {
+      var sleft = selEl.offsetLeft - row.offsetLeft;
+      row.scrollLeft = Math.max(0, sleft - 8);
+    }
+  }
+  function updateStartUI() {
+    if (pendingSave) {
+      $('startBtn').textContent = '继续上次 · 第 ' + pendingSave.day + ' 天';
+      $('newBtn').style.display = 'block';
+      $('saveInfo').style.display = 'block';
+      $('saveInfo').textContent = '存档：第 ' + pendingSave.day + ' 天 · 村庄 ' + calcLevel(pendingSave.xp || 0) + ' 级 · ' + (pendingSave.coins || 0) + ' 铜钱';
+    } else {
+      $('startBtn').textContent = '住进桃源乡';
+      $('newBtn').style.display = 'none';
+      $('saveInfo').style.display = 'none';
+    }
+  }
+
+  /* ---------- modal ---------- */
+  function openModal(kind, tab) {
+    modalKind = kind;
+    modalTab = tab || (kind === 'market' ? 'inv' : (kind === 'village' ? 'fac' : 'story'));
+    $('screenModal').classList.add('show');
+    renderModal();
+  }
+  function closeModal() {
+    $('screenModal').classList.remove('show');
+    modalKind = '';
+  }
+  function renderModal() {
+    if (!modalKind) return;
+    var tabs = [], title = '';
+    if (modalKind === 'market') { title = '仓坊'; tabs = [['inv', '仓库'], ['craft', '加工']]; }
+    else if (modalKind === 'village') { title = '村务'; tabs = [['fac', '设施'], ['vil', '村民'], ['codex', '图鉴'], ['ach', '成就']]; }
+    else { title = '主线 · 桃源记'; tabs = [['story', '六章主线']]; }
+    $('modalTitle').textContent = title;
+    var tb = $('modalTabs');
+    tb.innerHTML = '';
+    for (var i = 0; i < tabs.length; i++) {
+      (function (t) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'tabBtn' + (modalTab === t[0] ? ' on' : '');
+        b.textContent = t[1];
+        b.addEventListener('click', function () { modalTab = t[0]; renderModal(); });
+        tb.appendChild(b);
+      })(tabs[i]);
+    }
+    if (modalKind === 'market') renderMarket();
+    else if (modalKind === 'village') renderVillage();
+    else renderStory();
+  }
+  function renderMarket() {
+    var body = $('modalBody');
+    if (modalTab === 'craft') { renderCraft(body); return; }
+    var html = '<div class="sum">铜钱 <b>' + coins + '</b> · 体力 <b>' + energy + '/' + maxEnergy + '</b> · 当季 ' + seasonName() + '（当季作物售价 +30%）</div>';
+    var owned = [];
+    for (var k in ITEMS) if ((inv[k] || 0) > 0) owned.push(k);
+    if (!owned.length) {
+      html += '<div class="empty">仓库还是空的。<br>先去田里收点东西，或者等鸡舍、蜂箱每天送点土产。</div>';
+      body.innerHTML = html;
+      return;
+    }
+    for (var i = 0; i < owned.length; i++) {
+      var key = owned[i], it = ITEMS[key], n = inv[key];
+      var bonus = (it.type === 'crop' && CROPS[key] && CROPS[key].season === seasonName());
+      var label = it.type === 'crop' ? '普通作物' : (it.type === 'product' ? '土产' : '加工品');
+      var notes = [];
+      if (bonus) notes.push('当季售价 +30%');
+      if (key === hotItem) notes.push('今日热销 +50%');
+      html += '<div class="itemRow"><span class="ii">' + it.icon + '</span><span class="nm">' + it.name +
+        '<small>' + label + (notes.length ? ' · ' + notes.join(' · ') : '') + ' · 库存 ' + n +
+        '</small></span><span class="price">◉' + sellPrice(key) + '</span>' +
+        '<button class="mini" data-sell1="' + key + '">卖1</button>' +
+        '<button class="mini gold" data-sellall="' + key + '">全卖</button></div>';
+    }
+    body.innerHTML = html;
+    var b1 = body.querySelectorAll('[data-sell1]');
+    for (i = 0; i < b1.length; i++) {
+      (function (btn) { btn.addEventListener('click', function () { sellOne(btn.getAttribute('data-sell1')); }); })(b1[i]);
+    }
+    var b2 = body.querySelectorAll('[data-sellall]');
+    for (i = 0; i < b2.length; i++) {
+      (function (btn) { btn.addEventListener('click', function () { sellAllOf(btn.getAttribute('data-sellall')); }); })(b2[i]);
+    }
+  }
+  function renderCraft(body) {
+    var html = '<div class="sum">加工消耗 1 点体力，成品可直接卖钱或留给订单。</div>';
+    for (var i = 0; i < RECIPES.length; i++) {
+      var r = RECIPES[i];
+      var hasFac = !!facilities[r.fac];
+      var can = hasFac && energy >= 1;
+      var ing = [];
+      for (var k in r.inp) {
+        var have = inv[k] || 0, need = r.inp[k];
+        if (have < need) can = false;
+        ing.push('<i class="' + (have < need ? 'bad' : '') + '">' + ITEMS[k].icon + ITEMS[k].name + ' ' + have + '/' + need + '</i>');
+      }
+      var outKey = '';
+      for (var ok in r.out) outKey = ok;
+      html += '<div class="recipe"><div class="rtop"><b>' + r.name + '</b><span>→ ' + ITEMS[outKey].icon + ' ' +
+        ITEMS[outKey].name + ' ×1 · 值 ◉' + ITEMS[outKey].sell + '</span></div>' +
+        '<div class="ring">' + ing.join(' ＋ ') + '　·　+' + r.xp + ' 经验</div>' +
+        '<div class="rbot"><span class="rnote">' + (hasFac ? '所需设施已就绪' : '需要先建「' + FACILITIES[r.fac].name + '」') +
+        '</span><button class="mini gold" data-craft="' + r.id + '"' + (can ? '' : ' disabled') + '>加工</button></div></div>';
+    }
+    body.innerHTML = html;
+    var btns = body.querySelectorAll('[data-craft]');
+    for (i = 0; i < btns.length; i++) {
+      (function (btn) { btn.addEventListener('click', function () { craftRecipe(btn.getAttribute('data-craft')); }); })(btns[i]);
+    }
+  }
+  function renderVillage() {
+    var body = $('modalBody');
+    if (modalTab === 'fac') { renderFacilities(body); return; }
+    if (modalTab === 'vil') { renderVillagers(body); return; }
+    if (modalTab === 'codex') { renderCodex(body); return; }
+    renderAch(body);
+  }
+  function renderFacilities(body) {
+    var html = '<div class="sum">铜钱 <b>' + coins + '</b> · 已建设施 <b>' + facilityCount() + '/12</b>　（设施效果每天清晨生效）</div><div class="fgrid">';
+    for (var i = 0; i < FACILITY_KEYS.length; i++) {
+      var k = FACILITY_KEYS[i], f = FACILITIES[k], owned = !!facilities[k];
+      html += '<div class="fcard"><div class="ftop"><span>' + f.icon + '</span><b>' + f.name + '</b><span class="fcost">◉' + f.cost + '</span></div>' +
+        '<p>' + f.desc + '</p>' +
+        (owned ? '<span class="owned">✓ 已建成</span>' :
+          '<button class="mini gold" data-build="' + k + '"' + (coins >= f.cost ? '' : ' disabled') + '>建造</button>') +
+        '</div>';
+    }
+    html += '</div>';
+    body.innerHTML = html;
+    var btns = body.querySelectorAll('[data-build]');
+    for (i = 0; i < btns.length; i++) {
+      (function (btn) { btn.addEventListener('click', function () { buildFacility(btn.getAttribute('data-build')); }); })(btns[i]);
+    }
+  }
+  function renderVillagers(body) {
+    var html = '<div class="sum">每天可以给每位村民送 1 份礼物，送到 100 好感成为知己，解锁永久效果。</div>';
+    for (var i = 0; i < VILLAGER_KEYS.length; i++) {
+      var k = VILLAGER_KEYS[i], v = villagers[k], def = VILLAGERS[k];
+      var full = Math.floor(v.f / 20), partial = v.f % 20;
+      var hearts = '';
+      for (var h = 0; h < 5; h++) hearts += '<span class="' + (h < full ? 'on' : 'off') + '">' + (h < full ? '♥' : '♡') + '</span>';
+      var likeNames = [];
+      var canGift = false;
+      for (var l = 0; l < def.likes.length; l++) {
+        var lk = def.likes[l];
+        likeNames.push(ITEMS[lk].icon + ITEMS[lk].name + '（' + (inv[lk] || 0) + '）');
+        if ((inv[lk] || 0) > 0) canGift = true;
+      }
+      html += '<div class="vcard"><div class="vtop"><span class="vi">' + def.icon + '</span><b>' + def.name +
+        '</b><span class="hearts">' + hearts + '</span></div>' +
+        '<p>喜欢：' + likeNames.join(' · ') + '</p>' +
+        '<p class="perk">' + def.perk + '　' + (v.perkOn ? '（已生效）' : '') + '</p>' +
+        '<div class="vbar"><i style="width:' + v.f + '%"></i></div>' +
+        '<div class="rbot">' + (v.f >= 100 ? '<span>已是知己，常来坐坐</span>' :
+          (v.gifted ? '<span>今天已经送过礼了</span>' :
+            '<button class="mini gold" data-gift="' + k + '"' + (canGift ? '' : ' disabled') + '>送礼</button><span>' +
+            (canGift ? '消耗 1 份喜欢的东西，好感 +16' : '没有对方喜欢的东西') + '</span>')) +
+        '</div></div>';
+    }
+    body.innerHTML = html;
+    var btns = body.querySelectorAll('[data-gift]');
+    for (i = 0; i < btns.length; i++) {
+      (function (btn) { btn.addEventListener('click', function () { giftVillager(btn.getAttribute('data-gift')); }); })(btns[i]);
+    }
+  }
+  function renderCodex(body) {
+    var html = '<div class="sum">累计收获 <b>' + stats.harvests + '</b> · 后山 <b>' + (stats.hillHarvests || 0) + '</b> · 订单 <b>' + stats.orders + '</b> · 加工 <b>' + stats.crafts +
+      '</b> · 钓鱼 <b>' + stats.fish + '</b> · 已过 <b>' + stats.daysPlayed + '</b> 天</div><div class="cgrid">';
+    for (var i = 0; i < CROP_KEYS.length; i++) {
+      var k = CROP_KEYS[i], c = CROPS[k], unlocked = level >= c.unlock && (!c.hill || hillUnlocked);
+      var grown = stats.types[k] || 0;
+      var lockTxt = (c.hill && !hillUnlocked) ? '完成第二章解锁后山' : '村庄 ' + c.unlock + ' 级解锁';
+      html += '<div class="ccard' + (unlocked ? '' : ' lock') + '"><b>' + c.icon + ' ' + c.name + (grown ? ' · 已收 ' + grown : '') + '</b>' +
+        '<small>' + (unlocked ? '种子 ◉' + c.cost + ' · ' + c.days + ' 天 · 售价 ◉' + c.sell + ' · 当季 ' + c.season : lockTxt) +
+        (c.hill ? ' · 后山专属' : '') +
+        (c.regrow ? '<br>可重复收获 ' + c.times + ' 次，间隔 ' + c.regrow + ' 天' : '') + '</small></div>';
+    }
+    html += '</div><div class="sum" style="margin-top:10px">土产与加工品</div><div class="cgrid">';
+    var extraKeys = ['egg', 'milk', 'honey', 'fish', 'flour', 'bread', 'pie', 'jam', 'fishSoup', 'teaCake', 'honeyCake', 'wine', 'ginsengTea', 'blueberryJam', 'mushroomSoup'];
+    for (i = 0; i < extraKeys.length; i++) {
+      var ek = extraKeys[i];
+      html += '<div class="ccard"><b>' + ITEMS[ek].icon + ' ' + ITEMS[ek].name + '</b><small>售价 ◉' + ITEMS[ek].sell + ' · 库存 ' + (inv[ek] || 0) + '</small></div>';
+    }
+    html += '</div>';
+    body.innerHTML = html;
+  }
+  function renderAch(body) {
+    var got = 0;
+    for (var i = 0; i < ACHS.length; i++) if (stats.ach[ACHS[i].id]) got++;
+    var html = '<div class="sum">成就 <b>' + got + '/' + ACHS.length + '</b> · 铜钱 <b>' + coins + '</b></div>';
+    for (i = 0; i < ACHS.length; i++) {
+      var a = ACHS[i], on = !!stats.ach[a.id];
+      html += '<div class="achRow' + (on ? ' on' : '') + '"><span class="medal">' + (on ? '🏅' : '🔒') + '</span>' +
+        '<span class="nm">' + a.name + '<small>' + a.desc + '</small></span>' +
+        '<span class="rw">' + (a.reward ? '◉' + a.reward : '勋章') + '</span></div>';
+    }
+    body.innerHTML = html;
+  }
+  function renderStory() {
+    var html = '<div class="sum">当前：第 ' + day + ' 天 · ' + seasonName() + ' · 村庄 ' + level + ' 级 · 订单 ' + stats.orders + ' 个</div>';
+    for (var i = 0; i < CHAPTERS.length; i++) {
+      var c = CHAPTERS[i];
+      var cls = i < chapter ? ' done' : (i === chapter ? ' cur' : '');
+      var status = i < chapter ? '已完成' : (i === chapter ? '进行中' : '未解锁');
+      html += '<div class="chapRow' + cls + '"><div class="ch">第' + ['一', '二', '三', '四', '五', '六'][i] + '章 · ' + c.title +
+        '<span>' + status + '</span></div>' +
+        '<p>目标：' + (i < chapter ? '已完成' : c.goal()) + '</p>' +
+        '<div class="story">' + c.story + '</div>' +
+        '<p>奖励：◉' + c.reward + ' · ' + c.xp + ' 经验</p></div>';
+    }
+    if (chapter >= CHAPTERS.length) {
+      html += '<div class="chapRow cur"><div class="ch">桃源已成<span>通关</span></div><p>主线走完了，但日子还长。继续冲十级村庄、集齐设施和成就吧。</p></div>';
+    }
+    $('modalBody').innerHTML = html;
+  }
+
+  /* ---------- drawing ---------- */
+  function roundRect(x, y, w, h, r) {
+    r = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+  function resize() {
+    var r = stage.getBoundingClientRect();
+    W = Math.max(300, Math.floor(r.width - 2));
+    H = Math.max(220, Math.floor(r.height - 2));
+    cvs.style.width = W + 'px';
+    cvs.style.height = H + 'px';
+    DPR = Math.min(2.5, window.devicePixelRatio || 1);
+    cvs.width = Math.round(W * DPR);
+    cvs.height = Math.round(H * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    TILE = Math.max(24, Math.min(92, Math.floor(Math.min((W - 20) / SIZE, (H - 14) / SIZE))));
+    FX = (W - TILE * SIZE) / 2;
+    FY = (H - TILE * SIZE) / 2;
+    makeAmbient();
+  }
+  function makeAmbient() {
+    butterflies = [];
+    for (var i = 0; i < 5; i++) {
+      butterflies.push({ x: Math.random() * W, y: 20 + Math.random() * H * 0.7,
+        p: Math.random() * 6.28, s: 0.5 + Math.random() * 0.7, hue: Math.random() < 0.5 ? '#ffe08a' : '#e8b6ff' });
+    }
+    clouds = [];
+    for (i = 0; i < 3; i++) {
+      clouds.push({ x: Math.random() * W, y: 14 + Math.random() * (H * 0.3), s: 50 + Math.random() * 70, v: 4 + Math.random() * 7 });
+    }
+  }
+  function tileRect(x, y) {
+    return { x: FX + x * TILE + 2, y: FY + y * TILE + 2, w: TILE - 4, h: TILE - 4 };
+  }
+  function tileAt(mx, my) {
+    var x = Math.floor((mx - FX) / TILE), y = Math.floor((my - FY) / TILE);
+    if (x < 0 || y < 0 || x >= SIZE || y >= SIZE) return null;
+    return { x: x, y: y };
+  }
+  var SEASON_PAL = [
+    ['#4a6c3c', '#33502b', '#22381d'],
+    ['#3f6a34', '#2c4c25', '#1c3318'],
+    ['#6b5a2e', '#4a3f22', '#2e2a16'],
+    ['#4a5c5e', '#354648', '#233133']
+  ];
+  function grassColors() {
+    var s = seasonIdx();
+    if (isHill()) {
+      if (s === 0) return ['#3f5d43', '#39553e'];
+      if (s === 1) return ['#39573d', '#335038'];
+      if (s === 2) return ['#5b5636', '#524d30'];
+      return ['#4a5c58', '#435450'];
+    }
+    if (s === 0) return ['#4a7040', '#43683a'];
+    if (s === 1) return ['#3f6a34', '#39602f'];
+    if (s === 2) return ['#6b5f30', '#61562b'];
+    return ['#556a63', '#4c605a'];
+  }
+  function drawMountains() {
+    ctx.save();
+    ctx.fillStyle = seasonIdx() === 3 ? 'rgba(150,175,180,.30)' : 'rgba(82,122,128,.34)';
+    ctx.beginPath();
+    ctx.moveTo(0, H * 0.36);
+    ctx.lineTo(W * 0.08, H * 0.16); ctx.lineTo(W * 0.17, H * 0.28);
+    ctx.lineTo(W * 0.28, H * 0.09); ctx.lineTo(W * 0.40, H * 0.30);
+    ctx.lineTo(W * 0.52, H * 0.14); ctx.lineTo(W * 0.65, H * 0.31);
+    ctx.lineTo(W * 0.78, H * 0.11); ctx.lineTo(W * 0.90, H * 0.27);
+    ctx.lineTo(W, H * 0.17); ctx.lineTo(W, H * 0.42); ctx.lineTo(0, H * 0.42);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = seasonIdx() === 3 ? 'rgba(105,135,140,.40)' : 'rgba(54,90,92,.42)';
+    ctx.beginPath();
+    ctx.moveTo(0, H * 0.44);
+    ctx.lineTo(W * 0.10, H * 0.30); ctx.lineTo(W * 0.22, H * 0.40);
+    ctx.lineTo(W * 0.35, H * 0.24); ctx.lineTo(W * 0.48, H * 0.41);
+    ctx.lineTo(W * 0.61, H * 0.28); ctx.lineTo(W * 0.75, H * 0.42);
+    ctx.lineTo(W * 0.88, H * 0.26); ctx.lineTo(W, H * 0.38);
+    ctx.lineTo(W, H * 0.50); ctx.lineTo(0, H * 0.50);
+    ctx.closePath(); ctx.fill();
+    if (seasonIdx() === 3) {
+      ctx.fillStyle = 'rgba(245,250,252,.35)';
+      var caps = [[0.28, 0.09], [0.52, 0.14], [0.78, 0.11]];
+      for (var i = 0; i < caps.length; i++) {
+        var cx = W * caps[i][0], cy = H * caps[i][1];
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx - 12, cy + 16); ctx.lineTo(cx + 12, cy + 16); ctx.closePath(); ctx.fill();
+      }
+    }
+    ctx.fillStyle = 'rgba(225,240,240,.05)';
+    for (i = 0; i < 4; i++) {
+      ctx.beginPath(); ctx.ellipse(W * (0.16 + i * 0.24), H * (0.26 + (i % 2) * 0.06), W * 0.12, 9, 0, 0, 6.2832); ctx.fill();
+    }
+    ctx.restore();
+  }
+  function drawBackground() {
+    if (isHill()) {
+      var hg = ctx.createLinearGradient(0, 0, 0, H);
+      hg.addColorStop(0, '#3b5a60'); hg.addColorStop(0.46, '#315049'); hg.addColorStop(1, '#1d312c');
+      ctx.fillStyle = hg; ctx.fillRect(0, 0, W, H);
+      drawMountains();
+      ctx.fillStyle = 'rgba(210,230,225,.035)';
+      for (var hi = 0; hi < 40; hi++) {
+        ctx.fillRect((hi * 151.3) % W, (hi * 93.7) % H, 2, 2);
+      }
+      if (seasonIdx() === 3) {
+        ctx.fillStyle = 'rgba(220,240,245,.07)';
+        ctx.fillRect(0, 0, W, H);
+      }
+      return;
+    }
+    var pal = SEASON_PAL[seasonIdx()];
+    var g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, pal[0]); g.addColorStop(0.45, pal[1]); g.addColorStop(1, pal[2]);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(150,200,120,.05)';
+    for (var i = 0; i < 60; i++) {
+      var x = (i * 137.5) % W, y = (i * 89.3) % H;
+      ctx.fillRect(x, y, 2, 2);
+    }
+    for (i = 0; i < clouds.length; i++) {
+      var c = clouds[i];
+      ctx.save(); ctx.globalAlpha = 0.055; ctx.fillStyle = '#e8f5dc';
+      ctx.beginPath(); ctx.ellipse(c.x, c.y, c.s, c.s * 0.3, 0, 0, 6.2832); ctx.fill();
+      ctx.restore();
+    }
+    if (seasonIdx() === 3) {
+      ctx.fillStyle = 'rgba(220,240,245,.07)';
+      ctx.fillRect(0, 0, W, H);
+    }
+  }
+  function drawPond() {
+    var right = W - (FX + TILE * SIZE);
+    if (right < 96) return;
+    var px = FX + TILE * SIZE + right / 2;
+    var py = FY + TILE * SIZE - 24;
+    ctx.save();
+    ctx.fillStyle = '#2f5d6b';
+    ctx.beginPath(); ctx.ellipse(px, py, Math.min(58, right / 2 - 8), 24, 0, 0, 6.2832); ctx.fill();
+    ctx.fillStyle = '#3d7684';
+    ctx.beginPath(); ctx.ellipse(px - 4, py - 3, Math.min(46, right / 2 - 16), 17, 0, 0, 6.2832); ctx.fill();
+    ctx.strokeStyle = 'rgba(180,235,240,.35)'; ctx.lineWidth = 1;
+    for (var i = 0; i < 3; i++) {
+      ctx.beginPath();
+      ctx.ellipse(px - 12 + i * 12, py - 4 + i * 4, 8 + i * 3, 2 + i * 0.7, 0, 0, 6.2832);
+      ctx.stroke();
+    }
+    ctx.fillStyle = '#6fae5a';
+    ctx.beginPath(); ctx.ellipse(px + 14, py - 10, 8, 4, 0, 0, 6.2832); ctx.fill();
+    if (fishLeft > 0) {
+      var rp = 0.5 + Math.sin(time * 2.2) * 0.5;
+      ctx.strokeStyle = 'rgba(210,245,250,' + (0.15 + rp * 0.3) + ')';
+      ctx.beginPath(); ctx.ellipse(px, py, 10 + rp * 8, 4 + rp * 3, 0, 0, 6.2832); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,.55)';
+      ctx.font = 'bold 9px "Microsoft YaHei",sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('钓鱼', px, Math.min(py + 30, H - 6));
+    }
+    ctx.restore();
+  }
+  function drawHouse() {
+    if (FX < 96) return;
+    var x = 10, y = H - 82;
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,.18)';
+    ctx.beginPath(); ctx.ellipse(x + 32, y + 42, 40, 11, 0, 0, 6.2832); ctx.fill();
+    ctx.fillStyle = '#c9a06a';
+    ctx.fillRect(x, y, 62, 38);
+    ctx.fillStyle = '#b58a55';
+    ctx.fillRect(x + 7, y + 7, 16, 14);
+    ctx.fillStyle = '#a8563f';
+    ctx.beginPath();
+    ctx.moveTo(x - 7, y + 2); ctx.lineTo(x + 31, y - 24); ctx.lineTo(x + 69, y + 2); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#8c4433';
+    ctx.beginPath();
+    ctx.moveTo(x - 7, y + 2); ctx.lineTo(x + 31, y - 24); ctx.lineTo(x + 31, y + 2); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#6b4326';
+    ctx.fillRect(x + 34, y + 18, 14, 20);
+    ctx.fillStyle = '#ffd166';
+    ctx.beginPath(); ctx.arc(x + 45, y + 28, 1.2, 0, 6.2832); ctx.fill();
+    ctx.fillStyle = '#ffe0a3';
+    ctx.fillRect(x + 10, y + 14, 12, 10);
+    ctx.strokeStyle = '#8c5a33'; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(x + 16, y + 14); ctx.lineTo(x + 16, y + 24);
+    ctx.moveTo(x + 10, y + 19); ctx.lineTo(x + 22, y + 19); ctx.stroke();
+    for (var i = 0; i < 3; i++) {
+      var ph = (time * 0.25 + i * 0.33) % 1;
+      ctx.globalAlpha = (1 - ph) * 0.28;
+      ctx.fillStyle = '#e8efe0';
+      ctx.beginPath();
+      ctx.arc(x + 49 + Math.sin(ph * 5 + i) * 4, y - 26 - ph * 26, 3 + ph * 4, 0, 6.2832);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+  function drawTree(x, y, s) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,.16)';
+    ctx.beginPath(); ctx.ellipse(x, y + 7, 14 * s, 4.5 * s, 0, 0, 6.2832); ctx.fill();
+    ctx.fillStyle = '#6b4a2c';
+    ctx.fillRect(x - 2.6 * s, y - 22 * s, 5.2 * s, 26 * s);
+    var sway = Math.sin(time * 1.2 + x * 0.1) * 1.4;
+    var leaf = seasonIdx() === 3 ? '#6f8a76' : (seasonIdx() === 2 ? '#8a7a3a' : '#477f3f');
+    ctx.fillStyle = leaf;
+    ctx.beginPath(); ctx.arc(x + sway, y - 32 * s, 14 * s, 0, 6.2832); ctx.fill();
+    ctx.fillStyle = seasonIdx() === 2 ? '#a08c46' : '#59994d';
+    ctx.beginPath(); ctx.arc(x - 9 * s + sway, y - 25 * s, 9.5 * s, 0, 6.2832); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + 10 * s + sway, y - 25 * s, 9 * s, 0, 6.2832); ctx.fill();
+    ctx.restore();
+  }
+  function drawPine(x, y, s) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,.20)';
+    ctx.beginPath(); ctx.ellipse(x, y + 4 * s, 13 * s, 4 * s, 0, 0, 6.2832); ctx.fill();
+    ctx.fillStyle = '#4a3826';
+    ctx.fillRect(x - 2 * s, y - 13 * s, 4 * s, 17 * s);
+    var sway = Math.sin(time * 0.9 + x * 0.07) * 1.2;
+    var tiers = [[-6, 15, 11], [-15, 12.5, 9], [-23, 9.5, 7.5]];
+    for (var i = 0; i < tiers.length; i++) {
+      var ty = y + tiers[i][0] * s, tw = tiers[i][1] * s, th = tiers[i][2] * s;
+      ctx.fillStyle = i === 0 ? '#31593e' : (i === 1 ? '#396548' : '#417152');
+      ctx.beginPath();
+      ctx.moveTo(x + sway, ty - th);
+      ctx.lineTo(x - tw, ty + 3 * s);
+      ctx.lineTo(x + tw, ty + 3 * s);
+      ctx.closePath(); ctx.fill();
+      if (seasonIdx() === 3) {
+        ctx.fillStyle = 'rgba(235,248,250,.5)';
+        ctx.beginPath();
+        ctx.moveTo(x + sway, ty - th);
+        ctx.lineTo(x - tw * 0.5, ty + 3 * s - th * 0.5);
+        ctx.lineTo(x + tw * 0.5, ty + 3 * s - th * 0.5);
+        ctx.closePath(); ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+  function drawStream() {
+    var right = W - (FX + TILE * SIZE);
+    if (right < 44) return;
+    var sx = FX + TILE * SIZE + right * 0.46;
+    var top = FY - 12, bot = FY + TILE * SIZE + 14;
+    ctx.save();
+    ctx.beginPath();
+    var i, t, yy, xx;
+    for (i = 0; i <= 18; i++) {
+      t = i / 18; yy = top + (bot - top) * t; xx = sx + Math.sin(t * 5.2 + 0.6) * 8;
+      if (i === 0) ctx.moveTo(xx - 8, yy); else ctx.lineTo(xx - 8, yy);
+    }
+    for (i = 18; i >= 0; i--) {
+      t = i / 18; yy = top + (bot - top) * t; xx = sx + Math.sin(t * 5.2 + 0.6) * 8;
+      ctx.lineTo(xx + 8, yy);
+    }
+    ctx.closePath();
+    var sg = ctx.createLinearGradient(sx - 10, 0, sx + 10, 0);
+    sg.addColorStop(0, 'rgba(70,140,150,.10)');
+    sg.addColorStop(.4, 'rgba(96,180,190,.55)');
+    sg.addColorStop(.7, 'rgba(140,215,225,.45)');
+    sg.addColorStop(1, 'rgba(70,140,150,.08)');
+    ctx.fillStyle = sg; ctx.fill();
+    ctx.strokeStyle = 'rgba(210,240,245,.35)'; ctx.lineWidth = 1;
+    for (i = 0; i < 7; i++) {
+      t = (i / 7 + (time * 0.05) % 0.14) % 1;
+      yy = top + (bot - top) * t; xx = sx + Math.sin(t * 5.2 + 0.6) * 8;
+      ctx.beginPath(); ctx.moveTo(xx - 4, yy); ctx.lineTo(xx + 3, yy + 3); ctx.stroke();
+    }
+    for (i = 0; i < 4; i++) {
+      var ry = FY + 20 + i * (TILE * SIZE / 4);
+      ctx.fillStyle = i % 2 ? 'rgba(150,160,145,.55)' : 'rgba(125,140,130,.6)';
+      ctx.beginPath(); ctx.ellipse(sx + (i % 2 ? 11 : -10), ry, 4, 2.6, 0.4, 0, 6.2832); ctx.fill();
+    }
+    ctx.restore();
+  }
+  function drawMapMark() {
+    if (FX < 62) return;
+    var x = 16, y = Math.max(72, FY + 4);
+    ctx.save();
+    ctx.fillStyle = '#6f4b2c';
+    ctx.fillRect(x + 16, y + 10, 4, 30);
+    ctx.fillStyle = '#8a6238';
+    ctx.fillRect(x, y, 38, 16);
+    ctx.fillStyle = '#6f4b2c';
+    ctx.fillRect(x, y + 13, 38, 3);
+    ctx.fillStyle = '#f0e2c4';
+    ctx.font = 'bold 9px "Microsoft YaHei",sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('后山梯田', x + 19, y + 7);
+    ctx.restore();
+  }
+  function drawDecor() {
+    if (isHill()) {
+      drawStream();
+      if (FX > 92) {
+        drawPine(20, H - 96, 1.15);
+        drawPine(44, H - 62, 0.85);
+        if (H > 360) drawPine(26, FY + 74, 0.95);
+      } else if (W - (FX + TILE * SIZE) > 84) {
+        drawPine(W - 24, FY + 58, 0.9);
+      }
+      if (W - (FX + TILE * SIZE) > 120) {
+        drawPine(W - 34, H - 92, 1.05);
+        drawPine(W - 58, H - 58, 0.75);
+      }
+      if (H - (FY + TILE * SIZE) > 64) {
+        drawPine(24, H - 30, 0.7);
+        drawPine(W - 26, H - 52, 0.8);
+      }
+      drawMapMark();
+      for (var hi = 0; hi < butterflies.length; hi++) {
+        var hb = butterflies[hi];
+        var hx = hb.x + Math.sin(time * 0.5 + hb.p) * 18;
+        var hy = hb.y + Math.cos(time * 0.8 + hb.p) * 10;
+        var hf = Math.abs(Math.sin(time * 6 + hb.p));
+        ctx.save();
+        ctx.globalAlpha = 0.5;
+        ctx.fillStyle = hb.hue;
+        ctx.beginPath(); ctx.ellipse(hx - 2.4 * hf, hy, 2.4 * hf + 0.8, 1.7, -0.4, 0, 6.2832); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(hx + 2.4 * hf, hy, 2.4 * hf + 0.8, 1.7, 0.4, 0, 6.2832); ctx.fill();
+        ctx.restore();
+      }
+      return;
+    }
+    drawHouse();
+    drawPond();
+    if (FX > 110) {
+      drawTree(26, H - 130, 1.15);
+      if (H > 340) drawTree(W - 34, FY + 36, 0.95);
+    } else if (W - (FX + TILE * SIZE) > 80) {
+      drawTree(W - 34, FY + 30, 0.95);
+    }
+    for (var i = 0; i < butterflies.length; i++) {
+      var b = butterflies[i];
+      var bx = b.x + Math.sin(time * 0.6 + b.p) * 24;
+      var by = b.y + Math.cos(time * 0.9 + b.p) * 12;
+      var flap = Math.abs(Math.sin(time * 7 + b.p));
+      ctx.save();
+      ctx.globalAlpha = 0.75;
+      ctx.fillStyle = b.hue;
+      ctx.beginPath(); ctx.ellipse(bx - 3 * flap, by, 3 * flap + 1, 2.1, -0.4, 0, 6.2832); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(bx + 3 * flap, by, 3 * flap + 1, 2.1, 0.4, 0, 6.2832); ctx.fill();
+      ctx.restore();
+    }
+  }
+  function drawFence() {
+    var pad = 7;
+    var x0 = FX - pad, y0 = FY - pad, w = TILE * SIZE + pad * 2, h = TILE * SIZE + pad * 2;
+    ctx.save();
+    if (isHill()) {
+      var band = Math.max(5, TILE * 0.13);
+      ctx.strokeStyle = '#566357'; ctx.lineWidth = band;
+      ctx.strokeRect(x0, y0, w, h);
+      ctx.strokeStyle = 'rgba(190,205,190,.22)'; ctx.lineWidth = 1;
+      ctx.strokeRect(x0 - band * 0.4, y0 - band * 0.4, w + band * 0.8, h + band * 0.8);
+      ctx.strokeStyle = 'rgba(30,45,35,.5)';
+      for (var i = 0; i <= 12; i++) {
+        var px = x0 + (w / 12) * i;
+        ctx.beginPath(); ctx.moveTo(px, y0 - band / 2); ctx.lineTo(px, y0 + band / 2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(px, y0 + h - band / 2); ctx.lineTo(px, y0 + h + band / 2); ctx.stroke();
+      }
+      for (i = 0; i <= 12; i++) {
+        var py = y0 + (h / 12) * i;
+        ctx.beginPath(); ctx.moveTo(x0 - band / 2, py); ctx.lineTo(x0 + band / 2, py); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x0 + w - band / 2, py); ctx.lineTo(x0 + w + band / 2, py); ctx.stroke();
+      }
+      ctx.strokeStyle = 'rgba(110,170,105,.30)'; ctx.lineWidth = 1.4;
+      for (i = 0; i < 9; i++) {
+        var mx = x0 + 14 + (i * 61.7) % (w - 28);
+        ctx.beginPath(); ctx.moveTo(mx, y0 - 2); ctx.lineTo(mx + 3, y0 - 6); ctx.stroke();
+      }
+      ctx.restore();
+      return;
+    }
+    ctx.strokeStyle = '#a87a4a'; ctx.lineWidth = Math.max(2, TILE * 0.05);
+    ctx.strokeRect(x0, y0, w, h);
+    ctx.strokeStyle = 'rgba(255,230,180,.16)'; ctx.lineWidth = 1;
+    ctx.strokeRect(x0 - 2, y0 - 2, w + 4, h + 4);
+    ctx.fillStyle = '#8f6238';
+    var posts = 8;
+    for (var i = 0; i <= posts; i++) {
+      var px = x0 + (w / posts) * i;
+      ctx.fillRect(px - 2, y0 - 4, 4, 8);
+      ctx.fillRect(px - 2, y0 + h - 3, 4, 8);
+    }
+    for (i = 0; i <= posts; i++) {
+      var py = y0 + (h / posts) * i;
+      ctx.fillRect(x0 - 4, py - 2, 8, 4);
+      ctx.fillRect(x0 + w - 3, py - 2, 8, 4);
+    }
+    ctx.restore();
+  }
+  function drawPlots() {
+    var gc = grassColors();
+    for (var y = 0; y < SIZE; y++) {
+      for (var x = 0; x < SIZE; x++) {
+        var p = plots[y][x];
+        var r = tileRect(x, y);
+        if (isHill()) {
+          if (p.state === 'grass') {
+            ctx.fillStyle = ((x + y) % 2 === 0) ? gc[0] : gc[1];
+            roundRect(r.x, r.y, r.w, r.h, TILE * 0.13); ctx.fill();
+            ctx.fillStyle = 'rgba(18,32,22,.20)';
+            ctx.fillRect(r.x + 2, r.y + r.h - 3.5, r.w - 4, 2);
+            ctx.fillStyle = 'rgba(126,140,124,.45)';
+            ctx.fillRect(r.x + 1, r.y + r.h - 5.5, r.w - 2, 2);
+            ctx.strokeStyle = 'rgba(150,190,140,.12)'; ctx.lineWidth = 1;
+            roundRect(r.x + .5, r.y + .5, r.w - 1, r.h - 1, TILE * 0.13); ctx.stroke();
+            ctx.strokeStyle = seasonIdx() === 3 ? 'rgba(225,242,242,.34)' : 'rgba(170,210,150,.38)';
+            ctx.lineWidth = 1.2;
+            var hgx = r.x + r.w * (0.3 + (p.seed % 0.4)), hgy = r.y + r.h * 0.7;
+            ctx.beginPath();
+            ctx.moveTo(hgx, hgy); ctx.quadraticCurveTo(hgx - 2, hgy - 5, hgx - 4, hgy - 8);
+            ctx.moveTo(hgx + 2.6, hgy); ctx.quadraticCurveTo(hgx + 4.5, hgy - 4, hgx + 6.5, hgy - 6);
+            ctx.stroke();
+            continue;
+          }
+          var hbase = p.watered ? '#453723' : '#57452c';
+          var htop = p.watered ? '#55452d' : '#695535';
+          ctx.fillStyle = hbase;
+          roundRect(r.x, r.y, r.w, r.h, TILE * 0.11); ctx.fill();
+          var hgg = ctx.createLinearGradient(r.x, r.y, r.x, r.y + r.h);
+          hgg.addColorStop(0, htop); hgg.addColorStop(1, hbase);
+          ctx.fillStyle = hgg;
+          roundRect(r.x + 2.5, r.y + 2.5, r.w - 5, r.h - 5, TILE * 0.09); ctx.fill();
+          ctx.fillStyle = 'rgba(132,144,128,.42)';
+          ctx.fillRect(r.x + 1, r.y + r.h - 5.5, r.w - 2, 2);
+          ctx.strokeStyle = 'rgba(24,16,8,.28)'; ctx.lineWidth = 1;
+          for (var hi = 1; hi < 3; hi++) {
+            var hyy = r.y + (r.h / 3) * hi;
+            ctx.beginPath(); ctx.moveTo(r.x + 4, hyy); ctx.lineTo(r.x + r.w - 4, hyy); ctx.stroke();
+          }
+          ctx.strokeStyle = 'rgba(168,176,158,.20)';
+          for (hi = 0; hi < 3; hi++) {
+            ctx.beginPath();
+            ctx.arc(r.x + 7 + hi * 9, r.y + r.h - 4, 2.2, 0, 6.2832);
+            ctx.stroke();
+          }
+          if (p.watered) {
+            ctx.fillStyle = 'rgba(120,195,215,.10)';
+            roundRect(r.x + 3.5, r.y + 3.5, r.w - 7, r.h - 7, TILE * 0.08); ctx.fill();
+          }
+          if (p.state === 'crop') drawCrop(p, r);
+          if (hover && hover.x === x && hover.y === y) {
+            ctx.strokeStyle = 'rgba(255,240,180,.85)';
+            ctx.lineWidth = 2;
+            roundRect(r.x, r.y, r.w, r.h, TILE * 0.11); ctx.stroke();
+          }
+          continue;
+        }
+        if (p.state === 'grass') {
+          ctx.fillStyle = ((x + y) % 2 === 0) ? gc[0] : gc[1];
+          roundRect(r.x, r.y, r.w, r.h, TILE * 0.13); ctx.fill();
+          ctx.strokeStyle = 'rgba(150,210,130,.10)'; ctx.lineWidth = 1;
+          roundRect(r.x + .5, r.y + .5, r.w - 1, r.h - 1, TILE * 0.13); ctx.stroke();
+          ctx.strokeStyle = seasonIdx() === 3 ? 'rgba(220,240,240,.3)' : 'rgba(160,220,130,.4)';
+          ctx.lineWidth = 1.2;
+          var gx = r.x + r.w * (0.24 + (p.seed % 0.5)), gy = r.y + r.h * 0.72;
+          ctx.beginPath();
+          ctx.moveTo(gx, gy); ctx.quadraticCurveTo(gx - 2, gy - 6, gx - 4, gy - 9);
+          ctx.moveTo(gx + 3, gy); ctx.quadraticCurveTo(gx + 5, gy - 5, gx + 7, gy - 7);
+          ctx.stroke();
+          continue;
+        }
+        var base = p.watered ? '#5a4229' : '#6f5233';
+        var top = p.watered ? '#6a4e31' : '#86643e';
+        ctx.fillStyle = base;
+        roundRect(r.x, r.y, r.w, r.h, TILE * 0.11); ctx.fill();
+        var gg = ctx.createLinearGradient(r.x, r.y, r.x, r.y + r.h);
+        gg.addColorStop(0, top); gg.addColorStop(1, base);
+        ctx.fillStyle = gg;
+        roundRect(r.x + 2.5, r.y + 2.5, r.w - 5, r.h - 5, TILE * 0.09); ctx.fill();
+        ctx.strokeStyle = 'rgba(30,18,8,.22)'; ctx.lineWidth = 1;
+        for (var i = 1; i < 4; i++) {
+          var yy = r.y + (r.h / 4) * i;
+          ctx.beginPath(); ctx.moveTo(r.x + 5, yy); ctx.lineTo(r.x + r.w - 5, yy); ctx.stroke();
+        }
+        if (p.watered) {
+          ctx.fillStyle = 'rgba(140,215,235,.10)';
+          roundRect(r.x + 3.5, r.y + 3.5, r.w - 7, r.h - 7, TILE * 0.08); ctx.fill();
+        }
+        if (p.state === 'crop') drawCrop(p, r);
+        if (hover && hover.x === x && hover.y === y) {
+          ctx.strokeStyle = 'rgba(255,240,180,.85)';
+          ctx.lineWidth = 2;
+          roundRect(r.x, r.y, r.w, r.h, TILE * 0.11); ctx.stroke();
+        }
+      }
+    }
+  }
+  function drawCrop(p, r) {
+    var c = CROPS[p.crop];
+    if (!c) return;
+    var cx = r.x + r.w / 2, cy = r.y + r.h * 0.75;
+    var frac = Math.max(0, Math.min(1, p.growth / c.days));
+    var ready = p.growth >= c.days;
+    var sway = Math.sin(time * 2 + p.seed) * (ready ? 1.3 : 0.8);
+    var u = r.w / 60;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(u, u);
+    ctx.translate(sway, 0);
+
+    if (p.crop === 'carrot') {
+      var hgt = 7 + frac * 15;
+      ctx.strokeStyle = c.leaf; ctx.lineWidth = 2.1; ctx.lineCap = 'round';
+      for (var i = -1; i <= 1; i++) {
+        ctx.beginPath(); ctx.moveTo(0, 0);
+        ctx.quadraticCurveTo(i * 6, -hgt * 0.55, i * 9, -hgt);
+        ctx.stroke();
+      }
+      if (frac > 0.55) {
+        ctx.fillStyle = c.fruit;
+        ctx.beginPath(); ctx.ellipse(0, 4, 4.2, 5.5 * frac, 0, 0, 6.2832); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,.28)';
+        ctx.beginPath(); ctx.ellipse(-1.2, 2, 1.2, 2.6, 0, 0, 6.2832); ctx.fill();
+      }
+    } else if (p.crop === 'ginseng') {
+      var hg = 6 + frac * 12;
+      ctx.strokeStyle = c.leaf; ctx.lineWidth = 1.8;
+      ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -hg); ctx.stroke();
+      for (i = -1; i <= 1; i++) {
+        ctx.save(); ctx.translate(0, -hg); ctx.rotate(i * 0.62);
+        ctx.fillStyle = c.leaf;
+        ctx.beginPath(); ctx.ellipse(0, -5, 3.2, 6, 0, 0, 6.2832); ctx.fill();
+        ctx.restore();
+      }
+      if (frac > 0.6) {
+        ctx.fillStyle = c.fruit;
+        ctx.beginPath(); ctx.ellipse(0, 4, 3.5, 5, 0, 0, 6.2832); ctx.fill();
+        if (ready) {
+          ctx.fillStyle = '#d94a4a';
+          for (i = -1; i <= 1; i++) { ctx.beginPath(); ctx.arc(i * 3, -hg - 2, 1.5, 0, 6.2832); ctx.fill(); }
+        }
+      }
+    } else if (c.shape === 'grain') {
+      var hh = 8 + frac * 20;
+      for (var j = -2; j <= 2; j++) {
+        ctx.strokeStyle = c.leaf; ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.moveTo(j * 3, 0);
+        ctx.quadraticCurveTo(j * 4, -hh * 0.55, j * 5, -hh); ctx.stroke();
+        if (frac > 0.45) {
+          ctx.fillStyle = c.fruit;
+          ctx.beginPath(); ctx.ellipse(j * 5, -hh, 1.8, 3.4, 0, 0, 6.2832); ctx.fill();
+        }
+      }
+    } else if (p.crop === 'rice') {
+      var hr = 10 + frac * 22;
+      for (j = -3; j <= 3; j++) {
+        ctx.strokeStyle = c.leaf; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(j * 2.2, 0);
+        ctx.quadraticCurveTo(j * 3, -hr * 0.6, j * 4, -hr); ctx.stroke();
+        if (frac > 0.5) {
+          ctx.fillStyle = c.fruit;
+          ctx.save(); ctx.translate(j * 4, -hr); ctx.rotate(0.5 * j);
+          ctx.beginPath(); ctx.ellipse(1.5, 1, 1.5, 3.8, 0, 0, 6.2832); ctx.fill();
+          ctx.restore();
+        }
+      }
+    } else if (p.crop === 'pumpkin') {
+      ctx.strokeStyle = c.leaf; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(-12, 0); ctx.quadraticCurveTo(0, -8, 12, 0); ctx.stroke();
+      ctx.fillStyle = c.leaf;
+      ctx.beginPath(); ctx.ellipse(-10, -2, 5, 3, -0.4, 0, 6.2832); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(10, -2, 5, 3, 0.4, 0, 6.2832); ctx.fill();
+      if (frac > 0.65) {
+        var rr = 5 + frac * 5;
+        ctx.fillStyle = c.fruit;
+        ctx.beginPath(); ctx.ellipse(0, -3, rr + 3, rr, 0, 0, 6.2832); ctx.fill();
+        if (ready) {
+          ctx.strokeStyle = 'rgba(140,60,10,.35)'; ctx.lineWidth = 1.1;
+          for (var k = -1; k <= 1; k++) {
+            ctx.beginPath(); ctx.ellipse(k * (rr / 2.5), -3, 1.8, rr, 0, 0, 6.2832); ctx.stroke();
+          }
+          ctx.fillStyle = '#6b8f3d';
+          ctx.fillRect(-1.2, -rr - 6, 2.4, 4);
+        }
+      }
+    } else if (p.crop === 'strawberry') {
+      ctx.fillStyle = c.leaf;
+      for (var l = -1; l <= 1; l++) {
+        ctx.beginPath(); ctx.ellipse(l * 5, -2, 4.5, 3, 0, 0, 6.2832); ctx.fill();
+      }
+      if (frac < 0.55) {
+        ctx.fillStyle = '#fff4f7';
+        for (var f = -1; f <= 1; f++) { ctx.beginPath(); ctx.arc(f * 5, -5, 2, 0, 6.2832); ctx.fill(); }
+      }
+      if (frac > 0.55) {
+        ctx.fillStyle = ready ? c.fruit : '#f2aebc';
+        for (var b = -1; b <= 1; b++) { ctx.beginPath(); ctx.arc(b * 5, 1, 2.4, 0, 6.2832); ctx.fill(); }
+      }
+    } else if (p.crop === 'grape') {
+      ctx.strokeStyle = c.leaf; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -12); ctx.stroke();
+      ctx.fillStyle = c.leaf;
+      ctx.beginPath(); ctx.ellipse(-6, -9, 4.5, 3, -0.5, 0, 6.2832); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(6, -9, 4.5, 3, 0.5, 0, 6.2832); ctx.fill();
+      if (ready) {
+        var pts = [[0, -3], [-3, -3], [3, -3], [-1.5, 0], [1.5, 0], [0, 3], [-3, 0], [3, 0]];
+        ctx.fillStyle = c.fruit;
+        for (i = 0; i < pts.length; i++) { ctx.beginPath(); ctx.arc(pts[i][0], pts[i][1], 2.2, 0, 6.2832); ctx.fill(); }
+      }
+    } else if (p.crop === 'tea') {
+      var rad = 5 + frac * 7;
+      ctx.fillStyle = c.leaf;
+      ctx.beginPath(); ctx.arc(0, -rad * 0.5, rad, 0, 6.2832); ctx.fill();
+      if (ready) {
+        ctx.fillStyle = '#a8d97a';
+        for (i = 0; i < 4; i++) {
+          ctx.beginPath();
+          ctx.arc(Math.cos(i * 1.7) * rad * 0.5, -rad * 0.5 + Math.sin(i * 1.7) * rad * 0.35, 1.6, 0, 6.2832);
+          ctx.fill();
+        }
+      }
+    } else if (p.crop === 'sunflower') {
+      var hs = 8 + frac * 18;
+      ctx.strokeStyle = c.leaf; ctx.lineWidth = 2.2;
+      ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -hs); ctx.stroke();
+      ctx.fillStyle = c.leaf;
+      ctx.beginPath(); ctx.ellipse(-5, -hs * 0.5, 4, 2.2, -0.5, 0, 6.2832); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(5, -hs * 0.62, 4, 2.2, 0.5, 0, 6.2832); ctx.fill();
+      if (frac > 0.4) {
+        var hy = -hs - 3;
+        ctx.fillStyle = c.fruit;
+        for (i = 0; i < 8; i++) {
+          var a = i * 0.785;
+          ctx.beginPath(); ctx.ellipse(Math.cos(a) * 6, hy + Math.sin(a) * 6, 2.6, 1.6, a, 0, 6.2832); ctx.fill();
+        }
+        ctx.fillStyle = ready ? '#7a4a1e' : '#a97c3e';
+        ctx.beginPath(); ctx.arc(0, hy, 4, 0, 6.2832); ctx.fill();
+      }
+    } else if (p.crop === 'peach') {
+      ctx.fillStyle = '#7a5232';
+      ctx.fillRect(-1.5, -12, 3, 12);
+      ctx.fillStyle = c.leaf;
+      ctx.beginPath(); ctx.arc(0, -18, 9, 0, 6.2832); ctx.fill();
+      ctx.beginPath(); ctx.arc(-6, -14, 6, 0, 6.2832); ctx.fill();
+      ctx.beginPath(); ctx.arc(6, -14, 6, 0, 6.2832); ctx.fill();
+      if (ready) {
+        ctx.fillStyle = c.fruit;
+        ctx.beginPath(); ctx.arc(-4, -16, 2.4, 0, 6.2832); ctx.fill();
+        ctx.beginPath(); ctx.arc(4, -19, 2.4, 0, 6.2832); ctx.fill();
+        ctx.beginPath(); ctx.arc(1, -12, 2.2, 0, 6.2832); ctx.fill();
+      }
+    } else if (c.shape === 'mushroom') {
+      var mcap = 4 + frac * 5;
+      ctx.fillStyle = '#e6ddc8';
+      ctx.fillRect(-1.8, -mcap * 0.75, 3.6, mcap * 0.8);
+      ctx.fillStyle = c.fruit;
+      ctx.beginPath();
+      ctx.ellipse(0, -mcap * 0.75, mcap + 1.5, mcap * 0.8, 0, Math.PI, 0);
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = 'rgba(90,60,30,.28)'; ctx.lineWidth = 0.8;
+      ctx.beginPath(); ctx.moveTo(-mcap, -mcap * 0.75); ctx.lineTo(mcap, -mcap * 0.75); ctx.stroke();
+      if (ready) {
+        ctx.fillStyle = 'rgba(255,245,225,.75)';
+        for (i = -1; i <= 1; i++) {
+          ctx.beginPath(); ctx.arc(i * mcap * 0.42, -mcap * 1.08, 1.1 + (i === 0 ? 0.4 : 0), 0, 6.2832); ctx.fill();
+        }
+      }
+    } else if (c.shape === 'berry2') {
+      ctx.fillStyle = c.leaf;
+      ctx.beginPath(); ctx.arc(-5, -5, 5.4, 0, 6.2832); ctx.fill();
+      ctx.beginPath(); ctx.arc(5, -6, 5.2, 0, 6.2832); ctx.fill();
+      ctx.beginPath(); ctx.arc(0, -9, 5.6, 0, 6.2832); ctx.fill();
+      if (frac > 0.5) {
+        var bp = [[-5, -3], [1, -4], [6, -2], [-2, 1], [4, 2]];
+        ctx.fillStyle = ready ? c.fruit : '#8b94c4';
+        for (i = 0; i < bp.length; i++) {
+          ctx.beginPath(); ctx.arc(bp[i][0], bp[i][1], 2.1, 0, 6.2832); ctx.fill();
+        }
+        if (ready) {
+          ctx.fillStyle = 'rgba(235,242,255,.6)';
+          for (i = 0; i < bp.length; i++) { ctx.beginPath(); ctx.arc(bp[i][0] - 0.6, bp[i][1] - 0.7, 0.7, 0, 6.2832); ctx.fill(); }
+        }
+      }
+    }
+    ctx.restore();
+
+    if (ready) {
+      var pulse = 0.6 + Math.sin(time * 4 + p.seed) * 0.4;
+      ctx.save();
+      ctx.globalAlpha = pulse;
+      ctx.fillStyle = '#ffe08a';
+      ctx.shadowColor = '#ffd166'; ctx.shadowBlur = 8;
+      ctx.beginPath(); ctx.arc(r.x + r.w - 9, r.y + 9, 5.6, 0, 6.2832); ctx.fill();
+      ctx.fillStyle = '#5a4210';
+      ctx.font = 'bold 8px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('!', r.x + r.w - 9, r.y + 9.5);
+      ctx.restore();
+    } else if (!p.watered) {
+      ctx.save();
+      ctx.globalAlpha = 0.7;
+      ctx.fillStyle = '#8fd8e8';
+      ctx.beginPath(); ctx.arc(r.x + 8, r.y + 8, 2.8, 0, 6.2832); ctx.fill();
+      ctx.restore();
+    }
+  }
+  function drawParticles() {
+    for (var i = 0; i < particles.length; i++) {
+      var p = particles[i];
+      ctx.globalAlpha = Math.max(0, p.life / p.max);
+      ctx.fillStyle = p.color;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.2832); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    for (i = 0; i < floats.length; i++) {
+      var f = floats[i];
+      ctx.globalAlpha = Math.max(0, 1 - f.t / 1.4);
+      ctx.fillStyle = f.color;
+      ctx.font = 'bold 11px "Microsoft YaHei",sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(f.text, f.x, f.y - f.t * 26);
+    }
+    ctx.globalAlpha = 1;
+  }
+  function drawWeather() {
+    if (weather === 'rain') {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(160,210,235,.28)';
+      ctx.lineWidth = 1;
+      for (var i = 0; i < 42; i++) {
+        var x = ((i * 53 + time * 140) % (W + 20)) - 10;
+        var y = (i * 37 + time * 260) % H;
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - 3, y + 9); ctx.stroke();
+      }
+      ctx.restore();
+    } else if (weather === 'snow') {
+      ctx.save();
+      ctx.fillStyle = 'rgba(240,250,255,.6)';
+      for (var j = 0; j < 34; j++) {
+        var sx = ((j * 71 + time * 26) % (W + 16)) - 8;
+        var sy = (j * 43 + time * 40) % H;
+        ctx.beginPath(); ctx.arc(sx, sy, 1.2 + (j % 3) * 0.5, 0, 6.2832); ctx.fill();
+      }
+      ctx.restore();
+    } else if (weather === 'cloud') {
+      ctx.fillStyle = 'rgba(40,60,70,.10)';
+      ctx.fillRect(0, 0, W, H);
+    }
+  }
+  function draw() {
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    drawBackground();
+    drawDecor();
+    drawFence();
+    drawPlots();
+    drawParticles();
+    drawWeather();
+    if (state === 'playing' && energy <= 0) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(255,225,150,.85)';
+      ctx.font = 'bold 11px "Microsoft YaHei",sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('今天累了，点右下角「收工」休息', W / 2, H - 6);
+      ctx.restore();
+    }
+  }
+
+  /* ---------- ambient ---------- */
+  function spawnAmbient() {
+    if (particles.length > 70 || weather === 'rain') return;
+    var s = seasonIdx(), color = null, vy = 10, grav = 4, rr = 1.6;
+    if (weather === 'snow') { color = '#e8f4f8'; vy = 16; grav = 6; rr = 1.8; }
+    else if (s === 0) { color = '#ffd7e8'; vy = 9; grav = 3; rr = 1.7; }
+    else if (s === 1) { color = null; }
+    else if (s === 2) { color = '#d9a24a'; vy = 12; grav = 4; rr = 2; }
+    else { color = '#dfeef2'; vy = 13; grav = 4; rr = 1.5; }
+    if (!color) return;
+    particles.push({ x: Math.random() * W, y: -8, vx: -6 + Math.random() * 12, vy: vy,
+      life: 5 + Math.random() * 3, max: 8, color: color, r: rr, grav: grav });
+  }
+
+  /* ---------- loop ---------- */
+  var last = 0;
+  function loop(now) {
+    if (!last) last = now;
+    var dt = Math.min(0.05, Math.max(0, (now - last) / 1000));
+    last = now;
+    time += dt;
+    for (var i = clouds.length - 1; i >= 0; i--) {
+      clouds[i].x += clouds[i].v * dt;
+      if (clouds[i].x - clouds[i].s > W) clouds[i].x = -clouds[i].s * 2;
+    }
+    for (i = particles.length - 1; i >= 0; i--) {
+      var p = particles[i];
+      p.x += p.vx * dt; p.y += p.vy * dt;
+      p.vy += (p.grav == null ? 70 : p.grav) * dt;
+      p.vx *= 0.97; p.vy *= 0.97;
+      p.life -= dt;
+      if (p.life <= 0) particles.splice(i, 1);
+    }
+    for (i = floats.length - 1; i >= 0; i--) {
+      floats[i].t += dt;
+      if (floats[i].t > 1.4) floats.splice(i, 1);
+    }
+    ambientTimer -= dt;
+    if (ambientTimer <= 0) { ambientTimer = 0.55; spawnAmbient(); }
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  /* ---------- input ---------- */
+  cvs.addEventListener('pointermove', function (e) {
+    var r = cvs.getBoundingClientRect();
+    hover = tileAt(e.clientX - r.left, e.clientY - r.top);
+    cvs.style.cursor = hover ? 'pointer' : 'default';
+  });
+  cvs.addEventListener('pointerleave', function () { hover = null; });
+  cvs.addEventListener('pointerdown', function (e) {
+    e.preventDefault();
+    if (state !== 'playing') return;
+    var r = cvs.getBoundingClientRect();
+    var t = tileAt(e.clientX - r.left, e.clientY - r.top);
+    if (t) act(t.x, t.y);
+    audio();
+  });
+  function togglePause() {
+    if (modalKind) { closeModal(); return; }
+    if (state === 'playing') { state = 'paused'; $('screenPause').classList.add('show'); }
+    else if (state === 'paused') { state = 'playing'; hideAll(); }
+  }
+  function hideAll() {
+    $('screenStart').classList.remove('show');
+    $('screenPause').classList.remove('show');
+    $('screenWin').classList.remove('show');
+  }
+  document.addEventListener('keydown', function (e) {
+    if (e.target && e.target.tagName === 'BUTTON' && (e.key === 'Enter' || e.key === ' ')) return;
+    if (e.key === 'Escape') { e.preventDefault(); if (modalKind) closeModal(); else togglePause(); return; }
+    if (e.key === 'p' || e.key === 'P') { e.preventDefault(); togglePause(); return; }
+    if (e.key === 'm' || e.key === 'M') {
+      e.preventDefault();
+      if (!modalKind && state === 'playing') { switchMap(isHill() ? 'home' : 'hill'); audio(); }
+      return;
+    }
+    if (modalKind) return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      if (state === 'start') { e.preventDefault(); startGame(!!pendingSave); }
+      else if (state === 'paused') { e.preventDefault(); togglePause(); }
+      else if (state === 'playing') { e.preventDefault(); endDay(); }
+      return;
+    }
+    var kk = e.key.toLowerCase(), idx = -1;
+    if (kk >= '1' && kk <= '9') idx = parseInt(kk, 10) - 1;
+    else if (kk === '0') idx = 9;
+    else if (kk === 'q') idx = 10;
+    else if (kk === 'e') idx = 11;
+    if (idx >= 0) {
+      var k = CROP_KEYS[idx];
+      if (k && level >= CROPS[k].unlock) {
+        if (CROPS[k].hill && !isHill()) {
+          showToast(hillUnlocked ? '「' + CROPS[k].name + '」要种在后山梯田，按 M 过去' : '完成第二章后，后山梯田才会打开');
+          sfxErr();
+        } else { selected = k; syncToolbar(); }
+      } else if (k) showToast('这种子要村庄 ' + CROPS[k].unlock + ' 级才解锁');
+    }
+  });
+
+  var startBtn = $('startBtn'), newBtn = $('newBtn'), resumeBtn = $('resumeBtn'),
+      continueBtn = $('continueBtn'), restartBtn = $('restartBtn');
+  var newArm = 0;
+  startBtn.addEventListener('click', function () { startGame(!!pendingSave); });
+  newBtn.addEventListener('click', function () {
+    if (!newArm || Date.now() - newArm > 3000) {
+      newArm = Date.now();
+      newBtn.textContent = '再点一次，清空存档重开';
+      tone(240, 0.1, 'square', 0.03, 180);
+    } else {
+      newArm = 0;
+      clearSave();
+      startGame(false);
+    }
+  });
+  resumeBtn.addEventListener('click', function () { if (state === 'paused') togglePause(); });
+  continueBtn.addEventListener('click', function () { $('screenWin').classList.remove('show'); state = 'playing'; syncAll(); });
+  restartBtn.addEventListener('click', function () {
+    clearSave();
+    $('screenWin').classList.remove('show');
+    startGame(false);
+  });
+  $('deliverBtn') && $('deliverBtn').addEventListener('click', function () {});
+  $('marketBtn').addEventListener('click', function () {
+    if (state === 'start') { showToast('先住进桃源乡'); sfxErr(); return; }
+    openModal('market', 'inv'); audio();
+  });
+  $('villageBtn').addEventListener('click', function () {
+    if (state === 'start') { showToast('先住进桃源乡'); sfxErr(); return; }
+    openModal('village', 'fac'); audio();
+  });
+  $('fishBtn').addEventListener('click', function () { doFish(); audio(); });
+  $('mapBtn').addEventListener('click', function () {
+    if (state !== 'playing') { showToast('先住进桃源乡'); sfxErr(); return; }
+    switchMap(isHill() ? 'home' : 'hill'); audio();
+  });
+  $('endBtn').addEventListener('click', function () { endDay(); audio(); });
+  $('chapterBar').addEventListener('click', function () { openModal('story', 'story'); });
+  $('chapterBar').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openModal('story', 'story'); }
+  });
+  $('modalClose').addEventListener('click', closeModal);
+  $('screenModal').addEventListener('click', function (e) { if (e.target === this) closeModal(); });
+  $('soundBtn').addEventListener('click', function () {
+    soundOn = !soundOn; saveNum('taoyuan.sound', soundOn ? 1 : 0);
+    this.classList.toggle('on', soundOn); this.textContent = soundOn ? '♪' : '×';
+    if (soundOn) tone(700, 0.06, 'sine', 0.03);
+  });
+  $('soundBtn').classList.toggle('on', soundOn);
+  $('soundBtn').textContent = soundOn ? '♪' : '×';
+
+  function bindRestart(btn, label, armedText) {
+    if (!btn) return;
+    var armed = 0, timer = 0;
+    function disarm() {
+      clearTimeout(timer);
+      armed = 0;
+      btn.classList.remove('arm');
+      btn.textContent = label;
+    }
+    btn.addEventListener('click', function () {
+      if (state === 'start') { showToast('先住进桃源乡'); sfxErr(); return; }
+      if (!armed || Date.now() - armed > 3500) {
+        armed = Date.now();
+        btn.classList.add('arm');
+        btn.textContent = armedText;
+        showToast('再点一次，确认清空存档、从第一天重新开始');
+        tone(240, 0.1, 'square', 0.03, 180);
+        clearTimeout(timer);
+        timer = setTimeout(disarm, 3500);
+        return;
+      }
+      disarm();
+      clearSave();
+      startGame(false);
+    });
+  }
+  bindRestart($('resetBtn'), '↺', '?');
+  bindRestart($('pauseResetBtn'), '重新开始', '再点一次确认');
+
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) {
+      if (state === 'playing') { saveGame(); }
+    }
+  });
+  window.addEventListener('beforeunload', function () { if (state === 'playing' || state === 'paused') saveGame(); });
+  window.addEventListener('resize', resize);
+  window.addEventListener('orientationchange', function () { setTimeout(resize, 120); });
+
+  function startGame(useSave) {
+    if (useSave && pendingSave) { applySave(pendingSave); pendingSave = null; }
+    else { resetRun(); }
+    state = 'playing';
+    hideAll(); closeModal();
+    if ($('resetBtn')) $('resetBtn').style.display = '';
+    syncAll(); syncToolbar(); resize();
+    saveSoon();
+    showToast(useSave ? '欢迎回来 · 第 ' + day + ' 天 · ' + seasonName() : '新的开始，先把熟地的萝卜收了吧');
+    tone(392, 0.12, 'sine', 0.04, 523);
+  }
+
+  /* ---------- init ---------- */
+  resetRun();
+  pendingSave = loadSave();
+  syncAll(); syncToolbar(); updateStartUI();
+  resize();
+  setTimeout(resize, 120);
+  if (window.ResizeObserver) {
+    try { new ResizeObserver(function () { resize(); }).observe(stage); } catch (e) {}
+  }
+  draw();
+  requestAnimationFrame(loop);
+  if (pendingSave) startGame(true);
+})();
+</script>
+</body>
+</html>

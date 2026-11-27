@@ -10,13 +10,13 @@
     --text:#eaf2ff;--muted:#8ea3bd;--line:rgba(148,163,184,.16);
     --pink:#f472b6;--violet:#818cf8;--cyan:#38bdf8;
     --board:min(86vw, 512px);
-    --cols:4;--rows:4;
+    --cols:5;--rows:4;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;min-height:100%;}
   body{
     min-height:100vh;display:flex;align-items:center;justify-content:center;
-    padding:22px 16px 26px;color:var(--text);
+    padding:20px 16px 24px;color:var(--text);
     font-family:"Segoe UI","Microsoft YaHei","PingFang SC","Hiragino Sans GB",sans-serif;
     background:
       radial-gradient(900px 620px at 8% -6%, rgba(244,114,182,.15), transparent 62%),
@@ -26,7 +26,7 @@
     -webkit-font-smoothing:antialiased;overflow-x:hidden;-webkit-tap-highlight-color:transparent;
   }
   button{font:inherit;color:inherit;}
-  .app{width:min(100%,720px);display:flex;flex-direction:column;gap:16px;}
+  .app{width:min(100%,720px);display:flex;flex-direction:column;gap:14px;}
 
   .topbar{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;}
   .brand{display:flex;align-items:center;gap:13px;min-width:0;}
@@ -41,10 +41,28 @@
     -webkit-background-clip:text;background-clip:text;color:transparent;
   }
   .brand p{margin:4px 0 0;font-size:12.5px;color:var(--muted);}
-  .stats{display:flex;gap:8px;flex-wrap:wrap;}
-  .stat{min-width:76px;padding:9px 13px;border-radius:13px;background:rgba(255,255,255,.045);border:1px solid var(--line);}
+  .stats{display:flex;gap:7px;flex-wrap:wrap;}
+  .stat{min-width:66px;padding:8px 11px;border-radius:13px;background:rgba(255,255,255,.045);border:1px solid var(--line);}
   .stat span{display:block;font-size:11px;color:var(--muted);letter-spacing:.08em;}
   .stat b{display:block;margin-top:3px;font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;}
+  .stat.lives b{color:#fda4af;letter-spacing:.12em;font-size:15px;}
+
+  .modes{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;}
+  .mode{
+    border:1px solid var(--line);border-radius:12px;padding:8px 4px 7px;cursor:pointer;
+    background:rgba(255,255,255,.04);display:flex;flex-direction:column;align-items:center;gap:2px;
+    transition:background .16s ease,border-color .16s ease,transform .16s ease;
+  }
+  .mode:hover{transform:translateY(-1px);border-color:rgba(244,114,182,.32);}
+  .mode b{font-size:12.5px;font-weight:800;color:#dbe4f3;letter-spacing:.04em;white-space:nowrap;}
+  .mode span{font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .mode.on{
+    background:linear-gradient(135deg,rgba(244,114,182,.22),rgba(129,140,248,.22));
+    border-color:rgba(244,114,182,.44);box-shadow:inset 0 0 0 1px rgba(244,114,182,.16);
+  }
+  .mode.on b{color:#f5d0fe;}
+  .mode.on span{color:#e9d5ff;}
+  .rule{margin:0;font-size:11.5px;line-height:1.5;color:var(--muted);min-height:18px;}
 
   .stage{display:flex;justify-content:center;padding:2px 0;}
   .board-shell{
@@ -70,6 +88,7 @@
     box-shadow:inset 0 0 0 1px rgba(148,163,184,.10), inset 0 18px 40px rgba(0,0,0,.32);
     user-select:none;
   }
+  .board[data-cols="5"],.board[data-cols="6"]{gap:5px;padding:6px;}
 
   .mem{
     position:relative;border:0;padding:0;background:none;cursor:pointer;
@@ -82,7 +101,7 @@
     transition:transform .34s cubic-bezier(.2,.7,.2,1);
     border-radius:14%;
   }
-  .mem.flipped .inner,.mem.matched .inner{transform:rotateY(180deg);}
+  .mem.flipped .inner,.mem.matched .inner,.mem.peek .inner{transform:rotateY(180deg);}
   .face{
     position:absolute;inset:0;border-radius:14%;backface-visibility:hidden;-webkit-backface-visibility:hidden;
     display:grid;place-items:center;overflow:hidden;
@@ -116,7 +135,7 @@
   }
   .front i{
     font-style:normal;font-weight:800;line-height:1;
-    font-size:clamp(24px, 4vw, 42px);
+    font-size:var(--glyph,clamp(24px,4vw,42px));
     color:var(--c,#e2e8f0);
     text-shadow:0 2px 12px rgba(0,0,0,.35);
     filter:drop-shadow(0 0 10px var(--glow,rgba(255,255,255,.12)));
@@ -141,13 +160,24 @@
     75%{transform:rotateY(180deg) translateX(4px);}
   }
 
-  .panel{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
-  .seg{display:inline-flex;gap:4px;padding:4px;border-radius:12px;background:rgba(255,255,255,.045);border:1px solid var(--line);}
-  .seg button{
-    border:0;background:none;color:#8ea3bd;padding:6px 12px;border-radius:9px;cursor:pointer;
-    font-size:12px;font-weight:700;letter-spacing:.02em;transition:background .16s ease,color .16s ease;
+  .preview-hint{
+    position:absolute;left:50%;top:11px;transform:translateX(-50%);z-index:8;pointer-events:none;
+    padding:6px 13px;border-radius:999px;white-space:nowrap;
+    background:rgba(6,12,24,.86);border:1px solid rgba(244,114,182,.38);
+    font-size:11.5px;font-weight:700;color:#fbcfe8;letter-spacing:.04em;
+    box-shadow:0 8px 20px rgba(0,0,0,.42);
   }
-  .seg button.on{background:linear-gradient(135deg,rgba(244,114,182,.24),rgba(129,140,248,.24));color:#f5d0fe;box-shadow:inset 0 0 0 1px rgba(244,114,182,.26);}
+  .preview-hint b{font-variant-numeric:tabular-nums;color:#fff;}
+  .toast{
+    position:absolute;left:50%;bottom:14px;z-index:8;pointer-events:none;white-space:nowrap;
+    transform:translateX(-50%) translateY(8px);opacity:0;transition:opacity .22s ease,transform .22s ease;
+    padding:6px 13px;border-radius:999px;font-size:11.5px;font-weight:700;color:#e9d5ff;
+    background:rgba(8,14,28,.88);border:1px solid rgba(129,140,248,.42);
+    box-shadow:0 8px 20px rgba(0,0,0,.42);
+  }
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  .panel{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
   .actions{display:flex;gap:8px;}
   .btn{
     border:1px solid rgba(255,255,255,.11);border-radius:11px;padding:8px 14px;cursor:pointer;
@@ -164,40 +194,43 @@
 
   .overlay{
     position:absolute;inset:0;z-index:9;display:none;align-items:center;justify-content:center;padding:18px;
-    background:rgba(3,8,18,.74);backdrop-filter:blur(7px);border-radius:18px;
+    background:rgba(3,8,18,.78);backdrop-filter:blur(7px);border-radius:18px;
   }
   .overlay.on{display:flex;animation:fadeIn .25s ease;}
   @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
   .card{
-    width:min(100%,330px);padding:24px 22px 20px;border-radius:22px;text-align:center;
+    width:min(100%,330px);padding:22px 20px 18px;border-radius:22px;text-align:center;
     background:linear-gradient(180deg,rgba(24,20,38,.98),rgba(9,13,26,.98));
     border:1px solid rgba(244,114,182,.26);
     box-shadow:0 26px 70px rgba(0,0,0,.55), 0 0 44px rgba(244,114,182,.10);
   }
   .kicker{font-size:11.5px;letter-spacing:.22em;color:#f9a8d4;font-weight:700;}
   .card h2{
-    margin:10px 0 5px;font-size:30px;font-weight:900;letter-spacing:.08em;
+    margin:9px 0 5px;font-size:29px;font-weight:900;letter-spacing:.08em;
     background:linear-gradient(100deg,#fce7f3,#f9a8d4,#c7d2fe);
     -webkit-background-clip:text;background-clip:text;color:transparent;
   }
-  .card p{margin:0 0 16px;font-size:12.5px;line-height:1.65;color:var(--muted);}
-  .res-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
-  .res-grid div{padding:9px 8px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid var(--line);}
+  .card p{margin:0 0 14px;font-size:12.5px;line-height:1.65;color:var(--muted);}
+  .res-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+  .res-grid div{padding:8px 8px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid var(--line);}
   .res-grid span{display:block;font-size:10.5px;color:var(--muted);}
-  .res-grid b{display:block;margin-top:2px;font-size:17px;font-variant-numeric:tabular-nums;}
+  .res-grid b{display:block;margin-top:2px;font-size:16px;font-variant-numeric:tabular-nums;}
   .card .btn.primary{width:100%;padding:11px 14px;font-size:13.5px;}
 
   @media (max-width:620px){
-    body{padding:14px 12px 18px;}
-    .app{gap:12px;}
-    .logo{width:46px;height:46px;border-radius:14px;font-size:21px;}
-    .stat{min-width:64px;padding:7px 10px;}
-    .stat b{font-size:15px;}
-    .brand p{font-size:11.5px;}
-    .seg button{padding:6px 9px;}
+    body{padding:12px 11px 16px;}
+    .app{gap:11px;}
+    .logo{width:44px;height:44px;border-radius:13px;font-size:20px;}
+    .stat{min-width:56px;padding:6px 9px;}
+    .stat span{font-size:10px;}
+    .stat b{font-size:14.5px;}
+    .brand p{font-size:11px;}
+    .mode{padding:7px 2px 6px;border-radius:10px;}
+    .mode b{font-size:11.5px;}
+    .mode span{font-size:9.5px;}
+    .rule{font-size:11px;}
   }
   @media (max-height:760px) and (min-width:700px){
-    :root{--board:min(72vh,510px);}
     .brand p{display:none;}
     .foot{display:none;}
   }
@@ -210,86 +243,139 @@
       <div class="logo">🎴</div>
       <div>
         <h1>记忆翻牌</h1>
-        <p>记住牌面的位置，用最少步数把所有对子配完</p>
+        <p>五种难度：从轻松记牌到限时、重排与三条命</p>
       </div>
     </div>
     <div class="stats">
       <div class="stat"><span>步数</span><b id="moves">0</b></div>
-      <div class="stat"><span>时间</span><b id="time">00:00</b></div>
-      <div class="stat"><span>配对</span><b id="pairs">0/8</b></div>
-      <div class="stat"><span>最佳步数</span><b id="best">—</b></div>
+      <div class="stat"><span id="timeLabel">时间</span><b id="time">00:00</b></div>
+      <div class="stat"><span>配对</span><b id="pairs">0/10</b></div>
+      <div class="stat lives" id="livesStat" hidden><span>生命</span><b id="lives">♥♥♥</b></div>
+      <div class="stat"><span>最佳</span><b id="best">—</b></div>
     </div>
   </div>
+
+  <div class="modes" id="modes" role="tablist" aria-label="难度选择"></div>
+  <p class="rule" id="rule"></p>
 
   <div class="stage">
     <div class="board-shell">
       <div class="board" id="board" aria-label="记忆翻牌棋盘"></div>
+      <div class="preview-hint" id="previewHint" hidden>预览 <b id="previewLeft">3</b> 秒</div>
+      <div class="toast" id="toast"></div>
     </div>
   </div>
 
   <div class="panel">
-    <div class="seg" id="sizes">
-      <button type="button" data-size="4" class="on">4 × 4</button>
-      <button type="button" data-size="5">5 × 4</button>
-      <button type="button" data-size="6">6 × 6</button>
-    </div>
     <div class="actions">
-      <button class="btn" id="restart">重开</button>
+      <button class="btn" id="restart">重开本局</button>
     </div>
   </div>
-  <p class="foot">点击两张牌配对 · 全部配对完成即获胜 · R 键重开</p>
+  <p class="foot">点击两张牌配对 · 全部配完即获胜 · R 键重开</p>
 </div>
 
 <script>
 (function () {
   'use strict';
 
-  var BEST_KEY = 'tx_memory_best_v1';
+  var BEST_KEY = 'tx_memory_best_v2';
+  var MODE_KEY = 'tx_memory_mode_v1';
+
   var SYMBOLS = [
     ['♥', '#fb7185'], ['◆', '#38bdf8'], ['★', '#fbbf24'], ['●', '#a78bfa'],
     ['▲', '#34d399'], ['■', '#f472b6'], ['☾', '#93c5fd'], ['☀', '#fb923c'],
     ['☘', '#4ade80'], ['♣', '#22d3ee'], ['♠', '#cbd5e1'], ['♦', '#f43f5e'],
     ['✚', '#e879f9'], ['❄', '#7dd3fc'], ['♪', '#facc15'], ['✦', '#c084fc'],
-    ['⚑', '#fb923c'], ['∞', '#5eead4']
+    ['⚑', '#f97316'], ['∞', '#5eead4'], ['☯', '#fda4af'], ['☂', '#67e8f9'],
+    ['☁', '#e2e8f0'], ['✿', '#f0abfc'], ['☄', '#fdba74'], ['⚡', '#fde047']
   ];
+
+  var MODES = {
+    easy: {
+      name: '新手', cols: 4, rows: 4, preview: 5, timed: 0, extend: 0,
+      lives: 0, shuffleEvery: 0,
+      rule: '4×4 共 8 对。开局亮牌 5 秒，翻错没有惩罚，先熟悉牌位。'
+    },
+    classic: {
+      name: '经典', cols: 5, rows: 4, preview: 3, timed: 0, extend: 0,
+      lives: 0, shuffleEvery: 0,
+      rule: '5×4 共 10 对。开局亮牌 3 秒，标准规则，用最少步数配完。'
+    },
+    sprint: {
+      name: '疾速', cols: 6, rows: 4, preview: 3, timed: 75, extend: 4,
+      lives: 0, shuffleEvery: 0,
+      rule: '6×4 共 12 对。75 秒倒计时，每配成一对加 4 秒，超时即失败。'
+    },
+    fog: {
+      name: '迷雾', cols: 5, rows: 6, preview: 3, timed: 0, extend: 0,
+      lives: 0, shuffleEvery: 3,
+      rule: '5×6 共 15 对。每配成 3 对，剩余未配对的牌会重新洗位。'
+    },
+    hell: {
+      name: '地狱', cols: 6, rows: 8, preview: 2, timed: 0, extend: 0,
+      lives: 3, shuffleEvery: 5,
+      rule: '6×8 共 24 对。3 条命，翻错扣 1 条；每配成 5 对重排一次。'
+    }
+  };
+  var ORDER = ['easy', 'classic', 'sprint', 'fog', 'hell'];
 
   var boardEl = document.getElementById('board');
   var movesEl = document.getElementById('moves');
   var timeEl = document.getElementById('time');
+  var timeLabelEl = document.getElementById('timeLabel');
   var pairsEl = document.getElementById('pairs');
   var bestEl = document.getElementById('best');
-  var sizesEl = document.getElementById('sizes');
+  var livesStatEl = document.getElementById('livesStat');
+  var livesEl = document.getElementById('lives');
+  var modesEl = document.getElementById('modes');
+  var ruleEl = document.getElementById('rule');
   var restartBtn = document.getElementById('restart');
+  var previewHintEl = document.getElementById('previewHint');
+  var previewLeftEl = document.getElementById('previewLeft');
+  var toastEl = document.getElementById('toast');
 
-  var cols = 4, rows = 4;
-  var deck = [], first = null, second = null, busy = false;
-  var moves = 0, matched = 0, started = false;
-  var startAt = 0, elapsed = 0, timer = null;
+  var modeId = 'classic';
+  var mode = MODES[modeId];
+  var cols = 5, rows = 4;
+  var cards = [], first = null, second = null, busy = false;
+  var moves = 0, matched = 0, elapsed = 0, lives = 0;
+  var startAt = 0, timer = null, previewTimer = null, previewLeft = 0;
+  var previewing = false, roundOver = false, started = false;
+  var roundId = 0, toastTimer = null, bonusMs = 0;
   var bests = {};
 
   try {
     var raw = JSON.parse(localStorage.getItem(BEST_KEY) || '{}');
     if (raw && typeof raw === 'object') bests = raw;
   } catch (e) { bests = {}; }
+  try {
+    var savedMode = localStorage.getItem(MODE_KEY);
+    if (savedMode && MODES[savedMode]) modeId = savedMode;
+  } catch (e) {}
+
+  mode = MODES[modeId];
 
   function pairCount() { return cols * rows / 2; }
-  function sizeKey() { return cols + 'x' + rows; }
 
   function loadBest() {
-    var v = bests[sizeKey()];
-    bestEl.textContent = v ? (v + ' 步') : '—';
+    var b = bests[modeId];
+    bestEl.textContent = (b && b.moves) ? (b.moves + ' 步') : '—';
+    bestEl.title = (b && b.time) ? ('最佳用时 ' + fmt(b.time)) : '';
   }
 
   function saveBest() {
-    var k = sizeKey();
-    if (!bests[k] || moves < bests[k]) {
-      bests[k] = moves;
+    var b = bests[modeId];
+    var isRecord = !b || moves < b.moves || (moves === b.moves && elapsed < b.time);
+    if (isRecord) {
+      bests[modeId] = { moves: moves, time: elapsed };
       try { localStorage.setItem(BEST_KEY, JSON.stringify(bests)); } catch (e) {}
     }
     loadBest();
+    return isRecord;
   }
 
   function fmt(ms) {
+    if (ms < 0) ms = 0;
     var t = Math.floor(ms / 1000);
     var m = Math.floor(t / 60), s = t % 60;
     return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
@@ -298,18 +384,77 @@
   function updateMoves() { movesEl.textContent = moves; }
   function updatePairs() { pairsEl.textContent = matched + '/' + pairCount(); }
 
-  function startTimer() {
-    if (started) return;
-    started = true;
-    startAt = Date.now() - elapsed;
-    timer = setInterval(function () {
-      elapsed = Date.now() - startAt;
-      timeEl.textContent = fmt(elapsed);
-    }, 120);
+  function renderLives() {
+    if (!mode.lives) { livesStatEl.hidden = true; return; }
+    livesStatEl.hidden = false;
+    var s = '';
+    for (var i = 0; i < mode.lives; i++) s += (i < lives ? '♥' : '♡');
+    livesEl.textContent = s;
   }
 
-  function stopTimer() {
+  function fitBoard() {
+    var maxW = Math.min(window.innerWidth * 0.86, 512);
+    var availH = window.innerHeight - 292;
+    var wByH = availH * cols / rows;
+    var w = Math.max(230, Math.min(maxW, wByH));
+    document.documentElement.style.setProperty('--board', w + 'px');
+  }
+
+  function stopTimers() {
     if (timer) { clearInterval(timer); timer = null; }
+    if (previewTimer) { clearInterval(previewTimer); previewTimer = null; }
+  }
+
+  function tick() {
+    if (roundOver) return;
+    var now = Date.now() - startAt - bonusMs;
+    if (now < 0) now = 0;
+    elapsed = now;
+    if (mode.timed) {
+      var left = mode.timed * 1000 - now;
+      if (left <= 0) {
+        elapsed = mode.timed * 1000 + bonusMs;
+        timeEl.textContent = '00:00';
+        lose('时间到', '倒计时归零，牌还没配完。');
+        return;
+      }
+      timeEl.textContent = fmt(left);
+    } else {
+      timeEl.textContent = fmt(now);
+    }
+  }
+
+  function beginPlay(rid) {
+    if (roundOver || rid !== roundId) return;
+    previewing = false;
+    previewHintEl.hidden = true;
+    started = true;
+    startAt = Date.now();
+    if (mode.timed) {
+      timer = setInterval(tick, 100);
+      tick();
+    }
+  }
+
+  function startPreview(rid) {
+    if (!mode.preview) { beginPlay(rid); return; }
+    previewing = true;
+    previewLeft = mode.preview;
+    previewLeftEl.textContent = previewLeft;
+    previewHintEl.hidden = false;
+    for (var i = 0; i < cards.length; i++) cards[i].classList.add('peek');
+    previewTimer = setInterval(function () {
+      if (rid !== roundId) return;
+      previewLeft--;
+      if (previewLeft <= 0) {
+        clearInterval(previewTimer);
+        previewTimer = null;
+        for (var j = 0; j < cards.length; j++) cards[j].classList.remove('peek');
+        beginPlay(rid);
+      } else {
+        previewLeftEl.textContent = previewLeft;
+      }
+    }, 1000);
   }
 
   function shuffle(a) {
@@ -320,28 +465,57 @@
     return a;
   }
 
+  function setCardFace(card, pid) {
+    var sym = SYMBOLS[pid][0], color = SYMBOLS[pid][1];
+    card.dataset.pair = String(pid);
+    var front = card.querySelector('.front');
+    front.style.setProperty('--c', color);
+    front.style.setProperty('--glow', color + '55');
+    front.querySelector('i').textContent = sym;
+  }
+
   function build() {
-    stopTimer();
+    roundId++;
+    var rid = roundId;
+    stopTimers();
+    if (toastTimer) { clearTimeout(toastTimer); toastTimer = null; }
+    toastEl.classList.remove('on');
+
+    mode = MODES[modeId];
+    cols = mode.cols; rows = mode.rows;
     boardEl.innerHTML = '';
-    boardEl.style.setProperty('--cols', cols);
-    boardEl.style.setProperty('--rows', rows);
+    document.documentElement.style.setProperty('--cols', cols);
+    document.documentElement.style.setProperty('--rows', rows);
+    boardEl.dataset.cols = cols;
+    boardEl.style.setProperty('--glyph',
+      cols >= 6 ? 'clamp(14px,3.1vw,26px)' :
+      cols === 5 ? 'clamp(18px,3.6vw,33px)' :
+      'clamp(22px,4vw,42px)');
+    fitBoard();
+
     first = null; second = null; busy = false;
-    moves = 0; matched = 0; started = false; elapsed = 0; startAt = 0;
+    moves = 0; matched = 0; elapsed = 0; startAt = 0; bonusMs = 0;
+    previewing = false; roundOver = false; started = false;
+    lives = mode.lives || 0;
+
     movesEl.textContent = '0';
-    timeEl.textContent = '00:00';
+    timeLabelEl.textContent = mode.timed ? '剩余' : '时间';
+    timeEl.textContent = mode.timed ? fmt(mode.timed * 1000) : '00:00';
     updatePairs();
+    renderLives();
     loadBest();
 
     var n = pairCount();
-    deck = [];
-    for (var i = 0; i < n; i++) {
-      deck.push({ id: i, sym: SYMBOLS[i][0], color: SYMBOLS[i][1] });
-      deck.push({ id: i, sym: SYMBOLS[i][0], color: SYMBOLS[i][1] });
+    var pool = [];
+    for (var i = 0; i < n; i++) pool.push({ id: i });
+    cards = [];
+    for (var p = 0; p < n; p++) {
+      pool.push({ id: p });
     }
-    shuffle(deck);
+    shuffle(pool);
 
-    for (var k = 0; k < deck.length; k++) {
-      var item = deck[k];
+    for (var k = 0; k < pool.length; k++) {
+      var item = pool[k];
       var b = document.createElement('button');
       b.type = 'button';
       b.className = 'mem';
@@ -350,16 +524,59 @@
       b.innerHTML =
         '<span class="inner">' +
           '<span class="face back"></span>' +
-          '<span class="face front" style="--c:' + item.color + ';--glow:' + item.color + '55"><i>' + item.sym + '</i></span>' +
+          '<span class="face front"><i></i></span>' +
         '</span>';
+      setCardFace(b, item.id);
       b.addEventListener('click', function () { flip(this); });
       boardEl.appendChild(b);
+      cards.push(b);
     }
+
+    startPreview(rid);
+  }
+
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('on');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.classList.remove('on'); }, 1300);
+  }
+
+  function reshuffleRemaining(rid) {
+    var rest = [];
+    for (var i = 0; i < cards.length; i++) {
+      if (!cards[i].classList.contains('matched')) rest.push(cards[i]);
+    }
+    if (rest.length < 2) return;
+    var ids = [];
+    for (var j = 0; j < rest.length; j++) {
+      ids.push(parseInt(rest[j].dataset.pair, 10));
+      rest[j].classList.remove('flipped');
+      rest[j].setAttribute('aria-label', '未翻开的牌');
+    }
+    shuffle(ids);
+    for (var k = 0; k < rest.length; k++) {
+      setCardFace(rest[k], ids[k]);
+      rest[k].classList.add('peek');
+    }
+    showToast('牌局重排');
+    busy = true;
+    setTimeout(function () {
+      if (rid !== roundId) return;
+      for (var m = 0; m < rest.length; m++) rest[m].classList.remove('peek');
+      busy = false;
+    }, 620);
   }
 
   function flip(card) {
-    if (busy || card.classList.contains('matched') || card.classList.contains('flipped') || card === first) return;
-    if (!started) startTimer();
+    if (previewing || busy || roundOver || !card) return;
+    if (card.classList.contains('matched') || card.classList.contains('flipped')) return;
+    if (!started) beginPlay(roundId);
+    if (!timer) {
+      startAt = Date.now();
+      timer = setInterval(tick, 100);
+      tick();
+    }
     card.classList.add('flipped');
     card.setAttribute('aria-label', '已翻开的牌');
 
@@ -369,76 +586,137 @@
     moves++;
     updateMoves();
     busy = true;
+    var rid = roundId;
 
     if (first.dataset.pair === second.dataset.pair) {
       var a = first, b = second;
+      first = null; second = null;
       setTimeout(function () {
+        if (rid !== roundId || roundOver) return;
         a.classList.add('matched');
         b.classList.add('matched');
         matched++;
         updatePairs();
-        first = null; second = null; busy = false;
-        if (matched === pairCount()) win();
-      }, 300);
+        if (mode.timed && mode.extend) bonusMs += mode.extend * 1000;
+        if (matched === pairCount()) { busy = false; win(); return; }
+        if (mode.shuffleEvery && matched % mode.shuffleEvery === 0) {
+          reshuffleRemaining(rid);
+        } else {
+          busy = false;
+        }
+      }, 280);
     } else {
       var x = first, y = second;
+      first = null; second = null;
       y.classList.add('shake');
+      if (mode.lives) {
+        lives = Math.max(0, lives - 1);
+        renderLives();
+      }
       setTimeout(function () {
+        if (rid !== roundId || roundOver) return;
         x.classList.remove('flipped');
         y.classList.remove('flipped');
         x.setAttribute('aria-label', '未翻开的牌');
         y.setAttribute('aria-label', '未翻开的牌');
         y.classList.remove('shake');
-        first = null; second = null; busy = false;
-      }, 720);
+        if (mode.lives && lives <= 0) {
+          lose('生命耗尽', '翻错太多次，三条命已经用完。');
+          return;
+        }
+        busy = false;
+      }, 700);
     }
   }
 
-  function win() {
-    stopTimer();
-    saveBest();
+  function makeOverlay(kicker, title, text, stats, buttonText) {
+    stopTimers();
     var overlay = document.createElement('div');
     overlay.className = 'overlay on';
-    var isBest = bests[sizeKey()] === moves;
     overlay.innerHTML =
       '<div class="card">' +
-        '<div class="kicker">全部配对完成</div>' +
-        '<h2>通关</h2>' +
-        '<p>' + (isBest ? '新的最佳步数，记性不错。' : '再来一局，试试用更少步数配完。') + '</p>' +
-        '<div class="res-grid">' +
-          '<div><span>步数</span><b>' + moves + '</b></div>' +
-          '<div><span>用时</span><b>' + fmt(elapsed) + '</b></div>' +
-          '<div><span>棋盘</span><b>' + cols + '×' + rows + '</b></div>' +
-          '<div><span>最佳步数</span><b>' + bests[sizeKey()] + '</b></div>' +
-        '</div>' +
-        '<button class="btn primary" id="again">再来一局</button>' +
+        '<div class="kicker">' + kicker + '</div>' +
+        '<h2>' + title + '</h2>' +
+        '<p>' + text + '</p>' +
+        '<div class="res-grid">' + stats + '</div>' +
+        '<button class="btn primary" id="again">' + buttonText + '</button>' +
       '</div>';
     boardEl.appendChild(overlay);
-    overlay.querySelector('#again').addEventListener('click', function () {
-      build();
-    });
+    overlay.querySelector('#again').addEventListener('click', function () { build(); });
   }
 
-  sizesEl.addEventListener('click', function (e) {
-    var btn = e.target.closest('button[data-size]');
-    if (!btn) return;
-    var n = parseInt(btn.dataset.size, 10);
-    if (n === cols) return;
-    cols = n;
-    rows = n === 5 ? 4 : n;
-    var all = sizesEl.querySelectorAll('button');
-    for (var i = 0; i < all.length; i++) all[i].classList.toggle('on', all[i] === btn);
-    build();
+  function statsGrid(bestText) {
+    return '<div><span>步数</span><b>' + moves + '</b></div>' +
+      '<div><span>用时</span><b>' + fmt(elapsed) + '</b></div>' +
+      '<div><span>配对</span><b>' + matched + '/' + pairCount() + '</b></div>' +
+      '<div><span>难度</span><b>' + mode.name + '</b></div>' +
+      '<div><span>最佳步数</span><b>' + (bestText || '—') + '</b></div>' +
+      '<div><span>棋盘</span><b>' + cols + '×' + rows + '</b></div>';
+  }
+
+  function win() {
+    if (roundOver) return;
+    roundOver = true;
+    busy = true;
+    var isRecord = saveBest();
+    var b = bests[modeId];
+    makeOverlay(
+      '全部配对完成',
+      '通关',
+      isRecord ? '新的最佳步数，记性不错。' : '再来一局，试试用更少步数配完。',
+      statsGrid(b ? (b.moves + ' 步') : '—'),
+      '再来一局'
+    );
+  }
+
+  function lose(title, text) {
+    if (roundOver) return;
+    roundOver = true;
+    busy = true;
+    makeOverlay(
+      '挑战失败',
+      title,
+      text,
+      statsGrid(bests[modeId] ? (bests[modeId].moves + ' 步') : '—'),
+      '再试一次'
+    );
+  }
+
+  function applyModeUi() {
+    var all = modesEl.querySelectorAll('button[data-mode]');
+    for (var i = 0; i < all.length; i++) {
+      all[i].classList.toggle('on', all[i].dataset.mode === modeId);
+      all[i].setAttribute('aria-selected', all[i].dataset.mode === modeId ? 'true' : 'false');
+    }
+    ruleEl.textContent = mode.rule;
+  }
+
+  ORDER.forEach(function (id) {
+    var m = MODES[id];
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'mode';
+    b.dataset.mode = id;
+    b.setAttribute('role', 'tab');
+    b.innerHTML = '<b>' + m.name + '</b><span>' + m.cols + '×' + m.rows + '</span>';
+    b.addEventListener('click', function () {
+      if (modeId === id) return;
+      modeId = id;
+      mode = MODES[id];
+      try { localStorage.setItem(MODE_KEY, modeId); } catch (e) {}
+      applyModeUi();
+      build();
+    });
+    modesEl.appendChild(b);
   });
 
-  restartBtn.addEventListener('click', function () {
-    build();
-  });
-
+  restartBtn.addEventListener('click', function () { build(); });
   document.addEventListener('keydown', function (e) {
     if (e.key === 'r' || e.key === 'R') build();
   });
+  window.addEventListener('resize', function () { fitBoard(); });
 
+  applyModeUi();
   build();
 })();
 </script>

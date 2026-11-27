@@ -100,6 +100,8 @@
     text-shadow: 0 0 14px rgba(68, 215, 255, 0.5);
   }
   .stat .value.high { color: #ffd166; text-shadow: 0 0 14px rgba(255, 196, 70, 0.45); }
+  .stat .value.combo { color: #ffd166; text-shadow: 0 0 14px rgba(255, 196, 70, 0.45); }
+  .stat .value.combo.hot { color: #ff8d5c; text-shadow: 0 0 16px rgba(255, 91, 64, 0.7); }
   .lives {
     font-size: 19px;
     line-height: 1;
@@ -121,6 +123,9 @@
     transition: border-color 0.2s, color 0.2s, background 0.2s;
   }
   .hud-btn:hover { border-color: rgba(98, 224, 255, 0.7); color: #e6fcff; background: rgba(12, 40, 66, 0.8); }
+  #bombBtn { color: #ffd166; border-color: rgba(255, 209, 102, 0.42); }
+  #bombBtn:hover { border-color: rgba(255, 220, 130, 0.8); color: #fff3cc; }
+  #bombBtn:disabled { opacity: 0.42; cursor: default; }
   .power-status {
     position: fixed;
     top: 78px;
@@ -350,7 +355,7 @@
     .stat { min-width: 48px; }
     .stat .value { font-size: 16px; }
     .lives { font-size: 16px; }
-    .hud-right .hud-btn { display: none; }
+    .hud-right #muteBtn { display: none; }
     .power-status { top: 68px; left: 14px; }
     .controls-bar { font-size: 10.5px; padding: 7px 12px; bottom: 10px; }
     .panel { padding: 26px 20px 22px; border-radius: 16px; }
@@ -368,18 +373,20 @@
     <div class="brand"><span class="brand-mark"></span><span>深空战机</span></div>
     <div class="stat"><span class="label">分数</span><span class="value" id="score">0</span></div>
     <div class="stat"><span class="label">最高分</span><span class="value high" id="highScore">0</span></div>
-    <div class="stat"><span class="label">关卡</span><span class="value" id="levelHud">1 / 5</span></div>
+    <div class="stat"><span class="label">关卡</span><span class="value" id="levelHud">1 / 10</span></div>
+    <div class="stat"><span class="label">连击</span><span class="value combo" id="comboHud">—</span></div>
   </div>
   <div class="hud-right">
     <div class="stat"><span class="label">生存</span><span class="value" id="time">00:00</span></div>
     <div class="stat"><span class="label">生命</span><span class="lives" id="lives">♥ ♥ ♥</span></div>
+    <button id="bombBtn" class="hud-btn" type="button">炸弹 ×2 (B)</button>
     <button id="muteBtn" class="hud-btn" type="button">音效：开 (M)</button>
   </div>
 </div>
 
 <div id="powerStatus" class="power-status"></div>
 
-<div class="controls-bar">方向键 / WASD 移动 · 鼠标跟随 · 自动开火 · 空格 / P 暂停 · M 静音</div>
+<div class="controls-bar">方向键 / WASD 移动 · 鼠标跟随 · 自动开火 · B 炸弹 · 空格 / P 暂停 · M 静音</div>
 
 <div class="overlay" id="startOverlay">
   <div class="panel">
@@ -389,10 +396,11 @@
     <div class="how">
       <div class="how-item"><span>移动</span><strong>方向键 / WASD / 鼠标</strong></div>
       <div class="how-item"><span>射击</span><strong>自动开火</strong></div>
+      <div class="how-item"><span>清屏炸弹</span><strong>B 键 / 点按钮</strong></div>
       <div class="how-item"><span>暂停 / 继续</span><strong>空格 或 P</strong></div>
       <div class="how-item"><span>静音</span><strong>M</strong></div>
     </div>
-    <div class="rules">击落敌机得分 · 初始 3 条命 · 受击短暂无敌 · 补给：三向弹 / 加速射击 / 加命<br>5 个关卡逐级推进，关末迎战 Boss；击破 Boss 才能踏入下一片星域。</div>
+    <div class="rules">击落敌机得分 · 连击越高得分倍率越高 · 初始 3 条命 · B 键清屏炸弹 · 补给：火力升级（永久，最多 9 发）/ 射速提升（永久）/ 护盾 / 加命<br>10 个关卡逐级推进，每关会在 1–2 分钟的随机时刻迎来 Boss；Boss 低血量会进入狂暴。</div>
     <p class="record-tag" id="startBest"></p>
     <button class="primary-btn" id="startBtn" type="button">开始战斗</button>
     <p class="hint">按 Enter 或空格也可以开始</p>
@@ -430,8 +438,8 @@
 <div class="overlay hidden" id="victoryOverlay">
   <div class="panel small">
     <div class="eyebrow">航线贯通</div>
-    <h2>五关全通</h2>
-    <p class="sub">五道封锁线全部突破，星海暂时安静下来。</p>
+    <h2>十关全通</h2>
+    <p class="sub">十道封锁线全部突破，星海暂时安静下来。</p>
     <div class="final-stats">
       <div class="final-stat"><span class="label">总分</span><span class="value" id="victoryScore">0</span></div>
       <div class="final-stat"><span class="label">用时</span><span class="value" id="victoryTime">00:00</span></div>
@@ -452,11 +460,19 @@ var W = 0;
 var H = 0;
 var DPR = 1;
 
+/* 渲染缓存：避免 Boss 战每帧重复创建渐变和阴影 */
+var bgCanvas = null;
+var vignetteCanvas = null;
+var bulletSpriteCache = {};
+var bossSprite = null;
+
 var scoreEl = document.getElementById('score');
 var highEl = document.getElementById('highScore');
 var livesEl = document.getElementById('lives');
 var timeEl = document.getElementById('time');
 var powerEl = document.getElementById('powerStatus');
+var comboEl = document.getElementById('comboHud');
+var bombBtn = document.getElementById('bombBtn');
 var muteBtn = document.getElementById('muteBtn');
 var startOverlay = document.getElementById('startOverlay');
 var pauseOverlay = document.getElementById('pauseOverlay');
@@ -493,7 +509,13 @@ var powerHudTimer = 0;
 var shake = 0;
 var gameTime = 0;
 var lastTs = 0;
-var muted = false;
+var combo = 0;
+var comboTimer = 0;
+var comboWindow = 2.4;
+var bombs = 2;
+var BOMB_MAX = 3;
+var bombFlash = 0;
+var muted = readMuted();
 var audioCtx = null;
 var noiseBuffer = null;
 var lastShotSound = 0;
@@ -516,7 +538,7 @@ var ENEMY_TYPES = {
   large: { r: 33, hp: 14, score: 650, speedMin: 48, speedMax: 70, amp: 14, color: '#ffb15e', glow: '#ff5a36' }
 };
 
-/* 五关配置：敌人数量、速度、血量、弹幕密度逐级递进，关末 Boss 拥有多种弹幕。 */
+/* 十关配置：敌人数量、速度、血量、弹幕密度逐级递进，关末 Boss 拥有多种弹幕。 */
 var LEVELS = [
   {
     title: '前哨巡逻',
@@ -572,6 +594,61 @@ var LEVELS = [
     pMedium: 0.4,
     pLarge: 0.24,
     boss: { name: '终焉母舰 · 蚀日', hp: 400, r: 66, fire: 0.78, patterns: ['fan', 'radial', 'spiral', 'aim'], score: 6500 }
+  },
+  {
+    title: '陨石回廊',
+    quota: 34,
+    spawn: 0.56,
+    speed: 1.4,
+    hp: 5,
+    bullet: 1.6,
+    pMedium: 0.44,
+    pLarge: 0.28,
+    boss: { name: '碎星者 · 陨铁', hp: 480, r: 68, fire: 0.72, patterns: ['aim', 'fan', 'radial', 'spiral'], score: 7600 }
+  },
+  {
+    title: '赤色星云',
+    quota: 38,
+    spawn: 0.51,
+    speed: 1.48,
+    hp: 6,
+    bullet: 1.7,
+    pMedium: 0.48,
+    pLarge: 0.32,
+    boss: { name: '赤焰母舰 · 燎原', hp: 560, r: 70, fire: 0.67, patterns: ['fan', 'radial', 'spiral', 'aim'], score: 8800 }
+  },
+  {
+    title: '静默神域',
+    quota: 42,
+    spawn: 0.47,
+    speed: 1.56,
+    hp: 7,
+    bullet: 1.8,
+    pMedium: 0.52,
+    pLarge: 0.36,
+    boss: { name: '虚空祭司 · 无相', hp: 650, r: 72, fire: 0.62, patterns: ['radial', 'spiral', 'aim', 'fan'], score: 10000 }
+  },
+  {
+    title: '虫洞边缘',
+    quota: 46,
+    spawn: 0.43,
+    speed: 1.64,
+    hp: 8,
+    bullet: 1.9,
+    pMedium: 0.56,
+    pLarge: 0.4,
+    boss: { name: '时空吞噬者 · 逆流', hp: 750, r: 74, fire: 0.58, patterns: ['spiral', 'aim', 'fan', 'radial'], score: 11500 }
+  },
+  {
+    title: '终焉之门',
+    quota: 50,
+    spawn: 0.4,
+    speed: 1.72,
+    hp: 9,
+    bullet: 2.0,
+    pMedium: 0.6,
+    pLarge: 0.44,
+    boss: { name: '深渊主宰 · 终焉', hp: 1000, r: 78, fire: 0.54, patterns: ['aim', 'fan', 'radial', 'spiral'], score: 14000 }
   }
 ];
 
@@ -580,6 +657,10 @@ var phase = 'intro';
 var phaseTimer = 0;
 var levelKills = 0;
 var levelQuota = 0;
+var levelElapsed = 0;
+var BOSS_MIN_DELAY = 60;
+var BOSS_MAX_DELAY = 120;
+var bossDelay = 60;
 var levelStartScore = 0;
 var boss = null;
 var maxLevelReached = readMaxLevel();
@@ -636,6 +717,22 @@ function persistHighScore() {
   }
 }
 
+function readMuted() {
+  try {
+    return window.localStorage.getItem('spaceShooterMuted') === '1';
+  } catch (err) {
+    return false;
+  }
+}
+
+function writeMuted() {
+  try {
+    window.localStorage.setItem('spaceShooterMuted', muted ? '1' : '0');
+  } catch (err) {
+    // 本地存储不可用时静默降级。
+  }
+}
+
 function updateBestText() {
   if (!startBestEl) { return; }
   var reached = maxLevelReached > 0 ? ('第 ' + maxLevelReached + ' 关') : '尚未出征';
@@ -656,6 +753,7 @@ function resize() {
     player.y = clamp(player.y, 70, H - player.r - 10);
   }
   initStars();
+  buildBackdrop();
 }
 
 function initStars() {
@@ -714,8 +812,9 @@ function updatePowerHud() {
     return;
   }
   var parts = [];
-  if (player.triple > 0) { parts.push('三向弹 ' + Math.ceil(player.triple) + ' 秒'); }
-  if (player.rapid > 0) { parts.push('加速射击 ' + Math.ceil(player.rapid) + ' 秒'); }
+  if (player.gunLevel >= 2) { parts.push('火力 ' + player.gunLevel + ' 发'); }
+  if (player.rateLevel > 0) { parts.push('射速 Lv.' + player.rateLevel); }
+  if (player.shield) { parts.push('护盾'); }
   if (parts.length) {
     powerEl.textContent = parts.join('  ·  ');
     powerEl.classList.add('visible');
@@ -723,6 +822,68 @@ function updatePowerHud() {
     powerEl.textContent = '';
     powerEl.classList.remove('visible');
   }
+}
+
+function updateComboHud() {
+  if (!comboEl) { return; }
+  comboEl.textContent = combo > 0 ? '×' + combo : '—';
+  if (combo >= 10) { comboEl.classList.add('hot'); }
+  else { comboEl.classList.remove('hot'); }
+}
+
+function comboMultiplier() {
+  return 1 + Math.min(2, Math.floor(combo / 10) * 0.5);
+}
+
+function updateCombo(dt) {
+  if (comboTimer <= 0) { return; }
+  comboTimer -= dt;
+  if (comboTimer <= 0 && combo > 0) {
+    combo = 0;
+    updateComboHud();
+  }
+}
+
+function updateBombHud() {
+  if (!bombBtn) { return; }
+  bombBtn.textContent = '炸弹 ×' + bombs + ' (B)';
+  bombBtn.disabled = bombs <= 0;
+}
+
+function useBomb() {
+  if (gameState !== 'playing' || !player || player.dead) { return; }
+  if (phase !== 'fight' && phase !== 'boss') { return; }
+  if (bombs <= 0) {
+    playTone(160, 0.08, 'square', 0.022, 110);
+    return;
+  }
+  bombs -= 1;
+  updateBombHud();
+  bombFlash = 0.75;
+  enemyBullets.length = 0;
+  for (var i = enemies.length - 1; i >= 0; i--) {
+    destroyEnemy(i);
+  }
+  if (boss) {
+    damageBoss(Math.max(30, Math.round(boss.maxHp * 0.08)));
+  }
+  player.invincible = Math.max(player.invincible, 1.8);
+  for (var r = 0; r < 3; r++) {
+    particles.push({
+      kind: 'ring',
+      x: player.x,
+      y: player.y,
+      r: 20 + r * 46,
+      growth: 920,
+      life: 0.65,
+      maxLife: 0.65,
+      color: '#bff8ff'
+    });
+  }
+  spawnExplosion(player.x, player.y, 34, '#bff8ff', true);
+  floaters.push({ x: player.x, y: player.y - 44, text: '清屏炸弹', color: '#ffd166', life: 1.1, maxLife: 1.1 });
+  shake = 22;
+  playBombSound();
 }
 
 function initAudio() {
@@ -857,6 +1018,17 @@ function playBossWarnSound() {
   window.setTimeout(function () { playTone(150, 0.38, 'sawtooth', 0.06, 88); }, 260);
 }
 
+function playBombSound() {
+  playTone(120, 0.52, 'sawtooth', 0.075, 46);
+  playNoise(0.62, 0.22, 1500);
+  window.setTimeout(function () { playTone(520, 0.22, 'triangle', 0.045, 980); }, 90);
+}
+
+function playShieldSound() {
+  playTone(720, 0.12, 'sine', 0.05, 1060);
+  window.setTimeout(function () { playTone(1040, 0.16, 'sine', 0.04, 1360); }, 70);
+}
+
 function playVictorySound() {
   var notes = [523, 659, 784, 1046];
   for (var i = 0; i < notes.length; i++) {
@@ -869,6 +1041,7 @@ function playVictorySound() {
 function toggleMute() {
   muted = !muted;
   muteBtn.textContent = muted ? '音效：关 (M)' : '音效：开 (M)';
+  writeMuted();
   if (!muted) {
     ensureAudio();
     playTone(760, 0.08, 'sine', 0.05, 1080);
@@ -886,6 +1059,10 @@ function startLevel(idx) {
   phaseTimer = 2.3;
   levelKills = 0;
   levelQuota = cfg.quota;
+  levelElapsed = 0;
+  bossDelay = rand(BOSS_MIN_DELAY, BOSS_MAX_DELAY);
+  combo = 0;
+  comboTimer = 0;
   levelStartScore = score;
   boss = null;
   spawnTimer = 0.7;
@@ -898,14 +1075,13 @@ function startLevel(idx) {
     player.x = W / 2;
     player.y = H - 92;
     player.fireTimer = 0.2;
-    player.triple = 0;
-    player.rapid = 0;
     player.invincible = Math.max(1.8, player.invincible);
     player.dead = false;
   }
   gameState = 'playing';
   updateHud();
   updatePowerHud();
+  updateComboHud();
   updateBestText();
   playLevelStartSound();
 }
@@ -939,14 +1115,21 @@ function startGame(retry) {
   powerups.length = 0;
   floaters.length = 0;
   boss = null;
+  combo = 0;
+  comboTimer = 0;
+  bombs = 2;
+  bombFlash = 0;
+  var keepGun = retry && player && player.gunLevel ? player.gunLevel : 1;
+  var keepRate = retry && player && player.rateLevel ? player.rateLevel : 0;
   player = {
     x: W / 2,
     y: H - 92,
     r: 16,
     speed: 365,
     fireTimer: 0.12,
-    triple: 0,
-    rapid: 0,
+    gunLevel: keepGun,
+    rateLevel: keepRate,
+    shield: false,
     invincible: 1.6,
     dead: false
   };
@@ -962,6 +1145,8 @@ function startGame(retry) {
   startLevel(levelIndex);
   updateHud();
   updatePowerHud();
+  updateComboHud();
+  updateBombHud();
 }
 
 function pauseGame() {
@@ -1008,8 +1193,8 @@ function showVictory() {
   victoryTimeEl.textContent = formatTime(elapsed);
   victoryHighEl.textContent = formatNum(highScore);
   victoryTagEl.textContent = score > recordBefore
-    ? '★ 新纪录 ★  五关全通 · 历史最远 第 ' + Math.max(levelIndex + 1, maxLevelReached) + ' 关'
-    : '五关全通 · 历史最远 第 ' + Math.max(levelIndex + 1, maxLevelReached) + ' 关';
+    ? '★ 新纪录 ★  十关全通 · 历史最远 第 ' + Math.max(levelIndex + 1, maxLevelReached) + ' 关'
+    : '十关全通 · 历史最远 第 ' + Math.max(levelIndex + 1, maxLevelReached) + ' 关';
   victoryOverlay.classList.remove('hidden');
   spawnExplosion(W * 0.28, H * 0.38, 42, '#68f0ff', true);
   spawnExplosion(W * 0.72, H * 0.42, 42, '#ff73cf', true);
@@ -1064,7 +1249,16 @@ function spawnEnemy() {
 
 function firePlayer() {
   if (!player || player.dead) { return; }
-  var angles = player.triple > 0 ? [-0.17, 0, 0.17] : [0];
+  var count = clamp(player.gunLevel || 1, 1, 9);
+  var angles = [];
+  if (count === 1) {
+    angles = [0];
+  } else {
+    var step = Math.min(0.12, 0.84 / (count - 1));
+    for (var n = 0; n < count; n++) {
+      angles.push((n - (count - 1) / 2) * step);
+    }
+  }
   var speed = 760;
   for (var i = 0; i < angles.length; i++) {
     var a = angles[i];
@@ -1137,6 +1331,7 @@ function spawnBoss() {
     modeTimer: 0,
     spin: 0,
     flash: 0,
+    enraged: false,
     name: cfg.name,
     cfg: cfg
   };
@@ -1179,6 +1374,18 @@ function updateBoss(dt) {
   if (!boss) { return; }
   boss.age += dt;
   if (boss.flash > 0) { boss.flash = Math.max(0, boss.flash - dt); }
+  if (!boss.enraged && boss.maxHp > 0 && boss.hp <= boss.maxHp * 0.35) {
+    boss.enraged = true;
+    boss.modeTimer = 0;
+    boss.fireTimer = 0.35;
+    shake = 16;
+    spawnExplosion(boss.x, boss.y, boss.r * 1.15, '#ff4f4f', true);
+    floaters.push({ x: boss.x, y: boss.y + boss.r * 0.6, text: 'BOSS 狂暴', color: '#ff6b6b', life: 1.4, maxLife: 1.4 });
+    for (var e = 0; e < 20; e++) {
+      bossBullet(boss.x, boss.y, boss.age + e * Math.PI * 2 / 20, 165, 5, '#ff6b6b');
+    }
+    playBossWarnSound();
+  }
   if (boss.y < 108) {
     boss.y = Math.min(108, boss.y + 78 * dt);
     boss.x = W / 2;
@@ -1189,7 +1396,7 @@ function updateBoss(dt) {
   boss.baseX = boss.x;
   if (boss.y > 0) {
     boss.modeTimer += dt;
-    if (boss.modeTimer > 5.2) {
+    if (boss.modeTimer > (boss.enraged ? 3.3 : 5.2)) {
       boss.modeTimer = 0;
       boss.modeIndex = (boss.modeIndex + 1) % boss.cfg.patterns.length;
       boss.pattern = boss.cfg.patterns[boss.modeIndex];
@@ -1197,7 +1404,7 @@ function updateBoss(dt) {
     boss.fireTimer -= dt;
     if (boss.fireTimer <= 0) {
       fireBoss();
-      boss.fireTimer = boss.cfg.fire * rand(0.86, 1.12);
+      boss.fireTimer = boss.cfg.fire * rand(0.86, 1.12) * (boss.enraged ? 0.62 : 1);
     }
   }
   if (player && !player.dead && player.invincible <= 0 && boss.y > 0) {
@@ -1233,6 +1440,11 @@ function defeatBoss() {
   spawnExplosion(b.x + b.r * 0.7, b.y + 20, b.r, '#ff73cf', true);
   floaters.push({ x: b.x, y: b.y, text: 'BOSS 击破 +' + bonus, color: '#ffd166', life: 1.6, maxLife: 1.6 });
   if (lives < 5) { lives += 1; updateLivesHud(); }
+  if (bombs < BOMB_MAX) {
+    bombs += 1;
+    updateBombHud();
+    floaters.push({ x: b.x, y: b.y + 26, text: '炸弹 +1', color: '#ffd166', life: 1.4, maxLife: 1.4 });
+  }
   shake = 22;
   playExplosionSound(true);
   phase = 'clear';
@@ -1250,14 +1462,17 @@ function updateLevelPhase(dt) {
     return;
   }
   if (phase === 'fight') {
-    if (levelKills + enemies.length < levelQuota) {
+    levelElapsed += dt;
+    if (levelElapsed < bossDelay) {
       spawnTimer -= dt;
       if (spawnTimer <= 0) {
         spawnEnemy();
         spawnTimer = LEVELS[levelIndex].spawn * rand(0.78, 1.22);
       }
-    }
-    if (levelKills >= levelQuota && enemies.length === 0) {
+    } else {
+      enemies.length = 0;
+      enemyBullets.length = 0;
+      spawnTimer = 0.4;
       phase = 'bossWarn';
       phaseTimer = 2.0;
       playBossWarnSound();
@@ -1323,7 +1538,16 @@ function maybeDropPowerup(e) {
   var chance = e.type === 'large' ? 0.55 : (e.type === 'medium' ? 0.18 : 0.065);
   if (Math.random() > chance) { return; }
   var roll = Math.random();
-  var type = roll < 0.4 ? 'triple' : (roll < 0.8 ? 'rapid' : 'life');
+  var type;
+  if (roll < 0.32) {
+    type = (player && player.gunLevel >= 9) ? 'rapid' : 'triple';
+  } else if (roll < 0.62) {
+    type = 'rapid';
+  } else if (roll < 0.82) {
+    type = 'life';
+  } else {
+    type = 'shield';
+  }
   powerups.push({
     x: e.x,
     y: e.y,
@@ -1341,13 +1565,27 @@ function destroyEnemy(index) {
   if (!e) { return; }
   enemies.splice(index, 1);
   if (phase === 'fight') { levelKills += 1; }
-  addScore(e.score);
+  combo += 1;
+  comboTimer = comboWindow;
+  if (combo > 1 && combo % 10 === 0) {
+    floaters.push({
+      x: e.x,
+      y: e.y - e.r - 14,
+      text: '连击 ×' + combo,
+      color: '#ffd166',
+      life: 1.0,
+      maxLife: 1.0
+    });
+  }
+  var gain = Math.round(e.score * comboMultiplier());
+  addScore(gain);
+  updateComboHud();
   spawnExplosion(e.x, e.y, e.r, e.color, e.type === 'large');
   playExplosionSound(e.type === 'large');
   floaters.push({
     x: e.x,
     y: e.y - e.r,
-    text: '+' + e.score,
+    text: '+' + gain,
     color: e.color,
     life: 0.85,
     maxLife: 0.85
@@ -1358,11 +1596,38 @@ function destroyEnemy(index) {
 function collectPowerup(p) {
   if (!player || player.dead) { return; }
   if (p.type === 'triple') {
-    player.triple = Math.min(24, player.triple + 12);
-    floaters.push({ x: p.x, y: p.y, text: '三向弹 +12s', color: '#5eeaff', life: 1.05, maxLife: 1.05 });
+    if (player.gunLevel < 9) {
+      player.gunLevel += 1;
+      floaters.push({
+        x: p.x, y: p.y,
+        text: '火力 ' + player.gunLevel + ' 发！',
+        color: '#5eeaff', life: 1.05, maxLife: 1.05
+      });
+    } else {
+      addScore(200);
+      floaters.push({ x: p.x, y: p.y, text: '火力已满 +200', color: '#5eeaff', life: 1.05, maxLife: 1.05 });
+    }
   } else if (p.type === 'rapid') {
-    player.rapid = Math.min(24, player.rapid + 12);
-    floaters.push({ x: p.x, y: p.y, text: '加速射击 +12s', color: '#ffe260', life: 1.05, maxLife: 1.05 });
+    if (player.rateLevel < 12) {
+      player.rateLevel += 1;
+      floaters.push({
+        x: p.x, y: p.y,
+        text: '射速提升 Lv.' + player.rateLevel,
+        color: '#ffe260', life: 1.05, maxLife: 1.05
+      });
+    } else {
+      addScore(200);
+      floaters.push({ x: p.x, y: p.y, text: '射速已满 +200', color: '#ffe260', life: 1.05, maxLife: 1.05 });
+    }
+  } else if (p.type === 'shield') {
+    if (!player.shield) {
+      player.shield = true;
+      playShieldSound();
+      floaters.push({ x: p.x, y: p.y, text: '护盾展开', color: '#7dffb0', life: 1.05, maxLife: 1.05 });
+    } else {
+      addScore(150);
+      floaters.push({ x: p.x, y: p.y, text: '护盾已满 +150', color: '#7dffb0', life: 1.05, maxLife: 1.05 });
+    }
   } else {
     if (lives < 5) {
       lives += 1;
@@ -1373,13 +1638,31 @@ function collectPowerup(p) {
       floaters.push({ x: p.x, y: p.y, text: '生命已满 +300', color: '#ff7cae', life: 1.05, maxLife: 1.05 });
     }
   }
-  spawnExplosion(p.x, p.y, 12, p.type === 'rapid' ? '#ffe260' : (p.type === 'life' ? '#ff7cae' : '#5eeaff'), false);
+  spawnExplosion(
+    p.x, p.y, 12,
+    p.type === 'rapid' ? '#ffe260' : (p.type === 'life' ? '#ff7cae' : (p.type === 'shield' ? '#7dffb0' : '#5eeaff')),
+    false
+  );
   playPickupSound();
   updatePowerHud();
 }
 
 function playerHit() {
   if (!player || player.dead || player.invincible > 0 || gameState !== 'playing') { return; }
+  if (player.shield) {
+    player.shield = false;
+    player.invincible = Math.max(player.invincible, 1.4);
+    enemyBullets.length = 0;
+    spawnExplosion(player.x, player.y, 30, '#7dffb0', true);
+    shake = 10;
+    playShieldSound();
+    floaters.push({ x: player.x, y: player.y - 38, text: '护盾抵消', color: '#7dffb0', life: 1.1, maxLife: 1.1 });
+    updatePowerHud();
+    return;
+  }
+  combo = 0;
+  comboTimer = 0;
+  updateComboHud();
   lives -= 1;
   updateLivesHud();
   enemyBullets.length = 0;
@@ -1424,14 +1707,17 @@ function updatePlayer(dt) {
   player.y = clamp(player.y, minY, maxY);
 
   if (player.invincible > 0) { player.invincible = Math.max(0, player.invincible - dt); }
-  if (player.triple > 0) { player.triple = Math.max(0, player.triple - dt); }
-  if (player.rapid > 0) { player.rapid = Math.max(0, player.rapid - dt); }
 
   player.fireTimer -= dt;
   if (player.fireTimer <= 0) {
     firePlayer();
-    player.fireTimer = player.rapid > 0 ? 0.075 : 0.16;
+    player.fireTimer = playerFireInterval();
   }
+}
+
+function playerFireInterval() {
+  var level = player && player.rateLevel ? player.rateLevel : 0;
+  return Math.max(0.075, 0.16 * Math.pow(0.94, level));
 }
 
 function updateEnemies(dt) {
@@ -1615,6 +1901,8 @@ function updateFloaters(dt) {
 function updateGame(dt) {
   elapsed += dt;
   updateLevelPhase(dt);
+  updateCombo(dt);
+  bombFlash = Math.max(0, bombFlash - dt * 1.8);
   updatePlayer(dt);
   updateEnemies(dt);
   updateBullets(dt);
@@ -1639,25 +1927,175 @@ function updateGame(dt) {
   }
 }
 
-function drawBackground() {
-  var g = ctx.createLinearGradient(0, 0, 0, H);
-  g.addColorStop(0, '#040713');
-  g.addColorStop(0.52, '#071329');
-  g.addColorStop(1, '#02040a');
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, W, H);
+function buildBackdrop() {
+  var cw = Math.max(1, Math.ceil(W));
+  var ch = Math.max(1, Math.ceil(H));
+  if (!cw || !ch) { return; }
 
-  var r1 = ctx.createRadialGradient(W * 0.78, H * 0.16, 0, W * 0.78, H * 0.16, Math.max(W, H) * 0.6);
+  bgCanvas = document.createElement('canvas');
+  bgCanvas.width = cw;
+  bgCanvas.height = ch;
+  var g = bgCanvas.getContext('2d');
+
+  var grad = g.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, '#040713');
+  grad.addColorStop(0.52, '#071329');
+  grad.addColorStop(1, '#02040a');
+  g.fillStyle = grad;
+  g.fillRect(0, 0, W, H);
+
+  var r1 = g.createRadialGradient(W * 0.78, H * 0.16, 0, W * 0.78, H * 0.16, Math.max(W, H) * 0.6);
   r1.addColorStop(0, 'rgba(92, 44, 168, 0.16)');
   r1.addColorStop(0.55, 'rgba(35, 18, 75, 0.06)');
   r1.addColorStop(1, 'rgba(0, 0, 0, 0)');
-  ctx.fillStyle = r1;
-  ctx.fillRect(0, 0, W, H);
+  g.fillStyle = r1;
+  g.fillRect(0, 0, W, H);
 
-  var r2 = ctx.createRadialGradient(W * 0.18, H * 0.82, 0, W * 0.18, H * 0.82, Math.max(W, H) * 0.5);
+  var r2 = g.createRadialGradient(W * 0.18, H * 0.82, 0, W * 0.18, H * 0.82, Math.max(W, H) * 0.5);
   r2.addColorStop(0, 'rgba(16, 124, 168, 0.12)');
   r2.addColorStop(1, 'rgba(0, 0, 0, 0)');
-  ctx.fillStyle = r2;
+  g.fillStyle = r2;
+  g.fillRect(0, 0, W, H);
+
+  vignetteCanvas = document.createElement('canvas');
+  vignetteCanvas.width = cw;
+  vignetteCanvas.height = ch;
+  var v = vignetteCanvas.getContext('2d');
+  var vg = v.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.24, W / 2, H / 2, Math.max(W, H) * 0.76);
+  vg.addColorStop(0, 'rgba(0, 0, 0, 0)');
+  vg.addColorStop(1, 'rgba(0, 0, 0, 0.52)');
+  v.fillStyle = vg;
+  v.fillRect(0, 0, W, H);
+}
+
+function makeBulletSprite(color, coreColor) {
+  var size = 64;
+  var c = document.createElement('canvas');
+  c.width = size;
+  c.height = size;
+  var g = c.getContext('2d');
+  var cx = size / 2;
+  var cy = size / 2;
+
+  var halo = g.createRadialGradient(cx, cy, 0, cx, cy, size * 0.5);
+  halo.addColorStop(0, color);
+  halo.addColorStop(0.4, color);
+  halo.addColorStop(0.7, 'rgba(0, 0, 0, 0)');
+  halo.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  g.globalAlpha = 0.34;
+  g.fillStyle = halo;
+  g.beginPath();
+  g.arc(cx, cy, size * 0.5, 0, Math.PI * 2);
+  g.fill();
+  g.globalAlpha = 1;
+
+  var core = g.createRadialGradient(cx, cy, 0, cx, cy, size * 0.222);
+  core.addColorStop(0, coreColor);
+  core.addColorStop(0.6, coreColor);
+  core.addColorStop(1, color);
+  g.fillStyle = core;
+  g.beginPath();
+  g.arc(cx, cy, size * 0.222, 0, Math.PI * 2);
+  g.fill();
+  return c;
+}
+
+function getBulletSprite(color, coreColor) {
+  var key = color + '|' + coreColor;
+  if (!bulletSpriteCache[key]) {
+    bulletSpriteCache[key] = makeBulletSprite(color || '#ff6b9d', coreColor || '#fff1f4');
+  }
+  return bulletSpriteCache[key];
+}
+
+function paintBossShip(g, r, enraged, hit) {
+  g.shadowBlur = 26;
+  g.shadowColor = hit ? '#ffffff' : (enraged ? '#ff3b3b' : '#ff4fa3');
+  g.fillStyle = hit ? 'rgba(255,255,255,0.92)' : (enraged ? 'rgba(44, 6, 12, 0.96)' : 'rgba(24, 10, 36, 0.96)');
+  g.strokeStyle = hit ? '#ffffff' : (enraged ? '#ff6b6b' : '#ff73cf');
+  g.lineWidth = 2;
+  g.beginPath();
+  g.moveTo(0, r);
+  g.lineTo(r * 0.28, r * 0.42);
+  g.lineTo(r * 0.92, r * 0.12);
+  g.lineTo(r * 0.66, -r * 0.22);
+  g.lineTo(r * 0.3, -r * 0.18);
+  g.lineTo(r * 0.2, -r * 0.82);
+  g.lineTo(-r * 0.2, -r * 0.82);
+  g.lineTo(-r * 0.3, -r * 0.18);
+  g.lineTo(-r * 0.66, -r * 0.22);
+  g.lineTo(-r * 0.92, r * 0.12);
+  g.lineTo(-r * 0.28, r * 0.42);
+  g.closePath();
+  g.fill();
+  g.stroke();
+
+  g.shadowBlur = 12;
+  g.shadowColor = '#68f0ff';
+  g.strokeStyle = 'rgba(104, 240, 255, 0.75)';
+  g.lineWidth = 1.4;
+  g.beginPath();
+  g.moveTo(-r * 0.5, r * 0.06);
+  g.lineTo(0, r * 0.5);
+  g.lineTo(r * 0.5, r * 0.06);
+  g.stroke();
+
+  for (var s = -1; s <= 1; s += 2) {
+    g.fillStyle = enraged ? '#ff5a5a' : '#ffb347';
+    g.shadowBlur = 16;
+    g.shadowColor = enraged ? '#ff2f2f' : '#ff7500';
+    g.beginPath();
+    g.arc(s * r * 0.66, r * 0.1, r * 0.1, 0, Math.PI * 2);
+    g.fill();
+  }
+
+  var core = g.createRadialGradient(0, -r * 0.08, 2, 0, -r * 0.08, r * 0.36);
+  core.addColorStop(0, '#ffffff');
+  core.addColorStop(0.35, enraged ? '#ff6b6b' : '#ffd166');
+  core.addColorStop(1, 'rgba(255, 90, 54, 0)');
+  g.fillStyle = core;
+  g.shadowBlur = 22;
+  g.shadowColor = enraged ? '#ff3b3b' : '#ffd166';
+  g.beginPath();
+  g.arc(0, -r * 0.08, r * 0.36, 0, Math.PI * 2);
+  g.fill();
+
+  g.fillStyle = '#5eeaff';
+  g.shadowBlur = 10;
+  g.shadowColor = '#5eeaff';
+  g.beginPath();
+  g.arc(0, -r * 0.08, r * 0.09, 0, Math.PI * 2);
+  g.fill();
+  g.shadowBlur = 0;
+}
+
+function getBossSprite() {
+  if (!boss) { return null; }
+  var hit = boss.flash > 0;
+  var enraged = !!boss.enraged;
+  if (bossSprite && bossSprite.r === boss.r && bossSprite.enraged === enraged && bossSprite.hit === hit) {
+    return bossSprite;
+  }
+  var r = boss.r;
+  var pad = Math.ceil(r * 1.2 + 30);
+  var size = Math.ceil(r * 2 + pad * 2);
+  var c = document.createElement('canvas');
+  c.width = size;
+  c.height = size;
+  var g = c.getContext('2d');
+  g.translate(size / 2, size / 2);
+  paintBossShip(g, r, enraged, hit);
+  bossSprite = { r: r, enraged: enraged, hit: hit, canvas: c, size: size };
+  return bossSprite;
+}
+
+function drawBackground() {
+  if (!bgCanvas) { buildBackdrop(); }
+  if (bgCanvas) {
+    ctx.drawImage(bgCanvas, 0, 0, W, H);
+    return;
+  }
+  ctx.fillStyle = '#040713';
   ctx.fillRect(0, 0, W, H);
 }
 
@@ -1750,6 +2188,21 @@ function drawPlayer() {
     ctx.arc(0, 0, player.r + 12, 0, Math.PI * 2);
     ctx.stroke();
     ctx.setLineDash([]);
+  }
+  if (player.shield) {
+    var shieldPulse = 1 + Math.sin(gameTime * 6) * 0.06;
+    ctx.shadowBlur = 18;
+    ctx.shadowColor = 'rgba(125, 255, 176, 0.9)';
+    ctx.strokeStyle = 'rgba(125, 255, 176, 0.82)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, (player.r + 12) * shieldPulse, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(220, 255, 235, 0.35)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(0, 0, (player.r + 18) * shieldPulse, 0, Math.PI * 2);
+    ctx.stroke();
   }
   ctx.restore();
 }
@@ -1881,49 +2334,43 @@ function drawEnemies() {
 }
 
 function drawPlayerBullets() {
+  if (!bullets.length) { return; }
   ctx.save();
+  ctx.strokeStyle = 'rgba(74, 231, 255, 0.4)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (var t = 0; t < bullets.length; t++) {
+    var tb = bullets[t];
+    ctx.moveTo(tb.x, tb.y + 3);
+    ctx.lineTo(tb.x, tb.y + 13);
+  }
+  ctx.stroke();
+
   ctx.globalCompositeOperation = 'lighter';
+  var sp = getBulletSprite('#32e6ff', '#e8ffff');
   for (var i = 0; i < bullets.length; i++) {
     var b = bullets[i];
-    ctx.shadowBlur = 15;
-    ctx.shadowColor = '#32e6ff';
-    ctx.fillStyle = '#c7fbff';
-    ctx.beginPath();
-    ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(74, 231, 255, 0.55)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(b.x, b.y + 3);
-    ctx.lineTo(b.x, b.y + 13);
-    ctx.stroke();
+    var sz = b.r * 4.5;
+    ctx.drawImage(sp, b.x - sz / 2, b.y - sz / 2, sz, sz);
   }
   ctx.restore();
 }
 
 function drawEnemyBullets() {
+  if (!enemyBullets.length) { return; }
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
   for (var i = 0; i < enemyBullets.length; i++) {
     var b = enemyBullets[i];
-    ctx.shadowBlur = 16;
-    ctx.shadowColor = b.color;
-    ctx.fillStyle = b.color;
-    ctx.globalAlpha = 0.35;
-    ctx.beginPath();
-    ctx.arc(b.x, b.y, b.r * 1.8, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = '#fff1f4';
-    ctx.beginPath();
-    ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
-    ctx.fill();
+    var sp = b.sprite || (b.sprite = getBulletSprite(b.color || '#ff6b9d', '#fff1f4'));
+    var sz = b.r * 4.5;
+    ctx.drawImage(sp, b.x - sz / 2, b.y - sz / 2, sz, sz);
   }
   ctx.restore();
 }
 
 function drawPowerup(p) {
-  var color = p.type === 'triple' ? '#5eeaff' : (p.type === 'rapid' ? '#ffe260' : '#ff7cae');
+  var color = p.type === 'triple' ? '#5eeaff' : (p.type === 'rapid' ? '#ffe260' : (p.type === 'shield' ? '#7dffb0' : '#ff7cae'));
   ctx.save();
   ctx.translate(p.x, p.y);
   var pulse = 1 + Math.sin(p.age * 4) * 0.08;
@@ -1965,12 +2412,21 @@ function drawPowerup(p) {
     ctx.lineTo(1, -1);
     ctx.closePath();
     ctx.fill();
-  } else {
+  } else if (p.type === 'life') {
     ctx.beginPath();
     ctx.moveTo(0, 6);
     ctx.bezierCurveTo(-12, -3, -7, -11, 0, -4);
     ctx.bezierCurveTo(7, -11, 12, -3, 0, 6);
     ctx.fill();
+  } else {
+    ctx.beginPath();
+    ctx.moveTo(0, -8);
+    ctx.lineTo(7, -4);
+    ctx.lineTo(7, 2);
+    ctx.quadraticCurveTo(0, 9, -7, 2);
+    ctx.lineTo(-7, -4);
+    ctx.closePath();
+    ctx.stroke();
   }
   ctx.restore();
 }
@@ -2024,6 +2480,11 @@ function drawFloaters() {
 }
 
 function drawVignette() {
+  if (!vignetteCanvas) { buildBackdrop(); }
+  if (vignetteCanvas) {
+    ctx.drawImage(vignetteCanvas, 0, 0, W, H);
+    return;
+  }
   var v = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.24, W / 2, H / 2, Math.max(W, H) * 0.76);
   v.addColorStop(0, 'rgba(0, 0, 0, 0)');
   v.addColorStop(1, 'rgba(0, 0, 0, 0.52)');
@@ -2033,67 +2494,21 @@ function drawVignette() {
 
 function drawBossShip() {
   if (!boss) { return; }
-  var r = boss.r;
+  var sp = getBossSprite();
   ctx.save();
-  ctx.translate(boss.x, boss.y);
-  var hit = boss.flash > 0;
-  ctx.shadowBlur = 26;
-  ctx.shadowColor = hit ? '#ffffff' : '#ff4fa3';
-  ctx.fillStyle = hit ? 'rgba(255,255,255,0.92)' : 'rgba(24, 10, 36, 0.96)';
-  ctx.strokeStyle = hit ? '#ffffff' : '#ff73cf';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(0, r);
-  ctx.lineTo(r * 0.28, r * 0.42);
-  ctx.lineTo(r * 0.92, r * 0.12);
-  ctx.lineTo(r * 0.66, -r * 0.22);
-  ctx.lineTo(r * 0.3, -r * 0.18);
-  ctx.lineTo(r * 0.2, -r * 0.82);
-  ctx.lineTo(-r * 0.2, -r * 0.82);
-  ctx.lineTo(-r * 0.3, -r * 0.18);
-  ctx.lineTo(-r * 0.66, -r * 0.22);
-  ctx.lineTo(-r * 0.92, r * 0.12);
-  ctx.lineTo(-r * 0.28, r * 0.42);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-
-  ctx.shadowBlur = 12;
-  ctx.shadowColor = '#68f0ff';
-  ctx.strokeStyle = 'rgba(104, 240, 255, 0.75)';
-  ctx.lineWidth = 1.4;
-  ctx.beginPath();
-  ctx.moveTo(-r * 0.5, r * 0.06);
-  ctx.lineTo(0, r * 0.5);
-  ctx.lineTo(r * 0.5, r * 0.06);
-  ctx.stroke();
-
-  for (var s = -1; s <= 1; s += 2) {
-    ctx.fillStyle = '#ffb347';
-    ctx.shadowBlur = 16;
-    ctx.shadowColor = '#ff7500';
-    ctx.beginPath();
-    ctx.arc(s * r * 0.66, r * 0.1, r * 0.1, 0, Math.PI * 2);
-    ctx.fill();
+  if (sp) {
+    ctx.drawImage(sp.canvas, boss.x - sp.size / 2, boss.y - sp.size / 2, sp.size, sp.size);
   }
-
-  var core = ctx.createRadialGradient(0, -r * 0.08, 2, 0, -r * 0.08, r * 0.36);
-  core.addColorStop(0, '#ffffff');
-  core.addColorStop(0.35, '#ffd166');
-  core.addColorStop(1, 'rgba(255, 90, 54, 0)');
-  ctx.fillStyle = core;
-  ctx.shadowBlur = 22;
-  ctx.shadowColor = '#ffd166';
-  ctx.beginPath();
-  ctx.arc(0, -r * 0.08, r * 0.36, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = '#5eeaff';
-  ctx.shadowBlur = 10;
-  ctx.shadowColor = '#5eeaff';
-  ctx.beginPath();
-  ctx.arc(0, -r * 0.08, r * 0.09, 0, Math.PI * 2);
-  ctx.fill();
+  if (boss.enraged) {
+    ctx.translate(boss.x, boss.y);
+    ctx.strokeStyle = 'rgba(255, 80, 80, ' + (0.3 + 0.2 * Math.sin(gameTime * 8)) + ')';
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = '#ff3b3b';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, boss.r * 1.16, 0, Math.PI * 2);
+    ctx.stroke();
+  }
   ctx.restore();
 }
 
@@ -2108,20 +2523,20 @@ function drawBossBar() {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'bottom';
   ctx.font = '700 12px "Segoe UI", "Microsoft YaHei", sans-serif';
-  ctx.fillStyle = '#ffb7d8';
+  ctx.fillStyle = boss.enraged ? '#ff9a9a' : '#ffb7d8';
   ctx.shadowBlur = 12;
-  ctx.shadowColor = 'rgba(255, 79, 163, 0.8)';
-  ctx.fillText('BOSS  ' + boss.name + '   ' + Math.max(0, Math.ceil(boss.hp)) + ' / ' + boss.maxHp, W / 2, y - 5);
+  ctx.shadowColor = boss.enraged ? 'rgba(255, 59, 59, 0.9)' : 'rgba(255, 79, 163, 0.8)';
+  ctx.fillText('BOSS  ' + boss.name + (boss.enraged ? ' · 狂暴' : '') + '   ' + Math.max(0, Math.ceil(boss.hp)) + ' / ' + boss.maxHp, W / 2, y - 5);
   ctx.shadowBlur = 0;
   ctx.fillStyle = 'rgba(8, 12, 24, 0.82)';
   ctx.fillRect(x - 2, y - 2, w + 4, h + 4);
   var g = ctx.createLinearGradient(x, y, x + w, y);
-  g.addColorStop(0, '#ff4fa3');
+  g.addColorStop(0, boss.enraged ? '#ff2f3f' : '#ff4fa3');
   g.addColorStop(0.6, '#ff8b3d');
   g.addColorStop(1, '#ffd166');
   ctx.fillStyle = g;
-  ctx.shadowBlur = 18;
-  ctx.shadowColor = '#ff4fa3';
+  ctx.shadowBlur = 8;
+  ctx.shadowColor = boss.enraged ? '#ff2f3f' : '#ff4fa3';
   ctx.fillRect(x, y, w * ratio, h);
   ctx.shadowBlur = 0;
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.28)';
@@ -2138,16 +2553,16 @@ function drawBossBar() {
 }
 
 function drawLevelProgress() {
-  if (gameState !== 'playing' || phase === 'boss' || phase === 'bossWarn') { return; }
+  if (gameState !== 'playing' || phase === 'boss' || phase === 'bossWarn' || phase === 'clear') { return; }
   ctx.save();
   ctx.textAlign = 'left';
   ctx.textBaseline = 'bottom';
   ctx.font = '600 12px "Segoe UI", "Microsoft YaHei", sans-serif';
   ctx.fillStyle = 'rgba(160, 220, 255, 0.72)';
   ctx.fillText('第 ' + (levelIndex + 1) + ' 关 · ' + LEVELS[levelIndex].title, 24, H - 24);
-  var shown = Math.min(levelQuota, levelKills);
+  var remain = Math.max(0, bossDelay - levelElapsed);
   ctx.fillStyle = 'rgba(104, 240, 255, 0.9)';
-  ctx.fillText('清剿 ' + shown + ' / ' + levelQuota, 24, H - 8);
+  ctx.fillText('击落 ' + levelKills + ' · BOSS 倒计时 ' + formatTime(remain), 24, H - 8);
   ctx.restore();
 }
 
@@ -2159,7 +2574,7 @@ function drawLevelBanner() {
   var dur = 1;
   if (phase === 'intro') {
     title = '第 ' + (levelIndex + 1) + ' 关';
-    sub = LEVELS[levelIndex].title + ' · 清剿 ' + levelQuota + ' 架敌机';
+    sub = LEVELS[levelIndex].title + ' · 坚守 1–2 分钟后迎战 Boss';
     color = '#68f0ff';
     t = phaseTimer;
     dur = 2.3;
@@ -2201,7 +2616,6 @@ function drawLevelBanner() {
 
 function render() {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  ctx.clearRect(0, 0, W, H);
   drawBackground();
   drawStars();
 
@@ -2220,6 +2634,12 @@ function render() {
   ctx.restore();
 
   drawVignette();
+  if (bombFlash > 0) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(190, 245, 255, ' + (bombFlash * 0.45) + ')';
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+  }
   drawLevelProgress();
   drawBossBar();
   drawLevelBanner();
@@ -2269,6 +2689,10 @@ document.addEventListener('keydown', function (e) {
     } else if (gameState === 'ready' || gameState === 'victory') {
       startGame(false);
     }
+    return;
+  }
+  if (code === 'KeyB') {
+    if (!e.repeat) { useBomb(); }
     return;
   }
   if (code === 'KeyM') {
@@ -2381,10 +2805,18 @@ muteBtn.addEventListener('click', function () {
   muteBtn.blur();
 });
 
+bombBtn.addEventListener('click', function () {
+  useBomb();
+  bombBtn.blur();
+});
+
 resize();
 updateBestText();
 updateHud();
 updatePowerHud();
+updateComboHud();
+updateBombHud();
+muteBtn.textContent = muted ? '音效：关 (M)' : '音效：开 (M)';
 window.requestAnimationFrame(loop);
 </script>
 </body>

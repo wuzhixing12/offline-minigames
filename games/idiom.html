@@ -128,6 +128,37 @@
   .opt.dim{opacity:.55;}
   .opt:disabled{cursor:default;}
 
+  .fillwrap{display:none;}
+  .fillwrap.on{display:block;animation:fadeIn .2s ease;}
+  .slots{display:flex;justify-content:center;gap:clamp(7px,1.8vw,12px);margin:2px 0 12px;}
+  .slot{
+    width:clamp(46px,9.4vw,58px);height:clamp(52px,10.4vw,64px);border-radius:13px;text-align:center;
+    font-family:inherit;font-size:clamp(22px,4.4vw,30px);font-weight:800;color:#f4f7ff;
+    background:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.025));
+    border:1px solid rgba(255,255,255,.14);outline:none;caret-color:var(--pink);
+    transition:border-color .15s ease,box-shadow .15s ease,background .15s ease;
+    user-select:text;
+  }
+  .slot:focus{border-color:rgba(244,114,182,.72);background:rgba(244,114,182,.10);box-shadow:0 0 0 3px rgba(244,114,182,.15);}
+  .slot.ok{border-color:rgba(94,234,212,.72);color:#d9fff7;background:linear-gradient(160deg,rgba(94,234,212,.24),rgba(52,211,153,.08));}
+  .slot.bad{border-color:rgba(251,113,133,.62);color:#ffe3e8;background:linear-gradient(160deg,rgba(251,113,133,.20),rgba(190,18,60,.07));}
+  .slot:disabled{cursor:default;}
+  .slots.shake{animation:slotShake .32s ease;}
+  @keyframes slotShake{
+    0%,100%{transform:translateX(0);}
+    25%{transform:translateX(-5px);}
+    55%{transform:translateX(5px);}
+    80%{transform:translateX(-3px);}
+  }
+  .fillbar{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:4px;}
+  .fillbar .btn.primary{width:auto;padding:9px 18px;font-size:13px;}
+  .fillmsg{font-size:12.5px;font-weight:700;color:#ffd6ea;min-height:18px;}
+  .fillmsg.warn{color:#fda4af;}
+  .fillmsg.hit{color:#6ee7b7;}
+  .guess-log{display:flex;flex-direction:column;gap:3px;width:100%;max-width:340px;margin:8px auto 0;padding:0 2px;min-height:0;max-height:58px;overflow:hidden;}
+  .guess-log div{display:flex;justify-content:space-between;gap:10px;font-size:11px;color:#7d90a8;letter-spacing:.06em;}
+  .guess-log b{color:#c4b5fd;font-variant-numeric:tabular-nums;font-weight:700;}
+
   .pop{
     position:absolute;left:50%;top:44%;transform:translate(-50%,-50%) scale(.9);z-index:6;
     padding:8px 16px;border-radius:999px;font-size:14px;font-weight:800;pointer-events:none;
@@ -161,9 +192,11 @@
   .foot{font-size:11.5px;color:#5f7286;letter-spacing:.03em;text-align:center;}
 
   .overlay{
-    position:absolute;inset:0;z-index:9;display:none;align-items:center;justify-content:center;padding:18px;
-    background:rgba(3,8,18,.78);backdrop-filter:blur(7px);border-radius:17px;
+    position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;padding:20px;
+    background:rgba(3,8,18,.82);backdrop-filter:blur(8px);border-radius:0;
+    overflow-y:auto;overscroll-behavior:contain;
   }
+  .overlay .card{margin:auto;}
   .overlay.on{display:flex;animation:fadeIn .25s ease;}
   @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
   .card{
@@ -183,6 +216,45 @@
   .res-grid div{padding:9px 8px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid var(--line);}
   .res-grid span{display:block;font-size:10.5px;color:var(--muted);}
   .res-grid b{display:block;margin-top:2px;font-size:17px;font-variant-numeric:tabular-nums;}
+  .lv-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:0 0 12px;}
+  .lv-card{
+    padding:9px 4px 8px;border-radius:12px;cursor:pointer;text-align:center;
+    border:1px solid var(--line);background:rgba(255,255,255,.045);
+    transition:border-color .16s ease,background .16s ease,transform .16s ease;
+  }
+  .lv-card:hover{transform:translateY(-1px);border-color:rgba(129,140,248,.46);}
+  .lv-card b{display:block;font-size:13.5px;font-weight:800;letter-spacing:.10em;}
+  .lv-card span{display:block;margin-top:2px;font-size:9.5px;color:var(--muted);}
+  .lv-card i{display:block;margin-top:2px;font-size:9.5px;font-style:normal;color:#7d90a8;font-variant-numeric:tabular-nums;}
+  .lv-card.on{
+    border-color:rgba(244,114,182,.62);
+    background:linear-gradient(160deg,rgba(244,114,182,.20),rgba(129,140,248,.10));
+    box-shadow:0 0 0 1px rgba(244,114,182,.18),0 12px 26px -16px rgba(244,114,182,.8);
+  }
+  .lv-card.on b{color:#ffd6ea;}
+  .lv-card.on i{color:#f9a8d4;}
+  .sp-card{
+    width:100%;display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:10px 12px;
+    border-radius:13px;cursor:pointer;text-align:left;
+    border:1px solid rgba(94,234,212,.26);
+    background:linear-gradient(120deg,rgba(94,234,212,.12),rgba(56,189,248,.055));
+    transition:border-color .16s ease,background .16s ease,transform .16s ease,box-shadow .16s ease;
+  }
+  .sp-card:hover{transform:translateY(-1px);border-color:rgba(94,234,212,.5);}
+  .sp-card.on{
+    border-color:rgba(94,234,212,.72);
+    background:linear-gradient(120deg,rgba(94,234,212,.22),rgba(56,189,248,.10));
+    box-shadow:0 0 0 1px rgba(94,234,212,.20),0 12px 26px -16px rgba(94,234,212,.85);
+  }
+  .sp-k{
+    flex:0 0 auto;padding:4px 7px;border-radius:7px;font-size:10px;font-weight:800;letter-spacing:.14em;
+    color:#052018;background:linear-gradient(135deg,#6ee7b7,#38bdf8);
+  }
+  .sp-t{flex:1;min-width:0;}
+  .sp-t b{display:block;font-size:13.5px;letter-spacing:.08em;}
+  .sp-t i{display:block;margin-top:2px;font-size:10px;font-style:normal;color:var(--muted);}
+  .sp-n{flex:0 0 auto;font-size:10.5px;color:#7d90a8;font-variant-numeric:tabular-nums;}
+  .sp-card.on .sp-n{color:#6ee7b7;}
   .card .btn.primary{width:100%;padding:11px 14px;font-size:13.5px;}
 
   @media (max-width:620px){
@@ -208,6 +280,27 @@
     .foot{display:none;}
   }
 </style>
+<style id="tx-aurora-skin">
+/* tx-aurora-skin:idiom */
+:root{--tx-a1:#f472b6;--tx-a2:#818cf8;}
+html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+::selection{background:rgba(244,114,182,0.38);color:#fff}
+*::-webkit-scrollbar{width:8px;height:8px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:rgba(244,114,182,0.26);border-radius:99px;border:2px solid transparent;background-clip:content-box}
+*::-webkit-scrollbar-thumb:hover{background:rgba(244,114,182,0.46);background-clip:content-box}
+body{background-color:#070d18!important;background-image:radial-gradient(1100px 640px at 6% -12%, rgba(244,114,182,0.16), transparent 62%), radial-gradient(900px 680px at 104% 112%, rgba(129,140,248,0.12), transparent 62%)!important}
+button{transition:transform .14s ease,filter .16s ease,box-shadow .2s ease,border-color .16s ease,background-color .16s ease}
+button:hover{filter:brightness(1.07)}
+button:active{transform:translateY(1px) scale(.995)}
+button:focus-visible{outline:2px solid rgba(244,114,182,0.72);outline-offset:2px}
+.overlay,.modal,.dialog,.sheet,#levels,#loading{background-image:radial-gradient(900px 520px at 50% 0%,rgba(244,114,182,0.15),transparent 62%),radial-gradient(720px 520px at 50% 100%,rgba(129,140,248,0.08),transparent 60%)!important}
+.overlay,.modal,.dialog,.sheet{backdrop-filter:blur(9px) saturate(1.1)}
+.overlay h1,.modal h1,.screen h1,.overlay-card h1,.win-card h1,.result-card h1,.bcard .btitle,.loadcard .ltitle{text-shadow:0 2px 30px rgba(244,114,182,0.45)}
+.overlay .screen,.overlay .panel,.overlay-card,.modal .panel,.win-card,.result-card,.bcard,.loadcard,.rules-dialog,.panel{box-shadow:0 38px 96px -34px rgba(0,0,0,.95), inset 0 1px 0 rgba(255,255,255,.07)!important}
+.bcard,.loadcard{border-color:rgba(244,114,182,0.34)!important}
+.overlay .panel,.overlay-card,.win-card,.result-card,.modal .panel{backdrop-filter:blur(10px) saturate(1.08);border-color:rgba(244,114,182,0.26)!important}
+</style>
 </head>
 <body>
 <div class="app">
@@ -232,13 +325,26 @@
     <div class="quiz-shell">
       <div class="quiz" id="quiz">
         <div class="qtop">
-          <span class="qno" id="qno">第 1 题</span>
+          <span class="qno" id="qno">入门 · 第 1 题</span>
           <div class="qbar"><i id="qfill"></i></div>
-          <span class="qsec" id="qsec">15s</span>
+          <span class="qsec" id="qsec">18s</span>
         </div>
         <div class="pic" id="pic"></div>
         <div class="hintbar" id="hintbar"></div>
         <div class="options" id="options"></div>
+        <div class="fillwrap" id="fillwrap">
+          <div class="slots" id="slots">
+            <input class="slot" type="text" maxlength="1" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="第 1 个字">
+            <input class="slot" type="text" maxlength="1" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="第 2 个字">
+            <input class="slot" type="text" maxlength="1" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="第 3 个字">
+            <input class="slot" type="text" maxlength="1" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="第 4 个字">
+          </div>
+          <div class="fillbar">
+            <button type="button" class="btn primary" id="submitFill">提交答案</button>
+            <span class="fillmsg" id="fillMsg"></span>
+          </div>
+          <div class="guess-log" id="guessLog"></div>
+        </div>
         <div class="pop" id="pop"></div>
         <div class="overlay on" id="overlay"><div class="card" id="ovCard"></div></div>
       </div>
@@ -246,9 +352,9 @@
   </div>
 
   <div class="panel">
-    <div class="status" id="status"><i></i><span>每题 15 秒，答得越快分越高</span></div>
+    <div class="status" id="status"><i></i><span>三档难度 · 入门 18 秒 / 进阶 14 秒 / 挑战 11 秒</span></div>
     <div class="actions">
-      <button class="btn" id="hintBtn">提示 · -30</button>
+      <button class="btn" id="hintBtn">提示 · -20</button>
       <button class="btn" id="restart">重新开始</button>
     </div>
   </div>
@@ -259,224 +365,687 @@
 (function () {
   'use strict';
 
-  var BEST_KEY = 'tx_idiom_best_v1';
+  var BEST_KEY = 'tx_idiom_best_v2';
+  var OLD_BEST_KEY = 'tx_idiom_best_v1';
   var SEEN_KEY = 'tx_idiom_seen_v1';
   var TOTAL_Q = 10;
-  var LIMIT = 15;
-  var HINT_COST = 30;
+
+  var LEVELS = {
+    1: { name: '入门', sub: '看图就懂', time: 18, cost: 20 },
+    2: { name: '进阶', sub: '动动脑子', time: 14, cost: 30 },
+    3: { name: '挑战', sub: '高手过招', time: 11, cost: 40 }
+  };
+  var level = 1;
+  var limit = LEVELS[1].time;
+  var hintCost = LEVELS[1].cost;
 
   var DATA = [
-    { pic:'🐍 🖌️ 🦶', a:'画蛇添足' },
-    { pic:'🌳 ⏳ 🐇', a:'守株待兔' },
-    { pic:'🐑 🕳️ 🔨', a:'亡羊补牢' },
-    { pic:'🙉 🔔', a:'掩耳盗铃' },
-    { pic:'🐂 🎸', a:'对牛弹琴' },
-    { pic:'🦊 ➕ 🐯', a:'狐假虎威' },
-    { pic:'🕳️ 🐸', a:'井底之蛙' },
-    { pic:'🙈 🐘', a:'盲人摸象' },
-    { pic:'🔥 ➕ 🛢️', a:'火上浇油' },
-    { pic:'💧 ⬇️ 🪨', a:'水落石出' },
-    { pic:'🏹 2️⃣ 🦅', a:'一箭双雕' },
-    { pic:'3️⃣ ❤️ 2️⃣ 💭', a:'三心二意' },
-    { pic:'5️⃣ 🎨 6️⃣', a:'五颜六色' },
-    { pic:'7️⃣ ⬆️ 8️⃣ ⬇️', a:'七上八下' },
-    { pic:'9️⃣ 🐂 1️⃣ 🪶', a:'九牛一毛' },
-    { pic:'🔟 ✅ 🔟 💯', a:'十全十美' },
-    { pic:'1️⃣ ❤️ 1️⃣ 💭', a:'一心一意' },
-    { pic:'🛣️ ➡️ ❌', a:'半途而废' },
-    { pic:'💧 🪨', a:'滴水穿石' },
-    { pic:'🔩 ➡️ 🪡', a:'铁杵成针' },
-    { pic:'🤐 🍾', a:'守口如瓶' },
-    { pic:'🐉 🖌️ 👁️', a:'画龙点睛' },
-    { pic:'🥃 🏹 🐍', a:'杯弓蛇影' },
-    { pic:'🌿 🌲 😨', a:'草木皆兵' },
-    { pic:'4️⃣ 🎵', a:'四面楚歌' },
-    { pic:'👉 🦌 ➡️ 🐴', a:'指鹿为马' },
-    { pic:'🎺 🔢', a:'滥竽充数' },
-    { pic:'🌱 ⬆️', a:'拔苗助长' },
-    { pic:'🛶 🗡️', a:'刻舟求剑' },
-    { pic:'🧭 ❌', a:'南辕北辙' },
-    { pic:'🛍️ 📦 ↩️ 💎', a:'买椟还珠' },
-    { pic:'🌅 3️⃣ 🌆 4️⃣', a:'朝三暮四' },
-    { pic:'🦢 🐔 🐔', a:'鹤立鸡群' },
-    { pic:'🐔 🐕 😱', a:'鸡犬不宁' },
-    { pic:'🐟 👁️ 🔮', a:'鱼目混珠' },
-    { pic:'🐯 ⬆️ ❌', a:'骑虎难下' },
-    { pic:'🪵 🔥', a:'抱薪救火' },
-    { pic:'👀 🍒 💧', a:'望梅止渴' },
-    { pic:'🖌️ 🥞 🍽️', a:'画饼充饥' },
-    { pic:'🏹 🐦 😱', a:'惊弓之鸟' },
-    { pic:'🕸️ 🐟', a:'漏网之鱼' },
-    { pic:'🗡️ 🛡️', a:'自相矛盾' },
-    { pic:'🐎 ✅', a:'马到成功' },
-    { pic:'⛵ 💨', a:'一帆风顺' },
-    { pic:'🐯 🐍', a:'虎头蛇尾' },
-    { pic:'🐔 ✈️ 🥚 💥', a:'鸡飞蛋打' },
-    { pic:'🐕 😱 🧱', a:'狗急跳墙' },
-    { pic:'🚪 ⛰️', a:'开门见山' },
-    { pic:'1️⃣ 🐔 😲', a:'一鸣惊人' },
-    { pic:'🤚 🐑', a:'顺手牵羊' },
-    { pic:'🌫️ 👀 🌸', a:'雾里看花' },
-    { pic:'🧵 ⬆️ 🌸', a:'锦上添花' },
-    { pic:'💧 👋 🌙', a:'水中捞月' },
-    { pic:'🌳 🐟', a:'缘木求鱼' },
-    { pic:'🐲 🐯', a:'生龙活虎' },
-    { pic:'🐉 ✈️ 🦚 💃', a:'龙飞凤舞' },
-    { pic:'🌈 🌸', a:'万紫千红' },
-    { pic:'🌸 ✅ 🌕 ⭕', a:'花好月圆' },
-    { pic:'🐦 💬 🌸 👃', a:'鸟语花香' },
-    { pic:'⛰️ 💧 🌿', a:'山清水秀' },
-
-    { pic:'🍃 👴 ❤️ 🐉', a:'叶公好龙', hint:'嘴上说喜欢，心里其实怕' },
-    { pic:'👴 🚚 ⛰️', a:'愚公移山', hint:'挖山不止，终于搬走' },
-    { pic:'🦅 🪨 ➡️ 🌊', a:'精卫填海', hint:'小鸟衔石填大海' },
-    { pic:'🛏️ 🪵 👅 😖', a:'卧薪尝胆', hint:'睡柴草，尝苦胆' },
-    { pic:'🪢 🏠 🪡 🦵', a:'悬梁刺股', hint:'古人苦读的狠办法' },
-    { pic:'🚪 🧍 ❄️', a:'程门立雪', hint:'雪里站着等老师' },
-    { pic:'⛰️ ⬆️ 💧 ⬇️', a:'高山流水', hint:'知音难遇的琴曲' },
-    { pic:'🎵 🔁 🏠', a:'余音绕梁', hint:'歌声久久不散' },
-    { pic:'📛 ⬇️ ⛰️', a:'名落孙山', hint:'考试没考上' },
-    { pic:'👴 🐴 ❌ 😢', a:'塞翁失马', hint:'坏事也许变成好事' },
-    { pic:'🍲 💥 🚢 ⬇️', a:'破釜沉舟', hint:'砸锅沉船，不留退路' },
-    { pic:'🎒 💧 1️⃣ ⚔️', a:'背水一战', hint:'背靠河水，拼死一战' },
-    { pic:'📄 💬 🪖', a:'纸上谈兵', hint:'只会空谈不会打' },
-    { pic:'💎 ↩️ 🏯', a:'完璧归赵', hint:'宝物完好送回' },
-    { pic:'🪵 🎒 🙏 😔', a:'负荆请罪', hint:'背着荆条去认错' },
-    { pic:'3️⃣ 🚶 🏠', a:'三顾茅庐', hint:'三次登门请高人' },
-    { pic:'📜 3️⃣ ✅', a:'约法三章', hint:'先定下三条规矩' },
-    { pic:'🔊 ➡️ 🥊 ⬅️', a:'声东击西', hint:'喊着东边，打西边' },
-    { pic:'🐦 🦪 ⚔️', a:'鹬蚌相争', hint:'两方相争，旁人得利' },
-    { pic:'🦗 💪 🚗', a:'螳臂当车', hint:'小虫挡大车，不自量力' },
-    { pic:'🐜 💪 🌳', a:'蚍蜉撼树', hint:'蚂蚁想摇倒大树' },
-    { pic:'🦋 ➡️ 🔥', a:'飞蛾扑火', hint:'自己往火里扑' },
-    { pic:'🦅 🛣️ ♾️', a:'鹏程万里', hint:'前途远大' },
-    { pic:'🐟 ✅ 💧', a:'如鱼得水', hint:'到了最合适的环境' },
-    { pic:'🐟 ⬆️ 🚪 🐉', a:'鱼跃龙门', hint:'一跃就身价百倍' },
-    { pic:'🐟 ⬇️ 🦆 ⬇️', a:'沉鱼落雁', hint:'美得鱼沉雁落' },
-    { pic:'🌕 🙈 🌸 😊', a:'闭月羞花', hint:'美得月亮躲、花害羞' },
-    { pic:'🔥 👁️ 🥇', a:'火眼金睛', hint:'一眼看穿真假' },
-    { pic:'👀 🚫 🔁', a:'目不转睛', hint:'眼睛一眨不眨' },
-    { pic:'😐 🪵 🐔', a:'呆若木鸡', hint:'愣得像木头鸡' },
-    { pic:'🐔 🎤 🐕 🥷', a:'鸡鸣狗盗', hint:'小偷小摸的本事' },
-    { pic:'🐔 🪶 🧄 🥜', a:'鸡毛蒜皮', hint:'不值得一提的小事' },
-    { pic:'🐴 🐴 🐯 🐯', a:'马马虎虎', hint:'做事不太认真' },
-    { pic:'👴 🐎 🛣️', a:'老马识途', hint:'老手自然认得路' },
-    { pic:'🏇 👀 🌸', a:'走马观花', hint:'粗略地看一眼' },
-    { pic:'❤️ 🐒 💭 🐴', a:'心猿意马', hint:'心思定不下来' },
-    { pic:'🚗 💧 🐴 🐉', a:'车水马龙', hint:'车马很多很热闹' },
-    { pic:'🪖 🌾 🐴 🌀', a:'兵荒马乱', hint:'打仗年头不太平' },
-    { pic:'1️⃣ 🔫 1️⃣ 🐴', a:'单枪匹马', hint:'一个人独自去闯' },
-    { pic:'🕷️ 🧵 🐴 👣', a:'蛛丝马迹', hint:'细小的线索' },
-    { pic:'🐯 ➕ 🦅', a:'如虎添翼', hint:'本就厉害，又添帮手' },
-    { pic:'🌿 👊 😱 🐍', a:'打草惊蛇', hint:'一动草先把蛇惊了' },
-    { pic:'🐍 ⬆️ 🕳️', a:'引蛇出洞', hint:'想法子把对手引出来' },
-    { pic:'🐯 🎒 🐻 🧍', a:'虎背熊腰', hint:'身材魁梧结实' },
-    { pic:'🐯 👀 👀', a:'虎视眈眈', hint:'狠狠盯着不放' },
-    { pic:'🐑 ➡️ 🐯 👄', a:'羊入虎口', hint:'自己送上门去' },
-    { pic:'🐺 🍲 🐯 😋', a:'狼吞虎咽', hint:'吃得又快又猛' },
-    { pic:'🐺 🦡 🤝', a:'狼狈为奸', hint:'坏人合伙做坏事' },
-    { pic:'🐉 ⚔️ 🐯', a:'龙争虎斗', hint:'两个强者相争' },
-    { pic:'🐉 ⬆️ 🐯 ⬆️', a:'龙腾虎跃', hint:'动作矫健有生气' },
-    { pic:'🐉 🐴 ⚡', a:'龙马精神', hint:'精神头特别足' },
-    { pic:'🐉 🛏️ 🐯', a:'藏龙卧虎', hint:'暗地里藏着高手' },
-    { pic:'🦊 👥 🐕 👥', a:'狐朋狗友', hint:'一帮不三不四的朋友' },
-    { pic:'🍷 🍖 👥 👥', a:'酒肉朋友', hint:'只在吃喝时来往' },
-    { pic:'3️⃣ 👥 ✅ 🐯', a:'三人成虎', hint:'说的人多了，假的也像真的' },
-    { pic:'👥 💭 ✅ 🏰', a:'众志成城', hint:'齐心就能筑起城墙' },
-    { pic:'🔁 ❤️ 🤝 💪', a:'同心协力', hint:'一条心一起使劲' },
-    { pic:'🥚 🥊 🪨', a:'以卵击石', hint:'拿鸡蛋去碰石头' },
-    { pic:'⚖️ 💪 ⚖️ 💪', a:'势均力敌', hint:'两边本事差不多' },
-    { pic:'1️⃣ 🪖 🔥 ⚔️', a:'孤军奋战', hint:'没有帮手独自打' },
-    { pic:'🪑 😊 🉐 ✅', a:'坐享其成', hint:'不干活白得好处' },
-    { pic:'❌ 💪 ➡️ 🉐', a:'不劳而获', hint:'不出力也有收获' },
-    { pic:'🏁 ✅ 🏁 ✅', a:'有始有终', hint:'开头结尾都做好' },
-    { pic:'⏰ ➡️ 🏠 ⬆️', a:'后来居上', hint:'后起的反而超过前面' },
-    { pic:'🥇 1️⃣ 😱 ⏰', a:'争先恐后', hint:'抢着往前，怕落后' },
-    { pic:'💪 ⬆️ 🚣', a:'力争上游', hint:'拼命往好里争取' },
-    { pic:'💪 ➡️ 🛣️', a:'勇往直前', hint:'什么也不怕地向前' },
-    { pic:'🧠 😖 ➡️ ↩️', a:'知难而退', hint:'看到难处就退回来' },
-    { pic:'👀 ➡️ ↩️ 🦶', a:'望而却步', hint:'一看见就往后缩' },
-    { pic:'🌗 ✅ 🌗 ❓', a:'半信半疑', hint:'一半相信一半怀疑' },
-    { pic:'💯 ✅ ❌ ❓', a:'深信不疑', hint:'一点也不怀疑' },
-    { pic:'🖐️ 🦶 ❌ 🖐️', a:'手足无措', hint:'慌得不知怎么办' },
-    { pic:'🧘 ✅ ❌ 😰', a:'从容不迫', hint:'一点不慌不忙' },
-    { pic:'😱 😵 ❌ 🖐️', a:'惊慌失措', hint:'吓慌了手脚' },
-    { pic:'😌 ❌ ✅ 💼', a:'若无其事', hint:'像什么都没发生' },
-    { pic:'🧘 ✨ 😌', a:'泰然自若', hint:'很镇定，跟平常一样' },
-    { pic:'😌 ✨ 🉐', a:'悠然自得', hint:'清闲自在' },
-    { pic:'🉐 ✨ 😄 🎵', a:'自得其乐', hint:'自己给自己找乐子' },
-    { pic:'😄 ❌ ✅ 💪', a:'乐不可支', hint:'笑得撑不住了' },
-    { pic:'😏 ✅ 🌊 🌊', a:'得意洋洋', hint:'得意得不得了' },
-    { pic:'❤️ ⚫ 💭 🧊', a:'心灰意冷', hint:'没了劲头，灰心' },
-    { pic:'😞 ⬇️ 🧠 💨', a:'垂头丧气', hint:'低着头没精打采' },
-    { pic:'🔁 ❌ 🔁 ⚔️', a:'屡败屡战', hint:'输了还接着打' },
-    { pic:'❤️ 🌸 💥 🌼', a:'心花怒放', hint:'心里乐开了花' },
-    { pic:'❤️ ➖ 💨 😊', a:'心平气和', hint:'心情平稳不激动' },
-    { pic:'❤️ 😊 ✅ 🦶', a:'心满意足', hint:'想要的全有了' },
-    { pic:'❤️ 🏃 🔥', a:'心急如焚', hint:'急得像火烧' },
-    { pic:'❤️ 🗡️ ✂️', a:'心如刀割', hint:'心里疼得像被割' },
-    { pic:'❤️ 👄 🔁 1️⃣', a:'心口如一', hint:'想的和说的一样' },
-    { pic:'❤️ 💡 ❌ 📢', a:'心照不宣', hint:'心里明白，不说破' },
-    { pic:'❤️ 🍬 😊 🙏', a:'心甘情愿', hint:'完全是自己愿意' },
-    { pic:'🎉 ⬆️ 🔥', a:'兴高采烈', hint:'兴致特别高' },
-    { pic:'❌ ⚡ 🥊 🎨', a:'无精打采', hint:'一点精神也没有' },
-    { pic:'⚡ ✨ 😄', a:'精神抖擞', hint:'精神头很足' },
-    { pic:'😄 👀 😄', a:'眉开眼笑', hint:'眉毛舒展，眼睛带笑' },
-    { pic:'😄 ⬆️ 🎨 💃', a:'眉飞色舞', hint:'又高兴又得意' },
-    { pic:'😆 ➡️ 😊 🚪', a:'笑逐颜开', hint:'满脸都是笑' },
-    { pic:'🤲 🤰 😆', a:'捧腹大笑', hint:'捂着肚子笑' },
-    { pic:'😭 💧 😀', a:'泪流满面', hint:'眼泪流了一脸' },
-    { pic:'😔 💬 😮‍💨', a:'唉声叹气', hint:'无奈地连声叹气' },
-    { pic:'😟 😖', a:'愁眉苦脸', hint:'一脸发愁的样子' },
-    { pic:'🌱 ☀️ 🌸 🌼', a:'春暖花开', hint:'天气转暖，花开' },
-    { pic:'🍂 ⬆️ 💨 😊', a:'秋高气爽', hint:'秋天又高又凉快' },
-    { pic:'1️⃣ 🍃 👁️ 🍂', a:'一叶知秋', hint:'一片落叶就知道秋天' },
-    { pic:'🍂 ⬇️ ↩️ 🌳', a:'落叶归根', hint:'回到自己的家乡' },
-    { pic:'🌳 ⬇️ 🍃 🌿', a:'根深叶茂', hint:'根扎得深，枝叶旺' },
-    { pic:'🌸 ⬆️ 🍎', a:'开花结果', hint:'有了好收成' },
-    { pic:'❄️ ➕ 🧊', a:'雪上加霜', hint:'祸不单行' },
-    { pic:'❄️ 🎁 ♨️', a:'雪中送炭', hint:'难处时帮一把' },
-    { pic:'🌧️ ➡️ ☀️ 🌈', a:'雨过天晴', hint:'坏事过去，好起来' },
-    { pic:'💨 ➖ 🌊 😶', a:'风平浪静', hint:'没有风，也没有浪' },
-    { pic:'😱 🌊 🌊', a:'惊涛骇浪', hint:'险恶的大风浪' },
-    { pic:'💨 ⬆️ ☁️ ⬆️', a:'风起云涌', hint:'形势大变，动静大' },
-    { pic:'⚡ 💥 🔊', a:'电闪雷鸣', hint:'又打闪又打雷' },
-    { pic:'🧊 ☁️ ❄️ 🗺️', a:'冰天雪地', hint:'到处是冰雪' },
-    { pic:'☁️ 🥶 🗺️ 🧊', a:'天寒地冻', hint:'冷得地都冻住了' },
-    { pic:'☁️ ⬇️ 🗺️ ⬆️', a:'天南地北', hint:'一南一北，隔得远' },
-    { pic:'☁️ 🛣️ 🌊 📐', a:'天涯海角', hint:'最远最偏的地方' },
-    { pic:'4️⃣ 🧭 8️⃣ ➡️', a:'四面八方', hint:'各个方向都算上' },
-    { pic:'4️⃣ 🛣️ 8️⃣ ✅', a:'四通八达', hint:'路路都通' },
-    { pic:'5️⃣ 🏞️ 4️⃣ 🌊', a:'五湖四海', hint:'各地各处的人' },
-    { pic:'➡️ 👀 ⬅️ 👀', a:'东张西望', hint:'这边看看那边看看' },
-    { pic:'➡️ ⬇️ ⬅️ 🌀', a:'东倒西歪', hint:'歪歪扭扭站不稳' },
-    { pic:'➡️ 🏃 ⬅️ 🏃', a:'东奔西走', hint:'四处跑，到处忙' },
-    { pic:'🚶 ⬇️ 🚪 ⬆️', a:'走南闯北', hint:'南北都跑遍了' },
-    { pic:'⬅️ ➡️ 🤝 💧', a:'左右逢源', hint:'两边都吃得开' },
-    { pic:'⬅️ 😰 ➡️', a:'左右为难', hint:'两边都不好办' },
-    { pic:'⬆️ 🔁 ⬇️ 🔁', a:'上行下效', hint:'上面做，下面学着做' },
-    { pic:'⬆️ ⬇️ 1️⃣ ❤️', a:'上下一心', hint:'上下一条心' },
-    { pic:'✋ 1️⃣ ↩️ 3️⃣', a:'举一反三', hint:'会一个就能推三个' },
-    { pic:'🪶 😊 ✋', a:'轻而易举', hint:'像举羽毛一样容易' },
-    { pic:'🤚 😵 🦶 🌀', a:'手忙脚乱', hint:'慌得手脚都不听话' },
-    { pic:'🤚 💃 🦶 🕺', a:'手舞足蹈', hint:'高兴得手脚都动起来' },
-    { pic:'🦶 ⚡ 1️⃣ ⛰️', a:'捷足先登', hint:'腿快的先到先得' },
-    { pic:'🦶 🗺️ ✅', a:'脚踏实地', hint:'做事踏实不浮' },
-    { pic:'🙂 ⬇️ 😄 🙇', a:'点头哈腰', hint:'讨好地弯腰' },
-    { pic:'🙂 🔁 🧠 🔁', a:'摇头晃脑', hint:'得意地晃着脑袋' },
-    { pic:'🪨 2️⃣ 🐦', a:'一石二鸟', hint:'一个动作两个收获' },
-    { pic:'🪖 🐎 🪖 🐎', a:'千军万马', hint:'兵马多得数不清' },
-    { pic:'💯 ❌ 1️⃣ ❌', a:'万无一失', hint:'保证一点不出错' },
-    { pic:'💯 🎯', a:'百发百中', hint:'每次都打中' },
-    { pic:'5️⃣ 🌸 8️⃣ 🚪', a:'五花八门', hint:'花样多得数不完' },
-    { pic:'7️⃣ 0️⃣ 🍂', a:'七零八落', hint:'散得乱七八糟' },
-    { pic:'9️⃣ 💀 1️⃣ 🧬', a:'九死一生', hint:'太险了，差点没命' },
-    { pic:'6️⃣ 😇 ❌ 👑', a:'六神无主', hint:'慌得没了主意' },
-    { pic:'8️⃣ 🎲 💎', a:'八面玲珑', hint:'各处都应付得圆滑' },
-    { pic:'3️⃣ 3️⃣ 2️⃣ 2️⃣', a:'三三两两', hint:'三两个凑在一起' },
-    { pic:'3️⃣ 🔁 5️⃣ 🔁', a:'三番五次', hint:'一遍又一遍' },
-    { pic:'3️⃣ 💭 ➡️ 🚶', a:'三思而行', hint:'想清楚了再动手' },
-    { pic:'🔟 ✋ 9️⃣ 🧘', a:'十拿九稳', hint:'很有把握' }
+    { pic:"🐍 🖌️ 🦶", a:"画蛇添足", lv:1 },
+    { pic:"🌳 ⏳ 🐇", a:"守株待兔", lv:1 },
+    { pic:"🐑 🕳️ 🔨", a:"亡羊补牢", lv:1 },
+    { pic:"🙉 🔔", a:"掩耳盗铃", lv:1 },
+    { pic:"🐂 🎸", a:"对牛弹琴", lv:1 },
+    { pic:"🦊 ➕ 🐯", a:"狐假虎威", lv:1 },
+    { pic:"🕳️ 🐸", a:"井底之蛙", lv:1 },
+    { pic:"🙈 🐘", a:"盲人摸象", lv:1 },
+    { pic:"🔥 ➕ 🛢️", a:"火上浇油", lv:1 },
+    { pic:"💧 ⬇️ 🪨", a:"水落石出", lv:1 },
+    { pic:"🏹 2️⃣ 🦅", a:"一箭双雕", lv:1 },
+    { pic:"3️⃣ ❤️ 2️⃣ 💭", a:"三心二意", lv:1 },
+    { pic:"5️⃣ 🎨 6️⃣", a:"五颜六色", lv:1 },
+    { pic:"7️⃣ ⬆️ 8️⃣ ⬇️", a:"七上八下", lv:1 },
+    { pic:"9️⃣ 🐂 1️⃣ 🪶", a:"九牛一毛", lv:1 },
+    { pic:"🔟 ✅ 🔟 💯", a:"十全十美", lv:1 },
+    { pic:"1️⃣ ❤️ 1️⃣ 💭", a:"一心一意", lv:1 },
+    { pic:"🛣️ ➡️ ❌", a:"半途而废", lv:1 },
+    { pic:"💧 🪨", a:"滴水穿石", lv:1 },
+    { pic:"🔩 ➡️ 🪡", a:"铁杵成针", lv:1 },
+    { pic:"🤐 🍾", a:"守口如瓶", lv:1 },
+    { pic:"🐉 🖌️ 👁️", a:"画龙点睛", lv:1 },
+    { pic:"🥃 🏹 🐍", a:"杯弓蛇影", lv:1 },
+    { pic:"🌿 🌲 😨", a:"草木皆兵", lv:1 },
+    { pic:"4️⃣ 🎵", a:"四面楚歌", lv:1 },
+    { pic:"👉 🦌 ➡️ 🐴", a:"指鹿为马", lv:1 },
+    { pic:"🎺 🔢", a:"滥竽充数", lv:1 },
+    { pic:"🌱 ⬆️", a:"拔苗助长", lv:1 },
+    { pic:"🛶 🗡️", a:"刻舟求剑", lv:1 },
+    { pic:"🧭 ❌", a:"南辕北辙", lv:1 },
+    { pic:"🛍️ 📦 ↩️ 💎", a:"买椟还珠", lv:1 },
+    { pic:"🌅 3️⃣ 🌆 4️⃣", a:"朝三暮四", lv:1 },
+    { pic:"🦢 🐔 🐔", a:"鹤立鸡群", lv:1 },
+    { pic:"🐔 🐕 😱", a:"鸡犬不宁", lv:1 },
+    { pic:"🐟 👁️ 🔮", a:"鱼目混珠", lv:1 },
+    { pic:"🐯 ⬆️ ❌", a:"骑虎难下", lv:1 },
+    { pic:"🪵 🔥", a:"抱薪救火", lv:1 },
+    { pic:"👀 🍒 💧", a:"望梅止渴", lv:1 },
+    { pic:"🖌️ 🥞 🍽️", a:"画饼充饥", lv:1 },
+    { pic:"🏹 🐦 😱", a:"惊弓之鸟", lv:1 },
+    { pic:"🕸️ 🐟", a:"漏网之鱼", lv:1 },
+    { pic:"🗡️ 🛡️", a:"自相矛盾", lv:1 },
+    { pic:"🐎 ✅", a:"马到成功", lv:1 },
+    { pic:"⛵ 💨", a:"一帆风顺", lv:1 },
+    { pic:"🐯 🐍", a:"虎头蛇尾", lv:1 },
+    { pic:"🐔 ✈️ 🥚 💥", a:"鸡飞蛋打", lv:1 },
+    { pic:"🐕 😱 🧱", a:"狗急跳墙", lv:1 },
+    { pic:"🚪 ⛰️", a:"开门见山", lv:1 },
+    { pic:"1️⃣ 🐔 😲", a:"一鸣惊人", lv:1 },
+    { pic:"🤚 🐑", a:"顺手牵羊", lv:1 },
+    { pic:"🌫️ 👀 🌸", a:"雾里看花", lv:1 },
+    { pic:"🧵 ⬆️ 🌸", a:"锦上添花", lv:1 },
+    { pic:"💧 👋 🌙", a:"水中捞月", lv:1 },
+    { pic:"🌳 🐟", a:"缘木求鱼", lv:1 },
+    { pic:"🐲 🐯", a:"生龙活虎", lv:1 },
+    { pic:"🐉 ✈️ 🦚 💃", a:"龙飞凤舞", lv:1 },
+    { pic:"🌈 🌸", a:"万紫千红", lv:1 },
+    { pic:"🌸 ✅ 🌕 ⭕", a:"花好月圆", lv:1 },
+    { pic:"🐦 💬 🌸 👃", a:"鸟语花香", lv:1 },
+    { pic:"⛰️ 💧 🌿", a:"山清水秀", lv:1 },
+    { pic:"🍃 👴 ❤️ 🐉", a:"叶公好龙", hint:"嘴上说喜欢，心里其实怕", lv:1 },
+    { pic:"👴 🚚 ⛰️", a:"愚公移山", hint:"挖山不止，终于搬走", lv:1 },
+    { pic:"🦅 🪨 ➡️ 🌊", a:"精卫填海", hint:"小鸟衔石填大海", lv:1 },
+    { pic:"🛏️ 🪵 👅 😖", a:"卧薪尝胆", hint:"睡柴草，尝苦胆", lv:1 },
+    { pic:"🪢 🏠 🪡 🦵", a:"悬梁刺股", hint:"古人苦读的狠办法", lv:1 },
+    { pic:"🚪 🧍 ❄️", a:"程门立雪", hint:"雪里站着等老师", lv:1 },
+    { pic:"⛰️ ⬆️ 💧 ⬇️", a:"高山流水", hint:"知音难遇的琴曲", lv:1 },
+    { pic:"🎵 🔁 🏠", a:"余音绕梁", hint:"歌声久久不散", lv:1 },
+    { pic:"📛 ⬇️ ⛰️", a:"名落孙山", hint:"考试没考上", lv:1 },
+    { pic:"👴 🐴 ❌ 😢", a:"塞翁失马", hint:"坏事也许变成好事", lv:1 },
+    { pic:"1️⃣ ❤️ 2️⃣ 🛠️", a:"一心二用", lv:1 },
+    { pic:"3️⃣ 💬 2️⃣ 🗣️", a:"三言两语", lv:1 },
+    { pic:"5️⃣ ✨ 🔟 🎨", a:"五光十色", lv:1 },
+    { pic:"7️⃣ 👄 8️⃣ 👅", a:"七嘴八舌", lv:1 },
+    { pic:"1️⃣0️⃣0️⃣0️⃣ 🔁 1️⃣0️⃣0️⃣0️⃣0️⃣ 🔄", a:"千变万化", lv:1 },
+    { pic:"3️⃣ 📏 2️⃣ 📐", a:"三长两短", lv:1 },
+    { pic:"1️⃣ 5️⃣ 1️⃣ 🔟", a:"一五一十", lv:1 },
+    { pic:"2️⃣ 🐉 🎭 🔮", a:"二龙戏珠", lv:1 },
+    { pic:"4️⃣ ⚖️ 8️⃣ 🧘", a:"四平八稳", lv:1 },
+    { pic:"🖐️ 🦶 🙇 ⬇️", a:"五体投地", lv:1 },
+    { pic:"6️⃣ 👨‍👩‍👧 ❌ 🙅", a:"六亲不认", lv:1 },
+    { pic:"7️⃣ ✋ 8️⃣ 🦶", a:"七手八脚", lv:1 },
+    { pic:"8️⃣ 🧙 🌊", a:"八仙过海", lv:1 },
+    { pic:"9️⃣ ☁️ ⬆️ 🌌", a:"九霄云外", lv:1 },
+    { pic:"🔟 ☝️ 🔗 ❤️", a:"十指连心", lv:1 },
+    { pic:"1️⃣0️⃣0️⃣0️⃣ 🛣️ 🚶 💨", a:"千里迢迢", lv:1 },
+    { pic:"1️⃣0️⃣0️⃣0️⃣0️⃣ 💧 1️⃣0️⃣0️⃣0️⃣ ⛰️", a:"万水千山", lv:1 },
+    { pic:"1️⃣0️⃣0️⃣0️⃣ 💬 1️⃣0️⃣0️⃣0️⃣0️⃣ 🗣️", a:"千言万语", lv:1 },
+    { pic:"1️⃣0️⃣0️⃣0️⃣ 😖 1️⃣0️⃣0️⃣0️⃣0️⃣ 😫", a:"千辛万苦", lv:1 },
+    { pic:"1️⃣0️⃣0️⃣0️⃣ 🧭 1️⃣0️⃣0️⃣0️⃣0️⃣ 💡", a:"千方百计", lv:1 },
+    { pic:"🔟 1️⃣0️⃣0️⃣0️⃣0️⃣ 🔥 🏃", a:"十万火急", lv:1 },
+    { pic:"🐦 ✈️ ⬆️ ☁️", a:"一飞冲天", lv:1 },
+    { pic:"🦶 ➡️ ⬆️ ☁️", a:"一步登天", lv:1 },
+    { pic:"1️⃣ ⬇️ 1️⃣0️⃣0️⃣0️⃣ 📏", a:"一落千丈", lv:1 },
+    { pic:"1️⃣ ❌ 🎨 🗺️", a:"一败涂地", lv:1 },
+    { pic:"1️⃣ 🛣️ 🚗 🕊️", a:"一路平安", lv:1 },
+    { pic:"1️⃣ 🛣️ ➡️ 💨", a:"一路顺风", lv:1 },
+    { pic:"1️⃣ ⚪ 😊 💨", a:"一团和气", lv:1 },
+    { pic:"1️⃣ ⌚ 👤 🎓", a:"一表人才", lv:1 },
+    { pic:"1️⃣ 🧼 2️⃣ ⚪", a:"一清二白", lv:1 },
+    { pic:"1️⃣ 💸 2️⃣ ⚪", a:"一穷二白", lv:1 },
+    { pic:"1️⃣ 🏜️ 2️⃣ 🧼", a:"一干二净", lv:1 },
+    { pic:"1️⃣ ✂️ 2️⃣", a:"一分为二", lv:1 },
+    { pic:"1️⃣ 🎤 1️⃣ 🎶", a:"一唱一和", lv:1 },
+    { pic:"1️⃣ ✋ 2️⃣ 🎁", a:"一举两得", lv:1 },
+    { pic:"2️⃣ ✅ 👉 🎨", a:"两全其美", lv:1 },
+    { pic:"2️⃣ 👀 3️⃣ 🔪", a:"两面三刀", lv:1 },
+    { pic:"3️⃣ 🗣️ 6️⃣ 💪", a:"三头六臂", lv:1 },
+    { pic:"3️⃣ 📢 5️⃣ 🔁", a:"三令五申", lv:1 },
+    { pic:"4️⃣ ✂️ 5️⃣ 💔", a:"四分五裂", lv:1 },
+    { pic:"4️⃣ 🦶 ⬆️ ☁️", a:"四脚朝天", lv:1 },
+    { pic:"4️⃣ 🌊 ✅ 🏠", a:"四海为家", lv:1 },
+    { pic:"5️⃣ 🌾 🍚 ⬆️", a:"五谷丰登", lv:1 },
+    { pic:"6️⃣ 🐮 🐑 ✨", a:"六畜兴旺", lv:1 },
+    { pic:"7️⃣ 🧩 8️⃣ 🤝", a:"七拼八凑", lv:1 },
+    { pic:"8️⃣ 👀 💨 🦁", a:"八面威风", lv:1 },
+    { pic:"9️⃣ 9️⃣ ↩️ 1️⃣", a:"九九归一", lv:1 },
+    { pic:"🔟 🏠 9️⃣ 🕳️", a:"十室九空", lv:1 },
+    { pic:"1️⃣0️⃣0️⃣ ⚔️ 1️⃣0️⃣0️⃣ ✅", a:"百战百胜", lv:1 },
+    { pic:"1️⃣0️⃣0️⃣ 🔨 ❌ 🙇", a:"百折不挠", lv:1 },
+    { pic:"1️⃣0️⃣0️⃣ 🧠 ❌ 💡", a:"百思不解", lv:1 },
+    { pic:"1️⃣0️⃣0️⃣ ❤️ 🔀 🧩", a:"百感交集", lv:1 },
+    { pic:"1️⃣0️⃣0️⃣ 🌸 👥 🎉", a:"百花齐放", lv:1 },
+    { pic:"1️⃣0️⃣0️⃣ 🏠 🥇 📢", a:"百家争鸣", lv:1 },
+    { pic:"1️⃣0️⃣0️⃣0️⃣ 🏋️ 1️⃣ 💇", a:"千钧一发", lv:1 },
+    { pic:"1️⃣0️⃣0️⃣0️⃣ 📅 😖 🤝", a:"千载难逢", lv:1 },
+    { pic:"1️⃣0️⃣0️⃣0️⃣ ✅ 1️⃣0️⃣0️⃣0️⃣0️⃣ ✔️", a:"千真万确", lv:1 },
+    { pic:"1️⃣0️⃣0️⃣0️⃣0️⃣ 🏛️ 🌲 🌿", a:"万古长青", lv:1 },
+    { pic:"1️⃣0️⃣0️⃣0️⃣0️⃣ 👥 1️⃣ ❤️", a:"万众一心", lv:1 },
+    { pic:"1️⃣0️⃣0️⃣0️⃣0️⃣ 🎁 ✨", a:"万事如意", lv:1 },
+    { pic:"1️⃣0️⃣0️⃣0️⃣0️⃣ 🌱 ↩️ 🐣", a:"万物复苏", lv:1 },
+    { pic:"1️⃣0️⃣0️⃣0️⃣0️⃣ 🎨 🔄 ✨", a:"万象更新", lv:1 },
+    { pic:"👀 ✅ 🦸 💪", a:"见义勇为", lv:1 },
+    { pic:"👀 ➕ 🧠 🌍", a:"见多识广", lv:1 },
+    { pic:"👀 🕳️ 📌 🪡", a:"见缝插针", lv:1 },
+    { pic:"👀 🎨 💭 🚶", a:"见异思迁", lv:1 },
+    { pic:"👀 👻 ❌ 👻", a:"见怪不怪", lv:1 },
+    { pic:"🔓 ☁️ 🪓 🗺️", a:"开天辟地", lv:1 },
+    { pic:"📖 ✅ ✨", a:"开卷有益", lv:1 },
+    { pic:"❤️ 🤝 📢 🌍", a:"开诚布公", lv:1 },
+    { pic:"🕳️ 🕳️ ✅ 📏", a:"井井有条", lv:1 },
+    { pic:"🕳️ ✅ ✅ 🔢", a:"井然有序", lv:1 },
+    { pic:"☁️ 🐴 🏃 🌌", a:"天马行空", lv:1 },
+    { pic:"☁️ 📏 🗺️ ⏳", a:"天长地久", lv:1 },
+    { pic:"☁️ 👨‍👩‍👧 ❤️ 😊", a:"天伦之乐", lv:1 },
+    { pic:"☁️ ✅ 🙅 😈", a:"天真无邪", lv:1 },
+    { pic:"☁️ ⬇️ ❌ 2️⃣", a:"天下无双", lv:1 },
+    { pic:"☁️ 🔄 🗺️ ↩️", a:"天翻地覆", lv:1 },
+    { pic:"☁️ 🕸️ 🗺️ 🥅", a:"天罗地网", lv:1 },
+    { pic:"☁️ 📖 🗺️ ⚖️", a:"天经地义", lv:1 },
+    { pic:"☁️ 🔨 🗺️ 🏗️", a:"天造地设", lv:1 },
+    { pic:"🗺️ 📏 🎁 🧠", a:"地大物博", lv:1 },
+    { pic:"⛰️ 💸 💧 🏁", a:"山穷水尽", lv:1 },
+    { pic:"⛰️ 🤝 🌊 🤞", a:"山盟海誓", lv:1 },
+    { pic:"⛰️ 💥 🗺️ ✂️", a:"山崩地裂", lv:1 },
+    { pic:"⛰️ ✨ 💧 🌸", a:"山明水秀", lv:1 },
+    { pic:"⛰️ 💎 🌊 🍽️", a:"山珍海味", lv:1 },
+    { pic:"💧 ➡️ 🛣️ ✅", a:"水到渠成", lv:1 },
+    { pic:"💧 📏 🔥 🔥", a:"水深火热", lv:1 },
+    { pic:"💧 ⬇️ ❌ 🛣️", a:"水泄不通", lv:1 },
+    { pic:"💧 🥛 🔀 🤝", a:"水乳交融", lv:1 },
+    { pic:"🔥 🌳 🥈 🌸", a:"火树银花", lv:1 },
+    { pic:"🔥 ⬆️ 3️⃣ 📏", a:"火冒三丈", lv:1 },
+    { pic:"🔥 👁️ 🪶", a:"火烧眉毛", lv:1 },
+    { pic:"💨 🌬️ 🌧️ 👊", a:"风吹雨打", lv:1 },
+    { pic:"💨 😊 ☀️ ✨", a:"风和日丽", lv:1 },
+    { pic:"💨 🌧️ 🔀 ➕", a:"风雨交加", lv:1 },
+    { pic:"💨 🌸 ❄️ 🌙", a:"风花雪月", lv:1 },
+    { pic:"💨 🎵 🌧️ ✅", a:"风调雨顺", lv:1 },
+    { pic:"💨 🍽️ 💧 🛏️", a:"风餐露宿", lv:1 },
+    { pic:"💨 🌧️ ❌ 🚧", a:"风雨无阻", lv:1 },
+    { pic:"⚡ ✨ 🪨 🔥", a:"电光石火", lv:1 },
+    { pic:"⚡ 💥 1️⃣0️⃣0️⃣0️⃣0️⃣ 🏋️", a:"雷霆万钧", lv:1 },
+    { pic:"🧊 🧼 💎 ✨", a:"冰清玉洁", lv:1 },
+    { pic:"🧊 ❄️ 3️⃣ 📏", a:"冰冻三尺", lv:1 },
+    { pic:"🌸 🎨 🈵 🏡", a:"春色满园", lv:1 },
+    { pic:"🌸 💭 🌿 ✨", a:"春意盎然", lv:1 },
+    { pic:"☀️ ⬇️ 🔥 🔥", a:"夏日炎炎", lv:1 },
+    { pic:"❄️ 🔥 ☀️ 🧊", a:"冬暖夏凉", lv:1 },
+    { pic:"🌸 🔴 🌿 🟢", a:"花红柳绿", lv:1 },
+    { pic:"🌸 🌿 👋 🎨", a:"花枝招展", lv:1 },
+    { pic:"🌸 ⚪ 🧵 👥", a:"花团锦簇", lv:1 },
+    { pic:"🌸 💬 🎨 🗣️", a:"花言巧语", lv:1 },
+    { pic:"🌸 😊 🌕 👤", a:"花容月貌", lv:1 },
+    { pic:"📏 😱 🔬 👻", a:"大惊小怪", lv:1 },
+    { pic:"📏 🪵 🔬 🛠️", a:"大材小用", lv:1 },
+    { pic:"📏 🤝 🔬 🔀", a:"大同小异", lv:1 },
+    { pic:"📏 📢 🔬 🗣️", a:"大呼小叫", lv:1 },
+    { pic:"📏 👋 📏 🚶", a:"大摇大摆", lv:1 },
+    { pic:"📏 🌊 🤲 🪡", a:"大海捞针", lv:1 },
+    { pic:"📏 😄 👥 ❤️", a:"大快人心", lv:1 },
+    { pic:"📏 ✨ 🧍 ✋", a:"大显身手", lv:1 },
+    { pic:"📏 🏺 🌇 ✅", a:"大器晚成", lv:1 },
+    { pic:"🔬 📝 📏 🛠️", a:"小题大做", lv:1 },
+    { pic:"🔬 ❤️ ✨ ✨", a:"小心翼翼", lv:1 },
+    { pic:"⚖️ ❤️ 🉐 ✨", a:"称心如意", lv:1 },
+    { pic:"👁️ ⬆️ ✋ ⬇️", a:"眼高手低", lv:1 },
+    { pic:"👁️ 😳 🗣️ 🪵", a:"目瞪口呆", lv:1 },
+    { pic:"👄 ✅ ❤️ ❌", a:"口是心非", lv:1 },
+    { pic:"👄 = 🎗️ 🌊", a:"口若悬河", lv:1 },
+    { pic:"👄 🍯 🫁 🔪", a:"口蜜腹剑", lv:1 },
+    { pic:"👤 🔴 👂 🔥", a:"面红耳赤", lv:1 },
+    { pic:"👤 = 🟫 🎨", a:"面如土色", lv:1 },
+    { pic:"🪶 🧼 👁️ ✨", a:"眉清目秀", lv:1 },
+    { pic:"👂 🧠 👁️ 💡", a:"耳聪目明", lv:1 },
+    { pic:"👤 👤 ✅ 🛣️", a:"头头是道", lv:1 },
+    { pic:"👤 ⚖️ 🦶 🪶", a:"头重脚轻", lv:1 },
+    { pic:"👤 💥 🩸 🌊", a:"头破血流", lv:1 },
+    { pic:"🔥 👤 🥀 👤", a:"焦头烂额", lv:1 },
+    { pic:"🛢️ 👄 🧼 👅", a:"油嘴滑舌", lv:1 },
+    { pic:"👄 🔫 👅 🗡️", a:"唇枪舌剑", lv:1 },
+    { pic:"📏 👄 🪢 👅", a:"张口结舌", lv:1 },
+    { pic:"👁️ 😳 🪢 👅", a:"瞠目结舌", lv:1 },
+    { pic:"5️⃣ 🎨 🎉 ✨", a:"五彩缤纷", lv:1 },
+    { pic:"✨ 🎨 ✊ 👁️", a:"光彩夺目", lv:1 },
+    { pic:"🥇 🟢 ✨ 🏯", a:"金碧辉煌", lv:1 },
+    { pic:"💰 ✨ 🏯 👑", a:"富丽堂皇", lv:1 },
+    { pic:"🏮 🔴 🍷 🟢", a:"灯红酒绿", lv:1 },
+    { pic:"🌸 ☁️ 🍷 🗺️", a:"花天酒地", lv:1 },
+    { pic:"😋 🎁 🍽️ 🍲", a:"美味佳肴", lv:1 },
+    { pic:"😫 ❌ 🎯 🍽️", a:"饥不择食", lv:1 },
+    { pic:"🔬 👅 🐢 🍽️", a:"细嚼慢咽", lv:1 },
+    { pic:"🍲 💥 🚢 ⬇️", a:"破釜沉舟", hint:"砸锅沉船，不留退路", lv:2 },
+    { pic:"🎒 💧 1️⃣ ⚔️", a:"背水一战", hint:"背靠河水，拼死一战", lv:2 },
+    { pic:"📄 💬 🪖", a:"纸上谈兵", hint:"只会空谈不会打", lv:2 },
+    { pic:"💎 ↩️ 🏯", a:"完璧归赵", hint:"宝物完好送回", lv:2 },
+    { pic:"🪵 🎒 🙏 😔", a:"负荆请罪", hint:"背着荆条去认错", lv:2 },
+    { pic:"3️⃣ 🚶 🏠", a:"三顾茅庐", hint:"三次登门请高人", lv:2 },
+    { pic:"📜 3️⃣ ✅", a:"约法三章", hint:"先定下三条规矩", lv:2 },
+    { pic:"🔊 ➡️ 🥊 ⬅️", a:"声东击西", hint:"喊着东边，打西边", lv:2 },
+    { pic:"🐦 🦪 ⚔️", a:"鹬蚌相争", hint:"两方相争，旁人得利", lv:2 },
+    { pic:"🦗 💪 🚗", a:"螳臂当车", hint:"小虫挡大车，不自量力", lv:2 },
+    { pic:"🐜 💪 🌳", a:"蚍蜉撼树", hint:"蚂蚁想摇倒大树", lv:2 },
+    { pic:"🦋 ➡️ 🔥", a:"飞蛾扑火", hint:"自己往火里扑", lv:2 },
+    { pic:"🦅 🛣️ ♾️", a:"鹏程万里", hint:"前途远大", lv:2 },
+    { pic:"🐟 ✅ 💧", a:"如鱼得水", hint:"到了最合适的环境", lv:2 },
+    { pic:"🐟 ⬆️ 🚪 🐉", a:"鱼跃龙门", hint:"一跃就身价百倍", lv:2 },
+    { pic:"🐟 ⬇️ 🦆 ⬇️", a:"沉鱼落雁", hint:"美得鱼沉雁落", lv:2 },
+    { pic:"🌕 🙈 🌸 😊", a:"闭月羞花", hint:"美得月亮躲、花害羞", lv:2 },
+    { pic:"🔥 👁️ 🥇", a:"火眼金睛", hint:"一眼看穿真假", lv:2 },
+    { pic:"👀 🚫 🔁", a:"目不转睛", hint:"眼睛一眨不眨", lv:2 },
+    { pic:"😐 🪵 🐔", a:"呆若木鸡", hint:"愣得像木头鸡", lv:2 },
+    { pic:"🐔 🎤 🐕 🥷", a:"鸡鸣狗盗", hint:"小偷小摸的本事", lv:2 },
+    { pic:"🐔 🪶 🧄 🥜", a:"鸡毛蒜皮", hint:"不值得一提的小事", lv:2 },
+    { pic:"🐴 🐴 🐯 🐯", a:"马马虎虎", hint:"做事不太认真", lv:2 },
+    { pic:"👴 🐎 🛣️", a:"老马识途", hint:"老手自然认得路", lv:2 },
+    { pic:"🏇 👀 🌸", a:"走马观花", hint:"粗略地看一眼", lv:2 },
+    { pic:"❤️ 🐒 💭 🐴", a:"心猿意马", hint:"心思定不下来", lv:2 },
+    { pic:"🚗 💧 🐴 🐉", a:"车水马龙", hint:"车马很多很热闹", lv:2 },
+    { pic:"🪖 🌾 🐴 🌀", a:"兵荒马乱", hint:"打仗年头不太平", lv:2 },
+    { pic:"1️⃣ 🔫 1️⃣ 🐴", a:"单枪匹马", hint:"一个人独自去闯", lv:2 },
+    { pic:"🕷️ 🧵 🐴 👣", a:"蛛丝马迹", hint:"细小的线索", lv:2 },
+    { pic:"🐯 ➕ 🦅", a:"如虎添翼", hint:"本就厉害，又添帮手", lv:2 },
+    { pic:"🌿 👊 😱 🐍", a:"打草惊蛇", hint:"一动草先把蛇惊了", lv:2 },
+    { pic:"🐍 ⬆️ 🕳️", a:"引蛇出洞", hint:"想法子把对手引出来", lv:2 },
+    { pic:"🐯 🎒 🐻 🧍", a:"虎背熊腰", hint:"身材魁梧结实", lv:2 },
+    { pic:"🐯 👀 👀", a:"虎视眈眈", hint:"狠狠盯着不放", lv:2 },
+    { pic:"🐑 ➡️ 🐯 👄", a:"羊入虎口", hint:"自己送上门去", lv:2 },
+    { pic:"🐺 🍲 🐯 😋", a:"狼吞虎咽", hint:"吃得又快又猛", lv:2 },
+    { pic:"🐺 🦡 🤝", a:"狼狈为奸", hint:"坏人合伙做坏事", lv:2 },
+    { pic:"🐉 ⚔️ 🐯", a:"龙争虎斗", hint:"两个强者相争", lv:2 },
+    { pic:"🐉 ⬆️ 🐯 ⬆️", a:"龙腾虎跃", hint:"动作矫健有生气", lv:2 },
+    { pic:"🐉 🐴 ⚡", a:"龙马精神", hint:"精神头特别足", lv:2 },
+    { pic:"🐉 🛏️ 🐯", a:"藏龙卧虎", hint:"暗地里藏着高手", lv:2 },
+    { pic:"🦊 👥 🐕 👥", a:"狐朋狗友", hint:"一帮不三不四的朋友", lv:2 },
+    { pic:"🍷 🍖 👥 👥", a:"酒肉朋友", hint:"只在吃喝时来往", lv:2 },
+    { pic:"3️⃣ 👥 ✅ 🐯", a:"三人成虎", hint:"说的人多了，假的也像真的", lv:2 },
+    { pic:"👥 💭 ✅ 🏰", a:"众志成城", hint:"齐心就能筑起城墙", lv:2 },
+    { pic:"🔁 ❤️ 🤝 💪", a:"同心协力", hint:"一条心一起使劲", lv:2 },
+    { pic:"🥚 🥊 🪨", a:"以卵击石", hint:"拿鸡蛋去碰石头", lv:2 },
+    { pic:"⚖️ 💪 ⚖️ 💪", a:"势均力敌", hint:"两边本事差不多", lv:2 },
+    { pic:"1️⃣ 🪖 🔥 ⚔️", a:"孤军奋战", hint:"没有帮手独自打", lv:2 },
+    { pic:"🪑 😊 🉐 ✅", a:"坐享其成", hint:"不干活白得好处", lv:2 },
+    { pic:"❌ 💪 ➡️ 🉐", a:"不劳而获", hint:"不出力也有收获", lv:2 },
+    { pic:"🏁 ✅ 🏁 ✅", a:"有始有终", hint:"开头结尾都做好", lv:2 },
+    { pic:"⏰ ➡️ 🏠 ⬆️", a:"后来居上", hint:"后起的反而超过前面", lv:2 },
+    { pic:"🥇 1️⃣ 😱 ⏰", a:"争先恐后", hint:"抢着往前，怕落后", lv:2 },
+    { pic:"💪 ⬆️ 🚣", a:"力争上游", hint:"拼命往好里争取", lv:2 },
+    { pic:"💪 ➡️ 🛣️", a:"勇往直前", hint:"什么也不怕地向前", lv:2 },
+    { pic:"🧠 😖 ➡️ ↩️", a:"知难而退", hint:"看到难处就退回来", lv:2 },
+    { pic:"👀 ➡️ ↩️ 🦶", a:"望而却步", hint:"一看见就往后缩", lv:2 },
+    { pic:"🌗 ✅ 🌗 ❓", a:"半信半疑", hint:"一半相信一半怀疑", lv:2 },
+    { pic:"💯 ✅ ❌ ❓", a:"深信不疑", hint:"一点也不怀疑", lv:2 },
+    { pic:"🖐️ 🦶 ❌ 🖐️", a:"手足无措", hint:"慌得不知怎么办", lv:2 },
+    { pic:"🧘 ✅ ❌ 😰", a:"从容不迫", hint:"一点不慌不忙", lv:2 },
+    { pic:"😱 😵 ❌ 🖐️", a:"惊慌失措", hint:"吓慌了手脚", lv:2 },
+    { pic:"😌 ❌ ✅ 💼", a:"若无其事", hint:"像什么都没发生", lv:2 },
+    { pic:"🧘 ✨ 😌", a:"泰然自若", hint:"很镇定，跟平常一样", lv:2 },
+    { pic:"😌 ✨ 🉐", a:"悠然自得", hint:"清闲自在", lv:2 },
+    { pic:"🉐 ✨ 😄 🎵", a:"自得其乐", hint:"自己给自己找乐子", lv:2 },
+    { pic:"😄 ❌ ✅ 💪", a:"乐不可支", hint:"笑得撑不住了", lv:2 },
+    { pic:"😏 ✅ 🌊 🌊", a:"得意洋洋", hint:"得意得不得了", lv:2 },
+    { pic:"🚗 📅 📏", a:"一日千里", hint:"一天跑很远", lv:2 },
+    { pic:"🤝 💰 💰 💰", a:"一诺千金", hint:"答应的事很重", lv:2 },
+    { pic:"👁️ 📖 🔟 ➡️", a:"一目十行", hint:"看书特别快", lv:2 },
+    { pic:"👁️ ⚖️ 👥", a:"一视同仁", hint:"一样看待", lv:2 },
+    { pic:"💬 2️⃣ 🎯", a:"一语双关", hint:"一句话两层意思", lv:2 },
+    { pic:"👕 🌊", a:"一衣带水", hint:"隔着一条窄水", lv:2 },
+    { pic:"💰 ❌ 🚿", a:"一贫如洗", hint:"穷得什么都没有", lv:2 },
+    { pic:"➡️ 🚫 ⬅️", a:"一往无前", hint:"一直往前不后退", lv:2 },
+    { pic:"🥁 💨 ✅", a:"一鼓作气", hint:"趁劲头一次干完", lv:2 },
+    { pic:"2️⃣ 💬 ❌", a:"二话不说", hint:"不啰嗦，马上做", lv:2 },
+    { pic:"🧑 ⛰️ 🧑 🌊", a:"人山人海", hint:"人特别多", lv:2 },
+    { pic:"🧑‍🎓 👥 ✨", a:"人才济济", hint:"有本事的人很多", lv:2 },
+    { pic:"🧍 💪 ☁️", a:"人定胜天", hint:"人能战胜自然", lv:2 },
+    { pic:"🧑 ⭐️ 🌍 ✨", a:"人杰地灵", hint:"地好也出人才", lv:2 },
+    { pic:"🧑 ☁️ 🗣️ ☁️", a:"人云亦云", hint:"别人说啥跟着说", lv:2 },
+    { pic:"🧑 🐺 ❤️", a:"人面兽心", hint:"外表像人，心很坏", lv:2 },
+    { pic:"🧑 🔊 🫕 ♨️", a:"人声鼎沸", hint:"吵吵嚷嚷", lv:2 },
+    { pic:"💪 ❌ ❤️", a:"力不从心", hint:"想干却没力气", lv:2 },
+    { pic:"💪 ↩️ 🌊", a:"力挽狂澜", hint:"挽回危局", lv:2 },
+    { pic:"3️⃣ 0️⃣ 🧍", a:"三十而立", hint:"三十岁能立身", lv:2 },
+    { pic:"3️⃣ 🤐 👄", a:"三缄其口", hint:"闭口不说", lv:2 },
+    { pic:"3️⃣ 🗣️ 2️⃣ 👤", a:"三头两面", hint:"当面一套背后一套", lv:2 },
+    { pic:"3️⃣ 👩 6️⃣ 👵", a:"三姑六婆", hint:"爱传闲话的人", lv:2 },
+    { pic:"⬆️ 🏗️ ❌ ✅", a:"上梁不正", hint:"上面不正下面歪", lv:2 },
+    { pic:"✍️ ⬇️ 📜 ✨", a:"下笔成章", hint:"一动笔就成文章", lv:2 },
+    { pic:"🤝 🌍 ❌ ⚔️", a:"与世无争", hint:"不跟人争", lv:2 },
+    { pic:"🧠 💧 ➡️", a:"才华横溢", hint:"才能多得往外流", lv:2 },
+    { pic:"📏 👣 😣", a:"寸步难行", hint:"一小步都走不动", lv:2 },
+    { pic:"🌍 🧑 ⚖️ 🚫", a:"大公无私", hint:"一心为公", lv:2 },
+    { pic:"🧠 😴 🙂", a:"大智若愚", hint:"很有智慧却像笨", lv:2 },
+    { pic:"🌍 ↔️ 🏡 ❓", a:"大相径庭", hint:"差得很远", lv:2 },
+    { pic:"1️⃣0️⃣0️⃣0️⃣ 🪡 1️⃣0️⃣0️⃣0️⃣0️⃣ 🧵", a:"千丝万缕", hint:"联系很复杂", lv:2 },
+    { pic:"1️⃣0️⃣0️⃣0️⃣ 🔨 1️⃣0️⃣0️⃣ 🔥", a:"千锤百炼", hint:"反复磨炼", lv:2 },
+    { pic:"1️⃣0️⃣0️⃣0️⃣ 🧍 💃 🕺", a:"千姿百态", hint:"样子很多", lv:2 },
+    { pic:"1️⃣0️⃣0️⃣0️⃣ 🧠 ➰", a:"千头万绪", hint:"事情乱成一团", lv:2 },
+    { pic:"1️⃣0️⃣0️⃣0️⃣ 📢 1️⃣0️⃣0️⃣0️⃣0️⃣ 🔊", a:"千呼万唤", hint:"一再呼唤", lv:2 },
+    { pic:"🚪 🕸️ 🐦", a:"门可罗雀", hint:"门口冷清", lv:2 },
+    { pic:"🚪 🏙️ 👥", a:"门庭若市", hint:"门前热闹", lv:2 },
+    { pic:"⚖️ 🚫 ↩️", a:"义无反顾", hint:"为正义不回头", lv:2 },
+    { pic:"⏳ ➡️ ⏳ ➡️", a:"久而久之", hint:"时间一长", lv:2 },
+    { pic:"⏰ ✅ 😄 🎉", a:"及时行乐", hint:"趁现在快活", lv:2 },
+    { pic:"⛰️ ⬆️ 🌊 📏", a:"山高水长", hint:"恩情深厚", lv:2 },
+    { pic:"⛰️ ↩️ 🛣️ 🔄", a:"峰回路转", hint:"事情有了转机", lv:2 },
+    { pic:"🌊 ➡️ 🚫 😴", a:"川流不息", hint:"像河一样不停", lv:2 },
+    { pic:"🤝 👥 🚫 ✅", a:"与众不同", hint:"跟别人不一样", lv:2 },
+    { pic:"🏆 📜 ⭐️", a:"丰功伟绩", hint:"很大的功劳", lv:2 },
+    { pic:"☁️ 👕 🧵 ❌", a:"天衣无缝", hint:"一点破绽都没有", lv:2 },
+    { pic:"🌸 ⬆️ ⬇️ 🌧️", a:"天花乱坠", hint:"说得特别夸张", lv:2 },
+    { pic:"❌ ➡️ ✅", a:"无中生有", hint:"没有也编出来", lv:2 },
+    { pic:"❌ 🤝 🏆", a:"无与伦比", hint:"没有能比的", lv:2 },
+    { pic:"♾️ ➡️", a:"无穷无尽", hint:"多到没边", lv:2 },
+    { pic:"1️⃣ ➡️ 2️⃣", a:"无独有偶", hint:"不止一个", lv:2 },
+    { pic:"🔍 ➡️ 🤏 ✅", a:"无微不至", hint:"照顾得极细", lv:2 },
+    { pic:"☁️ ➡️ ☀️", a:"云开见日", hint:"阴霾散去", lv:2 },
+    { pic:"❌ 3️⃣ ❌ 4️⃣", a:"不三不四", hint:"不正经", lv:2 },
+    { pic:"❌ ✅ 1️⃣ 🌍", a:"不可一世", hint:"狂得没边", lv:2 },
+    { pic:"❌ 🤝 ❌ 📐", a:"不伦不类", hint:"不像样", lv:2 },
+    { pic:"🚫 🙏 👥 ⭐️", a:"不负众望", hint:"没让大家失望", lv:2 },
+    { pic:"❌ 📅 🤝", a:"不约而同", hint:"没约却一致", lv:2 },
+    { pic:"❌ 📉 ❌ 💰", a:"不折不扣", hint:"完全彻底", lv:2 },
+    { pic:"❌ 👂 ❌ ❓", a:"不闻不问", hint:"一点不关心", lv:2 },
+    { pic:"❌ 😌 💪", a:"不甘示弱", hint:"不肯认输", lv:2 },
+    { pic:"❌ 📏 🔲", a:"不拘一格", hint:"不限制一种方式", lv:2 },
+    { pic:"❌ 😱 ❌ 💨", a:"不慌不忙", hint:"一点也不急", lv:2 },
+    { pic:"❌ 🗑️ 💪", a:"不遗余力", hint:"用尽全部力气", lv:2 },
+    { pic:"🧓 🎣 🪝", a:"太公钓鱼", hint:"自愿上钩", lv:2 },
+    { pic:"🌊 🧱 ⛰️", a:"中流砥柱", hint:"能顶事的人", lv:2 },
+    { pic:"👀 🌟 🤝 ➡️", a:"见贤思齐", hint:"向好人看齐", lv:2 },
+    { pic:"☀️ 🌙 🔄 🆕", a:"日新月异", hint:"变化特别快", lv:2 },
+    { pic:"☀️ ➕ 🌙 ➕ 📚", a:"日积月累", hint:"一天天攒起来", lv:2 },
+    { pic:"🀄 ➕ 🗽 💎", a:"中西合璧", hint:"中外优点结合", lv:2 },
+    { pic:"🏠 😟 🌍 ⚔️", a:"内忧外患", hint:"里外都麻烦", lv:2 },
+    { pic:"🌊 ⬆️ 🚢 ⬆️", a:"水涨船高", hint:"基础高了跟着高", lv:2 },
+    { pic:"😤 ➡️ 🌄", a:"气吞山河", hint:"气势特别大", lv:2 },
+    { pic:"😤 🏛️ ⬆️", a:"气宇轩昂", hint:"精神气度不凡", lv:2 },
+    { pic:"🛣️ ➡️ 🚪 💥", a:"长驱直入", hint:"一路冲进去", lv:2 },
+    { pic:"❤️ ➡️ ⚖️ ✅", a:"仁至义尽", hint:"该做的都做了", lv:2 },
+    { pic:"✋ ❌ 📖", a:"手不释卷", hint:"书不离手", lv:2 },
+    { pic:"✋ ⬇️ ❤️", a:"手下留情", hint:"下手留点情面", lv:2 },
+    { pic:"🤝 ✅ 🌊 ➡️", a:"从善如流", hint:"听得进好话", lv:2 },
+    { pic:"📅 ❌ 🔙", a:"今非昔比", hint:"现在不比从前", lv:2 },
+    { pic:"⏱️ 🪙 ⚔️", a:"分秒必争", hint:"一点时间都抢", lv:2 },
+    { pic:"💨 ➡️ ⚡ 🚗", a:"风驰电掣", hint:"快得像闪电", lv:2 },
+    { pic:"🌬️ ❄️ ➕ 🌨️", a:"风雪交加", hint:"又刮风又下雪", lv:2 },
+    { pic:"🐦 🤝 👥", a:"乌合之众", hint:"临时凑的散兵", lv:2 },
+    { pic:"6️⃣ 🌱 🧘 ✨", a:"六根清净", hint:"心里没有杂念", lv:2 },
+    { pic:"📖 ✨ 🧑 🤝", a:"文质彬彬", hint:"又文雅又礼貌", lv:2 },
+    { pic:"📖 💭 ⛲ ➡️", a:"文思泉涌", hint:"思路像泉水", lv:2 },
+    { pic:"1️⃣ 🪡 ❌ 😌", a:"一丝不苟", hint:"一点不马虎", lv:2 },
+    { pic:"👏 😄 🚪 2️⃣", a:"双喜临门", hint:"两件喜事一起来", lv:2 },
+    { pic:"📖 🌸 🚪 🏠", a:"书香门第", hint:"读书人家", lv:2 },
+    { pic:"⚖️ 📏 ☀️", a:"正大光明", hint:"堂堂正正", lv:2 },
+    { pic:"🙏 ⬇️ 🌬️", a:"甘拜下风", hint:"真心认输", lv:2 },
+    { pic:"🌍 🚪 🌸 🍑", a:"世外桃源", hint:"与世隔绝的好地方", lv:2 },
+    { pic:"🏺 🎨 🕰️", a:"古色古香", hint:"很有古味", lv:2 },
+    { pic:"🐉 🕳️ 🐯 🕳️", a:"龙潭虎穴", hint:"极危险的地方", lv:2 },
+    { pic:"🐉 ➰ 🐯 🦵", a:"龙盘虎踞", hint:"地势险要", lv:2 },
+    { pic:"⚖️ 🍂 🎨", a:"平分秋色", hint:"各占一半", lv:2 },
+    { pic:"📏 😊 ➡️ 🧑", a:"平易近人", hint:"态度和蔼", lv:2 },
+    { pic:"👁️ 🚫 ↘️", a:"目不斜视", hint:"看得很正", lv:2 },
+    { pic:"👁️ 🔥 🔥", a:"目光如炬", hint:"眼睛有神", lv:2 },
+    { pic:"↩️ ❤️ 🏹", a:"归心似箭", hint:"急着回家", lv:2 },
+    { pic:"4️⃣ 🌊 ⬆️ ☮️", a:"四海升平", hint:"天下太平", lv:2 },
+    { pic:"🚪 ⬆️ 🥇", a:"出类拔萃", hint:"超出一般人", lv:2 },
+    { pic:"🚪 🧑 🚪 💀", a:"出生入死", hint:"冒着生命危险", lv:2 },
+    { pic:"🖐️ ⬜ 🏠 ⬆️", a:"白手起家", hint:"从零开始", lv:2 },
+    { pic:"🧓 🧓 ❤️", a:"白头偕老", hint:"一起到老", lv:2 },
+    { pic:"🌍 📦 ♾️", a:"包罗万象", hint:"什么都有", lv:2 },
+    { pic:"🍽️ ❌ ❄️ 🥶", a:"饥寒交迫", hint:"又饿又冷", lv:2 },
+    { pic:"😄 ❌ 💭 🏡", a:"乐不思蜀", hint:"玩得不想回家", lv:2 },
+    { pic:"⚖️ 5️⃣ 8️⃣", a:"半斤八两", hint:"两边差不多", lv:2 },
+    { pic:"🤕 👁️ ✨", a:"头昏眼花", hint:"脑袋发晕", lv:2 },
+    { pic:"☠️ ❌ 🙇", a:"宁死不屈", hint:"死也不低头", lv:2 },
+    { pic:"🤒 ✅ 💊", a:"对症下药", hint:"按病情用药", lv:2 },
+    { pic:"🧓 💪 ⬆️", a:"老当益壮", hint:"越老越有劲", lv:2 },
+    { pic:"🧓 💬 🔁", a:"老生常谈", hint:"老一套话", lv:2 },
+    { pic:"👄 ✅ ❤️ ❌", a:"有口无心", hint:"嘴上说说而已", lv:2 },
+    { pic:"📏 🎋 ⬆️", a:"百尺竿头", hint:"已经很高再进一步", lv:2 },
+    { pic:"1️⃣0️⃣0️⃣ 📖 ❌ 😴", a:"百读不厌", hint:"读多少遍都不腻", lv:2 },
+    { pic:"1️⃣0️⃣0️⃣ ❌ 🏚️ ➡️ ✅", a:"百废俱兴", hint:"该办的事都办起来", lv:2 },
+    { pic:"1️⃣0️⃣0️⃣ 🌊 ↩️ 🌊", a:"百川归海", hint:"大势所趋", lv:2 },
+    { pic:"☠️ ⬇️ 🚪 🏃", a:"死里逃生", hint:"从绝境活下来", lv:2 },
+    { pic:"✅ 1️⃣0️⃣0️⃣0️⃣ ⬆️ 1️⃣0️⃣0️⃣0️⃣0️⃣", a:"成千上万", hint:"数量特别多", lv:2 },
+    { pic:"🎯 🧑 😵", a:"当局者迷", hint:"身在其中看不清", lv:2 },
+    { pic:"🚢 🤝 💪", a:"同舟共济", hint:"一起渡难关", lv:2 },
+    { pic:"🍬 ☠️ 🤝", a:"同甘共苦", hint:"福祸一起扛", lv:2 },
+    { pic:"🪵 ✅ 🎓", a:"因材施教", hint:"按资质教", lv:2 },
+    { pic:"❄️ 🌲 🎋 🌸", a:"岁寒三友", hint:"松竹梅", lv:2 },
+    { pic:"🕸️ ➡️ 1️⃣", a:"网开一面", hint:"留条活路", lv:2 },
+    { pic:"⏩ 👁️ 💡", a:"先见之明", hint:"提前看明白", lv:2 },
+    { pic:"🎒 😤 🛣️ 📏", a:"任重道远", hint:"担子重路还长", lv:2 },
+    { pic:"🌸 ✅ ❌ 🍎", a:"华而不实", hint:"好看不顶用", lv:2 },
+    { pic:"🏷️ ✅", a:"名副其实", hint:"名字和实际相符", lv:2 },
+    { pic:"➕ 1️⃣ ☝️", a:"多此一举", hint:"多余的动作", lv:2 },
+    { pic:"🗣️ 👥 💬", a:"各抒己见", hint:"各说各的看法", lv:2 },
+    { pic:"🗣️ 👂 👥", a:"交头接耳", hint:"凑近小声说", lv:2 },
+    { pic:"🚪 ❌ 🚗 🔨", a:"闭门造车", hint:"关起门自己搞", lv:2 },
+    { pic:"👄 ✅ 🔊", a:"异口同声", hint:"大家说法一致", lv:2 },
+    { pic:"☀️ 🎯 ☁️", a:"如日中天", hint:"正到最盛时", lv:2 },
+    { pic:"💭 🥱 👁️", a:"如梦初醒", hint:"一下子明白过来", lv:2 },
+    { pic:"✅ ⬆️ 🎯 📏", a:"好高骛远", hint:"目标高得不实际", lv:2 },
+    { pic:"👀 👥 ☁️", a:"观者如云", hint:"看的人特别多", lv:2 },
+    { pic:"🏇 ⭐️ 🀄 🌍", a:"驰名中外", hint:"名声传到国外", lv:2 },
+    { pic:"🔊 ⭐️ 📡", a:"声名远扬", hint:"名气传得远", lv:2 },
+    { pic:"⛰️ ⬆️ 🙇 🛑", a:"高山仰止", hint:"品德高得让人敬仰", lv:2 },
+    { pic:"✅ ⬅️ ❌ ⚖️", a:"既往不咎", hint:"过去的不再追究", lv:2 },
+    { pic:"🕳️ ❌ 📏 💇", a:"间不容发", hint:"差得极小", lv:2 },
+    { pic:"🌊 🧑 🧠 💀", a:"江郎才尽", hint:"才华用完了", lv:2 },
+    { pic:"🥇 🦗 🚪 🐚", a:"金蝉脱壳", hint:"巧妙脱身", lv:2 },
+    { pic:"🗿 🦴 ✍️ ❤️", a:"刻骨铭心", hint:"记得极牢", lv:2 },
+    { pic:"☁️ 🏢 🎈", a:"空中楼阁", hint:"不切实际", lv:2 },
+    { pic:"🍖 🔥 👄 ✅", a:"脍炙人口", hint:"人人称赞", lv:2 },
+    { pic:"❤️ ⚫ 💭 🧊", a:"心灰意冷", hint:"没了劲头，灰心", lv:3 },
+    { pic:"😞 ⬇️ 🧠 💨", a:"垂头丧气", hint:"低着头没精打采", lv:3 },
+    { pic:"🔁 ❌ 🔁 ⚔️", a:"屡败屡战", hint:"输了还接着打", lv:3 },
+    { pic:"❤️ 🌸 💥 🌼", a:"心花怒放", hint:"心里乐开了花", lv:3 },
+    { pic:"❤️ ➖ 💨 😊", a:"心平气和", hint:"心情平稳不激动", lv:3 },
+    { pic:"❤️ 😊 ✅ 🦶", a:"心满意足", hint:"想要的全有了", lv:3 },
+    { pic:"❤️ 🏃 🔥", a:"心急如焚", hint:"急得像火烧", lv:3 },
+    { pic:"❤️ 🗡️ ✂️", a:"心如刀割", hint:"心里疼得像被割", lv:3 },
+    { pic:"❤️ 👄 🔁 1️⃣", a:"心口如一", hint:"想的和说的一样", lv:3 },
+    { pic:"❤️ 💡 ❌ 📢", a:"心照不宣", hint:"心里明白，不说破", lv:3 },
+    { pic:"❤️ 🍬 😊 🙏", a:"心甘情愿", hint:"完全是自己愿意", lv:3 },
+    { pic:"🎉 ⬆️ 🔥", a:"兴高采烈", hint:"兴致特别高", lv:3 },
+    { pic:"❌ ⚡ 🥊 🎨", a:"无精打采", hint:"一点精神也没有", lv:3 },
+    { pic:"⚡ ✨ 😄", a:"精神抖擞", hint:"精神头很足", lv:3 },
+    { pic:"😄 👀 😄", a:"眉开眼笑", hint:"眉毛舒展，眼睛带笑", lv:3 },
+    { pic:"😄 ⬆️ 🎨 💃", a:"眉飞色舞", hint:"又高兴又得意", lv:3 },
+    { pic:"😆 ➡️ 😊 🚪", a:"笑逐颜开", hint:"满脸都是笑", lv:3 },
+    { pic:"🤲 🤰 😆", a:"捧腹大笑", hint:"捂着肚子笑", lv:3 },
+    { pic:"😭 💧 😀", a:"泪流满面", hint:"眼泪流了一脸", lv:3 },
+    { pic:"😔 💬 😮‍💨", a:"唉声叹气", hint:"无奈地连声叹气", lv:3 },
+    { pic:"😟 😖", a:"愁眉苦脸", hint:"一脸发愁的样子", lv:3 },
+    { pic:"🌱 ☀️ 🌸 🌼", a:"春暖花开", hint:"天气转暖，花开", lv:3 },
+    { pic:"🍂 ⬆️ 💨 😊", a:"秋高气爽", hint:"秋天又高又凉快", lv:3 },
+    { pic:"1️⃣ 🍃 👁️ 🍂", a:"一叶知秋", hint:"一片落叶就知道秋天", lv:3 },
+    { pic:"🍂 ⬇️ ↩️ 🌳", a:"落叶归根", hint:"回到自己的家乡", lv:3 },
+    { pic:"🌳 ⬇️ 🍃 🌿", a:"根深叶茂", hint:"根扎得深，枝叶旺", lv:3 },
+    { pic:"🌸 ⬆️ 🍎", a:"开花结果", hint:"有了好收成", lv:3 },
+    { pic:"❄️ ➕ 🧊", a:"雪上加霜", hint:"祸不单行", lv:3 },
+    { pic:"❄️ 🎁 ♨️", a:"雪中送炭", hint:"难处时帮一把", lv:3 },
+    { pic:"🌧️ ➡️ ☀️ 🌈", a:"雨过天晴", hint:"坏事过去，好起来", lv:3 },
+    { pic:"💨 ➖ 🌊 😶", a:"风平浪静", hint:"没有风，也没有浪", lv:3 },
+    { pic:"😱 🌊 🌊", a:"惊涛骇浪", hint:"险恶的大风浪", lv:3 },
+    { pic:"💨 ⬆️ ☁️ ⬆️", a:"风起云涌", hint:"形势大变，动静大", lv:3 },
+    { pic:"⚡ 💥 🔊", a:"电闪雷鸣", hint:"又打闪又打雷", lv:3 },
+    { pic:"🧊 ☁️ ❄️ 🗺️", a:"冰天雪地", hint:"到处是冰雪", lv:3 },
+    { pic:"☁️ 🥶 🗺️ 🧊", a:"天寒地冻", hint:"冷得地都冻住了", lv:3 },
+    { pic:"☁️ ⬇️ 🗺️ ⬆️", a:"天南地北", hint:"一南一北，隔得远", lv:3 },
+    { pic:"☁️ 🛣️ 🌊 📐", a:"天涯海角", hint:"最远最偏的地方", lv:3 },
+    { pic:"4️⃣ 🧭 8️⃣ ➡️", a:"四面八方", hint:"各个方向都算上", lv:3 },
+    { pic:"4️⃣ 🛣️ 8️⃣ ✅", a:"四通八达", hint:"路路都通", lv:3 },
+    { pic:"5️⃣ 🏞️ 4️⃣ 🌊", a:"五湖四海", hint:"各地各处的人", lv:3 },
+    { pic:"➡️ 👀 ⬅️ 👀", a:"东张西望", hint:"这边看看那边看看", lv:3 },
+    { pic:"➡️ ⬇️ ⬅️ 🌀", a:"东倒西歪", hint:"歪歪扭扭站不稳", lv:3 },
+    { pic:"➡️ 🏃 ⬅️ 🏃", a:"东奔西走", hint:"四处跑，到处忙", lv:3 },
+    { pic:"🚶 ⬇️ 🚪 ⬆️", a:"走南闯北", hint:"南北都跑遍了", lv:3 },
+    { pic:"⬅️ ➡️ 🤝 💧", a:"左右逢源", hint:"两边都吃得开", lv:3 },
+    { pic:"⬅️ 😰 ➡️", a:"左右为难", hint:"两边都不好办", lv:3 },
+    { pic:"⬆️ 🔁 ⬇️ 🔁", a:"上行下效", hint:"上面做，下面学着做", lv:3 },
+    { pic:"⬆️ ⬇️ 1️⃣ ❤️", a:"上下一心", hint:"上下一条心", lv:3 },
+    { pic:"✋ 1️⃣ ↩️ 3️⃣", a:"举一反三", hint:"会一个就能推三个", lv:3 },
+    { pic:"🪶 😊 ✋", a:"轻而易举", hint:"像举羽毛一样容易", lv:3 },
+    { pic:"🤚 😵 🦶 🌀", a:"手忙脚乱", hint:"慌得手脚都不听话", lv:3 },
+    { pic:"🤚 💃 🦶 🕺", a:"手舞足蹈", hint:"高兴得手脚都动起来", lv:3 },
+    { pic:"🦶 ⚡ 1️⃣ ⛰️", a:"捷足先登", hint:"腿快的先到先得", lv:3 },
+    { pic:"🦶 🗺️ ✅", a:"脚踏实地", hint:"做事踏实不浮", lv:3 },
+    { pic:"🙂 ⬇️ 😄 🙇", a:"点头哈腰", hint:"讨好地弯腰", lv:3 },
+    { pic:"🙂 🔁 🧠 🔁", a:"摇头晃脑", hint:"得意地晃着脑袋", lv:3 },
+    { pic:"🪨 2️⃣ 🐦", a:"一石二鸟", hint:"一个动作两个收获", lv:3 },
+    { pic:"🪖 🐎 🪖 🐎", a:"千军万马", hint:"兵马多得数不清", lv:3 },
+    { pic:"💯 ❌ 1️⃣ ❌", a:"万无一失", hint:"保证一点不出错", lv:3 },
+    { pic:"💯 🎯", a:"百发百中", hint:"每次都打中", lv:3 },
+    { pic:"5️⃣ 🌸 8️⃣ 🚪", a:"五花八门", hint:"花样多得数不完", lv:3 },
+    { pic:"7️⃣ 0️⃣ 🍂", a:"七零八落", hint:"散得乱七八糟", lv:3 },
+    { pic:"9️⃣ 💀 1️⃣ 🧬", a:"九死一生", hint:"太险了，差点没命", lv:3 },
+    { pic:"6️⃣ 😇 ❌ 👑", a:"六神无主", hint:"慌得没了主意", lv:3 },
+    { pic:"8️⃣ 🎲 💎", a:"八面玲珑", hint:"各处都应付得圆滑", lv:3 },
+    { pic:"3️⃣ 3️⃣ 2️⃣ 2️⃣", a:"三三两两", hint:"三两个凑在一起", lv:3 },
+    { pic:"3️⃣ 🔁 5️⃣ 🔁", a:"三番五次", hint:"一遍又一遍", lv:3 },
+    { pic:"3️⃣ 💭 ➡️ 🚶", a:"三思而行", hint:"想清楚了再动手", lv:3 },
+    { pic:"🔟 ✋ 9️⃣ 🧘", a:"十拿九稳", hint:"很有把握", lv:3 },
+    { pic:"🐎 ⬜ 🕳️", a:"白驹过隙", hint:"时间过得飞快", lv:3 },
+    { pic:"🥛 ➕ 🚗 🪵", a:"杯水车薪", hint:"力量太小不顶用", lv:3 },
+    { pic:"🛣️ 👕 🔵 🧵", a:"筚路蓝缕", hint:"创业很艰苦", lv:3 },
+    { pic:"🚫 🔲 1️⃣ 📐", a:"别具一格", hint:"风格独特", lv:3 },
+    { pic:"🚫 ⬇️ 🕳️ 🕳️", a:"不落窠臼", hint:"不按老套", lv:3 },
+    { pic:"🚫 🦵 ➡️ 🚶", a:"不胫而走", hint:"没推就传开了", lv:3 },
+    { pic:"❌ 😌 👥 ⭐️", a:"不孚众望", hint:"没让大家信服", lv:3 },
+    { pic:"❌ ➡️ ❌ ⬅️", a:"不即不离", hint:"不太近也不太远", lv:3 },
+    { pic:"🧠 ⬆️ 8️⃣ 🪣", a:"才高八斗", hint:"文才极高", lv:3 },
+    { pic:"🌿 ⬆️ 🐦 ✈️", a:"草长莺飞", hint:"春天生机", lv:3 },
+    { pic:"❌ 😊 🧑", a:"差强人意", hint:"勉强让人满意", lv:3 },
+    { pic:"🌕 🐸 🌿 🥇", a:"蟾宫折桂", hint:"考试高中", lv:3 },
+    { pic:"🌅 🔔 🌆 🥁", a:"晨钟暮鼓", hint:"寺院报时", lv:3 },
+    { pic:"🌊 🌳 🌾", a:"沧海桑田", hint:"世事变化大", lv:3 },
+    { pic:"📦 🛠️ ⏰", a:"藏器待时", hint:"有本事等时机", lv:3 },
+    { pic:"🕰️ ❓ 📅", a:"曾几何时", hint:"时间没过多久", lv:3 },
+    { pic:"📏 ❌ 🧵 🔍", a:"差之毫厘", hint:"差一点差很多", lv:3 },
+    { pic:"🚗 😩 🐎 😫", a:"车殆马烦", hint:"旅途疲乏", lv:3 },
+    { pic:"👑 ⬆️ 👑 💪", a:"称王称霸", hint:"横行霸道", lv:3 },
+    { pic:"🏯 ⬇️ 🤝 📜", a:"城下之盟", hint:"被迫求和", lv:3 },
+    { pic:"🐟 🌊 😢", a:"池鱼之殃", hint:"无辜受牵连", lv:3 },
+    { pic:"📥 👂 ❌ 🔇", a:"充耳不闻", hint:"塞住耳朵不听", lv:3 },
+    { pic:"🧍 🤔 😌", a:"踌躇满志", hint:"很得意很有把握", lv:3 },
+    { pic:"🚪 ❓ 🏆", a:"出奇制胜", hint:"用奇招取胜", lv:3 },
+    { pic:"👆 📚 ➡️ 💡", a:"触类旁通", hint:"懂一类就通其他", lv:3 },
+    { pic:"🪡 ➡️ 🧵 🔗", a:"穿针引线", hint:"从中牵线", lv:3 },
+    { pic:"🪟 ⬇️ 👂 🏛️", a:"垂帘听政", hint:"太后掌权", lv:3 },
+    { pic:"🌸 ➡️ 🍂 🍎", a:"春华秋实", hint:"春开花秋结果", lv:3 },
+    { pic:"👄 💀 🦷 ❄️", a:"唇亡齿寒", hint:"关系太近", lv:3 },
+    { pic:"📏 🤔 💬", a:"从长计议", hint:"慢慢商量", lv:3 },
+    { pic:"🧑 🍔 ⬆️", a:"大腹便便", hint:"肚子很大", lv:3 },
+    { pic:"🔊 👄 🗯️", a:"大放厥词", hint:"乱发议论", lv:3 },
+    { pic:"⚖️ 🔥 👨‍👩‍👦", a:"大义灭亲", hint:"为正义不顾亲情", lv:3 },
+    { pic:"⏳ 💰 🏷️", a:"待价而沽", hint:"等好价钱再卖", lv:3 },
+    { pic:"🎩 👆 😄 🎉", a:"弹冠相庆", hint:"得意庆贺", lv:3 },
+    { pic:"↩️ 🚶 ❌ 📐", a:"倒行逆施", hint:"违背常理", lv:3 },
+    { pic:"✅ 🐉 👀 🐍", a:"得陇望蜀", hint:"得了还想更多", lv:3 },
+    { pic:"🪜 🏛️ 🚪", a:"登堂入室", hint:"学问渐深", lv:3 },
+    { pic:"⚖️ 👀", a:"等量齐观", hint:"一样看待", lv:3 },
+    { pic:"🌍 🧓 ☁️ 🧓", a:"地老天荒", hint:"时间极久", lv:3 },
+    { pic:"🦅 🐛 🔨 🤏", a:"雕虫小技", hint:"小本事", lv:3 },
+    { pic:"🪟 ➡️ 💥 🚨", a:"东窗事发", hint:"坏事败露", lv:3 },
+    { pic:"🕳️ 👀 🔥", a:"洞若观火", hint:"看得极清楚", lv:3 },
+    { pic:"🧍 🛣️ 🆕", a:"独辟蹊径", hint:"另开一条路", lv:3 },
+    { pic:"👂 ⬆️ 👄 💬", a:"耳提面命", hint:"当面教导", lv:3 },
+    { pic:"🔪 🩸 🙈 🎭", a:"借刀杀人", hint:"借别人的手害人", lv:3 },
+    { pic:"↩️ 🏠 👑", a:"反客为主", hint:"反过来做主", lv:3 },
+    { pic:"🔲 ⬆️ ❌ 🛑", a:"方兴未艾", hint:"正在兴起", lv:3 },
+    { pic:"🛡️ 🔍 🤏 ✅", a:"防微杜渐", hint:"小问题早防", lv:3 },
+    { pic:"✈️ 🟡 ⬆️", a:"飞黄腾达", hint:"地位升得快", lv:3 },
+    { pic:"🛣️ 🔀 🐎 ➡️", a:"分道扬镳", hint:"各走各的路", lv:3 },
+    { pic:"🔥 🪔 ➡️ ☀️", a:"焚膏继晷", hint:"夜以继日", lv:3 },
+    { pic:"💪 ❌ 🏃", a:"奋不顾身", hint:"拼命往前", lv:3 },
+    { pic:"🦚 🪶 🦄 📐", a:"凤毛麟角", hint:"极稀少", lv:3 },
+    { pic:"🤝 ☠️ ➡️ 😊", a:"逢凶化吉", hint:"坏事变好事", lv:3 },
+    { pic:"🌊 ⬇️ ❌ 📥", a:"覆水难收", hint:"说出去收不回", lv:3 },
+    { pic:"🍬 ✅ 😊", a:"甘之如饴", hint:"苦也愿意", lv:3 },
+    { pic:"🪨 🧠 💪", a:"刚愎自用", hint:"固执己见", lv:3 },
+    { pic:"🏠 ⬆️ 🏗️ 💧", a:"高屋建瓴", hint:"居高临下", lv:3 },
+    { pic:"✂️ 🧺 ➡️ 🪑", a:"割席分坐", hint:"断交", lv:3 },
+    { pic:"🥾 ↔️ 🤚 😣", a:"隔靴搔痒", hint:"没抓到点上", lv:3 },
+    { pic:"👥 ✅ 🏠", a:"各得其所", hint:"各有各的位置", lv:3 },
+    { pic:"🌳 ⬇️ 🌰 🪨", a:"根深蒂固", hint:"基础牢固", lv:3 },
+    { pic:"🏆 ❌ 1️⃣ 🧺", a:"功亏一篑", hint:"差一点没成", lv:3 },
+    { pic:"🪝 ❤️ ⚔️ 📐", a:"钩心斗角", hint:"互相算计", lv:3 },
+    { pic:"🐕 🦴 ➡️ 🦊", a:"狗尾续貂", hint:"续得不好", lv:3 },
+    { pic:"🍉 🏞️ 🍑 ⬇️", a:"瓜田李下", hint:"容易惹嫌疑", lv:3 },
+    { pic:"👀 🆕 ✨", a:"刮目相看", hint:"另眼看待", lv:3 },
+    { pic:"🎾 👀 🐆", a:"管中窥豹", hint:"只看到一点", lv:3 },
+    { pic:"✨ 👻 🌍 🎨", a:"光怪陆离", hint:"现象离奇", lv:3 },
+    { pic:"👻 🪓 ⭐️ 🔨", a:"鬼斧神工", hint:"技艺极精", lv:3 },
+    { pic:"🚶 🌊 🔨 🌉", a:"过河拆桥", hint:"用完就甩", lv:3 },
+    { pic:"🏙️ 🧑 👣", a:"邯郸学步", hint:"盲目模仿", lv:3 },
+    { pic:"💦 🐂 📚 🏠", a:"汗牛充栋", hint:"书极多", lv:3 },
+    { pic:"🌫️ 🤝 💨", a:"沆瀣一气", hint:"坏人气味相投", lv:3 },
+    { pic:"✅ 📏 😌", a:"好整以暇", hint:"从容不迫", lv:3 },
+    { pic:"✨ 🤝 🌫️", a:"和光同尘", hint:"不露锋芒", lv:3 },
+    { pic:"🦢 💇 👦 😊", a:"鹤发童颜", hint:"老人精神好", lv:3 },
+    { pic:"🌊 🍀 ☁️", a:"洪福齐天", hint:"福气极大", lv:3 },
+    { pic:"⏭️ 🧑 😱", a:"后生可畏", hint:"年轻人了不起", lv:3 },
+    { pic:"🍐 ➡️ 👄 🍎", a:"囫囵吞枣", hint:"不求甚解", lv:3 },
+    { pic:"🦊 💀 ⬆️ 🏔️", a:"狐死首丘", hint:"不忘故乡", lv:3 },
+    { pic:"🐯 ⬇️ 🌞", a:"虎落平阳", hint:"失去依靠", lv:3 },
+    { pic:"🖌️ 🌍 🪨 🔒", a:"画地为牢", hint:"自己限住自己", lv:3 },
+    { pic:"🟡 🌾 1️⃣ 💭", a:"黄粱一梦", hint:"空欢喜一场", lv:3 },
+    { pic:"🙈 🤒 ❌ 💊", a:"讳疾忌医", hint:"有病不肯治", lv:3 },
+    { pic:"🔥 ➡️ 🌰", a:"火中取栗", hint:"替人冒险", lv:3 },
+    { pic:"🧠 👥 ➕ ✅", a:"集思广益", hint:"集中大家智慧", lv:3 },
+    { pic:"📅 📏 🏆", a:"计日程功", hint:"很快能成功", lv:3 },
+    { pic:"🧴 🪵 🥁 🎶", a:"胶柱鼓瑟", hint:"不知变通", lv:3 },
+    { pic:"🤐 ❄️ 🦗", a:"噤若寒蝉", hint:"不敢说话", lv:3 },
+    { pic:"🙌 🍽️ 📏", a:"举案齐眉", hint:"夫妻相敬", lv:3 },
+    { pic:"🏖️ ➡️ 🏰", a:"聚沙成塔", hint:"积少成多", lv:3 },
+    { pic:"🚪 ➡️ 🙇 🦹", a:"开门揖盗", hint:"自己招祸", lv:3 },
+    { pic:"📖 ➡️ 💡 ⚖️", a:"开宗明义", hint:"开头讲明主旨", lv:3 },
+    { pic:"🐉 ⬆️ 😔", a:"亢龙有悔", hint:"盛极要警醒", lv:3 },
+    { pic:"👄 💀 ✍️ ⚔️", a:"口诛笔伐", hint:"口头上文字上批评", lv:3 },
+    { pic:"😣 👄 👵 ❤️", a:"苦口婆心", hint:"反复劝", lv:3 },
+    { pic:"🏃 ☀️", a:"夸父逐日", hint:"拼命追不可能的事", lv:3 },
+    { pic:"🐺 👶 ❤️", a:"狼子野心", hint:"坏心藏不住", lv:3 },
+    { pic:"🧓 🐎 ⬇️ 🪵", a:"老骥伏枥", hint:"老了还有壮志", lv:3 },
+    { pic:"😄 ⬆️ ➡️ 😢", a:"乐极生悲", hint:"高兴过头出事", lv:3 },
+    { pic:"💪 ➡️ 📄 ⬇️", a:"力透纸背", hint:"笔力极强", lv:3 },
+    { pic:"🔗 📄 ⬆️ 📚", a:"连篇累牍", hint:"文章又长又多", lv:3 },
+    { pic:"✅ 🌾 ❌ 🌾", a:"良莠不齐", hint:"好坏都有", lv:3 },
+    { pic:"🌉 ⬆️ 👤", a:"梁上君子", hint:"小偷", lv:3 },
+    { pic:"🕳️ 👀 🐟", a:"临渊羡鱼", hint:"光想不动手", lv:3 },
+    { pic:"🌊 🌸 1️⃣0️⃣0️⃣ 🌍", a:"流芳百世", hint:"美名长传", lv:3 },
+    { pic:"🔁 👀 ❌ 🆕", a:"屡见不鲜", hint:"见多了不稀奇", lv:3 },
+    { pic:"🌫️ 🤝 ✅ 🚪", a:"蒙混过关", hint:"糊弄过去", lv:3 },
+    { pic:"👤 👁️ ✅ ❌", a:"面目全非", hint:"样子全变了", lv:3 },
+    { pic:"🏷️ ✅ 💀", a:"名存实亡", hint:"只有空名", lv:3 },
+    { pic:"👀 🔍 🍂 🧵", a:"明察秋毫", hint:"看得极细", lv:3 },
+    { pic:"🖤 🛡️ ✅ 📏", a:"墨守成规", hint:"守着老规矩", lv:3 },
+    { pic:"🪵 ✅ 🚢", a:"木已成舟", hint:"已成定局", lv:3 },
+    { pic:"👀 ❌ 🐂", a:"目无全牛", hint:"技艺纯熟", lv:3 },
+    { pic:"🌳 1️⃣ 💭", a:"南柯一梦", hint:"一场空梦", lv:3 },
+    { pic:"😣 👬", a:"难兄难弟", hint:"同样倒霉", lv:3 },
+    { pic:"🐦 ✅ 🏹 📦", a:"鸟尽弓藏", hint:"事成后抛弃功臣", lv:3 },
+    { pic:"😌 ❌ ✅", a:"宁缺毋滥", hint:"宁可少不凑数", lv:3 },
+    { pic:"😠 💇 👑 ⬆️", a:"怒发冲冠", hint:"气得头发立起", lv:3 },
+    { pic:"🧱 ➡️ 💎", a:"抛砖引玉", hint:"用粗浅引高明", lv:3 },
+    { pic:"🧥 🌿 ⚔️ 🌵", a:"披荆斩棘", hint:"克服困难", lv:3 },
+    { pic:"❌ ➡️ ☀️ ✅", a:"否极泰来", hint:"坏到头就好", lv:3 },
+    { pic:"🪞 💥 ➡️ ⭕️", a:"破镜重圆", hint:"夫妻复合", lv:3 },
+    { pic:"🦋 🕸️ 😵", a:"扑朔迷离", hint:"看不清真相", lv:3 },
+    { pic:"🧑 😟 ☁️", a:"杞人忧天", hint:"没必要的担心", lv:3 },
+    { pic:"⏩ 🚗 ✅ 🔍", a:"前车之鉴", hint:"前人的教训", lv:3 },
+    { pic:"💪 🏹 ➡️ 🔚", a:"强弩之末", hint:"力量快用完", lv:3 },
+    { pic:"🧠 ⚔️ ☁️ 🔨", a:"巧夺天工", hint:"技艺胜过天然", lv:3 },
+    { pic:"🔵 ➡️ 🟦", a:"青出于蓝", hint:"后来超过前人", lv:3 },
+    { pic:"🎋 ✅ ❌ ✍️", a:"罄竹难书", hint:"罪行多得写不完", lv:3 },
+    { pic:"🎵 ⬆️ 🤝 👥", a:"曲高和寡", hint:"太高级少人懂", lv:3 },
+    { pic:"✅ 📖 🔨", a:"如法炮制", hint:"照样做一遍", lv:3 },
+    { pic:"📥 🪵 3️⃣ 📏", a:"入木三分", hint:"见解深刻", lv:3 },
+    { pic:"🔪 🐔 ➡️ 🥚 💰", a:"杀鸡取卵", hint:"只顾眼前", lv:3 },
+    { pic:"⬆️ ⬇️ 🤚 🤫", a:"上下其手", hint:"暗中作弊", lv:3 },
+    { pic:"🔊 🌫️ ⬆️", a:"甚嚣尘上", hint:"议论得很凶", lv:3 },
+    { pic:"🧬 💀 🚪", a:"生死攸关", hint:"非常关键", lv:3 },
+    { pic:"💀 🪑 🍽️ 🚫", a:"尸位素餐", hint:"占位不干事", lv:3 },
+    { pic:"⏰ ❌ 🧑 ⏳", a:"时不我待", hint:"时间不等人", lv:3 },
+    { pic:"💪 ➡️ 🎋 💥", a:"势如破竹", hint:"一路顺利", lv:3 },
+    { pic:"☝️ 1️⃣ 👆 🥇", a:"首屈一指", hint:"排第一", lv:3 },
+    { pic:"🐕 🗻 🌞 🔊", a:"蜀犬吠日", hint:"少见多怪", lv:3 },
+    { pic:"➡️ 🌊 👋 🚢", a:"顺水推舟", hint:"顺势而为", lv:3 },
+    { pic:"🙈 ❓ 🧑 🚫", a:"素昧平生", hint:"从来不认识", lv:3 },
+    { pic:"🎯 ➡️ 🤺 💥", a:"所向披靡", hint:"谁也挡不住", lv:3 },
+    { pic:"💬 🐯 🎨 🔄", a:"谈虎色变", hint:"一提起就害怕", lv:3 },
+    { pic:"😮 👀 🛑 ⭐️", a:"叹为观止", hint:"好到极点", lv:3 },
+    { pic:"📦 ✨ 🤫 🌑", a:"韬光养晦", hint:"隐藏才能", lv:3 },
+    { pic:"🔩 🌳 🌸 😲", a:"铁树开花", hint:"极难遇到", lv:3 },
+    { pic:"💎 🧠 🔥 👁️", a:"真知灼见", hint:"正确深刻的见解", lv:3 }
   ];
 
   var scoreEl = document.getElementById('score');
@@ -496,10 +1065,17 @@
   var hintBar = document.getElementById('hintbar');
   var hintBtn = document.getElementById('hintBtn');
   var footEl = document.getElementById('foot');
+  var fillWrap = document.getElementById('fillwrap');
+  var slotsWrap = document.getElementById('slots');
+  var slotEls = slotsWrap ? slotsWrap.querySelectorAll('.slot') : [];
+  var submitFillBtn = document.getElementById('submitFill');
+  var fillMsgEl = document.getElementById('fillMsg');
+  var guessLogEl = document.getElementById('guessLog');
 
   var queue = [];
   var qi = 0, score = 0, combo = 0, correctCount = 0, hintsUsed = 0;
   var best = 0, locked = true, playing = false;
+  var special = false, tries = 0, guessLog = [];
   var qStart = 0, timerId = 0, advanceTimer = 0;
   var hintShown = false;
   var seenMap = {};
@@ -519,9 +1095,49 @@
   }
 
   seenMap = loadSeen();
-  try { best = parseInt(localStorage.getItem(BEST_KEY) || '0', 10) || 0; } catch (e) { best = 0; }
 
-  function solvedCount() {
+  function loadBestMap() {
+    var raw = '';
+    try { raw = localStorage.getItem(BEST_KEY) || ''; } catch (e) { return {}; }
+    if (!raw) return {};
+    var obj = null;
+    try { obj = JSON.parse(raw); } catch (e2) { obj = null; }
+    return (obj && typeof obj === 'object') ? obj : {};
+  }
+
+  function bestFor(lv) {
+    var map = loadBestMap();
+    if (map[lv] != null) return parseInt(map[lv], 10) || 0;
+    if (lv === 1) {
+      try { return parseInt(localStorage.getItem(OLD_BEST_KEY) || '0', 10) || 0; } catch (e) {}
+    }
+    return 0;
+  }
+
+  function saveBest(lv, val) {
+    var map = loadBestMap();
+    if (val <= (parseInt(map[lv], 10) || 0)) return;
+    map[lv] = val;
+    try { localStorage.setItem(BEST_KEY, JSON.stringify(map)); } catch (e) {}
+  }
+
+  function poolFor(lv) {
+    var pool = [], i;
+    for (i = 0; i < DATA.length; i++) {
+      if ((DATA[i].lv || 1) === lv) pool.push(DATA[i]);
+    }
+    return pool;
+  }
+
+  function solvedCount(lv) {
+    var n = 0, i;
+    for (i = 0; i < DATA.length; i++) {
+      if ((DATA[i].lv || 1) === lv && seenMap[DATA[i].a] === 1) n++;
+    }
+    return n;
+  }
+
+  function solvedAll() {
     var n = 0, i;
     for (i = 0; i < DATA.length; i++) {
       if (seenMap[DATA[i].a] === 1) n++;
@@ -529,14 +1145,23 @@
     return n;
   }
 
+  function bestKey() { return special ? 'special' : level; }
+  function modeName() { return special ? '特殊关卡' : LEVELS[level].name; }
+  function currentPool() { return special ? DATA : poolFor(level); }
+
+  best = bestFor(bestKey());
+
   function roundTotal() {
     return queue.length > 0 ? queue.length : TOTAL_Q;
   }
 
   function refreshBank() {
-    bankEl.textContent = solvedCount() + ' / ' + DATA.length;
-    footEl.textContent = '题库 ' + DATA.length + ' 条 · 已学会 ' + solvedCount() +
-      ' 条 · 没答对过的题会优先出现 · 键盘 1–4 选答，H 用提示';
+    var total = currentPool().length;
+    var done = special ? solvedAll() : solvedCount(level);
+    bankEl.textContent = done + ' / ' + total;
+    footEl.textContent = '题库 ' + DATA.length + ' 条 · ' + modeName() + ' 已学会 ' +
+      done + ' / ' + total + ' · ' +
+      (special ? '四个空格逐字猜，回车提交，H 用提示' : '键盘 1–4 选答，H 用提示');
   }
 
   function markSeen(answer, ok) {
@@ -562,10 +1187,11 @@
   function setStatus(t) { statusEl.querySelector('span').textContent = t; }
 
   function buildQueue() {
+    var all = currentPool();
     var fresh = [], review = [], i;
-    for (i = 0; i < DATA.length; i++) {
-      if (seenMap[DATA[i].a] === 1) review.push(DATA[i]);
-      else fresh.push(DATA[i]);
+    for (i = 0; i < all.length; i++) {
+      if (seenMap[all[i].a] === 1) review.push(all[i]);
+      else fresh.push(all[i]);
     }
     shuffle(fresh);
     shuffle(review);
@@ -574,10 +1200,11 @@
   }
 
   function optionList(answer) {
+    var pool = poolFor(level);
     var opts = [answer];
     var guard = 0;
     while (opts.length < 4 && guard++ < 400) {
-      var cand = DATA[Math.floor(Math.random() * DATA.length)].a;
+      var cand = pool[Math.floor(Math.random() * pool.length)].a;
       if (opts.indexOf(cand) < 0) opts.push(cand);
     }
     return shuffle(opts);
@@ -588,12 +1215,47 @@
     return '首字是「' + q.a.charAt(0) + '」，共四个字，把画面里每个图形各想成一个字。';
   }
 
+  function resetFillBoard() {
+    tries = 0;
+    guessLog = [];
+    fillMsgEl.textContent = '';
+    fillMsgEl.className = 'fillmsg';
+    guessLogEl.innerHTML = '';
+    submitFillBtn.disabled = false;
+    slotsWrap.classList.remove('shake');
+    for (var i = 0; i < slotEls.length; i++) {
+      slotEls[i].value = '';
+      slotEls[i].className = 'slot';
+      slotEls[i].disabled = false;
+    }
+  }
+
+  function focusFirstSlot() {
+    if (window.matchMedia && window.matchMedia('(pointer: fine)').matches) {
+      try { slotEls[0].focus({ preventScroll: true }); } catch (e) { try { slotEls[0].focus(); } catch (e2) {} }
+    }
+  }
+
+  function renderGuessLog() {
+    guessLogEl.innerHTML = '';
+    for (var i = Math.max(0, guessLog.length - 4); i < guessLog.length; i++) {
+      var row = document.createElement('div');
+      var g = document.createElement('span');
+      var n = document.createElement('b');
+      g.textContent = guessLog[i].g;
+      n.textContent = guessLog[i].h + ' 个对';
+      row.appendChild(g);
+      row.appendChild(n);
+      guessLogEl.appendChild(row);
+    }
+  }
+
   function resetHint() {
     hintShown = false;
     hintBar.classList.remove('on');
     hintBar.innerHTML = '';
     hintBtn.disabled = false;
-    hintBtn.textContent = '提示 · -' + HINT_COST;
+    hintBtn.textContent = '提示 · -' + hintCost;
   }
 
   function showHint() {
@@ -602,14 +1264,14 @@
     if (!q) return;
     hintShown = true;
     hintsUsed++;
-    score = Math.max(0, score - HINT_COST);
+    score = Math.max(0, score - hintCost);
     scoreEl.textContent = String(score);
     hintBar.innerHTML = '<b>提示</b><span></span>';
     hintBar.querySelector('span').textContent = hintText(q);
     hintBar.classList.add('on');
     hintBtn.disabled = true;
-    hintBtn.textContent = '已用提示 · -' + HINT_COST;
-    setStatus('用了提示 · 扣 ' + HINT_COST + ' 分');
+    hintBtn.textContent = '已用提示 · -' + hintCost;
+    setStatus('用了提示 · 扣 ' + hintCost + ' 分');
   }
 
   function showQuestion() {
@@ -625,36 +1287,46 @@
       picEl.appendChild(s);
     });
     optionsEl.innerHTML = '';
-    var opts = optionList(q.a);
-    opts.forEach(function (text, i) {
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'opt';
-      b.dataset.a = text;
-      b.innerHTML = '<span class="k">' + (i + 1) + '</span>' + text;
-      b.addEventListener('click', function () { answer(this, text); });
-      optionsEl.appendChild(b);
-    });
-    qnoEl.textContent = '第 ' + (qi + 1) + ' 题';
+    if (special) {
+      optionsEl.style.display = 'none';
+      fillWrap.classList.add('on');
+      resetFillBoard();
+      focusFirstSlot();
+    } else {
+      optionsEl.style.display = '';
+      fillWrap.classList.remove('on');
+      var opts = optionList(q.a);
+      opts.forEach(function (text, i) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'opt';
+        b.dataset.a = text;
+        b.innerHTML = '<span class="k">' + (i + 1) + '</span>' + text;
+        b.addEventListener('click', function () { answer(this, text); });
+        optionsEl.appendChild(b);
+      });
+    }
+    qnoEl.textContent = modeName() + ' · 第 ' + (qi + 1) + ' 题';
     progressEl.textContent = (qi + 1) + ' / ' + roundTotal();
-    qsecEl.textContent = LIMIT + 's';
+    qsecEl.textContent = limit + 's';
     qfill.style.width = '100%';
     qStart = Date.now();
     clearInterval(timerId);
     timerId = setInterval(tick, 100);
-    setStatus('选一个最贴切的成语');
+    setStatus(special ? '按图猜出四个字 · 填满后回车提交' : modeName() + ' · 选一个最贴切的成语');
   }
 
   function tick() {
     if (locked || !playing) return;
-    var left = LIMIT - (Date.now() - qStart) / 1000;
+    var left = limit - (Date.now() - qStart) / 1000;
     if (left <= 0) {
       qfill.style.width = '0%';
       qsecEl.textContent = '0s';
-      answer(null, null, true);
+      if (special) specialTimeout();
+      else answer(null, null, true);
       return;
     }
-    qfill.style.width = Math.max(0, left / LIMIT * 100) + '%';
+    qfill.style.width = Math.max(0, left / limit * 100) + '%';
     qsecEl.textContent = Math.ceil(left) + 's';
   }
 
@@ -676,7 +1348,7 @@
       setStatus('时间到 · 正确答案是「' + q.a + '」');
       showPop('时间到', false);
     } else if (text === q.a) {
-      var left = Math.max(0, LIMIT - (Date.now() - qStart) / 1000);
+      var left = Math.max(0, limit - (Date.now() - qStart) / 1000);
       var gain = 100 + Math.round(left) * 5 + combo * 15;
       score += gain;
       combo++;
@@ -698,6 +1370,92 @@
     progressEl.textContent = qi + ' / ' + roundTotal();
     clearTimeout(advanceTimer);
     advanceTimer = setTimeout(next, 1150);
+  }
+
+  function submitFill() {
+    if (!special || locked || !playing) return;
+    if (document.activeElement && document.activeElement.isComposing) return;
+    var q = queue[qi];
+    if (!q) return;
+    var guess = '', i;
+    for (i = 0; i < slotEls.length; i++) guess += (slotEls[i].value || '').trim();
+    if (Array.from(guess).length !== 4) {
+      fillMsgEl.textContent = '请先把四个字填满';
+      fillMsgEl.className = 'fillmsg warn';
+      return;
+    }
+    var hit = 0;
+    for (i = 0; i < 4; i++) if (guess.charAt(i) === q.a.charAt(i)) hit++;
+    tries++;
+    guessLog.push({ g: guess, h: hit });
+    renderGuessLog();
+    if (hit === 4) {
+      specialCorrect(q);
+      return;
+    }
+    score = Math.max(0, score - 5);
+    scoreEl.textContent = String(score);
+    fillMsgEl.textContent = hit === 0 ? '四个字都没对上' : '其中 ' + hit + ' 个字是对的';
+    fillMsgEl.className = 'fillmsg warn';
+    slotsWrap.classList.remove('shake');
+    void slotsWrap.offsetWidth;
+    slotsWrap.classList.add('shake');
+    for (i = 0; i < slotEls.length; i++) slotEls[i].value = '';
+    if (window.matchMedia && window.matchMedia('(pointer: fine)').matches) slotEls[0].focus();
+  }
+
+  function specialCorrect(q) {
+    locked = true;
+    clearInterval(timerId);
+    hintBtn.disabled = true;
+    submitFillBtn.disabled = true;
+    for (var i = 0; i < slotEls.length; i++) {
+      slotEls[i].value = q.a.charAt(i);
+      slotEls[i].className = 'slot ok';
+      slotEls[i].disabled = true;
+    }
+    fillMsgEl.textContent = '四个字全对！';
+    fillMsgEl.className = 'fillmsg hit';
+    var left = Math.max(0, limit - (Date.now() - qStart) / 1000);
+    var gain = Math.max(40, 100 + Math.round(left) * 5 + combo * 15 - 5 * Math.max(0, tries - 1));
+    score += gain;
+    combo++;
+    correctCount++;
+    scoreEl.textContent = String(score);
+    comboEl.textContent = String(combo);
+    markSeen(q.a, true);
+    setStatus('答对了 · +' + gain);
+    showPop('+' + gain, true);
+    qi++;
+    progressEl.textContent = qi + ' / ' + roundTotal();
+    clearTimeout(advanceTimer);
+    advanceTimer = setTimeout(next, 1600);
+  }
+
+  function specialTimeout() {
+    if (locked) return;
+    locked = true;
+    clearInterval(timerId);
+    hintBtn.disabled = true;
+    submitFillBtn.disabled = true;
+    var q = queue[qi];
+    if (!q) return;
+    for (var i = 0; i < slotEls.length; i++) {
+      slotEls[i].value = q.a.charAt(i);
+      slotEls[i].className = 'slot bad';
+      slotEls[i].disabled = true;
+    }
+    fillMsgEl.textContent = '时间到，正确答案已显示';
+    fillMsgEl.className = 'fillmsg warn';
+    combo = 0;
+    comboEl.textContent = '0';
+    markSeen(q.a, false);
+    setStatus('时间到 · 正确答案是「' + q.a + '」');
+    showPop('时间到', false);
+    qi++;
+    progressEl.textContent = qi + ' / ' + roundTotal();
+    clearTimeout(advanceTimer);
+    advanceTimer = setTimeout(next, 1600);
   }
 
   function next() {
@@ -724,64 +1482,150 @@
     locked = true;
     hintBtn.disabled = true;
     var total = roundTotal();
-    var isBest = score > best;
-    if (isBest) {
-      best = score;
-      try { localStorage.setItem(BEST_KEY, String(best)); } catch (e) {}
-    }
+    var isBest = score > bestFor(bestKey());
+    if (isBest) saveBest(bestKey(), score);
+    best = bestFor(bestKey());
     bestEl.textContent = best > 0 ? best : '—';
-    setStatus('本局结束');
+    setStatus(modeName() + ' 本局结束');
     var title = correctCount >= 8 ? '成语高手' : correctCount >= 5 ? '再接再厉' : '再来一局';
+    var bankDone = special ? solvedAll() : solvedCount(level);
+    var bankTotal = currentPool().length;
     ovCard.innerHTML =
-      '<div class="kicker">ROUND OVER</div>' +
+      '<div class="kicker">' + modeName() + ' · ROUND OVER</div>' +
       '<h2>' + title + '</h2>' +
       '<p>答对 ' + correctCount + ' / ' + total + ' 题，' +
-        (isBest ? '刷新了个人最佳。' : '继续熟悉这些成语吧。') +
-        '题库已学会 ' + solvedCount() + ' / ' + DATA.length + ' 条。</p>' +
+        (isBest ? '刷新了本档最佳。' : '继续熟悉这些成语吧。') +
+        '本档已学会 ' + bankDone + ' / ' + bankTotal + ' 条。</p>' +
       '<div class="res-grid">' +
         '<div><span>本局得分</span><b>' + score + '</b></div>' +
         '<div><span>答对题数</span><b>' + correctCount + ' / ' + total + '</b></div>' +
         '<div><span>用了提示</span><b>' + hintsUsed + ' 次</b></div>' +
-        '<div><span>历史最佳</span><b>' + (best > 0 ? best : '—') + '</b></div>' +
+        '<div><span>本档最佳</span><b>' + (best > 0 ? best : '—') + '</b></div>' +
       '</div>' +
       '<button type="button" class="btn primary" id="again">再来一局</button>';
     overlay.classList.add('on');
     ovCard.querySelector('#again').addEventListener('click', start);
   }
 
+  function applyMode() {
+    limit = special ? 45 : LEVELS[level].time;
+    hintCost = special ? 30 : LEVELS[level].cost;
+    best = bestFor(bestKey());
+    bestEl.textContent = best > 0 ? best : '—';
+    hintBtn.textContent = '提示 · -' + hintCost;
+    refreshBank();
+  }
+
   function showStart() {
     hintBtn.disabled = true;
     overlay.classList.add('on');
+    overlay.scrollTop = 0;
+    var lvHtml = '', i, id, L, n, b;
+    for (i = 0; i < 3; i++) {
+      id = i + 1;
+      L = LEVELS[id];
+      n = poolFor(id).length;
+      b = bestFor(id);
+      lvHtml += '<button type="button" class="lv-card' + (!special && id === level ? ' on' : '') + '" data-lv="' + id + '">' +
+        '<b>' + L.name + '</b>' +
+        '<span>' + L.sub + '</span>' +
+        '<i>' + n + ' 题' + (b > 0 ? ' · ' + b + ' 分' : '') + '</i>' +
+        '</button>';
+    }
+    var spBest = bestFor('special');
     ovCard.innerHTML =
-      '<div class="kicker">题库 ' + DATA.length + ' 条</div>' +
+      '<div class="kicker">题库 ' + DATA.length + ' 条 · 三档难度 + 特殊关卡</div>' +
       '<h2>看图猜成语</h2>' +
-      '<p>看图里的表情和符号，从四个选项里选出对应的成语。每题 15 秒，答得越快、连对越多，分数越高；卡住了可以点「提示」，代价是扣 ' + HINT_COST + ' 分。</p>' +
+      '<p>' + (special
+        ? '特殊关卡不给选项：看图把四个字填进空格，提交后会告诉你对了几个字。'
+        : '选好难度再开始。从四个选项里挑出对应的成语，答得越快、连对越多，分数越高。') + '</p>' +
+      '<div class="lv-grid">' + lvHtml + '</div>' +
+      '<button type="button" class="sp-card' + (special ? ' on' : '') + '" id="spCard">' +
+        '<span class="sp-k">特殊</span>' +
+        '<span class="sp-t"><b>特殊关卡</b><i>不给选项 · 四个空格 · 逐字猜</i></span>' +
+        '<span class="sp-n">' + DATA.length + ' 题' + (spBest > 0 ? ' · ' + spBest + ' 分' : '') + '</span>' +
+      '</button>' +
       '<div class="res-grid">' +
-        '<div><span>历史最佳</span><b>' + (best > 0 ? best : '—') + '</b></div>' +
-        '<div><span>本局题数</span><b>' + TOTAL_Q + ' 题</b></div>' +
-        '<div><span>题库进度</span><b>' + solvedCount() + ' / ' + DATA.length + '</b></div>' +
-        '<div><span>提示扣分</span><b>-' + HINT_COST + '</b></div>' +
+        '<div><span>本档题数</span><b>' + currentPool().length + ' 题</b></div>' +
+        '<div><span>本档最佳</span><b>' + (bestFor(bestKey()) > 0 ? bestFor(bestKey()) : '—') + '</b></div>' +
+        '<div><span>每题时间</span><b>' + limit + ' 秒</b></div>' +
+        '<div><span>提示扣分</span><b>-' + hintCost + '</b></div>' +
       '</div>' +
       '<button type="button" class="btn primary" id="startBtn">开始挑战</button>';
+    var cards = ovCard.querySelectorAll('.lv-card');
+    for (i = 0; i < cards.length; i++) {
+      cards[i].addEventListener('click', function () {
+        special = false;
+        level = parseInt(this.dataset.lv, 10) || 1;
+        applyMode();
+        showStart();
+      });
+    }
+    ovCard.querySelector('#spCard').addEventListener('click', function () {
+      special = true;
+      applyMode();
+      showStart();
+    });
     ovCard.querySelector('#startBtn').addEventListener('click', start);
   }
 
   function start() {
     clearInterval(timerId);
     clearTimeout(advanceTimer);
+    applyMode();
     buildQueue();
     qi = 0; score = 0; combo = 0; correctCount = 0; hintsUsed = 0;
     scoreEl.textContent = '0';
     comboEl.textContent = '0';
     progressEl.textContent = '0 / ' + roundTotal();
     overlay.classList.remove('on');
+    overlay.scrollTop = 0;
     playing = true;
     locked = false;
+    setStatus('每题 ' + limit + ' 秒，答得越快分越高');
     showQuestion();
   }
 
   document.getElementById('restart').addEventListener('click', function () { start(); this.blur(); });
   hintBtn.addEventListener('click', function () { showHint(); this.blur(); });
+
+  for (var si = 0; si < slotEls.length; si++) {
+    (function (idx) {
+      var el = slotEls[idx];
+      el.addEventListener('input', function () {
+        var cs = Array.from(el.value || '');
+        if (cs.length > 1) el.value = cs[cs.length - 1];
+        if (el.value && idx < slotEls.length - 1) slotEls[idx + 1].focus();
+        if (fillMsgEl.className.indexOf('warn') >= 0) {
+          fillMsgEl.textContent = '';
+          fillMsgEl.className = 'fillmsg';
+        }
+      });
+      el.addEventListener('keydown', function (e) {
+        if (e.isComposing) return;
+        if (e.key === 'Backspace' && !el.value && idx > 0) {
+          e.preventDefault();
+          slotEls[idx - 1].value = '';
+          slotEls[idx - 1].focus();
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          submitFill();
+        }
+      });
+      el.addEventListener('paste', function (e) {
+        var txt = (e.clipboardData || window.clipboardData).getData('text') || '';
+        var chars = Array.from(txt.replace(/\s+/g, '')).slice(0, 4);
+        if (!chars.length) return;
+        e.preventDefault();
+        for (var ci = 0; ci < chars.length; ci++) {
+          if (slotEls[ci]) slotEls[ci].value = chars[ci];
+        }
+        slotEls[Math.min(chars.length, slotEls.length - 1)].focus();
+      });
+    })(si);
+  }
+  submitFillBtn.addEventListener('click', function () { submitFill(); this.blur(); });
+
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Enter' || e.key === ' ') {
       if (overlay.classList.contains('on') && !playing) {
@@ -793,6 +1637,12 @@
     }
     if (!playing || locked) return;
     var k = e.key;
+    var inSlot = e.target && e.target.classList && e.target.classList.contains('slot');
+    if (special) {
+      if (k === 'Enter' && !inSlot) { e.preventDefault(); submitFill(); }
+      else if ((k === 'h' || k === 'H') && !inSlot) { e.preventDefault(); showHint(); }
+      return;
+    }
     if (k === 'h' || k === 'H') {
       e.preventDefault();
       showHint();

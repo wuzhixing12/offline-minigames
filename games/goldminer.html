@@ -1,0 +1,2468 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>黄金矿工 · Deep Vein</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  :root{--ink:#f4ead2;--dim:#9a8b6d;--gold:#f4c45a;--amber:#e09a3c;--line:#4a3a25;--red:#ff8f6a}
+  html,body{height:100%}
+  body{
+    background:
+      radial-gradient(1000px 650px at 50% -12%,#2a2014 0%,transparent 62%),
+      radial-gradient(900px 600px at 88% 112%,#2c1a0f 0%,transparent 58%),
+      #0d0906;
+    color:var(--ink);font-family:"Songti SC","STSong","Noto Serif SC",Georgia,"Microsoft YaHei",serif;
+    display:flex;align-items:center;justify-content:center;overflow-x:hidden;
+  }
+  button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer}
+  .hide{display:none!important}
+  #app{width:min(560px,100%);min-height:100dvh;display:flex;flex-direction:column;padding:10px clamp(8px,2vw,16px) 12px;gap:8px}
+  header{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .brand{display:flex;flex-direction:column;line-height:1;margin-right:auto}
+  .brand h1{font-size:19px;letter-spacing:.2em;font-weight:700;color:#f8eed6}
+  .brand span{font-size:8px;letter-spacing:.42em;color:#8a795c;margin-top:4px;font-family:"Segoe UI",sans-serif}
+  .hchip{display:flex;align-items:center;gap:5px;border:1px solid #4b3a24;background:#1a120a;border-radius:8px;padding:5px 8px;font-size:10px;color:#9a8b6d;font-family:"Segoe UI",sans-serif}
+  .hchip b{color:#f4ead2;font-size:13px;font-variant-numeric:tabular-nums}
+  .hchip.combo{border-color:#6b4a1c;background:#20150a;color:#c8a05a}
+  .hchip.combo b{color:#ffd36b}
+  .hchip.combo.hot{box-shadow:0 0 0 1px rgba(255,190,80,.35),0 0 16px rgba(255,170,50,.28)}
+  .iconbtn{width:28px;height:28px;border:1px solid #4b3a24;background:#1a120a;border-radius:8px;color:#c8b894;font-size:12px;display:flex;align-items:center;justify-content:center;font-family:"Segoe UI",sans-serif;flex:0 0 auto}
+  .iconbtn:hover{color:#f4c45a;border-color:#7a5a28}
+  .iconbtn.off{opacity:.42}
+  .stage{
+    position:relative;width:min(100%,480px);aspect-ratio:480/640;margin:auto;
+    border:1px solid #47351f;border-radius:14px;overflow:hidden;
+    box-shadow:0 30px 70px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.05);background:#0a0704;
+    touch-action:none;flex:0 0 auto;
+  }
+  canvas{display:block;width:100%;height:100%;touch-action:none}
+  .hint{font-size:9.5px;color:#8a795c;text-align:center;letter-spacing:.08em;font-family:"Segoe UI",sans-serif}
+  .hint kbd{background:#1a120a;border:1px solid #4a3a25;border-radius:4px;padding:1px 5px;font-size:9px;color:#c4b28e;font-family:inherit}
+
+  .overlay{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(5,3,2,.84);backdrop-filter:blur(6px)}
+  .overlay.hide{display:none}
+  .modal{width:min(540px,100%);max-height:calc(100dvh - 32px);overflow:auto;border:1px solid #4b3a25;border-radius:16px;padding:24px clamp(16px,3.4vw,30px);background:radial-gradient(600px 280px at 50% 0%,rgba(230,160,60,.13),transparent 64%),linear-gradient(180deg,#1c140c,#0d0905);box-shadow:0 30px 80px rgba(0,0,0,.78),inset 0 1px 0 rgba(255,255,255,.05);position:relative;scrollbar-width:thin;scrollbar-color:#4a3a25 transparent}
+  .modal.wide{width:min(640px,100%)}
+  .modal:before{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(90deg,rgba(255,255,255,.012) 0 1px,transparent 1px 30px)}
+  .kick{font-size:8.5px;letter-spacing:.5em;color:#8a795c;text-align:center;margin-bottom:9px;font-family:"Segoe UI",sans-serif;position:relative}
+  .modal h1{font-size:28px;text-align:center;letter-spacing:.2em;color:#f8eed6;position:relative}
+  .modal h1 em{font-style:normal;color:var(--gold)}
+  .sub{font-size:11px;color:#9a8b6d;text-align:center;margin-top:7px;letter-spacing:.1em;position:relative;line-height:1.7}
+  .rules{font-size:12px;line-height:1.85;color:#ad9d7c;margin:14px 0 0;position:relative}
+  .rules b{color:#f4ead2}
+  .rules .y{color:#f4c45a}.rules .o{color:#e09a3c}.rules .r{color:#ff8f6a}
+  .rules .tag{display:inline-block;border:1px solid #5a452a;border-radius:4px;padding:0 4px;font-size:10px;color:#f4c45a;font-family:"Segoe UI",sans-serif}
+
+  .mtabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:15px;position:relative}
+  .mtab{border:1px solid #4a3a25;border-radius:9px;padding:8px 4px 7px;background:#16100a;text-align:center;transition:border-color .15s,background .15s}
+  .mtab .mn{font-size:12px;color:#d8c8a4;letter-spacing:.1em}
+  .mtab .md{font-size:8px;color:#8a795c;margin-top:3px;font-family:"Segoe UI",sans-serif;letter-spacing:.05em}
+  .mtab.on{border-color:#a87a2e;background:linear-gradient(180deg,#2c1f0e,#1a1108);box-shadow:0 0 0 1px rgba(244,196,90,.18) inset}
+  .mtab.on .mn{color:#ffd36b}
+  .modedesc{font-size:10px;color:#9a8b6d;text-align:center;margin-top:8px;min-height:30px;line-height:1.6;position:relative;letter-spacing:.04em}
+
+  .statstrip{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px;position:relative}
+  .statbox{border:1px solid #3d2f1d;border-radius:8px;padding:6px 4px;background:#15100a;text-align:center}
+  .statbox .sl{font-size:7.5px;color:#8a795c;letter-spacing:.18em;font-family:"Segoe UI",sans-serif}
+  .statbox .sv{font-size:14px;color:#f0e2c0;margin-top:3px;font-variant-numeric:tabular-nums}
+  .statbox .sv.gold{color:#f4c45a}
+
+  .levels{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:13px;position:relative}
+  .lv{border:1px solid #3f3120;border-radius:7px;padding:5px 2px;background:#15100a;text-align:center;min-width:0}
+  .lv .n{font-size:8px;color:#8a795c;font-family:"Segoe UI",sans-serif}
+  .lv .m{font-size:9.5px;color:#e2d3af;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lv .t{font-size:7.5px;color:#a98f5e;margin-top:1px;font-family:"Segoe UI",sans-serif}
+  .lv.done{border-color:#6f5122;background:#1d1409}
+  .lv.now{border-color:#a87a2e;background:#241a0c;box-shadow:0 0 10px rgba(244,196,90,.12)}
+
+  .bigbtn{width:100%;margin-top:16px;padding:13px;border-radius:10px;font-size:15px;letter-spacing:.22em;font-weight:700;color:#241604;background:linear-gradient(100deg,#ffe6a6,#f4c45a 55%,#cf9134);border:1px solid #ffefc0;box-shadow:0 10px 26px rgba(210,150,60,.25);font-family:"Songti SC",serif}
+  .bigbtn:hover{filter:brightness(1.06)}
+  .bigbtn:disabled{opacity:.45;filter:grayscale(.6)}
+  .rowbtn{display:flex;gap:9px;margin-top:15px;position:relative}
+  .rowbtn .bigbtn{margin-top:0;letter-spacing:.12em}
+  .rowbtn .alt{background:linear-gradient(180deg,#1c160e,#0f0b06);color:#c8b894;border:1px solid #4a3a25;box-shadow:none}
+  .rowbtn.three .bigbtn{font-size:12px;padding:11px 6px;letter-spacing:.08em}
+
+  .resgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:15px;position:relative}
+  .resbox{border:1px solid #4a3a25;border-radius:9px;padding:9px 4px;text-align:center;background:#17100a;min-width:0}
+  .resbox .l{font-size:7.5px;letter-spacing:.16em;color:#8a795c;font-family:"Segoe UI",sans-serif;white-space:nowrap}
+  .resbox .v{font-size:16px;color:#f4ead2;margin-top:4px;font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .resbox .v.gold{color:#f4c45a}
+
+  .upgrades{display:grid;gap:7px;margin-top:13px;position:relative}
+  .upg{display:flex;align-items:center;gap:9px;border:1px solid #4a3a25;border-radius:10px;padding:8px 10px;background:#16100a}
+  .upg .ic{width:30px;height:30px;border-radius:8px;background:linear-gradient(180deg,#2a2012,#17100a);border:1px solid #4a3a25;display:flex;align-items:center;justify-content:center;font-size:15px;color:#f4c45a;flex:0 0 auto}
+  .upg .txt{min-width:0}
+  .upg .un{font-size:12px;color:#f0e4c6}
+  .upg .ud{font-size:8.5px;color:#8a795c;margin-top:2px;letter-spacing:.03em}
+  .upg .lvtag{font-size:8.5px;color:#f4c45a;margin-top:2px;letter-spacing:.08em;font-family:"Segoe UI",sans-serif}
+  .ubtn{margin-left:auto;flex:0 0 auto;padding:8px 9px;border-radius:8px;border:1px solid #7a5a28;background:linear-gradient(180deg,#3a2a12,#23180a);color:#f6d88e;font-size:10px;letter-spacing:.04em;min-width:84px;text-align:center;font-variant-numeric:tabular-nums}
+  .ubtn:disabled{opacity:.38}
+  .shopfoot{display:flex;align-items:center;gap:10px;margin-top:15px;position:relative}
+  .shopfoot .wallet{font-size:9px;color:#9a8b6d;font-family:"Segoe UI",sans-serif;white-space:nowrap}
+  .shopfoot .wallet b{display:block;font-size:17px;color:#f4c45a;margin-top:2px;font-family:"Songti SC",serif}
+  .shopfoot .bigbtn{margin-top:0;flex:1}
+  .shoptip{font-size:9px;color:#7f6f54;text-align:center;margin-top:9px;position:relative;letter-spacing:.05em;line-height:1.6}
+
+  .codexgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:14px;position:relative}
+  .cx{border:1px solid #3f3120;border-radius:9px;padding:8px 5px 7px;background:#15100a;text-align:center;min-width:0}
+  .cx .cg{font-size:19px;line-height:1;color:#f4c45a}
+  .cx .cn{font-size:10px;color:#e2d3af;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cx .cv{font-size:8px;color:#a98f5e;margin-top:2px;font-family:"Segoe UI",sans-serif}
+  .cx .cd{font-size:8px;color:#7f7057;margin-top:3px;line-height:1.4;min-height:22px}
+  .cx.locked{opacity:.36;filter:grayscale(.8)}
+  .cx.locked .cg{color:#7f7057}
+
+  .achlist{display:grid;gap:6px;margin-top:13px;position:relative}
+  .ach{display:flex;align-items:center;gap:9px;border:1px solid #3f3120;border-radius:9px;padding:8px 10px;background:#15100a}
+  .ach .ai{width:28px;height:28px;border-radius:50%;border:1px solid #4a3a25;display:flex;align-items:center;justify-content:center;font-size:13px;color:#8a795c;flex:0 0 auto;background:#1b140c}
+  .ach .at{min-width:0;flex:1}
+  .ach .an{font-size:11.5px;color:#d8c8a4}
+  .ach .ad{font-size:8.5px;color:#7f7057;margin-top:2px;line-height:1.4}
+  .ach.on{border-color:#6f5122;background:linear-gradient(180deg,#1f160b,#15100a)}
+  .ach.on .ai{color:#241604;background:linear-gradient(180deg,#ffe6a6,#e0a83e);border-color:#ffefc0;box-shadow:0 0 12px rgba(244,196,90,.2)}
+  .ach.on .an{color:#ffd36b}
+  .achhead{display:flex;align-items:center;justify-content:space-between;font-size:9px;color:#8a795c;margin-top:12px;position:relative;font-family:"Segoe UI",sans-serif;letter-spacing:.1em}
+
+  .endach{display:flex;flex-wrap:wrap;gap:5px;margin-top:12px;position:relative;justify-content:center}
+  .endach .ea{font-size:9px;color:#ffd36b;border:1px solid #6f5122;border-radius:20px;padding:3px 8px;background:#1d1409}
+  .endach .ea.none{color:#7f7057;border-color:#3f3120;background:#15100a}
+
+  .closerow{display:flex;gap:8px;margin-top:15px;position:relative}
+  .closerow .bigbtn{margin-top:0;font-size:12px;letter-spacing:.1em;padding:11px}
+
+  .toasts{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:80;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none}
+  .toast{font-size:11px;color:#ffe6a6;border:1px solid #7a5a28;background:rgba(40,28,12,.94);border-radius:20px;padding:7px 14px;letter-spacing:.06em;box-shadow:0 10px 30px rgba(0,0,0,.5);animation:tin .2s ease-out;white-space:nowrap}
+  .toast.ach{border-color:#b5872e;color:#fff0c0;background:rgba(58,38,10,.96)}
+  @keyframes tin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  .pausestat{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:14px;position:relative}
+  .psbox{border:1px solid #3f3120;border-radius:8px;padding:8px 4px;background:#15100a;text-align:center}
+  .psbox .l{font-size:7.5px;color:#8a795c;letter-spacing:.16em;font-family:"Segoe UI",sans-serif}
+  .psbox .v{font-size:15px;color:#f0e2c0;margin-top:3px;font-variant-numeric:tabular-nums}
+
+  @media (hover:none),(max-width:900px){
+    .hint{display:none}
+  }
+  @media (max-width:600px){
+    .stage{margin-top:auto;margin-bottom:auto}
+    .brand h1{font-size:16px}
+    .brand span{font-size:7px}
+    .hchip{padding:4px 6px;font-size:9px;gap:3px}
+    .hchip b{font-size:11.5px}
+    .iconbtn{width:25px;height:25px}
+    .modal h1{font-size:22px}
+    .rules{font-size:11px}
+    .levels{grid-template-columns:repeat(3,1fr)}
+    .lv .m{font-size:9px}
+    .lv .t{display:none}
+    .upg{gap:7px;padding:7px 8px}
+    .upg .ud{display:none}
+    .ubtn{min-width:74px;font-size:9.5px}
+    .codexgrid{grid-template-columns:repeat(2,1fr)}
+    .resgrid{grid-template-columns:repeat(2,1fr)}
+    .statstrip{grid-template-columns:repeat(2,1fr)}
+    .mtab .md{display:none}
+    .rowbtn.three{flex-direction:column}
+  }
+  @media (max-height:720px) and (min-width:640px){
+    #app{padding-top:6px}
+    .brand h1{font-size:17px}
+    .modal{padding-top:18px;padding-bottom:18px}
+    .rules{margin-top:10px;line-height:1.7}
+    .levels{margin-top:10px}
+  }
+  @media (orientation:landscape) and (max-height:720px){
+    #app{padding:5px 10px 7px;gap:4px}
+    header{gap:5px}
+    .brand h1{font-size:15px;letter-spacing:.14em}
+    .brand span{display:none}
+    .hchip{padding:3px 6px;font-size:9px;gap:3px}
+    .hchip b{font-size:11px}
+    .iconbtn{width:24px;height:24px}
+    .stage{height:min(calc(100dvh - 44px),640px);width:auto;max-width:100%;margin:auto;flex:0 0 auto}
+    .hint{display:none}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="brand"><h1>黄金矿工</h1><span>DEEP VEIN</span></div>
+    <div class="hchip">层 <b id="hLevel">1</b><span id="hMax" style="color:#5c4a2f">/12</span></div>
+    <div class="hchip">本关 <b id="hEarned">0</b></div>
+    <div class="hchip">待收 <b id="hLeft">0</b></div>
+    <div class="hchip">钱包 <b id="hWallet">0</b></div>
+    <div class="hchip combo" id="chipCombo">连击 <b id="hCombo">x1.0</b></div>
+    <button class="iconbtn" id="btnSound" title="音效开关">♪</button>
+    <button class="iconbtn" id="btnPause" title="暂停">Ⅱ</button>
+  </header>
+
+  <div class="stage" id="stage">
+    <canvas id="cv" width="480" height="640"></canvas>
+  </div>
+
+  <div class="hint"><kbd>点击</kbd> 或 <kbd>空格</kbd> 下钩 · <kbd>P</kbd> 暂停 · 抓得越重收得越慢 · 清空整层直接过关</div>
+</div>
+
+<div class="overlay" id="ovStart">
+  <div class="modal wide">
+    <div class="kick">TWELVE LAYERS · ONE LANTERN</div>
+    <h1>黄金<em>矿工</em></h1>
+    <div class="sub" id="startSub">把整层矿物全部抓完，清空后直接进入下一层。</div>
+    <div class="mtabs" id="modeTabs">
+      <button class="mtab on" data-mode="campaign"><div class="mn">闯关</div><div class="md">12 层矿脉</div></button>
+      <button class="mtab" data-mode="endless"><div class="mn">无尽</div><div class="md">越挖越深</div></button>
+      <button class="mtab" data-mode="daily"><div class="mn">每日</div><div class="md">同一矿脉</div></button>
+    </div>
+    <div class="modedesc" id="modeDesc">从浅层矿脉一路挖到地心熔炉，每层清空才能继续。</div>
+    <div class="statstrip">
+      <div class="statbox"><div class="sl">最高钱包</div><div class="sv gold" id="statBest">0</div></div>
+      <div class="statbox"><div class="sl">最深</div><div class="sv" id="statDepth">0</div></div>
+      <div class="statbox"><div class="sl">通关</div><div class="sv" id="statWins">0</div></div>
+      <div class="statbox"><div class="sl">每日最佳</div><div class="sv" id="statDaily">0</div></div>
+    </div>
+    <div class="rules">
+      钩子自动摆动，<b>点击</b> 或按 <b>空格</b> 放钩；重物回收更慢，<b class="o">石头又重又便宜</b>。<br>
+      连续抓取值钱的东西会累积 <b class="y">连击倍率</b>，抓石头、骨头或炸弹会打断连击。<br>
+      每层要把屏幕上的矿物<b class="y">全部抓完</b>，清空后直接进入下一层，可在矿灯小店升级。<br>
+      <b>沙漏</b> 加时间，<b>炸药桶</b> 会炸碎周围石头，<b>四叶草</b> 临时提升幸运。
+    </div>
+    <div class="levels" id="levelLine"></div>
+    <button class="bigbtn" id="btnStart">下矿</button>
+    <div class="rowbtn three">
+      <button class="bigbtn alt" id="btnCodex">图鉴</button>
+      <button class="bigbtn alt" id="btnAch">成就</button>
+      <button class="bigbtn alt" id="btnHelp">玩法</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hide" id="ovShop">
+  <div class="modal">
+    <div class="kick">MINE SHOP</div>
+    <h1>矿灯<em>小店</em></h1>
+    <div class="sub" id="shopSub">第 1 层通过</div>
+    <div class="upgrades">
+      <div class="upg">
+        <div class="ic">⛓</div>
+        <div class="txt"><div class="un">卷扬力量</div><div class="ud">抓重物时回收更快</div><div class="lvtag" id="lvStr">Lv 0 / 5</div></div>
+        <button class="ubtn" id="buyStr">升级 140</button>
+      </div>
+      <div class="upg">
+        <div class="ic">⚙</div>
+        <div class="txt"><div class="un">回收速度</div><div class="ud">所有物体回收更快</div><div class="lvtag" id="lvSpd">Lv 0 / 5</div></div>
+        <button class="ubtn" id="buySpd">升级 120</button>
+      </div>
+      <div class="upg">
+        <div class="ic">🍀</div>
+        <div class="txt"><div class="un">幸运</div><div class="ud">神秘袋更肥，暴击更高</div><div class="lvtag" id="lvLuck">Lv 0 / 5</div></div>
+        <button class="ubtn" id="buyLuck">升级 100</button>
+      </div>
+      <div class="upg">
+        <div class="ic">⏳</div>
+        <div class="txt"><div class="un">头灯油</div><div class="ud">每层开始多 3 秒</div><div class="lvtag" id="lvTime">Lv 0 / 5</div></div>
+        <button class="ubtn" id="buyTime">升级 180</button>
+      </div>
+    </div>
+    <div class="shopfoot">
+      <div class="wallet">钱包<b id="shopWallet">0</b></div>
+      <button class="bigbtn" id="btnShopNext">下一层</button>
+    </div>
+    <div class="shoptip">升级会保留到本局结束 · 金币来自每层收入，清空整层即可进入下一层</div>
+  </div>
+</div>
+
+<div class="overlay hide" id="ovEnd">
+  <div class="modal wide">
+    <div class="kick" id="endKick">TIME UP</div>
+    <h1 id="endTitle">矿洞黑了</h1>
+    <div class="sub" id="endSub">本层矿物还没抓完。</div>
+    <div class="resgrid">
+      <div class="resbox"><div class="l">钱包</div><div class="v gold" id="endWallet">0</div></div>
+      <div class="resbox"><div class="l">本关</div><div class="v" id="endEarned">0 / 300</div></div>
+      <div class="resbox"><div class="l">最高</div><div class="v" id="endBest">0</div></div>
+      <div class="resbox"><div class="l" id="endDepthLabel">深度</div><div class="v" id="endDepth">1</div></div>
+    </div>
+    <div class="endach" id="endAch"></div>
+    <div class="rowbtn">
+      <button class="bigbtn" id="btnPrimary">再试一次</button>
+      <button class="bigbtn alt" id="btnAlt">回到矿口</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hide" id="ovCodex">
+  <div class="modal wide">
+    <div class="kick">MINERAL CODEX</div>
+    <h1>矿脉<em>图鉴</em></h1>
+    <div class="sub" id="codexSub">抓到过的矿物会在这里点亮。</div>
+    <div class="codexgrid" id="codexGrid"></div>
+    <div class="closerow"><button class="bigbtn" id="btnCodexClose">收起图鉴</button></div>
+  </div>
+</div>
+
+<div class="overlay hide" id="ovAch">
+  <div class="modal wide">
+    <div class="kick">MINER RECORDS</div>
+    <h1>矿工<em>成就</em></h1>
+    <div class="sub" id="achSub">把矿洞里的稀罕事都做一遍。</div>
+    <div class="achhead"><span id="achCount">0 / 12</span><span>成就永久保留</span></div>
+    <div class="achlist" id="achList"></div>
+    <div class="closerow"><button class="bigbtn" id="btnAchClose">收起成就</button></div>
+  </div>
+</div>
+
+<div class="overlay hide" id="ovHelp">
+  <div class="modal wide">
+    <div class="kick">MINER'S MANUAL</div>
+    <h1>下矿<em>须知</em></h1>
+    <div class="rules">
+      <b class="y">基本操作</b><br>
+      钩子会来回摆动，点击画面、按 <span class="tag">空格</span> 或 <span class="tag">↓</span> 放钩。抓到东西后钩子自动回收，越重收得越慢。把屏幕上的矿物全部抓完，本层立即结束并直接进入下一层；时间归零时还没抓完则本层失败。<br><br>
+      <b class="y">连击与暴击</b><br>
+      3.5 秒内连续抓到值钱的东西会累积连击，每层连击提供最高 <b>x2.0</b> 收益。抓石头、骨头、炸弹会打断连击。幸运等级和四叶草会提高 <b class="o">暴击</b> 概率，暴击收益翻倍。<br><br>
+      <b class="y">特殊矿物</b><br>
+      <b>沙漏</b>：回收后本层 +6 秒。<br>
+      <b>炸药桶</b>：回收时炸碎周围石头，但会扣 2 秒并打断连击。<br>
+      <b>四叶草</b>：本层幸运 +1，可叠加。<br>
+      <b>宝箱</b>：非常重，但价值极高。<br>
+      <b>蝙蝠 / 地鼠</b>：会移动，瞄准需要预判。<br><br>
+      <b class="y">模式</b><br>
+      <b>闯关</b>：12 层固定矿脉，每层清空才能继续，通关后记录总钱包。<br>
+      <b>无尽</b>：每层矿物逐层增多，失败时按深度记录成绩。<br>
+      <b>每日</b>：每天一条相同矿脉，全服同种子，记录当日最佳。<br><br>
+      <b class="y">快捷键</b><br>
+      <span class="tag">空格</span> 下钩 · <span class="tag">P</span>/<span class="tag">Esc</span> 暂停 · <span class="tag">M</span> 静音 · <span class="tag">R</span> 重开本层（暂停时）
+    </div>
+    <div class="closerow"><button class="bigbtn" id="btnHelpClose">开始挖矿</button></div>
+  </div>
+</div>
+
+<div class="overlay hide" id="ovPause">
+  <div class="modal">
+    <div class="kick">LANTERN DOWN</div>
+    <h1>矿灯<em>暂歇</em></h1>
+    <div class="sub" id="pauseSub">时间已暂停。</div>
+    <div class="pausestat">
+      <div class="psbox"><div class="l">本关</div><div class="v" id="pauseEarned">0</div></div>
+      <div class="psbox"><div class="l">待收</div><div class="v" id="pauseTarget">0</div></div>
+      <div class="psbox"><div class="l">时间</div><div class="v" id="pauseTime">0s</div></div>
+    </div>
+    <div class="rowbtn three">
+      <button class="bigbtn" id="btnResume">继续</button>
+      <button class="bigbtn alt" id="btnRestart">重开本层</button>
+      <button class="bigbtn alt" id="btnQuit">回到矿口</button>
+    </div>
+    <div class="shoptip">按 P 或 Esc 继续 · 按 R 重开本层</div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<script>
+(function(){
+  'use strict';
+  var W=480,H=640;
+  var cv=document.getElementById('cv');
+  var DPR=Math.min(2,window.devicePixelRatio||1);
+  cv.width=W*DPR; cv.height=H*DPR;
+  var ctx=cv.getContext('2d');
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+
+  var $=function(id){return document.getElementById(id)};
+  var els={
+    hLevel:$('hLevel'),hMax:$('hMax'),hEarned:$('hEarned'),hWallet:$('hWallet'),
+    hCombo:$('hCombo'),hLeft:$('hLeft'),chipCombo:$('chipCombo'),
+    btnSound:$('btnSound'),btnPause:$('btnPause'),
+    ovStart:$('ovStart'),ovShop:$('ovShop'),ovEnd:$('ovEnd'),
+    ovCodex:$('ovCodex'),ovAch:$('ovAch'),ovHelp:$('ovHelp'),ovPause:$('ovPause'),
+    startSub:$('startSub'),modeDesc:$('modeDesc'),modeTabs:$('modeTabs'),
+    statBest:$('statBest'),statDepth:$('statDepth'),statWins:$('statWins'),statDaily:$('statDaily'),
+    levelLine:$('levelLine'),
+    shopSub:$('shopSub'),shopWallet:$('shopWallet'),
+    lvStr:$('lvStr'),lvSpd:$('lvSpd'),lvLuck:$('lvLuck'),lvTime:$('lvTime'),
+    buyStr:$('buyStr'),buySpd:$('buySpd'),buyLuck:$('buyLuck'),buyTime:$('buyTime'),
+    endKick:$('endKick'),endTitle:$('endTitle'),endSub:$('endSub'),
+    endWallet:$('endWallet'),endEarned:$('endEarned'),endBest:$('endBest'),
+    endDepthLabel:$('endDepthLabel'),endDepth:$('endDepth'),endAch:$('endAch'),
+    btnPrimary:$('btnPrimary'),btnAlt:$('btnAlt'),
+    codexGrid:$('codexGrid'),codexSub:$('codexSub'),
+    achList:$('achList'),achCount:$('achCount'),achSub:$('achSub'),
+    pauseSub:$('pauseSub'),pauseEarned:$('pauseEarned'),pauseTarget:$('pauseTarget'),pauseTime:$('pauseTime'),
+    btnResume:$('btnResume'),btnRestart:$('btnRestart'),btnQuit:$('btnQuit'),
+    toasts:$('toasts')
+  };
+
+  var PIVOT={x:240,y:104};
+  var BASE_LEN=34;
+  var MAX_LV=12;
+  var SAVE_KEY='tx_goldminer_v2';
+  var LEGACY_KEY='tx_goldminer_best_v1';
+
+  /* ---------- levels ---------- */
+  var LEVELS=[
+    {name:'浅层矿脉',theme:'mine',target:300,time:52,tip:'先熟悉钩子的节奏，金块比石头值钱得多。',items:{goldS:8,goldM:4,goldL:1,rockS:3,bag:1}},
+    {name:'老矿道',theme:'tunnel',target:560,time:52,tip:'老矿道里开始出现钻石，别被石头拖慢节奏。',items:{goldS:7,goldM:5,goldL:2,rockS:4,rockL:1,bag:1,diamond:1}},
+    {name:'水晶洞',theme:'crystal',target:880,time:51,tip:'水晶洞的紫水晶很值钱，连击可以滚起来。',items:{goldS:6,goldM:5,goldL:3,rockS:5,rockL:2,bag:2,diamond:1,crystal:2}},
+    {name:'断层深处',theme:'fault',target:1220,time:50,tip:'断层里化石与绿宝石混在岩石间，注意钩子角度。',items:{goldS:5,goldM:6,goldL:3,rockS:6,rockL:2,bag:2,diamond:2,bone:2,emerald:1,fossil:1}},
+    {name:'黄金之心',theme:'heart',target:1650,time:50,tip:'黄金之心是一整条金脉，巨型金块很重，但值得等。',items:{goldS:4,goldM:6,goldL:4,rockS:7,rockL:3,bag:3,diamond:3,bone:2,ruby:1,goldXL:1}},
+    {name:'熔岩裂谷',theme:'lava',target:2050,time:48,tip:'炸药桶能清掉石头，但会扣时间，算好再用。',items:{goldS:5,goldM:6,goldL:3,goldXL:1,rockS:6,rockL:3,bag:2,diamond:2,ruby:2,bomb:2}},
+    {name:'废弃营地',theme:'camp',target:2450,time:48,tip:'营地里散落着古币与宝箱，宝箱很重但价值惊人。',items:{goldS:5,goldM:6,goldL:4,rockS:7,rockL:3,bag:3,coin:6,skull:2,chest:1,clover:1}},
+    {name:'地下水潭',theme:'water',target:2900,time:47,tip:'水潭里的沙漏能续命，蓝宝石藏在最深处。',items:{goldS:4,goldM:6,goldL:4,rockS:5,rockL:2,bag:2,diamond:2,sapphire:2,fossil:2,hourglass:1}},
+    {name:'蝙蝠巢穴',theme:'batcave',target:3250,time:46,tip:'蝙蝠会横向移动，提前把钩子摆到它的落点。',items:{goldS:4,goldM:7,goldL:5,goldXL:1,rockS:6,rockL:3,bag:3,diamond:3,bat:3,hourglass:1,bomb:1}},
+    {name:'古老祭坛',theme:'altar',target:3950,time:45,tip:'祭坛周围全是宝石，宝箱和骷髅都在暗处。',items:{goldM:6,goldL:4,goldXL:1,rockS:4,rockL:2,bag:3,diamond:3,ruby:2,emerald:2,sapphire:2,skull:2,chest:1}},
+    {name:'星尘矿层',theme:'star',target:4550,time:44,tip:'星尘矿层会看见移动的地鼠，幸运草能推高暴击。',items:{goldM:6,goldL:5,goldXL:2,rockS:5,rockL:2,bag:3,diamond:4,sapphire:2,crystal:3,clover:2,hourglass:1,mole:2}},
+    {name:'地心熔炉',theme:'forge',target:5250,time:42,tip:'最后一层。把能拿的都拿走，矿灯油只够这么久。',items:{goldM:5,goldL:5,goldXL:3,rockS:6,rockL:3,bag:3,diamond:4,ruby:3,emerald:3,sapphire:3,chest:2,hourglass:1,mole:2,bomb:1}}
+  ];
+
+  /* ---------- themes ---------- */
+  var THEMES={
+    mine:{name:'矿脉',sky:['#1d140c','#24180d','#1a110a','#120c07'],beam:['#4a3219','#3a2714','#241608'],timber:['#3a2715','#241608'],accent:'#e0b060',glow:'255,210,120',dust:'210,200,180',rail:'120,95,60',decor:'strata'},
+    tunnel:{name:'老矿道',sky:['#181410','#211a12','#17110c','#0f0b08'],beam:['#4d3a22','#372817','#22170c'],timber:['#46331d','#2a1b0e'],accent:'#c9a46a',glow:'250,205,130',dust:'205,196,178',rail:'110,88,58',decor:'arch'},
+    crystal:{name:'水晶洞',sky:['#101820','#16222a','#0f171d','#0a1015'],beam:['#33404a','#243039','#172026'],timber:['#2c3a42','#1a252b'],accent:'#8fe3f0',glow:'150,235,255',dust:'198,228,236',rail:'86,112,120',decor:'crystal'},
+    fault:{name:'断层深处',sky:['#1a1210','#241813','#18100d','#100b09'],beam:['#4b3524','#372618','#22160e'],timber:['#423021','#281a10'],accent:'#d59a63',glow:'255,200,140',dust:'214,196,178',rail:'116,88,60',decor:'fault'},
+    heart:{name:'黄金之心',sky:['#21160a','#2c1d0c','#1d1308','#120c05'],beam:['#5c3f17','#432d11','#2a1b09'],timber:['#4b3215','#2e1e0b'],accent:'#ffd36b',glow:'255,215,110',dust:'236,210,150',rail:'150,110,45',decor:'heart'},
+    lava:{name:'熔岩裂谷',sky:['#1b0d08','#2a120a','#1c0c07','#120705'],beam:['#4a2a16','#362011','#23140a'],timber:['#3e2414','#25140a'],accent:'#ff8a4a',glow:'255,130,60',dust:'235,180,140',rail:'120,72,46',decor:'lava'},
+    camp:{name:'废弃营地',sky:['#181510','#221d14','#17130e','#100d09'],beam:['#4c3a22','#382a18','#241b0e'],timber:['#44301c','#2a1d10'],accent:'#d8b06a',glow:'255,205,130',dust:'220,204,176',rail:'112,90,60',decor:'camp'},
+    water:{name:'地下水潭',sky:['#0e1618','#132124','#0d171a','#081012'],beam:['#2f3d40','#223033','#162024'],timber:['#293a3d','#182528'],accent:'#7fd4d8',glow:'140,225,235',dust:'190,220,222',rail:'78,108,110',decor:'water'},
+    batcave:{name:'蝙蝠巢穴',sky:['#130e14','#1b121d','#110c12','#0a070c'],beam:['#3b2a3d','#2b1e2d','#1b131d'],timber:['#342638','#211726'],accent:'#c0a0d8',glow:'210,170,255',dust:'200,185,212',rail:'96,78,108',decor:'bat'},
+    altar:{name:'古老祭坛',sky:['#141310','#1e1c15','#14120e','#0d0b08'],beam:['#46402c','#332e1f','#201c12'],timber:['#3d3725','#262214'],accent:'#d9c07a',glow:'255,230,150',dust:'218,208,180',rail:'104,96,70',decor:'altar'},
+    star:{name:'星尘矿层',sky:['#0d1020','#14182c','#0d1120','#080a14'],beam:['#2d3450','#1f2539','#141827'],timber:['#262d45','#171c2c'],accent:'#9fb8ff',glow:'175,200,255',dust:'210,220,255',rail:'76,88,128',decor:'star'},
+    forge:{name:'地心熔炉',sky:['#1e0c06','#2e1208','#1e0c06','#130705'],beam:['#552d16','#3d2010','#26130a'],timber:['#472715','#2b160b'],accent:'#ff9a50',glow:'255,140,70',dust:'245,190,150',rail:'130,74,42',decor:'forge'}
+  };
+
+  /* ---------- types ---------- */
+  var TYPES={
+    goldS:{kind:'gold',r:16,weight:1,value:50,label:'小金块',glyph:'◆',note:'最容易抓到的金块。'},
+    goldM:{kind:'gold',r:22,weight:1.9,value:110,label:'中金块',glyph:'◆',note:'回收略慢，性价比很高。'},
+    goldL:{kind:'gold',r:30,weight:3.4,value:260,label:'大金块',glyph:'◆',note:'沉甸甸的大金块。'},
+    goldXL:{kind:'gold',r:38,weight:5.4,value:560,label:'巨型金矿',glyph:'◆',note:'最重的金子，耐心等它上岸。'},
+    diamond:{kind:'diamond',r:16,weight:1.2,value:520,label:'钻石',glyph:'◇',note:'轻巧又值钱，矿工最爱。'},
+    ruby:{kind:'ruby',r:17,weight:1.3,value:430,label:'红宝石',glyph:'◇',note:'深红色，成色极佳。'},
+    emerald:{kind:'emerald',r:17,weight:1.3,value:460,label:'绿宝石',glyph:'◇',note:'断层里少见的绿光。'},
+    sapphire:{kind:'sapphire',r:17,weight:1.3,value:490,label:'蓝宝石',glyph:'◇',note:'水潭深处的幽蓝。'},
+    crystal:{kind:'crystal',r:21,weight:1.8,value:310,label:'紫水晶',glyph:'⬙',note:'整簇生长，抓起来很脆。'},
+    coin:{kind:'coin',r:14,weight:.9,value:120,label:'古币',glyph:'◉',note:'前人留下的钱，轻而小。'},
+    bag:{kind:'bag',r:18,weight:1.4,value:0,label:'神秘袋',glyph:'?',note:'里面什么都可能有，幸运越高越肥。'},
+    rockS:{kind:'rock',r:19,weight:2.6,value:25,label:'小石头',glyph:'●',note:'又重又便宜，还会打断连击。'},
+    rockL:{kind:'rock',r:28,weight:4.2,value:60,label:'大石头',glyph:'●',note:'极慢。除非挡路，否则别碰。'},
+    bone:{kind:'bone',r:15,weight:1.1,value:15,label:'兽骨',glyph:'╳',note:'不值钱，会打断连击。'},
+    fossil:{kind:'fossil',r:22,weight:2.2,value:180,label:'化石',glyph:'◍',note:'收藏家会出价，中等重量。'},
+    skull:{kind:'skull',r:18,weight:1.6,value:90,label:'骷髅头',glyph:'☠',note:'有点晦气，会打断连击。'},
+    chest:{kind:'chest',r:30,weight:6.4,value:900,label:'矿工宝箱',glyph:'▣',note:'极重，但开出来就是一大笔。'},
+    hourglass:{kind:'hourglass',r:16,weight:1,value:0,label:'沙漏',glyph:'⧖',note:'回收后本层 +6 秒。'},
+    bomb:{kind:'bomb',r:17,weight:1.2,value:0,label:'炸药桶',glyph:'✸',note:'炸碎周围石头，扣 2 秒并断连击。'},
+    clover:{kind:'clover',r:14,weight:.8,value:0,label:'四叶草',glyph:'✤',note:'本层幸运 +1，可叠加。'},
+    bat:{kind:'bat',r:16,weight:.9,value:80,label:'洞穴蝙蝠',glyph:'⌁',note:'会横向飞舞，抓它要预判。'},
+    mole:{kind:'mole',r:19,weight:1.3,value:150,label:'盲眼地鼠',glyph:'◒',note:'在地面上下移动，值一点钱。'}
+  };
+  var TYPE_ORDER=['goldS','goldM','goldL','goldXL','diamond','ruby','emerald','sapphire','crystal','coin','bag','rockS','rockL','bone','fossil','skull','chest','hourglass','bomb','clover','bat','mole'];
+
+  /* ---------- upgrade defs ---------- */
+  var UPGRADES=[
+    {key:'str',name:'卷扬力量',icon:'⛓',desc:'抓重物时回收更快',base:140,step:90,max:5},
+    {key:'spd',name:'回收速度',icon:'⚙',desc:'所有物体回收更快',base:120,step:80,max:5},
+    {key:'luck',name:'幸运',icon:'🍀',desc:'神秘袋更肥，暴击更高',base:100,step:70,max:5},
+    {key:'time',name:'头灯油',icon:'⏳',desc:'每层开始多 3 秒',base:180,step:110,max:5}
+  ];
+
+  /* ---------- achievements ---------- */
+  var ACHS=[
+    {id:'first',name:'第一桶金',desc:'累计收集 10 件矿物',icon:'⛏'},
+    {id:'combo5',name:'连击达人',desc:'单次连击达到 5',icon:'✧'},
+    {id:'combo10',name:'矿脉节奏',desc:'单次连击达到 10',icon:'✦'},
+    {id:'diamond5',name:'钻石手',desc:'累计抓到 5 颗钻石',icon:'◇'},
+    {id:'clear1',name:'出师',desc:'通关浅层矿脉',icon:'⚑'},
+    {id:'clearAll',name:'矿脉之主',desc:'通关全部 12 层',icon:'♛'},
+    {id:'endless5',name:'深入者',desc:'无尽模式到达第 5 层',icon:'⇩'},
+    {id:'endless10',name:'无底洞',desc:'无尽模式到达第 10 层',icon:'⇊'},
+    {id:'rich',name:'家底殷实',desc:'单局钱包达到 3000',icon:'◈'},
+    {id:'bomb6',name:'爆破专家',desc:'一个炸药桶炸碎 6 块石头',icon:'✸'},
+    {id:'hourglass3',name:'时光盗贼',desc:'单局抓到 3 个沙漏',icon:'⧖'},
+    {id:'crit3',name:'会心一击',desc:'单局触发 3 次暴击',icon:'★'},
+    {id:'noRock',name:'利落收工',desc:'45 秒内清空一整层',icon:'❖'},
+    {id:'daily1',name:'每日矿工',desc:'完成一次每日矿脉',icon:'☼'}
+  ];
+
+  /* ---------- save ---------- */
+  function defaultSave(){
+    return {
+      best:0,depth:0,wins:0,gold:0,items:0,diamonds:0,crits:0,
+      bestCombo:0,bombRocks:0,hourglasses:0,noRockWins:0,dailyCount:0,
+      dailyDate:'',dailyBest:0,
+      ach:{},seen:{},
+      settings:{sound:true,shake:true}
+    };
+  }
+  var save=defaultSave();
+  function loadSave(){
+    try{
+      var raw=localStorage.getItem(SAVE_KEY);
+      if (raw){
+        var o=JSON.parse(raw);
+        if (o&&typeof o==='object'){
+          var d=defaultSave();
+          Object.keys(d).forEach(function(k){
+            if (o[k]===undefined) return;
+            if (k==='ach'||k==='seen'||k==='settings'){
+              if (o[k]&&typeof o[k]==='object') d[k]=Object.assign(d[k],o[k]);
+            } else if (typeof d[k]==='number'){
+              d[k]=+o[k]||0;
+            } else {
+              d[k]=o[k];
+            }
+          });
+          save=d;
+        }
+      }
+      if (!save.best){
+        var legacy=parseInt(localStorage.getItem(LEGACY_KEY)||'0',10)||0;
+        if (legacy>0) save.best=legacy;
+      }
+    }catch(e){}
+  }
+  function persist(){
+    try{ localStorage.setItem(SAVE_KEY,JSON.stringify(save)); }catch(e){}
+    try{ localStorage.setItem(LEGACY_KEY,String(Math.round(save.best||0))); }catch(e){}
+  }
+  function saveBest(){
+    if (game&&game.wallet>save.best) save.best=Math.round(game.wallet);
+    persist();
+  }
+  loadSave();
+
+  /* ---------- helpers ---------- */
+  function clamp(v,a,b){ return v<a?a:v>b?b:v; }
+  function rr(x,y,w,h,r){
+    r=Math.min(r,w/2,h/2);
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+    ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+    ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+    ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y);
+    ctx.closePath();
+  }
+  function rrLocal(g,x,y,w,h,r){
+    r=Math.min(r,w/2,h/2);
+    g.beginPath();
+    g.moveTo(x+r,y);
+    g.lineTo(x+w-r,y); g.quadraticCurveTo(x+w,y,x+w,y+r);
+    g.lineTo(x+w,y+h-r); g.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+    g.lineTo(x+r,y+h); g.quadraticCurveTo(x,y+h,x,y+h-r);
+    g.lineTo(x,y+r); g.quadraticCurveTo(x,y,x+r,y);
+    g.closePath();
+  }
+  function fmt(n){ return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,','); }
+  function frac(x){ return x-Math.floor(x); }
+  function todayKey(){
+    var d=new Date();
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  function hashStr(s){
+    var h=2166136261;
+    for (var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); }
+    return h>>>0;
+  }
+  function mulberry32(a){
+    return function(){
+      a|=0; a=a+0x6D2B79F5|0;
+      var t=Math.imul(a^a>>>15,1|a);
+      t=t+Math.imul(t^t>>>7,61|t)^t;
+      return ((t^t>>>14)>>>0)/4294967296;
+    };
+  }
+  function rndPick(arr,r){ return arr[Math.floor(r()*arr.length)]; }
+
+  /* ---------- audio ---------- */
+  var audio=null;
+  function soundOn(){ return !save.settings||save.settings.sound!==false; }
+  function sfx(freq,dur,type,vol,slide){
+    if (!soundOn()) return;
+    try{
+      if (!audio) audio=new (window.AudioContext||window.webkitAudioContext)();
+      if (audio.state==='suspended') audio.resume();
+      var o=audio.createOscillator(),g=audio.createGain();
+      o.type=type||'sine'; o.frequency.value=freq;
+      if (slide) o.frequency.linearRampToValueAtTime(Math.max(30,freq+slide),audio.currentTime+dur);
+      g.gain.setValueAtTime(vol||0.03,audio.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001,audio.currentTime+dur);
+      o.connect(g); g.connect(audio.destination); o.start(); o.stop(audio.currentTime+dur+0.02);
+    }catch(e){}
+  }
+  function noiseBurst(dur,vol,low){
+    if (!soundOn()) return;
+    try{
+      if (!audio) audio=new (window.AudioContext||window.webkitAudioContext)();
+      if (audio.state==='suspended') audio.resume();
+      var len=Math.floor(audio.sampleRate*dur);
+      var buf=audio.createBuffer(1,len,audio.sampleRate);
+      var data=buf.getChannelData(0);
+      for (var i=0;i<len;i++){
+        var env=1-i/len;
+        data[i]=(Math.random()*2-1)*env*env;
+      }
+      var src=audio.createBufferSource(); src.buffer=buf;
+      var filter=audio.createBiquadFilter(); filter.type='lowpass'; filter.frequency.value=low||900;
+      var g=audio.createGain(); g.gain.value=vol||0.12;
+      src.connect(filter); filter.connect(g); g.connect(audio.destination);
+      src.start();
+    }catch(e){}
+  }
+  function chime(){
+    sfx(880,.16,'sine',.04,120);
+    setTimeout(function(){ sfx(1180,.22,'sine',.03,90); },120);
+    setTimeout(function(){ sfx(1480,.3,'triangle',.025,60); },240);
+  }
+  function boolSetting(k){ return !!(save.settings&&save.settings[k]); }
+  function toggleSound(){
+    if (!save.settings) save.settings={sound:true,shake:true};
+    save.settings.sound=!soundOn();
+    persist();
+    els.btnSound.classList.toggle('off',!soundOn());
+    els.btnSound.textContent=soundOn()?'♪':'×';
+    if (soundOn()) sfx(660,.1,'sine',.03,80);
+  }
+
+  /* ---------- toast ---------- */
+  function toast(msg,kind){
+    var d=document.createElement('div');
+    d.className='toast'+(kind?' '+kind:'');
+    d.textContent=msg;
+    els.toasts.appendChild(d);
+    while (els.toasts.children.length>3) els.toasts.removeChild(els.toasts.firstChild);
+    setTimeout(function(){ d.style.opacity='0'; d.style.transition='opacity .3s'; },1900);
+    setTimeout(function(){ if (d.parentNode) d.parentNode.removeChild(d); },2300);
+  }
+
+  /* ---------- state ---------- */
+  var game=null,objects=[],hook=null;
+  var best=save.best||0;
+  var selectedMode='campaign';
+  var lastT=0,rafId=0;
+  var bgCache={};
+  var parts=[],floats=[],rings=[],shake=0;
+  var endAction='retry';
+  var endUnlocked=[];
+  var objId=0;
+  var ambient=[];
+  var menuT=0,menuRaf=0;
+  var lastAwardAt=0;
+
+  /* ---------- background ---------- */
+  function getBG(key){
+    if (bgCache[key]) return bgCache[key];
+    var c=document.createElement('canvas'); c.width=W; c.height=H;
+    var g=c.getContext('2d');
+    var th=THEMES[key]||THEMES.mine;
+    drawBGBase(g,th);
+    drawBGDecor(g,th,key);
+    bgCache[key]=c;
+    return c;
+  }
+
+  function bgRnd(seed){
+    var s=seed||11;
+    return function(){ s=(s*16807)%2147483647; return s/2147483647; };
+  }
+
+  function drawBGBase(g,th){
+    var r=bgRnd(hashStr(th.decor)%200000+17);
+    var sky=g.createLinearGradient(0,0,0,H);
+    sky.addColorStop(0,th.sky[0]); sky.addColorStop(.4,th.sky[1]); sky.addColorStop(.8,th.sky[2]); sky.addColorStop(1,th.sky[3]);
+    g.fillStyle=sky; g.fillRect(0,0,W,H);
+
+    // strata
+    for (var s=0;s<8;s++){
+      var y=150+s*58+r()*24;
+      g.strokeStyle='rgba('+th.glow+','+(0.022+r()*0.03).toFixed(3)+')';
+      g.lineWidth=1+r()*2;
+      g.beginPath(); g.moveTo(-20,y);
+      for (var x=0;x<=W+40;x+=60){
+        g.quadraticCurveTo(x+30,y+(r()-0.5)*20,x+60,y+(r()-0.5)*11);
+      }
+      g.stroke();
+    }
+
+    // dust / small stones
+    for (var d=0;d<280;d++){
+      var dx=r()*W,dy=118+r()*(H-118),dr=r()*1.5+0.2,a=r()*0.5+0.07;
+      g.fillStyle=r()>0.84?'rgba('+th.glow+','+a.toFixed(2)+')':'rgba('+th.dust+','+(a*0.7).toFixed(2)+')';
+      g.beginPath(); g.arc(dx,dy,dr,0,6.283); g.fill();
+    }
+
+    // side timbers
+    for (var side=0;side<2;side++){
+      var tx=side?W-26:0;
+      var tg=g.createLinearGradient(tx,0,tx+26,0);
+      tg.addColorStop(0,side?th.timber[0]:th.timber[1]); tg.addColorStop(1,side?th.timber[1]:th.timber[0]);
+      g.fillStyle=tg; g.fillRect(tx,50,26,H-50);
+      g.strokeStyle='rgba(0,0,0,.4)'; g.lineWidth=1;
+      for (var k=0;k<8;k++){
+        var ky=68+k*70;
+        g.beginPath(); g.moveTo(tx+3,ky); g.lineTo(tx+23,ky+(k%2?6:-6)); g.stroke();
+      }
+      g.fillStyle='rgba('+th.glow+',.3)';
+      for (var b=0;b<9;b++){ g.beginPath(); g.arc(tx+13,78+b*64,2.3,0,6.283); g.fill(); }
+    }
+
+    // top beam
+    var beam=g.createLinearGradient(0,0,0,78);
+    beam.addColorStop(0,th.beam[0]); beam.addColorStop(.5,th.beam[1]); beam.addColorStop(1,th.beam[2]);
+    g.fillStyle=beam; g.fillRect(0,0,W,78);
+    g.strokeStyle='rgba(0,0,0,.45)'; g.lineWidth=2;
+    for (var p=0;p<4;p++){ g.beginPath(); g.moveTo(0,16+p*17); g.lineTo(W,16+p*17); g.stroke(); }
+    g.strokeStyle='rgba('+th.glow+',.12)'; g.lineWidth=1;
+    for (var q=0;q<4;q++){ g.beginPath(); g.moveTo(0,17+q*17); g.lineTo(W,17+q*17); g.stroke(); }
+    g.fillStyle='rgba(15,10,5,.78)'; g.fillRect(0,74,W,8);
+    g.fillStyle='rgba(35,24,12,.92)'; g.fillRect(PIVOT.x-6,74,12,30);
+
+    // rails + floor
+    g.fillStyle='rgba(0,0,0,.32)'; g.fillRect(0,600,W,40);
+    g.strokeStyle='rgba('+th.rail+',.55)'; g.lineWidth=4;
+    g.beginPath(); g.moveTo(26,626); g.lineTo(W-26,626); g.stroke();
+    g.strokeStyle='rgba('+th.rail+',.42)'; g.lineWidth=3;
+    for (var sl=0;sl<12;sl++){
+      var sx=30+sl*38;
+      g.beginPath(); g.moveTo(sx,614); g.lineTo(sx,638); g.stroke();
+    }
+
+    // cart
+    g.fillStyle='rgba(8,6,3,.72)';
+    g.beginPath(); g.moveTo(26,558); g.lineTo(120,558); g.lineTo(108,600); g.lineTo(38,600); g.closePath(); g.fill();
+    g.strokeStyle='rgba('+th.glow+',.25)'; g.lineWidth=2; g.stroke();
+    g.fillStyle='rgba(26,18,10,.95)';
+    g.beginPath(); g.arc(46,602,9,0,6.283); g.fill();
+    g.beginPath(); g.arc(100,602,9,0,6.283); g.fill();
+
+    // lantern
+    var lg=g.createRadialGradient(74,132,4,74,132,58);
+    lg.addColorStop(0,'rgba('+th.glow+',.55)'); lg.addColorStop(1,'rgba('+th.glow+',0)');
+    g.fillStyle=lg; g.beginPath(); g.arc(74,132,58,0,6.283); g.fill();
+    g.fillStyle='rgba(35,24,12,.92)'; g.fillRect(70,78,8,14);
+    g.fillStyle='rgba('+th.glow+',.92)'; rrLocal(g,64,92,20,28,5); g.fill();
+    g.strokeStyle='rgba(80,54,22,.95)'; g.lineWidth=1.5;
+    rrLocal(g,64,92,20,28,5); g.stroke();
+  }
+
+  function drawBGDecor(g,th,key){
+    var r=bgRnd(hashStr(key)%99991+31);
+    var glow=th.glow;
+    if (th.decor==='crystal'||th.decor==='star'){
+      for (var i=0;i<3;i++){
+        var cx=i? (i===1?24:W-26) : 60;
+        var cy=548+i*8;
+        g.fillStyle='rgba('+glow+',.16)';
+        g.beginPath(); g.moveTo(cx,cy); g.lineTo(cx+16,cy-52-i*12); g.lineTo(cx+32,cy); g.closePath(); g.fill();
+        g.fillStyle='rgba('+glow+',.1)';
+        g.beginPath(); g.moveTo(cx+12,cy+8); g.lineTo(cx+24,cy-32); g.lineTo(cx+38,cy+8); g.closePath(); g.fill();
+      }
+    }
+    if (th.decor==='lava'||th.decor==='forge'){
+      var pool=g.createLinearGradient(0,556,0,640);
+      pool.addColorStop(0,'rgba(255,90,30,0)'); pool.addColorStop(.55,'rgba(255,110,40,.16)'); pool.addColorStop(1,'rgba(255,150,60,.3)');
+      g.fillStyle=pool; g.fillRect(0,540,W,100);
+      for (var l=0;l<7;l++){
+        var lx=20+r()*(W-40),ly=566+r()*54,lw=14+r()*34;
+        g.strokeStyle='rgba(255,'+(130+Math.floor(r()*70))+',60,'+(0.2+r()*0.3).toFixed(2)+')';
+        g.lineWidth=1.5+r()*2;
+        g.beginPath(); g.moveTo(lx,ly); g.lineTo(lx+lw,ly-6+r()*12); g.stroke();
+      }
+      // cracks
+      for (var c=0;c<5;c++){
+        var sx=30+r()*(W-60),sy=180+r()*320;
+        g.strokeStyle='rgba(255,120,50,.22)'; g.lineWidth=1;
+        g.beginPath(); g.moveTo(sx,sy);
+        var px=sx,py=sy;
+        for (var k=0;k<4;k++){ px+=(r()-0.5)*30; py+=12+r()*18; g.lineTo(px,py); }
+        g.stroke();
+      }
+    }
+    if (th.decor==='water'){
+      var wp=g.createLinearGradient(0,520,0,640);
+      wp.addColorStop(0,'rgba(60,150,170,0)'); wp.addColorStop(.5,'rgba(60,160,180,.12)'); wp.addColorStop(1,'rgba(90,200,210,.2)');
+      g.fillStyle=wp; g.fillRect(0,510,W,130);
+      g.strokeStyle='rgba(140,230,235,.16)'; g.lineWidth=1;
+      for (var w=0;w<8;w++){
+        var wy=552+w*10;
+        g.beginPath(); g.moveTo(30,wy);
+        for (var wx=30;wx<W-30;wx+=40) g.quadraticCurveTo(wx+20,wy+(w%2?3:-3),wx+40,wy);
+        g.stroke();
+      }
+      // drips
+      for (var dr=0;dr<5;dr++){
+        var dx=50+r()*(W-100),dy=120+r()*300;
+        g.strokeStyle='rgba(150,230,235,.25)'; g.lineWidth=1.4;
+        g.beginPath(); g.moveTo(dx,dy); g.lineTo(dx,dy+10+r()*16); g.stroke();
+      }
+    }
+    if (th.decor==='camp'){
+      // crates
+      for (var c2=0;c2<3;c2++){
+        var x2=300+c2*40,y2=560-c2*14;
+        g.fillStyle='rgba(70,48,24,.5)'; g.fillRect(x2,y2,30,34);
+        g.strokeStyle='rgba(200,160,100,.25)'; g.lineWidth=1.5; g.strokeRect(x2,y2,30,34);
+        g.beginPath(); g.moveTo(x2,y2); g.lineTo(x2+30,y2+34); g.moveTo(x2+30,y2); g.lineTo(x2,y2+34); g.stroke();
+      }
+      // tent
+      g.fillStyle='rgba(50,40,30,.55)';
+      g.beginPath(); g.moveTo(365,600); g.lineTo(420,520); g.lineTo(472,600); g.closePath(); g.fill();
+      g.strokeStyle='rgba(190,160,120,.28)'; g.lineWidth=1.5; g.stroke();
+      // fire
+      var fg=g.createRadialGradient(140,590,2,140,590,40);
+      fg.addColorStop(0,'rgba(255,190,90,.42)'); fg.addColorStop(1,'rgba(255,120,40,0)');
+      g.fillStyle=fg; g.beginPath(); g.arc(140,590,40,0,6.283); g.fill();
+    }
+    if (th.decor==='bat'){
+      // stalactites
+      for (var st=0;st<7;st++){
+        var sx2=40+r()*(W-80),len=16+r()*34;
+        g.fillStyle='rgba(40,30,44,.6)';
+        g.beginPath(); g.moveTo(sx2-7,78); g.lineTo(sx2+7,78); g.lineTo(sx2,78+len); g.closePath(); g.fill();
+      }
+      // hanging bats
+      for (var ba=0;ba<5;ba++){
+        var bx=60+r()*(W-120),by=120+r()*150;
+        g.fillStyle='rgba(22,16,26,.75)';
+        g.beginPath(); g.moveTo(bx,by); g.quadraticCurveTo(bx-12,by-8,bx-18,by+4); g.quadraticCurveTo(bx-8,by+2,bx,by+6);
+        g.quadraticCurveTo(bx+8,by+2,bx+18,by+4); g.quadraticCurveTo(bx+12,by-8,bx,by); g.fill();
+      }
+      // bones
+      g.strokeStyle='rgba(200,190,170,.18)'; g.lineWidth=3;
+      for (var bo=0;bo<4;bo++){
+        var bx2=60+r()*(W-120),by2=540+r()*50;
+        g.beginPath(); g.moveTo(bx2-10,by2); g.lineTo(bx2+10,by2+4); g.stroke();
+      }
+    }
+    if (th.decor==='altar'){
+      // pillars
+      for (var pi=0;pi<2;pi++){
+        var px2=pi?W-58:26;
+        g.fillStyle='rgba(58,52,36,.5)';
+        g.fillRect(px2,300,32,300);
+        g.strokeStyle='rgba(230,210,150,.16)'; g.lineWidth=1.5;
+        g.strokeRect(px2,300,32,300);
+        for (var pj=0;pj<5;pj++){ g.beginPath(); g.moveTo(px2,326+pj*54); g.lineTo(px2+32,326+pj*54); g.stroke(); }
+      }
+      // rune circle
+      var cy2=560,cx2=W/2;
+      g.strokeStyle='rgba(240,220,150,.16)'; g.lineWidth=2;
+      g.beginPath(); g.ellipse(cx2,cy2,86,26,0,0,6.283); g.stroke();
+      g.beginPath(); g.ellipse(cx2,cy2,60,18,0,0,6.283); g.stroke();
+      for (var rn=0;rn<8;rn++){
+        var a=rn/8*6.283;
+        g.fillStyle='rgba(240,220,150,.2)';
+        g.beginPath(); g.arc(cx2+Math.cos(a)*73,cy2+Math.sin(a)*22,1.8,0,6.283); g.fill();
+      }
+    }
+    if (th.decor==='star'){
+      // stars
+      for (var s2=0;s2<160;s2++){
+        var sx3=r()*W,sy3=90+r()*(H-100),sr=r()*1.2+0.2,sa=0.1+r()*0.55;
+        g.fillStyle='rgba(220,230,255,'+sa.toFixed(2)+')';
+        g.beginPath(); g.arc(sx3,sy3,sr,0,6.283); g.fill();
+      }
+      // glowing veins
+      for (var v=0;v<4;v++){
+        var vx=40+r()*(W-80),vy=200+r()*280;
+        g.strokeStyle='rgba(150,180,255,.18)'; g.lineWidth=1.5;
+        g.beginPath(); g.moveTo(vx,vy);
+        var vpx=vx,vpy=vy;
+        for (var vk=0;vk<5;vk++){ vpx+=(r()-0.5)*26; vpy+=10+r()*16; g.lineTo(vpx,vpy); }
+        g.stroke();
+      }
+    }
+    if (th.decor==='fault'){
+      for (var f=0;f<3;f++){
+        var fx=80+f*140,fy=160+f*40;
+        g.strokeStyle='rgba(255,190,130,.13)'; g.lineWidth=2+f;
+        g.beginPath(); g.moveTo(fx,fy);
+        var fpx=fx,fpy=fy;
+        for (var fk=0;fk<6;fk++){ fpx+=(r()-0.5)*34; fpy+=26+r()*18; g.lineTo(fpx,fpy); }
+        g.stroke();
+      }
+    }
+    if (th.decor==='arch'){
+      for (var ar=0;ar<2;ar++){
+        var ax=ar?W-70:34;
+        g.strokeStyle='rgba(190,150,100,.16)'; g.lineWidth=6;
+        g.beginPath(); g.moveTo(ax,78); g.lineTo(ax,600); g.stroke();
+        g.strokeStyle='rgba(190,150,100,.12)'; g.lineWidth=4;
+        g.beginPath(); g.moveTo(ax+36,78); g.lineTo(ax+36,600); g.stroke();
+        for (var ab=0;ab<5;ab++){
+          var aby=150+ab*90;
+          g.beginPath(); g.moveTo(ax,aby); g.lineTo(ax+36,aby+12); g.stroke();
+        }
+      }
+    }
+    if (th.decor==='strata'||th.decor==='heart'){
+      // buried gold veins
+      for (var gv=0;gv<5;gv++){
+        var gx=40+r()*(W-80),gy=200+r()*300;
+        g.strokeStyle='rgba(255,210,110,'+(0.08+r()*0.1).toFixed(2)+')';
+        g.lineWidth=1.5+r()*2;
+        g.beginPath(); g.moveTo(gx,gy);
+        var gpx=gx,gpy=gy;
+        for (var gk=0;gk<5;gk++){ gpx+=(r()-0.5)*30; gpy+=10+r()*16; g.lineTo(gpx,gpy); }
+        g.stroke();
+      }
+      if (th.decor==='heart'){
+        g.strokeStyle='rgba(255,210,110,.18)'; g.lineWidth=3;
+        g.beginPath(); g.moveTo(W/2,420);
+        g.bezierCurveTo(150,330,180,250,240,330);
+        g.bezierCurveTo(300,250,330,330,W/2-80,420);
+        g.stroke();
+      }
+    }
+    if (th.decor==='forge'){
+      // furnace arch
+      g.fillStyle='rgba(40,20,10,.65)';
+      g.beginPath(); g.moveTo(370,600); g.lineTo(370,470); g.quadraticCurveTo(420,430,470,470); g.lineTo(470,600); g.closePath(); g.fill();
+      var ff=g.createRadialGradient(420,505,4,420,505,60);
+      ff.addColorStop(0,'rgba(255,170,60,.55)'); ff.addColorStop(1,'rgba(255,80,20,0)');
+      g.fillStyle=ff; g.beginPath(); g.arc(420,505,60,0,6.283); g.fill();
+      // pipes
+      g.strokeStyle='rgba(90,60,40,.55)'; g.lineWidth=7;
+      g.beginPath(); g.moveTo(26,430); g.lineTo(120,430); g.lineTo(150,470); g.stroke();
+      g.strokeStyle='rgba(200,120,60,.2)'; g.lineWidth=2;
+      g.beginPath(); g.moveTo(26,427); g.lineTo(120,427); g.lineTo(150,467); g.stroke();
+    }
+  }
+
+  /* ---------- ambient (animated) ---------- */
+  function rebuildAmbient(){
+    ambient=[];
+    var r=bgRnd((game?hashStr(game.theme+'a'):17)%77777+5);
+    var theme=game?THEMES[game.theme]:THEMES.mine;
+    var n=(theme.decor==='star')?46:(theme.decor==='lava'||theme.decor==='forge'?30:22);
+    for (var i=0;i<n;i++){
+      ambient.push({
+        x:r()*W,y:110+r()*(H-140),vx:(r()-0.5)*8,vy:-6-r()*14,
+        r:0.6+r()*1.8,a:0.1+r()*0.35,ph:r()*6.283,sp:0.3+r()*1.2,
+        kind:theme.decor
+      });
+    }
+  }
+  function updateAmbient(dt,t){
+    for (var i=0;i<ambient.length;i++){
+      var p=ambient[i];
+      p.x+=p.vx*dt; p.y+=p.vy*dt;
+      if (p.y<108){ p.y=H-40; p.x=Math.random()*W; }
+      if (p.x<20) p.x=W-20; if (p.x>W-20) p.x=20;
+    }
+  }
+  function drawAmbient(t){
+    if (!game) return;
+    var th=THEMES[game.theme]||THEMES.mine;
+    var decor=th.decor;
+    ctx.save();
+    for (var i=0;i<ambient.length;i++){
+      var p=ambient[i];
+      var a=p.a*(0.55+0.45*Math.sin(t*p.sp+p.ph));
+      if (decor==='lava'||decor==='forge'){
+        ctx.fillStyle='rgba(255,'+(130+Math.floor(40*Math.sin(p.ph+t)))+',60,'+Math.max(0,a).toFixed(2)+')';
+        ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,6.283); ctx.fill();
+      } else if (decor==='water'){
+        ctx.fillStyle='rgba(150,230,235,'+Math.max(0,a*0.7).toFixed(2)+')';
+        ctx.beginPath(); ctx.arc(p.x,p.y,p.r*0.7,0,6.283); ctx.fill();
+      } else if (decor==='star'){
+        ctx.fillStyle='rgba(210,225,255,'+Math.max(0,a).toFixed(2)+')';
+        ctx.beginPath(); ctx.arc(p.x,p.y,p.r*0.8,0,6.283); ctx.fill();
+      } else {
+        ctx.fillStyle='rgba('+th.dust+','+Math.max(0,a*0.55).toFixed(2)+')';
+        ctx.beginPath(); ctx.arc(p.x,p.y,p.r*0.6,0,6.283); ctx.fill();
+      }
+    }
+    // torch flicker glow
+    var flick=0.82+0.18*Math.sin(t*7.3)+0.06*Math.sin(t*17.1);
+    var lg=ctx.createRadialGradient(74,132,3,74,132,64*flick);
+    lg.addColorStop(0,'rgba('+th.glow+',.22)'); lg.addColorStop(1,'rgba('+th.glow+',0)');
+    ctx.fillStyle=lg; ctx.beginPath(); ctx.arc(74,132,66*flick,0,6.283); ctx.fill();
+    ctx.restore();
+  }
+
+  save.campaignWins=save.campaignWins||0;
+  save.bestLevel=save.bestLevel||0;
+  save.runs=save.runs||0;
+  if (save.dailyDate && save.dailyDate!==todayKey()) save.dailyBest=0;
+
+  /* ---------- level generation ---------- */
+  function itemsValue(items){
+    var total=0;
+    Object.keys(items).forEach(function(k){
+      var t=TYPES[k]; if (!t) return;
+      var v=t.value;
+      if (k==='bag') v=130;
+      total+=v*(items[k]||0);
+    });
+    return total;
+  }
+
+  function makeEndlessLevel(depth,rng){
+    var themes=['mine','tunnel','crystal','fault','heart','lava','camp','water','batcave','altar','star','forge'];
+    var theme=themes[(depth-1)%themes.length];
+    var items={};
+    items.goldS=Math.max(2,8-Math.floor(depth/3));
+    items.goldM=3+Math.floor(depth*0.75);
+    items.goldL=1+Math.floor(depth*0.5);
+    if (depth>=3) items.goldXL=Math.floor((depth-1)/2);
+    items.rockS=2+Math.floor(depth*0.7);
+    if (depth>=2) items.rockL=Math.floor((depth+1)/2);
+    items.bag=1+Math.floor(depth/4);
+    if (depth>=3) items.diamond=1+Math.floor(depth/4);
+    if (depth>=4){ items.ruby=1+Math.floor(depth/6); items.emerald=Math.floor(depth/6); }
+    if (depth>=5){ items.sapphire=Math.floor(depth/5); items.crystal=Math.floor(depth/5); }
+    if (depth>=6){ items.fossil=1+Math.floor(depth/6); items.coin=2+Math.floor(depth/3); }
+    if (depth>=7) items.chest=1+Math.floor((depth-5)/4);
+    if (depth>=8) items.hourglass=1;
+    if (depth>=6 && depth%3===0) items.bomb=1;
+    if (depth>=9) items.bat=1+Math.floor((depth-7)/3);
+    if (depth>=11) items.mole=1+Math.floor((depth-9)/3);
+    if (depth>=5 && depth%4===0) items.clover=1;
+    var target=Math.round((330+290*(depth-1)+48*Math.pow(depth-1,1.55))/10)*10;
+    var guard=0;
+    while (itemsValue(items)<target*1.7 && guard<40){
+      items.goldM=(items.goldM||0)+1;
+      guard++;
+    }
+    var time=Math.max(32,52-Math.floor((depth-1)/2));
+    return {
+      name:'无尽 · 第 '+depth+' 层',
+      theme:theme,target:target,time:time,
+      tip:'清空整层才能下潜，撑得越久记录越深。',
+      items:items,endless:true,depth:depth
+    };
+  }
+
+  function makeDailyLevel(rng){
+    var themes=['mine','tunnel','crystal','fault','heart','lava','camp','water','batcave','altar','star','forge'];
+    var theme=themes[Math.floor(rng()*themes.length)];
+    var items={goldS:8,goldM:5,goldL:2,rockS:4,bag:2};
+    items.diamond=1+Math.floor(rng()*2);
+    if (rng()>0.5) items.ruby=1;
+    if (rng()>0.6) items.emerald=1;
+    if (rng()>0.65) items.sapphire=1;
+    if (rng()>0.55) items.crystal=1+Math.floor(rng()*2);
+    if (rng()>0.5) items.coin=2+Math.floor(rng()*3);
+    if (rng()>0.7) items.fossil=1;
+    if (rng()>0.72) items.chest=1;
+    if (rng()>0.55) items.hourglass=1;
+    if (rng()>0.7) items.clover=1;
+    if (rng()>0.78) items.bomb=1;
+    if (rng()>0.6) items.bat=1;
+    items.rockL=Math.floor(rng()*2);
+    var total=itemsValue(items);
+    var target=Math.max(700,Math.round(total*0.52/10)*10);
+    return {
+      name:'每日 · '+todayKey(),theme:theme,target:target,time:60,
+      tip:'全世界今天都是同一条矿脉，把整层清空才算完成。',
+      items:items,daily:true
+    };
+  }
+
+  function makeObjects(def,rng){
+    var list=[]; objId=0;
+    var order=[];
+    Object.keys(def.items).forEach(function(k){
+      if (!TYPES[k]) return;
+      for (var i=0;i<def.items[k];i++) order.push(k);
+    });
+    order.sort(function(a,b){ return (TYPES[b].value+TYPES[b].r*4)-(TYPES[a].value+TYPES[a].r*4); });
+    for (var n=0;n<order.length;n++){
+      var type=order[n], T=TYPES[type];
+      var placed=false;
+      for (var tries=0;tries<520&&!placed;tries++){
+        var x=44+rng()*(W-88);
+        var y=186+rng()*372;
+        var dx=x-PIVOT.x, dy=y-PIVOT.y;
+        var dist=Math.sqrt(dx*dx+dy*dy);
+        if (dist<126||dist>505) continue;
+        var ok=true;
+        for (var m=0;m<list.length;m++){
+          var o=list[m];
+          var ddx=o.x-x, ddy=o.y-y;
+          if (Math.sqrt(ddx*ddx+ddy*ddy)<o.r+T.r+9){ ok=false; break; }
+        }
+        if (!ok) continue;
+        list.push(mkObject(type,T,x,y,rng));
+        placed=true;
+      }
+      if (!placed){
+        var fx=52+rng()*(W-104), fy=200+rng()*340;
+        list.push(mkObject(type,T,fx,fy,rng));
+      }
+    }
+    return list;
+  }
+
+  function mkObject(type,T,x,y,rng){
+    var o={
+      id:objId++,type:type,kind:T.kind,x:x,y:y,r:T.r,weight:T.weight,
+      value:T.value,removed:false,grabbed:false,seed:rng()*100,
+      baseX:x,baseY:y,move:null
+    };
+    if (type==='bat'){
+      var amp=Math.min(34+rng()*38,x-44,W-44-x);
+      o.move={axis:'x',amp:Math.max(10,amp),speed:0.7+rng()*0.8,ph:rng()*6.283};
+      o.baseX=x;
+    } else if (type==='mole'){
+      var ampY=Math.min(14+rng()*12,560-y,Math.max(0,y-430));
+      o.move={axis:'y',amp:Math.max(6,ampY),speed:0.6+rng()*0.7,ph:rng()*6.283};
+      o.baseY=y;
+    }
+    return o;
+  }
+
+  /* ---------- run flow ---------- */
+  function newGame(mode){
+    selectedMode=mode||'campaign';
+    var seed=(selectedMode==='daily')?hashStr(todayKey()):((Date.now()^Math.floor(Math.random()*1e9))>>>0);
+    game={
+      mode:selectedMode,phase:'play',level:0,wallet:0,earned:0,target:0,
+      time:60,timeMax:60,upgrades:{str:0,spd:0,luck:0,time:0},
+      ending:false,theme:'mine',def:null,seed:seed,
+      combo:0,comboT:0,mult:1,luckBuff:0,
+      run:{items:0,rocks:0,diamonds:0,hourglasses:0,bestCombo:0,crits:0,bombRocks:0,noRock:true,earned:0},
+      dailyDate:todayKey(),hudT:0
+    };
+    save.runs=(save.runs||0)+1;
+    persist();
+    hideAll();
+    endUnlocked=[];
+    startLevel(0);
+  }
+
+  function hideAll(){
+    els.ovStart.classList.add('hide');
+    els.ovShop.classList.add('hide');
+    els.ovEnd.classList.add('hide');
+    els.ovCodex.classList.add('hide');
+    els.ovAch.classList.add('hide');
+    els.ovHelp.classList.add('hide');
+    els.ovPause.classList.add('hide');
+  }
+
+  function startLevel(idx){
+    if (!game) return;
+    game.level=idx;
+    var seed=(game.seed+idx*7919)>>>0;
+    var rng=mulberry32(seed);
+    game.rng=rng;
+    var def;
+    if (game.mode==='campaign'){
+      def=LEVELS[clamp(idx,0,LEVELS.length-1)];
+    } else if (game.mode==='endless'){
+      def=makeEndlessLevel(idx+1,rng);
+    } else {
+      def=makeDailyLevel(rng);
+    }
+    game.def=def;
+    game.theme=def.theme;
+    game.target=def.target;
+    game.earned=0;
+    game.ending=false;
+    game.phase='play';
+    game.combo=0; game.comboT=0; game.mult=1;
+    game.luckBuff=0;
+    game.run={items:0,rocks:0,diamonds:0,hourglasses:0,bestCombo:0,crits:0,bombRocks:0,noRock:true,earned:0};
+    objects=makeObjects(def,rng);
+    game.time=Math.max(def.time,Math.ceil(objects.length*3.4)+18)+game.upgrades.time*3;
+    game.timeMax=game.time;
+    parts=[]; floats=[]; rings=[]; shake=0;
+    hook={state:'swing',angle:0,len:BASE_LEN,swingT:0,grabbed:null,manual:false};
+    hideAll();
+    els.hLevel.textContent=String(idx+1);
+    els.hMax.textContent=(game.mode==='campaign')?('/'+MAX_LV):(game.mode==='endless'?'/∞':'/每日');
+    syncHud();
+    rebuildAmbient();
+    lastT=performance.now();
+    startLoop();
+    sfx(300,.1,'sine',.025,60);
+    setTimeout(function(){ sfx(420,.12,'sine',.02,80); },100);
+    toast('第 '+(idx+1)+' 层 · '+def.name);
+  }
+
+  function startLoop(){
+    cancelAnimationFrame(rafId);
+    lastT=performance.now();
+    rafId=requestAnimationFrame(loop);
+  }
+
+  function syncHud(){
+    if (!game) return;
+    els.hLevel.textContent=String(game.level+1);
+    els.hEarned.textContent=fmt(game.earned);
+    els.hWallet.textContent=fmt(game.wallet);
+    els.hCombo.textContent='x'+(game.mult||1).toFixed(1);
+    els.hLeft.textContent=String(remainingCount());
+    els.chipCombo.classList.toggle('hot',(game.combo||0)>=2);
+  }
+
+  function comboReset(){
+    if (game.combo>0) {
+      floats.push({x:PIVOT.x,y:PIVOT.y+50,text:'连击中断',t:1.1,color:'#9a8b6d',size:12});
+    }
+    game.combo=0; game.comboT=0; game.mult=1;
+  }
+
+  function comboAdd(){
+    if (game.comboT>0) game.combo=Math.min(99,game.combo+1);
+    else game.combo=1;
+    game.comboT=3.5;
+    game.mult=1+Math.min(1.0,(game.combo-1)*0.12);
+    if (game.combo>game.run.bestCombo) game.run.bestCombo=game.combo;
+    if (game.combo>save.bestCombo) save.bestCombo=game.combo;
+  }
+
+  /* ---------- upgrades ---------- */
+  function upgDef(key){
+    for (var i=0;i<UPGRADES.length;i++) if (UPGRADES[i].key===key) return UPGRADES[i];
+    return UPGRADES[0];
+  }
+  function price(kind){
+    var u=upgDef(kind);
+    var lv=game?game.upgrades[kind]:0;
+    return u.base+u.step*lv;
+  }
+  function buyUpgrade(kind){
+    if (!game||game.phase!=='shop') return;
+    var u=upgDef(kind);
+    var lv=game.upgrades[kind];
+    if (lv>=u.max){ return; }
+    var p=price(kind);
+    if (game.wallet<p){ shopToast('金币不够，再挖一层吧'); return; }
+    game.wallet-=p;
+    game.upgrades[kind]=lv+1;
+    if (game.wallet>save.best) save.best=game.wallet;
+    persist();
+    syncHud();
+    renderShop();
+    sfx(760,.12,'triangle',.03,120);
+    setTimeout(function(){ sfx(1040,.16,'sine',.03,80); },110);
+  }
+  function shopToast(msg){
+    els.shopSub.textContent=msg;
+    setTimeout(function(){ if (game&&game.phase==='shop') renderShopSub(); },1200);
+  }
+  function renderShopSub(){
+    if (!game) return;
+    var modeTxt=game.mode==='endless'?('无尽第 '+(game.level+1)+' 层'):(game.mode==='daily'?'每日矿脉':'第 '+(game.level+1)+' 层');
+    els.shopSub.textContent=modeTxt+'已清空 · 本层收入 '+fmt(game.earned);
+  }
+  function renderShop(){
+    if (!game) return;
+    els.shopWallet.textContent=fmt(game.wallet);
+    UPGRADES.forEach(function(u){
+      var lv=game.upgrades[u.key];
+      var tag=els['lv'+u.key.charAt(0).toUpperCase()+u.key.slice(1)];
+      if (tag) tag.textContent='Lv '+lv+' / '+u.max;
+      var b=els['buy'+u.key.charAt(0).toUpperCase()+u.key.slice(1)];
+      if (!b) return;
+      if (lv>=u.max){ b.textContent='已满级'; b.disabled=true; }
+      else {
+        b.textContent='升级 '+price(u.key);
+        b.disabled=game.wallet<price(u.key);
+      }
+    });
+    renderShopSub();
+  }
+
+  /* ---------- hook ---------- */
+  function hookLimit(angle){
+    var dx=Math.sin(angle), dy=Math.cos(angle), max=540;
+    if (dx>0.0001) max=Math.min(max,(W-24-PIVOT.x)/dx);
+    if (dx<-0.0001) max=Math.min(max,(24-PIVOT.x)/dx);
+    if (dy>0.0001) max=Math.min(max,(H-18-PIVOT.y)/dy);
+    return Math.max(60,max);
+  }
+  function hookPos(len){
+    return {x:PIVOT.x+Math.sin(hook.angle)*len,y:PIVOT.y+Math.cos(hook.angle)*len};
+  }
+  function launch(){
+    if (!game||game.phase!=='play'||hook.state!=='swing'||game.ending) return;
+    hook.state='out';
+    hook.len=BASE_LEN;
+    sfx(240,.14,'sawtooth',.025,-90);
+  }
+  function retractSpeed(o){
+    var up=game.upgrades;
+    var factor=1+Math.max(0,o.weight-1)*(0.62-0.13*up.str);
+    return (280+62*up.spd)/factor;
+  }
+  function grabObj(o){
+    if (o.removed||o.grabbed) return;
+    o.grabbed=true;
+    hook.grabbed=o;
+    hook.state='back';
+    shake=Math.min(8,shake+4);
+    sfx(460,.08,'square',.03,-40);
+    setTimeout(function(){ sfx(320,.12,'square',.025,-30); },60);
+  }
+
+  /* ---------- award ---------- */
+  function addFloat(text,x,y,color,size,sub){
+    floats.push({x:x,y:y,text:text,t:1.25,color:color,size:size||18,sub:sub||''});
+  }
+  function burst(x,y,color,n,spd){
+    for (var i=0;i<(n||14);i++){
+      var a=Math.random()*6.283,sp=(spd||120)*(0.4+Math.random());
+      parts.push({x:x,y:y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-40,t:0.35+Math.random()*0.5,color:color,r:1.2+Math.random()*2.2});
+    }
+  }
+  function addRing(x,y,color,rad){
+    rings.push({x:x,y:y,r:6,max:rad||60,t:0.55,color:color});
+  }
+
+  function award(o){
+    o.removed=true; o.grabbed=false;
+    var kind=o.kind, type=o.type;
+    if (type && !save.seen[type]){ save.seen[type]=1; }
+    var bx=o.baseX,by=o.baseY;
+    var base=o.value;
+    if (kind==='bag'){
+      var luck=game.upgrades.luck+game.luckBuff;
+      base=Math.round((60+Math.random()*(150+luck*65))/10)*10;
+    }
+    var special=false, crit=false, gain=0;
+
+    if (kind==='hourglass'){
+      special=true;
+      game.time+=6;
+      game.run.hourglasses++;
+      addFloat('+6 秒',PIVOT.x,PIVOT.y+26,'#9fe6ff',20);
+      addRing(PIVOT.x,PIVOT.y+10,'rgba(150,230,255,.8)',54);
+      sfx(880,.14,'sine',.035,160);
+      setTimeout(function(){ sfx(1180,.18,'sine',.03,120); },110);
+    } else if (kind==='bomb'){
+      special=true;
+      game.time=Math.max(0,game.time-2);
+      game.combo=0; game.comboT=0; game.mult=1;
+      var destroyed=0;
+      for (var i=0;i<objects.length;i++){
+        var q=objects[i];
+        if (q.removed||q.grabbed) continue;
+        if (q.kind!=='rock') continue;
+        var dd=Math.sqrt((q.x-bx)*(q.x-bx)+(q.y-by)*(q.y-by));
+        if (dd<126){ q.removed=true; destroyed++; burst(q.x,q.y,'#b0a89a',9,150); }
+      }
+      game.run.bombRocks=Math.max(game.run.bombRocks,destroyed);
+      if (destroyed>save.bombBest) save.bombBest=destroyed;
+      burst(bx,by,'#ffb04a',34,240);
+      addRing(bx,by,'rgba(255,150,60,.9)',130);
+      addFloat('轰! -2 秒',bx,by-10,'#ff9a60',22,destroyed?('炸碎 '+destroyed+' 块石头'):'什么都没炸到');
+      shake=Math.min(14,shake+11);
+      noiseBurst(.45,.14,700);
+      setTimeout(function(){ noiseBurst(.3,.09,500); },90);
+    } else if (kind==='clover'){
+      special=true;
+      game.luckBuff++;
+      addFloat('幸运 +1',PIVOT.x,PIVOT.y+26,'#8fe08a',20,'本层有效');
+      addRing(PIVOT.x,PIVOT.y+10,'rgba(140,230,140,.8)',50);
+      sfx(720,.14,'triangle',.03,140);
+    } else if (kind==='rock'||kind==='bone'||kind==='skull'){
+      game.combo=0; game.comboT=0; game.mult=1;
+      gain=base;
+      if (kind==='rock') game.run.rocks++;
+      if (kind==='rock') game.run.noRock=false;
+      addFloat('+'+base,PIVOT.x,PIVOT.y+30,'#c9c2b4',16);
+      burst(PIVOT.x,PIVOT.y+18,kind==='bone'?'#efe8d6':'#a9a49a',10,110);
+      sfx(180,.12,'square',.03,-30);
+    } else {
+      // valuable
+      comboAdd();
+      var luck2=game.upgrades.luck+game.luckBuff;
+      var critChance=Math.min(0.45,0.05+luck2*0.022);
+      crit=Math.random()<critChance;
+      var mult=game.mult;
+      gain=Math.round(base*mult*(crit?2:1));
+      if (crit) game.run.crits++;
+      game.run.items++;
+      save.items++;
+      if (kind==='diamond'){ game.run.diamonds++; save.diamonds++; }
+      addFloat('+'+gain,PIVOT.x,PIVOT.y+26,crit?'#fff1a8':(gain>=400?'#ffe08a':'#f4c45a'),crit?23:19,
+        crit?('暴击 ×2 · 连击 x'+mult.toFixed(1)):(game.combo>1?('连击 x'+mult.toFixed(1)):''));
+      burst(PIVOT.x,PIVOT.y+18,
+        kind==='diamond'?'#a8f2ff':(kind==='crystal'?'#d8a8ff':(kind==='bag'?'#e0b060':'#ffd766')),
+        crit?22:14,crit?220:170);
+      if (crit) addRing(PIVOT.x,PIVOT.y+10,'rgba(255,235,160,.9)',74);
+      if (kind==='diamond'){ sfx(980,.18,'sine',.04,160); setTimeout(function(){ sfx(1320,.22,'sine',.03,120); },110); }
+      else if (kind==='bag'){ sfx(620,.14,'triangle',.03,120); }
+      else if (kind==='bat'||kind==='mole'){ sfx(520,.1,'triangle',.03,60); }
+      else { sfx(700,.1,'sine',.035,90); }
+      if (type==='chest') { addRing(bx,by,'rgba(255,210,110,.85)',90); }
+    }
+
+    if (gain>0){
+      game.wallet+=gain;
+      game.earned+=gain;
+      game.run.earned+=gain;
+      save.gold+=gain;
+      if (game.wallet>save.best) save.best=game.wallet;
+      if (game.wallet>best) best=game.wallet;
+    }
+    if (o.kind==='rock'||o.kind==='bone'||o.kind==='skull'||kind==='bomb') game.combo=0;
+    checkAch(false);
+    persist();
+    syncHud();
+  }
+
+  function explodeVisual(x,y,r){}
+
+  /* ---------- achievements ---------- */
+  function unlockAch(id,silent){
+    if (!save.ach) save.ach={};
+    if (save.ach[id]) return false;
+    save.ach[id]=1;
+    persist();
+    var def=null;
+    for (var i=0;i<ACHS.length;i++) if (ACHS[i].id===id) def=ACHS[i];
+    if (def){
+      endUnlocked.push(def);
+      if (!silent) toast('成就解锁 · '+def.name,'ach');
+      if (!silent) chime();
+    }
+    return true;
+  }
+  function checkAch(silent){
+    if (!game) return;
+    if (save.items>=10) unlockAch('first',silent);
+    if ((game.run.bestCombo||0)>=5) unlockAch('combo5',silent);
+    if ((game.run.bestCombo||0)>=10) unlockAch('combo10',silent);
+    if (save.diamonds>=5) unlockAch('diamond5',silent);
+    if (game.wallet>=3000) unlockAch('rich',silent);
+    if ((game.run.bombRocks||0)>=6) unlockAch('bomb6',silent);
+    if ((game.run.hourglasses||0)>=3) unlockAch('hourglass3',silent);
+    if ((game.run.crits||0)>=3) unlockAch('crit3',silent);
+    if ((save.depth||0)>=5) unlockAch('endless5',silent);
+    if ((save.depth||0)>=10) unlockAch('endless10',silent);
+    if (game.mode==='daily'&&save.dailyCount>=1) unlockAch('daily1',silent);
+    if ((save.bestLevel||0)>=1) unlockAch('clear1',silent);
+    if (save.campaignWins>=1) unlockAch('clearAll',silent);
+  }
+
+  /* ---------- level ending ---------- */
+  function remainingCount(){
+    var n=0;
+    for (var i=0;i<objects.length;i++) if (!objects[i].removed&&!objects[i].grabbed) n++;
+    return n;
+  }
+  function finishLevelClear(){
+    if (!game||game.phase!=='play') return;
+    if ((game.timeMax||0)-game.time<=45) unlockAch('noRock',false);
+    successLevel();
+  }
+  function endLevel(){
+    if (!game||game.phase!=='play') return;
+    if (remainingCount()===0){ finishLevelClear(); return; }
+    failGame();
+  }
+
+  function successLevel(){
+    if (game.mode==='campaign'){
+      save.bestLevel=Math.max(save.bestLevel||0,game.level+1);
+      if (game.level>=LEVELS.length-1){ winGame(); return; }
+      save.wins=(save.wins||0)+1;
+      checkAch(false);
+      showShop();
+    } else if (game.mode==='endless'){
+      save.depth=Math.max(save.depth||0,game.level+1);
+      save.wins=(save.wins||0)+1;
+      checkAch(false);
+      showShop();
+    } else {
+      dailyResult(true);
+    }
+  }
+
+  function showShop(){
+    game.phase='shop';
+    saveBest();
+    persist();
+    renderShop();
+    els.ovShop.classList.remove('hide');
+    syncHud();
+    sfx(720,.16,'sine',.04,120);
+    setTimeout(function(){ sfx(960,.2,'sine',.03,100); },130);
+  }
+
+  function failGame(){
+    if (!game) return;
+    game.phase='over';
+    if (game.mode==='endless') save.depth=Math.max(save.depth||0,game.level);
+    if (game.mode==='campaign') save.bestLevel=Math.max(save.bestLevel||0,game.level);
+    saveBest();
+    persist();
+    var isEndless=game.mode==='endless';
+    els.endKick.textContent='TIME UP';
+    els.endTitle.textContent=isEndless?'矿灯熄灭':'矿洞黑了';
+    els.endSub.textContent='矿灯熄灭时还剩 '+remainingCount()+' 件矿物没拿走。';
+    els.endWallet.textContent=fmt(game.wallet);
+    els.endEarned.textContent=fmt(game.earned)+' / '+fmt(game.target);
+    els.endBest.textContent=fmt(best);
+    els.endDepthLabel.textContent=isEndless?'深度':'层数';
+    els.endDepth.textContent=isEndless?String(game.level+1):(game.level+1)+' / '+MAX_LV;
+    els.btnPrimary.textContent=isEndless?'再闯一次':'再试一次';
+    endAction=isEndless?'restart':'retry';
+    renderEndAch();
+    els.ovEnd.classList.remove('hide');
+    syncHud();
+    sfx(140,.55,'sawtooth',.045,-60);
+    checkAch(false);
+    persist();
+  }
+
+  function winGame(){
+    if (!game) return;
+    game.phase='over';
+    save.campaignWins=(save.campaignWins||0)+1;
+    save.wins=(save.wins||0)+1;
+    save.bestLevel=MAX_LV;
+    saveBest();
+    persist();
+    els.endKick.textContent='THE GOLDEN HEART';
+    els.endTitle.textContent='满载而归';
+    els.endSub.textContent='十二层矿脉全部挖穿，矿灯终于可以熄了。';
+    els.endWallet.textContent=fmt(game.wallet);
+    els.endEarned.textContent=fmt(game.earned)+' / '+fmt(game.target);
+    els.endBest.textContent=fmt(best);
+    els.endDepthLabel.textContent='通关';
+    els.endDepth.textContent=MAX_LV+' / '+MAX_LV;
+    els.btnPrimary.textContent='再挖一次';
+    endAction='restart';
+    renderEndAch();
+    els.ovEnd.classList.remove('hide');
+    syncHud();
+    checkAch(false);
+    chime();
+    setTimeout(function(){ chime(); },320);
+    persist();
+  }
+
+  function dailyResult(ok){
+    if (!game) return;
+    game.phase='over';
+    var dk=todayKey();
+    if (ok){
+      save.dailyCount=(save.dailyCount||0)+1;
+      if (game.wallet>save.dailyBest||save.dailyDate!==dk) save.dailyBest=game.wallet;
+      save.dailyDate=dk;
+      unlockAch('daily1',false);
+    }
+    saveBest();
+    persist();
+    els.endKick.textContent=ok?'DAILY CLEARED':'DAILY FAILED';
+    els.endTitle.textContent=ok?'今日矿脉已清':'今天的矿脉太深';
+    els.endSub.textContent=ok?('钱包 '+fmt(game.wallet)+' · 明日换一条新矿脉。'):('还剩 '+remainingCount()+' 件没拿走，明天再来。');
+    els.endWallet.textContent=fmt(game.wallet);
+    els.endEarned.textContent=fmt(game.earned)+' / '+fmt(game.target);
+    els.endBest.textContent=fmt(save.dailyBest||0);
+    els.endDepthLabel.textContent='模式';
+    els.endDepth.textContent='每日';
+    els.btnPrimary.textContent=ok?'再挖一次':'再试一次';
+    endAction='daily';
+    renderEndAch();
+    els.ovEnd.classList.remove('hide');
+    syncHud();
+    if (ok) chime(); else sfx(150,.5,'sawtooth',.04,-50);
+    checkAch(false);
+    persist();
+  }
+
+  function renderEndAch(){
+    els.endAch.innerHTML='';
+    if (!endUnlocked.length){
+      var d=document.createElement('div');
+      d.className='ea none';
+      d.textContent='本次没有新成就';
+      els.endAch.appendChild(d);
+      return;
+    }
+    for (var i=0;i<endUnlocked.length;i++){
+      var e=document.createElement('div');
+      e.className='ea';
+      e.textContent='✧ '+endUnlocked[i].name;
+      els.endAch.appendChild(e);
+    }
+  }
+
+  /* ---------- pause ---------- */
+  function pauseGame(){
+    if (!game||game.phase!=='play') return;
+    game.phase='paused';
+    cancelAnimationFrame(rafId);
+    els.pauseEarned.textContent=fmt(game.earned);
+    els.pauseTarget.textContent=remainingCount()+' 件';
+    els.pauseTime.textContent=Math.ceil(game.time)+'s';
+    els.ovPause.classList.remove('hide');
+    sfx(300,.1,'sine',.02,-40);
+  }
+  function resumeGame(){
+    if (!game||game.phase!=='paused') return;
+    game.phase='play';
+    els.ovPause.classList.add('hide');
+    lastT=performance.now();
+    startLoop();
+    sfx(520,.1,'sine',.025,60);
+  }
+  function restartFromPause(){
+    if (!game) return;
+    els.ovPause.classList.add('hide');
+    game.phase='play';
+    startLevel(game.level);
+  }
+  function quitToMenu(){
+    cancelAnimationFrame(rafId);
+    game=null;
+    hideAll();
+    els.ovStart.classList.remove('hide');
+    refreshStart();
+    drawMenu();
+  }
+
+  /* ---------- update ---------- */
+  var drawTime=0;
+  function loop(now){
+    if (!game||game.phase!=='play'){ return; }
+    var raw=Math.min(0.033,(now-lastT)/1000||0.016);
+    lastT=now;
+    drawTime=now/1000;
+    update(raw);
+    draw(now/1000);
+    if (game&&game.phase==='play') rafId=requestAnimationFrame(loop);
+  }
+
+  function update(dt){
+    if (!game) return;
+    updateAmbient(dt,drawTime);
+    if (shake>0) shake=Math.max(0,shake-36*dt);
+    for (var i=parts.length-1;i>=0;i--){
+      var p=parts[i];
+      p.t-=dt; p.x+=p.vx*dt; p.y+=p.vy*dt; p.vx*=0.97; p.vy*=0.97; p.vy+=120*dt;
+      if (p.t<=0) parts.splice(i,1);
+    }
+    for (var j=floats.length-1;j>=0;j--){
+      var f=floats[j];
+      f.t-=dt; f.y-=26*dt;
+      if (f.t<=0) floats.splice(j,1);
+    }
+    for (var ri=rings.length-1;ri>=0;ri--){
+      var rg=rings[ri];
+      rg.t-=dt; rg.r+=rg.max*dt*2.2;
+      if (rg.t<=0) rings.splice(ri,1);
+    }
+    if (game.comboT>0){
+      game.comboT-=dt;
+      if (game.comboT<=0){ game.combo=0; game.mult=1; }
+    }
+    if (game.phase!=='play') return;
+
+    if (game.time>0){
+      game.time=Math.max(0,game.time-dt);
+      if (game.time<=0){
+        game.ending=true;
+        if (hook.state==='swing'){ endLevel(); return; }
+      }
+    }
+
+    // moving objects
+    for (var mo=0;mo<objects.length;mo++){
+      var o=objects[mo];
+      if (o.removed||o.grabbed||!o.move) continue;
+      var mv=o.move;
+      mv.ph+=dt*mv.speed;
+      if (mv.axis==='x') o.x=o.baseX+Math.sin(mv.ph)*mv.amp;
+      else o.y=o.baseY+Math.sin(mv.ph)*mv.amp;
+    }
+
+    if (hook.state==='swing'&&!hook.manual){
+      hook.swingT+=dt;
+      hook.angle=Math.sin(hook.swingT*1.7)*1.0;
+    }
+
+    if (hook.state==='out'){
+      var before=hookPos(hook.len);
+      hook.len+=600*dt;
+      var lim=hookLimit(hook.angle);
+      var hitBottom=false;
+      if (hook.len>=lim){ hook.len=lim; hitBottom=true; }
+      var nowP=hookPos(hook.len);
+      var stepped=false;
+      for (var s=1;s<=4&&!stepped;s++){
+        var qx=before.x+(nowP.x-before.x)*s/4;
+        var qy=before.y+(nowP.y-before.y)*s/4;
+        for (var k=0;k<objects.length;k++){
+          var ob=objects[k];
+          if (ob.removed||ob.grabbed) continue;
+          var ddx=ob.x-qx,ddy=ob.y-qy;
+          if (Math.sqrt(ddx*ddx+ddy*ddy)<ob.r+9){ grabObj(ob); stepped=true; break; }
+        }
+      }
+      if (!stepped&&hitBottom){ hook.state='back'; }
+    } else if (hook.state==='back'){
+      var sp=hook.grabbed?retractSpeed(hook.grabbed):980;
+      hook.len-=sp*dt;
+      if (hook.len<=BASE_LEN){
+        hook.len=BASE_LEN;
+        if (hook.grabbed){ var g=hook.grabbed; hook.grabbed=null; award(g); }
+        hook.state='swing';
+        hook.manual=false;
+        if (remainingCount()===0){ finishLevelClear(); return; }
+        if (game.ending){ endLevel(); return; }
+      }
+    }
+    game.hudT=(game.hudT||0)+dt;
+    if (game.hudT>0.1){ game.hudT=0; syncHud(); }
+  }
+
+  /* ---------- drawing ---------- */
+  function draw(t){
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    ctx.clearRect(0,0,W,H);
+    var sx=shake>0?(Math.random()-0.5)*shake:0, sy=shake>0?(Math.random()-0.5)*shake:0;
+    ctx.save(); ctx.translate(sx,sy);
+    ctx.drawImage(getBG(game?game.theme:'mine'),0,0);
+    drawAmbient(t||drawTime);
+    drawObjects();
+    drawRope();
+    drawParts();
+    drawRings();
+    drawFloats();
+    ctx.restore();
+    drawSigns();
+  }
+
+  function drawSigns(){
+    if (!game) return;
+    var th=THEMES[game.theme]||THEMES.mine;
+    ctx.save();
+    // time
+    ctx.fillStyle='rgba(18,12,6,.84)';
+    ctx.strokeStyle='rgba('+th.glow+',.4)'; ctx.lineWidth=1;
+    rr(10,8,106,58,9); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#9a8b6d'; ctx.font='8px "Segoe UI",sans-serif'; ctx.textAlign='left';
+    ctx.fillText('TIME',20,24);
+    ctx.fillStyle=game.time<=10?'#ff8f6a':'#f4ead2';
+    ctx.font='700 24px "Segoe UI",sans-serif';
+    ctx.fillText(Math.ceil(game.time)+'',19,52);
+    ctx.fillStyle='#6f6146'; ctx.font='8px "Segoe UI",sans-serif';
+    ctx.fillText('秒',78,52);
+    // target
+    ctx.fillStyle='rgba(18,12,6,.84)';
+    rr(W-116,8,106,58,9); ctx.fill(); ctx.stroke();
+    var totalN=objects.length, leftN=remainingCount();
+    ctx.fillStyle='#9a8b6d'; ctx.font='8px "Segoe UI",sans-serif'; ctx.textAlign='right';
+    ctx.fillText('剩余矿物',W-20,24);
+    ctx.fillStyle=leftN<=3?'#ffd76b':'#f4c45a'; ctx.font='700 20px "Segoe UI",sans-serif';
+    ctx.fillText(leftN+' 件',W-20,50);
+    // level name
+    ctx.textAlign='center';
+    ctx.fillStyle='rgba(244,234,210,.92)';
+    var nm=game.def?game.def.name:(LEVELS[game.level]?LEVELS[game.level].name:'');
+    ctx.font=(nm.length>11?'10px':'11px')+' "Songti SC",serif';
+    ctx.fillText(nm,W/2,26);
+    // progress
+    var bw=150,bx=W/2-bw/2,by=40;
+    ctx.fillStyle='rgba(0,0,0,.55)'; rr(bx,by,bw,7,3.5); ctx.fill();
+    var pr=Math.min(1,(totalN-leftN)/Math.max(1,totalN));
+    if (pr>0){
+      var pg=ctx.createLinearGradient(bx,0,bx+bw,0);
+      pg.addColorStop(0,'#b07a2a'); pg.addColorStop(1,'#ffd66b');
+      ctx.fillStyle=pg; rr(bx,by,Math.max(4,bw*pr),7,3.5); ctx.fill();
+    }
+    ctx.fillStyle='rgba(200,184,148,.85)'; ctx.font='8px "Segoe UI",sans-serif';
+    ctx.fillText('已收 '+(totalN-leftN)+' / '+totalN,W/2,59);
+
+    // combo badge
+    if (game.combo>=2){
+      var cw=124,ch=24,cx=W/2-cw/2,cy=H-30;
+      ctx.fillStyle='rgba(30,20,8,.88)';
+      ctx.strokeStyle='rgba(255,196,90,.65)'; ctx.lineWidth=1;
+      rr(cx,cy,cw,ch,12); ctx.fill(); ctx.stroke();
+      ctx.fillStyle='#ffd36b';
+      ctx.font='700 12px "Segoe UI",sans-serif'; ctx.textAlign='left';
+      ctx.fillText('连击 '+game.combo,W/2-52,cy+16);
+      ctx.fillStyle='#f4ead2';
+      ctx.font='700 12px "Segoe UI",sans-serif'; ctx.textAlign='right';
+      ctx.fillText('x'+game.mult.toFixed(1),W/2+52,cy+16);
+      var tw=cw-14, tp=Math.max(0,game.comboT/3.5);
+      ctx.fillStyle='rgba(255,255,255,.12)'; rr(cx+7,cy+19,tw,2.5,1.2); ctx.fill();
+      ctx.fillStyle='#f4c45a'; rr(cx+7,cy+19,Math.max(1,tw*tp),2.5,1.2); ctx.fill();
+    }
+    // buffs
+    var buffs=[];
+    if (game.luckBuff>0) buffs.push('幸运 +'+game.luckBuff);
+    if (game.upgrades.time>0) buffs.push('+'+game.upgrades.time*3+'s');
+    if (game.ending) buffs.push('收钩中');
+    if (buffs.length){
+      ctx.textAlign='left';
+      ctx.font='9px "Segoe UI",sans-serif';
+      ctx.fillStyle='rgba(240,225,180,.8)';
+      ctx.fillText(buffs.join('  ·  '),18,H-14);
+    }
+    // mode tag
+    ctx.textAlign='right';
+    ctx.fillStyle='rgba(200,184,148,.55)';
+    ctx.font='8px "Segoe UI",sans-serif';
+    var tag=game.mode==='endless'?('ENDLESS '+ (game.level+1)):(game.mode==='daily'?'DAILY':'CAMPAIGN');
+    ctx.fillText(tag,W-18,H-14);
+    ctx.restore();
+  }
+
+  function drawObjects(){
+    for (var i=0;i<objects.length;i++){
+      var o=objects[i];
+      if (o.removed||o.grabbed) continue;
+      drawObject(o,o.x,o.y,o.r,o.seed);
+    }
+  }
+
+  function polygonPoints(r,seed,n,squash){
+    var pts=[];
+    for (var i=0;i<n;i++){
+      var a=i/n*Math.PI*2-0.6;
+      var rr2=r*(0.78+0.22*frac(Math.sin(seed+i*12.9898)*43758.5453));
+      pts.push([Math.cos(a)*rr2,Math.sin(a)*rr2*(squash||1)]);
+    }
+    return pts;
+  }
+  function pathPts(pts){
+    ctx.beginPath();
+    ctx.moveTo(pts[0][0],pts[0][1]);
+    for (var i=1;i<pts.length;i++) ctx.lineTo(pts[i][0],pts[i][1]);
+    ctx.closePath();
+  }
+
+  function gemPalette(kind){
+    if (kind==='ruby') return ['#ffe0e6','#ff6d8a','#9c1230','#fff0f4'];
+    if (kind==='emerald') return ['#dcffe6','#4fe08a','#0b6b3c','#effff4'];
+    if (kind==='sapphire') return ['#dfe9ff','#7098ff','#1b3d9c','#eef4ff'];
+    return ['#d9fbff','#7fe3f5','#2f8fae','#e6ffff'];
+  }
+
+  function drawGem(o,r){
+    var p=gemPalette(o.type);
+    var dg=ctx.createLinearGradient(0,-r,0,r);
+    dg.addColorStop(0,p[0]); dg.addColorStop(.45,p[1]); dg.addColorStop(1,p[2]);
+    ctx.fillStyle=dg;
+    ctx.beginPath();
+    ctx.moveTo(0,-r); ctx.lineTo(r*0.82,-r*0.1); ctx.lineTo(0,r); ctx.lineTo(-r*0.82,-r*0.1);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle=p[3]; ctx.lineWidth=1.2; ctx.stroke();
+    ctx.strokeStyle='rgba(255,255,255,.5)';
+    ctx.beginPath();
+    ctx.moveTo(0,-r); ctx.lineTo(0,r);
+    ctx.moveTo(-r*0.82,-r*0.1); ctx.lineTo(r*0.82,-r*0.1);
+    ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,.9)';
+    ctx.beginPath(); ctx.moveTo(-r*0.18,-r*0.55); ctx.lineTo(r*0.12,-r*0.18); ctx.lineTo(-r*0.3,-r*0.1); ctx.closePath(); ctx.fill();
+  }
+
+  function drawObject(o,x,y,r,seed){
+    ctx.save();
+    ctx.translate(x,y);
+    ctx.fillStyle='rgba(0,0,0,.3)';
+    ctx.beginPath(); ctx.ellipse(1,r*0.82,r*0.85,r*0.3,0,0,6.283); ctx.fill();
+
+    if (o.kind==='gold'){
+      var big=(o.type==='goldXL');
+      var grd=ctx.createLinearGradient(-r,-r,r,r);
+      grd.addColorStop(0,'#fff1a8'); grd.addColorStop(.4,'#ffd25a'); grd.addColorStop(1,big?'#9a5c12':'#b4761f');
+      ctx.fillStyle=grd;
+      pathPts(polygonPoints(r,seed,big?9:7,0.86)); ctx.fill();
+      ctx.strokeStyle='rgba(120,76,16,.65)'; ctx.lineWidth=1.2; ctx.stroke();
+      ctx.fillStyle='#ffcf52';
+      ctx.beginPath(); ctx.arc(-r*0.75,r*0.42,r*0.3,0,6.283); ctx.fill();
+      ctx.beginPath(); ctx.arc(r*0.72,-r*0.4,r*0.24,0,6.283); ctx.fill();
+      if (big){
+        ctx.beginPath(); ctx.arc(r*0.42,r*0.62,r*0.26,0,6.283); ctx.fill();
+        ctx.fillStyle='rgba(255,240,170,.35)';
+        ctx.beginPath(); ctx.arc(0,0,r*0.85,0,6.283); ctx.fill();
+      }
+      ctx.fillStyle='rgba(255,255,220,.85)';
+      ctx.beginPath(); ctx.ellipse(-r*0.22,-r*0.28,r*0.2,r*0.1,-0.6,0,6.283); ctx.fill();
+    } else if (o.kind==='diamond'||o.kind==='ruby'||o.kind==='emerald'||o.kind==='sapphire'){
+      drawGem(o,r);
+    } else if (o.kind==='crystal'){
+      var cg=ctx.createLinearGradient(0,-r,0,r);
+      cg.addColorStop(0,'#f0d8ff'); cg.addColorStop(.5,'#b98ae0'); cg.addColorStop(1,'#5c2f7a');
+      ctx.fillStyle=cg;
+      ctx.beginPath(); ctx.moveTo(-r*0.7,r*0.55); ctx.lineTo(-r*0.35,-r*0.95); ctx.lineTo(0,r*0.1); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle='rgba(255,240,255,.55)'; ctx.lineWidth=1; ctx.stroke();
+      ctx.fillStyle='rgba(220,170,255,.85)';
+      ctx.beginPath(); ctx.moveTo(-r*0.1,r*0.65); ctx.lineTo(r*0.35,-r*0.65); ctx.lineTo(r*0.75,r*0.65); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle='rgba(255,240,255,.4)'; ctx.stroke();
+      ctx.fillStyle='rgba(255,255,255,.6)';
+      ctx.beginPath(); ctx.moveTo(-r*0.45,-r*0.6); ctx.lineTo(-r*0.32,-r*0.2); ctx.lineTo(-r*0.52,-r*0.24); ctx.closePath(); ctx.fill();
+    } else if (o.kind==='rock'){
+      var rg=ctx.createLinearGradient(-r,-r,r,r);
+      rg.addColorStop(0,'#8b8780'); rg.addColorStop(.55,'#66635c'); rg.addColorStop(1,'#3f3d38');
+      ctx.fillStyle=rg;
+      pathPts(polygonPoints(r,seed,8,0.9)); ctx.fill();
+      ctx.strokeStyle='rgba(30,28,24,.7)'; ctx.lineWidth=1.2; ctx.stroke();
+      ctx.strokeStyle='rgba(40,38,34,.6)'; ctx.lineWidth=1.4;
+      ctx.beginPath(); ctx.moveTo(-r*0.3,-r*0.45); ctx.lineTo(-r*0.1,r*0.1); ctx.lineTo(-r*0.34,r*0.4); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(r*0.3,-r*0.2); ctx.lineTo(r*0.12,r*0.55); ctx.stroke();
+    } else if (o.kind==='bag'){
+      var bg2=ctx.createLinearGradient(0,-r,0,r);
+      bg2.addColorStop(0,'#b98450'); bg2.addColorStop(1,'#6b3f1e');
+      ctx.fillStyle=bg2;
+      ctx.beginPath();
+      ctx.moveTo(-r*0.55,-r*0.35);
+      ctx.quadraticCurveTo(-r*1.0,r*0.2,-r*0.5,r*0.8);
+      ctx.quadraticCurveTo(0,r*1.05,r*0.5,r*0.8);
+      ctx.quadraticCurveTo(r*1.0,r*0.2,r*0.55,-r*0.35);
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle='rgba(50,28,10,.7)'; ctx.lineWidth=1.4; ctx.stroke();
+      ctx.fillStyle='#c89a5e';
+      rr(-r*0.62,-r*0.55,r*1.24,r*0.24,3); ctx.fill();
+      ctx.strokeStyle='rgba(50,28,10,.6)'; ctx.lineWidth=1; ctx.stroke();
+      ctx.fillStyle='rgba(255,238,190,.9)';
+      ctx.font='700 '+Math.round(r*0.95)+'px "Segoe UI",sans-serif';
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText('?',0,r*0.16);
+    } else if (o.kind==='bone'){
+      ctx.strokeStyle='#e8e0cc'; ctx.lineCap='round'; ctx.lineWidth=r*0.42;
+      ctx.beginPath(); ctx.moveTo(-r*0.62,-r*0.24); ctx.lineTo(r*0.62,r*0.24); ctx.stroke();
+      ctx.fillStyle='#efe8d6';
+      ctx.beginPath(); ctx.arc(-r*0.72,-r*0.34,r*0.3,0,6.283); ctx.fill();
+      ctx.beginPath(); ctx.arc(-r*0.72,r*0.04,r*0.3,0,6.283); ctx.fill();
+      ctx.beginPath(); ctx.arc(r*0.72,r*0.14,r*0.3,0,6.283); ctx.fill();
+      ctx.beginPath(); ctx.arc(r*0.72,r*0.5,r*0.3,0,6.283); ctx.fill();
+    } else if (o.kind==='coin'){
+      var cg2=ctx.createLinearGradient(-r,-r,r,r);
+      cg2.addColorStop(0,'#ffe9a8'); cg2.addColorStop(.5,'#e0b050'); cg2.addColorStop(1,'#8f6420');
+      ctx.fillStyle=cg2;
+      ctx.beginPath(); ctx.arc(0,0,r,0,6.283); ctx.fill();
+      ctx.strokeStyle='rgba(90,60,20,.8)'; ctx.lineWidth=1.2; ctx.stroke();
+      ctx.strokeStyle='rgba(255,240,190,.7)'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.arc(0,0,r*0.7,0,6.283); ctx.stroke();
+      ctx.fillStyle='rgba(90,60,20,.55)'; ctx.fillRect(-r*0.16,-r*0.22,r*0.32,r*0.44);
+      ctx.fillStyle='rgba(255,255,225,.55)';
+      ctx.beginPath(); ctx.arc(-r*0.3,-r*0.3,r*0.18,0,6.283); ctx.fill();
+    } else if (o.kind==='fossil'){
+      var fg=ctx.createLinearGradient(-r,-r,r,r);
+      fg.addColorStop(0,'#d8c49a'); fg.addColorStop(1,'#8a7044');
+      ctx.fillStyle=fg;
+      ctx.beginPath(); ctx.arc(0,0,r,0,6.283); ctx.fill();
+      ctx.strokeStyle='rgba(70,52,26,.7)'; ctx.lineWidth=1.2; ctx.stroke();
+      ctx.strokeStyle='rgba(90,70,40,.75)'; ctx.lineWidth=1.6;
+      for (var sp=0;sp<3;sp++){
+        ctx.beginPath();
+        for (var a=0;a<6.283;a+=0.25){
+          var rad=r*(0.2+sp*0.22)+a*0.4;
+          var px=Math.cos(a)*Math.min(rad,r*0.78), py=Math.sin(a)*Math.min(rad,r*0.78);
+          if (a===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+        }
+        ctx.stroke();
+      }
+      ctx.fillStyle='rgba(255,255,230,.4)';
+      ctx.beginPath(); ctx.arc(-r*0.3,-r*0.32,r*0.16,0,6.283); ctx.fill();
+    } else if (o.kind==='skull'){
+      ctx.fillStyle='#efe8d6';
+      ctx.beginPath(); ctx.arc(0,-r*0.15,r*0.72,Math.PI*0.05,Math.PI*0.95,true); ctx.fill();
+      rr(-r*0.3,r*0.3,r*0.6,r*0.4,3); ctx.fill();
+      ctx.fillStyle='rgba(40,32,24,.85)';
+      ctx.beginPath(); ctx.arc(-r*0.28,-r*0.2,r*0.19,0,6.283); ctx.fill();
+      ctx.beginPath(); ctx.arc(r*0.28,-r*0.2,r*0.19,0,6.283); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(0,r*0.02); ctx.lineTo(-r*0.1,r*0.2); ctx.lineTo(r*0.1,r*0.2); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle='rgba(90,75,52,.7)'; ctx.lineWidth=1;
+      for (var tth=0;tth<3;tth++){
+        ctx.beginPath(); ctx.moveTo(-r*0.22+tth*r*0.16,r*0.5); ctx.lineTo(-r*0.22+tth*r*0.16,r*0.68); ctx.stroke();
+      }
+    } else if (o.kind==='chest'){
+      ctx.fillStyle='rgba(255,205,90,.14)';
+      ctx.beginPath(); ctx.arc(0,0,r*1.15,0,6.283); ctx.fill();
+      var wg=ctx.createLinearGradient(-r,-r,r,r);
+      wg.addColorStop(0,'#a86b34'); wg.addColorStop(1,'#5c3418');
+      ctx.fillStyle=wg;
+      rr(-r*0.9,-r*0.25,r*1.8,r*0.95,5); ctx.fill();
+      ctx.strokeStyle='rgba(40,22,8,.85)'; ctx.lineWidth=1.4; ctx.stroke();
+      ctx.fillStyle='#7c4a22';
+      ctx.beginPath();
+      ctx.moveTo(-r*0.9,-r*0.25);
+      ctx.quadraticCurveTo(0,-r*0.9,r*0.9,-r*0.25);
+      ctx.lineTo(r*0.9,-r*0.1); ctx.lineTo(-r*0.9,-r*0.1); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle='rgba(40,22,8,.85)'; ctx.stroke();
+      ctx.fillStyle='#e0b050'; ctx.fillRect(-r*0.16,-r*0.34,r*0.32,r*0.44);
+      ctx.fillStyle='#3a2410'; ctx.beginPath(); ctx.arc(0,r*0.02,r*0.06,0,6.283); ctx.fill();
+      ctx.strokeStyle='rgba(255,210,110,.75)'; ctx.lineWidth=1.6;
+      ctx.beginPath(); ctx.moveTo(-r*0.9,r*0.1); ctx.lineTo(r*0.9,r*0.1); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-r*0.62,-r*0.35); ctx.lineTo(-r*0.62,r*0.68); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(r*0.62,-r*0.35); ctx.lineTo(r*0.62,r*0.68); ctx.stroke();
+    } else if (o.kind==='hourglass'){
+      ctx.fillStyle='rgba(150,230,255,.14)';
+      ctx.beginPath(); ctx.arc(0,0,r*1.15,0,6.283); ctx.fill();
+      ctx.strokeStyle='#c8b894'; ctx.lineWidth=2.4;
+      ctx.beginPath(); ctx.moveTo(-r*0.55,-r*0.8); ctx.lineTo(r*0.55,-r*0.8); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-r*0.55,r*0.8); ctx.lineTo(r*0.55,r*0.8); ctx.stroke();
+      ctx.fillStyle='rgba(180,235,250,.35)';
+      ctx.beginPath(); ctx.moveTo(-r*0.45,-r*0.68); ctx.lineTo(r*0.45,-r*0.68); ctx.lineTo(0,0); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-r*0.45,r*0.68); ctx.lineTo(r*0.45,r*0.68); ctx.lineTo(0,0); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle='rgba(210,245,255,.75)'; ctx.lineWidth=1.2;
+      ctx.beginPath(); ctx.moveTo(-r*0.45,-r*0.68); ctx.lineTo(r*0.45,-r*0.68); ctx.lineTo(0,0); ctx.closePath(); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-r*0.45,r*0.68); ctx.lineTo(r*0.45,r*0.68); ctx.lineTo(0,0); ctx.closePath(); ctx.stroke();
+      ctx.fillStyle='#e8d29a';
+      ctx.beginPath(); ctx.moveTo(-r*0.3,r*0.62); ctx.lineTo(r*0.3,r*0.62); ctx.lineTo(0,r*0.38); ctx.closePath(); ctx.fill();
+      ctx.fillStyle='rgba(230,210,160,.85)';
+      ctx.beginPath(); ctx.arc(0,-r*0.02,r*0.05,0,6.283); ctx.fill();
+    } else if (o.kind==='bomb'){
+      var bgr=ctx.createRadialGradient(-r*0.3,-r*0.35,2,0,0,r);
+      bgr.addColorStop(0,'#5a5a62'); bgr.addColorStop(1,'#15151a');
+      ctx.fillStyle=bgr;
+      ctx.beginPath(); ctx.arc(0,r*0.1,r*0.8,0,6.283); ctx.fill();
+      ctx.strokeStyle='rgba(0,0,0,.6)'; ctx.stroke();
+      ctx.fillStyle='#c8b894'; rr(-r*0.2,-r*0.78,r*0.4,r*0.22,2); ctx.fill();
+      ctx.strokeStyle='#b09060'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(0,-r*0.75); ctx.quadraticCurveTo(r*0.55,-r*0.95,r*0.5,-r*0.45); ctx.stroke();
+      var flick=0.7+0.3*Math.sin((drawTime||0)*18+seed);
+      ctx.fillStyle='rgba(255,190,70,'+flick.toFixed(2)+')';
+      ctx.beginPath(); ctx.arc(r*0.5,-r*0.45,r*0.16,0,6.283); ctx.fill();
+      ctx.fillStyle='rgba(255,120,40,.8)'; ctx.fillRect(-r*0.8,-r*0.05,r*1.6,r*0.14);
+    } else if (o.kind==='clover'){
+      ctx.strokeStyle='#5fae58'; ctx.lineWidth=Math.max(1.5,r*0.16); ctx.lineCap='round';
+      ctx.beginPath(); ctx.moveTo(0,r*0.15); ctx.quadraticCurveTo(r*0.1,r*0.6,0,r*0.85); ctx.stroke();
+      ctx.fillStyle='#6fcf68';
+      for (var cl=0;cl<3;cl++){
+        var ca=cl/3*6.283-Math.PI/2;
+        var cxx=Math.cos(ca)*r*0.36, cyy=Math.sin(ca)*r*0.36;
+        ctx.beginPath(); ctx.ellipse(cxx,cyy,r*0.36,r*0.28,ca,0,6.283); ctx.fill();
+      }
+      ctx.fillStyle='rgba(200,255,190,.75)';
+      ctx.beginPath(); ctx.arc(-r*0.1,-r*0.12,r*0.12,0,6.283); ctx.fill();
+    } else if (o.kind==='bat'){
+      var flap=0.5+0.5*Math.sin((drawTime||0)*9+seed);
+      ctx.fillStyle='#3a2c44';
+      ctx.beginPath(); ctx.ellipse(0,0,r*0.32,r*0.42,0,0,6.283); ctx.fill();
+      ctx.beginPath(); ctx.arc(0,-r*0.36,r*0.24,0,6.283); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-r*0.24,-r*0.36); ctx.lineTo(-r*0.3,-r*0.66); ctx.lineTo(-r*0.05,-r*0.5); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(r*0.24,-r*0.36); ctx.lineTo(r*0.3,-r*0.66); ctx.lineTo(r*0.05,-r*0.5); ctx.closePath(); ctx.fill();
+      ctx.fillStyle='#2a1f33';
+      ctx.beginPath();
+      ctx.moveTo(-r*0.2,-r*0.05);
+      ctx.quadraticCurveTo(-r*1.0,-r*(0.4+flap*0.5),-r*0.95,r*0.15);
+      ctx.quadraticCurveTo(-r*0.5,r*0.02,-r*0.2,r*0.24);
+      ctx.closePath(); ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(r*0.2,-r*0.05);
+      ctx.quadraticCurveTo(r*1.0,-r*(0.4+flap*0.5),r*0.95,r*0.15);
+      ctx.quadraticCurveTo(r*0.5,r*0.02,r*0.2,r*0.24);
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle='#ffb0a0';
+      ctx.beginPath(); ctx.arc(-r*0.1,-r*0.38,r*0.055,0,6.283); ctx.fill();
+      ctx.beginPath(); ctx.arc(r*0.1,-r*0.38,r*0.055,0,6.283); ctx.fill();
+    } else if (o.kind==='mole'){
+      var mg=ctx.createLinearGradient(0,-r,0,r);
+      mg.addColorStop(0,'#8a6a4a'); mg.addColorStop(1,'#4a3320');
+      ctx.fillStyle=mg;
+      ctx.beginPath(); ctx.ellipse(0,0,r*0.72,r*0.62,0,0,6.283); ctx.fill();
+      ctx.fillStyle='#a8886a';
+      ctx.beginPath(); ctx.ellipse(0,r*0.32,r*0.34,r*0.24,0,0,6.283); ctx.fill();
+      ctx.fillStyle='#3a2a1a';
+      ctx.beginPath(); ctx.arc(0,r*0.34,r*0.09,0,6.283); ctx.fill();
+      ctx.strokeStyle='rgba(30,20,12,.8)'; ctx.lineWidth=1.4;
+      ctx.beginPath(); ctx.arc(-r*0.24,-r*0.1,r*0.14,0.15,Math.PI-0.15); ctx.stroke();
+      ctx.beginPath(); ctx.arc(r*0.24,-r*0.1,r*0.14,0.15,Math.PI-0.15); ctx.stroke();
+      ctx.strokeStyle='#d8c8a8'; ctx.lineWidth=2;
+      for (var cl2=0;cl2<3;cl2++){
+        var cx3=-r*0.5+cl2*r*0.14;
+        ctx.beginPath(); ctx.moveTo(cx3,r*0.3); ctx.lineTo(cx3-r*0.08,r*0.56); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(r*0.5-cl2*r*0.14,r*0.3); ctx.lineTo(r*0.58-cl2*r*0.14,r*0.56); ctx.stroke();
+      }
+      ctx.fillStyle='rgba(90,70,40,.4)';
+      ctx.beginPath(); ctx.ellipse(0,r*0.7,r*0.9,r*0.22,0,0,6.283); ctx.fill();
+    }
+    // subtle top highlight for visibility
+    ctx.fillStyle='rgba(255,240,200,.05)';
+    ctx.beginPath(); ctx.arc(0,-r*0.2,r*0.7,0,6.283); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawRope(){
+    var p=hookPos(hook.len);
+    var th=THEMES[game?game.theme:'mine']||THEMES.mine;
+    ctx.save();
+    ctx.fillStyle='#2a1b0d';
+    ctx.beginPath(); ctx.arc(PIVOT.x,PIVOT.y,17,0,6.283); ctx.fill();
+    ctx.strokeStyle='rgba('+th.glow+',.55)'; ctx.lineWidth=2.5;
+    ctx.beginPath(); ctx.arc(PIVOT.x,PIVOT.y,15,0,6.283); ctx.stroke();
+    ctx.save();
+    ctx.translate(PIVOT.x,PIVOT.y);
+    ctx.rotate((hook.swingT||0)*1.2+hook.len*0.02);
+    ctx.strokeStyle='rgba('+th.glow+',.5)'; ctx.lineWidth=2;
+    for (var i=0;i<4;i++){ var a=i*Math.PI/2; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(a)*13,Math.sin(a)*13); ctx.stroke(); }
+    ctx.restore();
+    ctx.fillStyle='#c9a45e'; ctx.beginPath(); ctx.arc(PIVOT.x,PIVOT.y,3.2,0,6.283); ctx.fill();
+    ctx.restore();
+    // rope
+    ctx.save();
+    ctx.strokeStyle='#8f7a52'; ctx.lineWidth=2.6; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(PIVOT.x,PIVOT.y); ctx.lineTo(p.x,p.y); ctx.stroke();
+    ctx.strokeStyle='rgba(230,200,140,.35)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(PIVOT.x,PIVOT.y); ctx.lineTo(p.x,p.y); ctx.stroke();
+    // claw
+    ctx.translate(p.x,p.y);
+    ctx.rotate(hook.angle);
+    ctx.strokeStyle='#d7dbe2'; ctx.lineWidth=4; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,10); ctx.stroke();
+    ctx.strokeStyle='#b8bec8'; ctx.lineWidth=3.4;
+    ctx.beginPath(); ctx.moveTo(-10,7); ctx.quadraticCurveTo(-13,20,0,24); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(10,7); ctx.quadraticCurveTo(13,20,0,24); ctx.stroke();
+    ctx.fillStyle='#e9edf4'; ctx.beginPath(); ctx.arc(0,24,2.4,0,6.283); ctx.fill();
+    ctx.restore();
+    if (hook.grabbed){
+      var o=hook.grabbed;
+      var gx=p.x+Math.sin(hook.angle)*(o.r+9);
+      var gy=p.y+Math.cos(hook.angle)*(o.r+9);
+      drawObject(o,gx,gy,o.r,o.seed);
+    }
+  }
+
+  function drawParts(){
+    ctx.save();
+    ctx.globalCompositeOperation='lighter';
+    for (var i=0;i<parts.length;i++){
+      var p=parts[i];
+      ctx.globalAlpha=Math.max(0,Math.min(1,p.t*2.2));
+      ctx.fillStyle=p.color;
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,6.283); ctx.fill();
+    }
+    ctx.restore();
+  }
+  function drawRings(){
+    ctx.save();
+    for (var i=0;i<rings.length;i++){
+      var r=rings[i];
+      ctx.globalAlpha=Math.max(0,Math.min(1,r.t*1.6));
+      ctx.strokeStyle=r.color; ctx.lineWidth=2.2;
+      ctx.beginPath(); ctx.arc(r.x,r.y,r.r,0,6.283); ctx.stroke();
+    }
+    ctx.restore();
+  }
+  function drawFloats(){
+    ctx.save();
+    ctx.textAlign='center';
+    for (var i=0;i<floats.length;i++){
+      var f=floats[i];
+      var a=Math.max(0,Math.min(1,f.t*1.6));
+      ctx.globalAlpha=a;
+      ctx.fillStyle=f.color;
+      ctx.font='700 '+(f.size||18)+'px "Segoe UI","PingFang SC",sans-serif';
+      ctx.shadowColor='rgba(0,0,0,.8)'; ctx.shadowBlur=6;
+      ctx.fillText(f.text,f.x,f.y);
+      if (f.sub){
+        ctx.globalAlpha=a*0.9;
+        ctx.fillStyle='rgba(240,228,198,.9)';
+        ctx.font='9px "Segoe UI",sans-serif';
+        ctx.fillText(f.sub,f.x,f.y+13);
+      }
+    }
+    ctx.restore();
+  }
+
+  /* ---------- menu scene ---------- */
+  function drawMenu(){
+    if (game) return;
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    ctx.drawImage(getBG('mine'),0,0);
+    var t=performance.now()/1000;
+    var th=THEMES.mine;
+    var lg=ctx.createRadialGradient(74,132,3,74,132,64*(0.9+0.1*Math.sin(t*3)));
+    lg.addColorStop(0,'rgba('+th.glow+',.3)'); lg.addColorStop(1,'rgba('+th.glow+',0)');
+    ctx.fillStyle=lg; ctx.beginPath(); ctx.arc(74,132,68,0,6.283); ctx.fill();
+    ctx.save();
+    ctx.strokeStyle='rgba(160,140,100,.5)'; ctx.lineWidth=2;
+    var sway=Math.sin(t*1.1)*14;
+    ctx.beginPath(); ctx.moveTo(PIVOT.x,PIVOT.y); ctx.lineTo(PIVOT.x+18+sway,330); ctx.stroke();
+    ctx.strokeStyle='#c9ccd2'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.arc(PIVOT.x+18+sway,342,10,Math.PI*0.1,Math.PI*0.9); ctx.stroke();
+    ctx.restore();
+    drawObject({kind:'gold',type:'goldM',seed:12},PIVOT.x+18+sway,372,26,12);
+    drawObject({kind:'diamond',type:'diamond',seed:3},120,470,16,3);
+    drawObject({kind:'rock',type:'rockS',seed:8},360,430,26,8);
+    drawObject({kind:'bag',type:'bag',seed:5},250,500,18,5);
+    drawObject({kind:'chest',type:'chest',seed:9},390,530,24,9);
+    drawObject({kind:'hourglass',type:'hourglass',seed:4},80,545,15,4);
+    ctx.save();
+    ctx.fillStyle='rgba(244,234,210,.92)';
+    ctx.font='600 15px "Songti SC","STSong",serif';
+    ctx.textAlign='center';
+    ctx.fillText('钩子会替你下矿，时间不会等你',W/2,556);
+    ctx.fillStyle='rgba(154,139,109,.8)';
+    ctx.font='10px "Segoe UI",sans-serif';
+    ctx.fillText('点击开始下钩',W/2,578);
+    ctx.restore();
+    // drifting dust
+    for (var i=0;i<16;i++){
+      var x=(i*97+t*10*(0.4+i%3*0.2))%(W-40)+20;
+      var y=150+((i*113+t*7)%420);
+      ctx.fillStyle='rgba(230,205,150,'+(0.05+(i%4)*0.02).toFixed(2)+')';
+      ctx.beginPath(); ctx.arc(x,y,1+(i%2)*0.6,0,6.283); ctx.fill();
+    }
+  }
+
+  /* ---------- menu / codex / achievements ui ---------- */
+  var MODE_DESC={
+    campaign:'从浅层矿脉一路挖到地心熔炉，共 12 层，每层清空才能继续。',
+    endless:'矿物一层比一层多，商店照常开；失败时按到达深度记录成绩。',
+    daily:'每天一条相同的矿脉，全球同种子，记录当天的最高钱包。'
+  };
+  function refreshStart(){
+    els.statBest.textContent=fmt(save.best||0);
+    els.statDepth.textContent=String(save.depth||0);
+    els.statWins.textContent=String(save.campaignWins||0);
+    els.statDaily.textContent=fmt(save.dailyBest||0);
+    var tabs=els.modeTabs.querySelectorAll('.mtab');
+    for (var i=0;i<tabs.length;i++){
+      tabs[i].classList.toggle('on',tabs[i].getAttribute('data-mode')===selectedMode);
+    }
+    els.modeDesc.textContent=MODE_DESC[selectedMode]||MODE_DESC.campaign;
+    els.startSub.textContent=selectedMode==='endless'?'每层矿物越挖越多，把整层清空就能下潜。':(selectedMode==='daily'?'今日矿脉已就绪，清空整层才算完成。':'把整层矿物全部抓完，清空后直接进入下一层。');
+    $('btnStart').textContent=selectedMode==='endless'?'开始无尽':(selectedMode==='daily'?'挖今日矿脉':'下矿');
+    els.btnSound.classList.toggle('off',!soundOn());
+    els.btnSound.textContent=soundOn()?'♪':'×';
+  }
+  function renderLevelLine(){
+    els.levelLine.innerHTML='';
+    var bestLv=save.bestLevel||0;
+    for (var i=0;i<LEVELS.length;i++){
+      var d=document.createElement('div');
+      d.className='lv'+(i<bestLv?' done':'')+(i===bestLv&&bestLv<LEVELS.length?' now':'');
+      var cnt=0; Object.keys(LEVELS[i].items).forEach(function(k){ cnt+=LEVELS[i].items[k]||0; });
+      d.innerHTML='<div class="n">'+(i+1)+'</div><div class="m">'+LEVELS[i].name+'</div><div class="t">'+cnt+' 件</div>';
+      els.levelLine.appendChild(d);
+    }
+    if (!bestLv) els.levelLine.children[0].classList.add('now');
+  }
+  function itemValueText(k){
+    var t=TYPES[k];
+    if (!t) return '';
+    if (k==='bag') return '随机';
+    if (k==='hourglass') return '时间 +6s';
+    if (k==='bomb') return '炸石头';
+    if (k==='clover') return '幸运 +1';
+    if (k==='bat'||k==='mole') return '值 '+t.value+' · 移动';
+    return '值 '+t.value;
+  }
+  function renderCodex(){
+    els.codexGrid.innerHTML='';
+    var seen=0;
+    TYPE_ORDER.forEach(function(k){
+      var t=TYPES[k];
+      var got=!!save.seen[k];
+      if (got) seen++;
+      var d=document.createElement('div');
+      d.className='cx'+(got?'':' locked');
+      d.innerHTML='<div class="cg">'+(got?t.glyph:'?')+'</div>'+
+        '<div class="cn">'+(got?t.label:'未知矿物')+'</div>'+
+        '<div class="cv">'+(got?itemValueText(k):'未发现')+'</div>'+
+        '<div class="cd">'+(got?t.note:'抓到一次即可点亮')+'</div>';
+      els.codexGrid.appendChild(d);
+    });
+    els.codexSub.textContent='已点亮 '+seen+' / '+TYPE_ORDER.length+' 种矿物，抓到过的会永久记录。';
+  }
+  function renderAch(){
+    els.achList.innerHTML='';
+    var count=0;
+    ACHS.forEach(function(a){
+      var on=!!(save.ach&&save.ach[a.id]);
+      if (on) count++;
+      var d=document.createElement('div');
+      d.className='ach'+(on?' on':'');
+      d.innerHTML='<div class="ai">'+(on?a.icon:'·')+'</div><div class="at"><div class="an">'+a.name+'</div><div class="ad">'+a.desc+'</div></div>';
+      els.achList.appendChild(d);
+    });
+    els.achCount.textContent=count+' / '+ACHS.length;
+  }
+
+  function openOverlay(el){
+    el.classList.remove('hide');
+    if (el===els.ovCodex) renderCodex();
+    if (el===els.ovAch) renderAch();
+    sfx(600,.1,'sine',.02,60);
+  }
+  function closeOverlay(el){ el.classList.add('hide'); }
+
+  /* ---------- events ---------- */
+  els.modeTabs.addEventListener('click',function(e){
+    var b=e.target.closest?e.target.closest('.mtab'):null;
+    if (!b) return;
+    selectedMode=b.getAttribute('data-mode')||'campaign';
+    refreshStart();
+    sfx(500,.08,'sine',.02,50);
+  });
+
+  $('btnStart').addEventListener('click',function(){
+    newGame(selectedMode);
+  });
+  $('btnCodex').addEventListener('click',function(){ openOverlay(els.ovCodex); });
+  $('btnAch').addEventListener('click',function(){ openOverlay(els.ovAch); });
+  $('btnHelp').addEventListener('click',function(){
+    openOverlay(els.ovHelp);
+    $('btnHelpClose').textContent='开始挖矿';
+  });
+  $('btnCodexClose').addEventListener('click',function(){ closeOverlay(els.ovCodex); });
+  $('btnAchClose').addEventListener('click',function(){ closeOverlay(els.ovAch); });
+  $('btnHelpClose').addEventListener('click',function(){ closeOverlay(els.ovHelp); });
+
+  $('buyStr').addEventListener('click',function(){ buyUpgrade('str'); });
+  $('buySpd').addEventListener('click',function(){ buyUpgrade('spd'); });
+  $('buyLuck').addEventListener('click',function(){ buyUpgrade('luck'); });
+  $('buyTime').addEventListener('click',function(){ buyUpgrade('time'); });
+
+  $('btnShopNext').addEventListener('click',function(){
+    if (!game||game.phase!=='shop') return;
+    if (game.mode==='campaign'&&game.level>=LEVELS.length-1){ winGame(); return; }
+    startLevel(game.level+1);
+  });
+
+  els.btnPrimary.addEventListener('click',function(){
+    if (!game) return;
+    if (endAction==='retry') startLevel(game.level);
+    else if (endAction==='restart') newGame(game.mode==='endless'?'endless':'campaign');
+    else newGame('daily');
+  });
+  els.btnAlt.addEventListener('click',goMenu);
+
+  function goMenu(){
+    quitToMenu();
+  }
+
+  els.btnSound.addEventListener('click',function(e){
+    e.stopPropagation();
+    toggleSound();
+  });
+  els.btnPause.addEventListener('click',function(e){
+    e.stopPropagation();
+    if (!game) return;
+    if (game.phase==='play') pauseGame();
+    else if (game.phase==='paused') resumeGame();
+  });
+  els.btnResume.addEventListener('click',resumeGame);
+  els.btnRestart.addEventListener('click',restartFromPause);
+  els.btnQuit.addEventListener('click',goMenu);
+
+  cv.addEventListener('pointerdown',function(e){
+    if (!game||game.phase!=='play') return;
+    e.preventDefault();
+    launch();
+  });
+  window.addEventListener('keydown',function(e){
+    if (e.code==='KeyM'){ e.preventDefault(); toggleSound(); return; }
+    if (e.code==='KeyP'||e.code==='Escape'){
+      if (game&&game.phase==='play'){ e.preventDefault(); pauseGame(); return; }
+      if (game&&game.phase==='paused'){ e.preventDefault(); resumeGame(); return; }
+      if (!els.ovCodex.classList.contains('hide')){ closeOverlay(els.ovCodex); return; }
+      if (!els.ovAch.classList.contains('hide')){ closeOverlay(els.ovAch); return; }
+      if (!els.ovHelp.classList.contains('hide')){ closeOverlay(els.ovHelp); return; }
+    }
+    if (e.code==='KeyR'&&game&&game.phase==='paused'){ restartFromPause(); return; }
+    if (e.code==='Space'||e.code==='ArrowDown'||e.code==='Enter'){
+      if (game&&game.phase==='play'){ e.preventDefault(); launch(); }
+    }
+  });
+  document.addEventListener('visibilitychange',function(){
+    if (document.hidden&&game&&game.phase==='play') pauseGame();
+  });
+  window.addEventListener('beforeunload',function(){
+    if (game) saveBest();
+  });
+
+  /* ---------- debug ---------- */
+  window.__GOLD__={
+    start:newGame,
+    menu:quitToMenu,
+    setMode:function(m){ selectedMode=m||'campaign'; refreshStart(); },
+    startLevel:function(i){
+      if (!game) newGame('campaign');
+      startLevel(clamp(+i||0,0,(game.mode==='campaign'?LEVELS.length-1:99)));
+    },
+    get state(){ return game; },
+    get objects(){ return objects; },
+    get hook(){ return hook; },
+    remaining:remainingCount,
+    finishClear:finishLevelClear,
+    get save(){ return save; },
+    launch:launch,
+    aimAt:function(x,y){ if(!hook) return; hook.manual=true; hook.angle=Math.atan2(x-PIVOT.x,y-PIVOT.y); },
+    setAngle:function(a){ if(hook){ hook.manual=true; hook.angle=a; } },
+    setTime:function(t){ if(game){ game.time=Math.max(0,+t||0); } },
+    addTime:function(t){ if(game){ game.time+= +t||0; } },
+    setEarned:function(n){ if(game){ game.earned=+n||0; syncHud(); } },
+    setWallet:function(n){ if(game){ game.wallet=+n||0; syncHud(); } },
+    addMoney:function(n){ if(game){ game.wallet+=+n||0; game.earned+=+n||0; syncHud(); } },
+    buy:buyUpgrade,
+    nextLevel:function(){ if(game&&game.phase==='shop') startLevel(game.level+1); },
+    finish:function(){
+      if (!game||game.phase!=='play') return;
+      game.earned=game.target;
+      game.time=0;
+      if (hook&&hook.state==='swing'){ endLevel(); }
+      else { game.ending=true; }
+    },
+    clearLevel:function(){
+      if (!game||game.phase!=='play') return;
+      objects.slice().forEach(function(o){ if(!o.removed) award(o); });
+      game.earned=game.target;
+      if (hook&&hook.state==='swing') endLevel();
+      else game.ending=true;
+    },
+    collect:function(id){
+      var o=objects.filter(function(x){return x.id===id;})[0];
+      if (!o||o.removed) return false;
+      o.grabbed=false; award(o); return true;
+    },
+    collectAll:function(){
+      objects.slice().forEach(function(o){ if(!o.removed) award(o); });
+    },
+    destroyRocks:function(){
+      objects.slice().forEach(function(o){ if(o.kind==='rock'&&!o.removed){ o.removed=true; } });
+    },
+    spawnAt:function(x,y,type){
+      var T=TYPES[type||'goldS'];
+      var o=mkObject(type||'goldS',T,x,y,Math.random);
+      objects.push(o); return o.id;
+    },
+    prices:function(){ return {str:price('str'),spd:price('spd'),luck:price('luck'),time:price('time')}; },
+    best:function(){ return best; },
+    pause:pauseGame,resume:resumeGame,
+    unlockAll:function(){
+      ACHS.forEach(function(a){ save.ach[a.id]=1; });
+      TYPE_ORDER.forEach(function(k){ save.seen[k]=1; });
+      persist(); refreshStart(); renderAch(); renderCodex();
+    },
+    showCodex:function(){ renderCodex(); els.ovCodex.classList.remove('hide'); },
+    showAch:function(){ renderAch(); els.ovAch.classList.remove('hide'); },
+    closeOverlays:function(){ hideAll(); },
+    snapshot:function(){
+      if (!game) return null;
+      return {
+        mode:game.mode,phase:game.phase,level:game.level,earned:game.earned,target:game.target,
+        time:Math.round(game.time*10)/10,wallet:game.wallet,combo:game.combo,mult:game.mult,
+        objects:objects.filter(function(o){return !o.removed;}).length,
+        theme:game.theme,upgrades:JSON.parse(JSON.stringify(game.upgrades))
+      };
+    },
+    resetSave:function(){
+      try{ localStorage.removeItem(SAVE_KEY); localStorage.removeItem(LEGACY_KEY); }catch(e){}
+      save=defaultSave();
+      save.campaignWins=0; save.bestLevel=0; save.runs=0;
+      best=0; persist(); refreshStart(); renderLevelLine();
+      toast('存档已重置');
+    }
+  };
+
+  /* ---------- boot ---------- */
+  renderLevelLine();
+  refreshStart();
+  els.endBest.textContent=String(best||0);
+  drawMenu();
+  setInterval(function(){
+    if (!game && !els.ovStart.classList.contains('hide')) drawMenu();
+  },120);
+})();
+</script>
+</body>
+</html>

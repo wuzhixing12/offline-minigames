@@ -1,0 +1,2386 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>雨夜疑云 · 物理破案</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#06090e;color:#e8eef5;font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;user-select:none;}
+  #app{height:100%;display:flex;flex-direction:column;background:radial-gradient(circle at 50% 0,rgba(60,110,140,.16),transparent 55%),#06090e;}
+  .top{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 14px;border-bottom:1px solid rgba(120,170,200,.14);background:rgba(6,10,16,.9);}
+  .brand{display:flex;align-items:baseline;gap:9px;min-width:0;}
+  .brand b{font-size:14px;letter-spacing:.14em;color:#e9f2f8;white-space:nowrap;}
+  .brand span{font-size:10px;letter-spacing:.18em;color:#6d8fa5;white-space:nowrap;}
+  .tools{display:flex;gap:7px;}
+  .tools button{border:1px solid rgba(120,170,200,.24);background:rgba(255,255,255,.03);color:#b9cddb;border-radius:999px;padding:7px 11px;font:600 11.5px/1 inherit;cursor:pointer;white-space:nowrap;}
+  .tools button:hover{border-color:rgba(121,214,208,.6);color:#d9f2ef;}
+
+  #main{flex:1 1 auto;overflow-y:auto;padding:10px 12px max(14px,env(safe-area-inset-bottom));}
+  .wrap{width:min(100%,760px);margin:0 auto;display:flex;flex-direction:column;gap:9px;}
+  .casebar{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;padding:2px 2px 0;}
+  .casebar .l{min-width:0;}
+  .casebar .k{font-size:9.5px;letter-spacing:.22em;color:#6d8fa5;}
+  .casebar h2{margin:3px 0 0;font-size:clamp(17px,4.6vw,21px);letter-spacing:.06em;color:#f2f7fb;font-weight:700;}
+  .casebar .place{font-size:11px;color:#8ba3b5;margin-top:2px;}
+  .side{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-end;gap:5px;}
+  .prog{font:700 12px/1 ui-monospace,Consolas,monospace;color:#79d6d0;letter-spacing:.12em;border:1px solid rgba(121,214,208,.28);border-radius:999px;padding:6px 10px;background:rgba(121,214,208,.06);white-space:nowrap;}
+  .score{font:700 10.5px/1 ui-monospace,Consolas,monospace;color:#e7c98f;letter-spacing:.1em;border:1px solid rgba(224,184,106,.25);border-radius:999px;padding:4px 8px;background:rgba(224,184,106,.06);white-space:nowrap;}
+
+  .chapterStrip{display:flex;gap:6px;}
+  .chSeg{flex:1;display:flex;align-items:center;justify-content:space-between;gap:6px;padding:5px 9px;border-radius:8px;border:1px solid rgba(120,170,200,.16);background:rgba(255,255,255,.02);font-size:10px;color:#7f97a9;letter-spacing:.05em;min-width:0;}
+  .chSeg b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .chSeg span{font:700 9.5px/1 ui-monospace,monospace;color:#6d8fa5;}
+  .chSeg.active{border-color:rgba(121,214,208,.42);background:rgba(121,214,208,.07);color:#cdeceb;}
+  .chSeg.active span{color:#79d6d0;}
+  .chSeg.done{border-color:rgba(224,184,106,.3);color:#d8c6a3;}
+  .chSeg.done span{color:#e7c98f;}
+
+  .board{position:relative;border-radius:14px;overflow:hidden;border:1px solid rgba(120,170,200,.18);box-shadow:0 18px 50px rgba(0,0,0,.5);background:#0a1018;}
+  canvas{display:block;width:100%;height:auto;}
+  .stamp{position:absolute;right:10px;top:10px;padding:4px 8px;border:1px solid rgba(224,184,106,.45);border-radius:4px;color:#e7c98f;font:700 9.5px/1 inherit;letter-spacing:.2em;transform:rotate(2deg);background:rgba(6,10,16,.5);pointer-events:none;}
+
+  .evidence{display:flex;gap:9px;padding:9px 11px;border:1px solid rgba(224,184,106,.18);border-radius:10px;background:rgba(224,184,106,.05);font-size:12px;line-height:1.7;color:#cfc3a9;}
+  .evidence b{flex:0 0 auto;color:#e7c98f;font-weight:700;font-size:10.5px;letter-spacing:.12em;padding-top:1px;}
+  .evidence span{min-width:0;}
+
+  .control{padding:8px 11px 7px;border:1px solid rgba(120,170,200,.16);border-radius:10px;background:rgba(255,255,255,.022);}
+  .ctitle{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:6px;}
+  .ctitle span{font-size:11px;color:#8ba3b5;letter-spacing:.08em;}
+  .ctitle b{font:700 15px/1 ui-monospace,Consolas,monospace;color:#79d6d0;letter-spacing:.04em;}
+  input[type=range]{width:100%;height:26px;margin:0;background:transparent;accent-color:#79d6d0;cursor:pointer;}
+  input[type=range]::-webkit-slider-runnable-track{height:5px;border-radius:999px;background:linear-gradient(90deg,rgba(121,214,208,.55),rgba(121,214,208,.14));}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;margin-top:-8px;border-radius:50%;background:#d9f7f4;border:3px solid #2c6f6a;box-shadow:0 0 14px rgba(121,214,208,.5);}
+  input[type=range]::-moz-range-track{height:5px;border-radius:999px;background:rgba(121,214,208,.3);}
+  input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#d9f7f4;border:3px solid #2c6f6a;}
+
+  .actions{display:flex;flex-wrap:wrap;gap:7px;}
+  .actions button{flex:1 1 0;min-width:86px;border:0;border-radius:10px;padding:11px 10px;font:700 13px/1 inherit;cursor:pointer;color:#04201e;background:linear-gradient(100deg,#8fe6e0,#68c4be);box-shadow:0 8px 20px rgba(104,196,190,.18);}
+  .actions button.ghost{flex:0 1 auto;min-width:70px;padding:11px 13px;color:#b9cddb;background:rgba(255,255,255,.03);border:1px solid rgba(120,170,200,.22);box-shadow:none;}
+  .actions button:hover{filter:brightness(1.06);}
+  .actions button:disabled{opacity:.45;cursor:default;}
+
+  .msg{min-height:42px;display:flex;align-items:center;gap:9px;padding:8px 11px;border-radius:9px;background:rgba(9,14,21,.8);border:1px solid rgba(120,170,200,.12);font-size:12px;line-height:1.6;color:#aebfcc;}
+  .msg::before{content:"";flex:0 0 auto;width:3px;height:20px;border-radius:2px;background:linear-gradient(180deg,#79d6d0,#2c6f6a);}
+  .msg b{color:#e8d3a4;font-weight:600;}
+  .msg.flash{animation:flash .5s ease;}
+  @keyframes flash{0%{background:rgba(121,214,208,.16)}100%{background:rgba(9,14,21,.8)}}
+
+  .overlay{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(3,6,10,.85);backdrop-filter:blur(4px);}
+  .overlay.hide{display:none;}
+  #dlg{z-index:60;}
+  .panel{width:min(94vw,440px);max-height:88vh;overflow:auto;padding:20px 18px;border-radius:18px;border:1px solid rgba(120,170,200,.26);background:linear-gradient(165deg,#0e1720,#070c12);box-shadow:0 30px 90px rgba(0,0,0,.75);}
+  .panel .kicker{font-size:9.5px;letter-spacing:.24em;color:#6d8fa5;margin-bottom:5px;}
+  .panel h2{margin:0 0 6px;font-size:18px;letter-spacing:.06em;color:#f0f6fa;}
+  .panel p{margin:7px 0;font-size:12.5px;line-height:1.8;color:#bccbd7;}
+  .panel .hl{color:#e7c98f;}
+  .panel .ok{color:#8fe6e0;}
+  .panel .bad{color:#e08573;}
+  .acts{display:flex;flex-direction:column;gap:8px;margin-top:15px;}
+  .acts button{border:0;border-radius:10px;padding:12px 14px;font:700 13.5px/1.2 inherit;cursor:pointer;color:#04201e;background:linear-gradient(100deg,#8fe6e0,#68c4be);text-align:left;}
+  .acts button.ghost{color:#bacbd7;background:rgba(255,255,255,.035);border:1px solid rgba(120,170,200,.24);}
+  .acts button:disabled{opacity:.4;cursor:default;}
+  .acts button:hover{filter:brightness(1.06);}
+
+  .titlePanel{text-align:center;padding:26px 20px 22px;}
+  .titlePanel h1{margin:10px 0 8px;font-size:clamp(30px,8vw,44px);letter-spacing:.12em;background:linear-gradient(100deg,#f2f8fb,#9fc6d8 55%,#e7c98f);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .titlePanel .sub{margin:0 auto 16px;max-width:350px;font-size:12.5px;line-height:1.9;color:#93a7b6;}
+  .titlePanel .meta{margin-top:14px;font-size:9.5px;letter-spacing:.16em;color:#647c8d;line-height:1.8;}
+  .titlePanel .best{margin-top:6px;font-size:10.5px;color:#8ba3b5;letter-spacing:.04em;}
+
+  .diffRow{display:flex;gap:8px;justify-content:center;margin:2px 0 4px;}
+  .chip{border:1px solid rgba(120,170,200,.28);background:rgba(255,255,255,.03);color:#a9c0cf;border-radius:999px;padding:8px 14px;font:600 11.5px/1 inherit;cursor:pointer;}
+  .chip.active{border-color:rgba(121,214,208,.65);background:rgba(121,214,208,.12);color:#d9f2ef;}
+  .chip:disabled{opacity:.45;cursor:default;}
+  .diffNote{font-size:10px;color:#6d8fa5;line-height:1.6;margin-top:4px;}
+
+  .suspect{padding:11px 12px;border-radius:10px;border:1px solid rgba(120,170,200,.18);background:rgba(255,255,255,.02);margin:7px 0;text-align:left;}
+  .suspect b{display:block;font-size:12.5px;color:#eaf2f8;margin-bottom:3px;}
+  .suspect span{font-size:11px;line-height:1.7;color:#8ba3b5;}
+  .clueRow{display:flex;gap:8px;padding:8px 0;border-bottom:1px dashed rgba(120,170,200,.14);font-size:12px;line-height:1.7;color:#b9c9d5;}
+  .clueRow:last-child{border-bottom:0;}
+  .clueRow i{flex:0 0 auto;font-style:normal;font:700 10px/1 ui-monospace,monospace;color:#e7c98f;padding-top:3px;}
+
+  .quote{padding:9px 11px;border-left:3px solid rgba(224,184,106,.7);background:rgba(224,184,106,.06);border-radius:0 8px 8px 0;color:#e8d3a4;font-size:12px;line-height:1.8;margin:8px 0;}
+  .evCard{display:flex;gap:8px;padding:7px 9px;border:1px solid rgba(120,170,200,.14);border-radius:8px;background:rgba(255,255,255,.02);margin:5px 0;font-size:11px;line-height:1.6;color:#9fb4c4;}
+  .evCard b{flex:0 0 18px;color:#e7c98f;font:700 11px/1.6 ui-monospace,monospace;}
+  .evCard span{min-width:0;}
+
+  .arcTop{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 4px;}
+  .arcStat{flex:1 1 120px;padding:8px 10px;border:1px solid rgba(120,170,200,.16);border-radius:9px;background:rgba(255,255,255,.025);}
+  .arcStat b{display:block;font:700 15px/1.3 ui-monospace,monospace;color:#e7c98f;}
+  .arcStat span{font-size:9.5px;letter-spacing:.12em;color:#6d8fa5;}
+  .arcH{display:flex;justify-content:space-between;font-size:10px;letter-spacing:.16em;color:#6d8fa5;margin:14px 0 6px;}
+  .arcGrid{display:flex;flex-direction:column;gap:5px;}
+  .arcCase{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;text-align:left;border:1px solid rgba(120,170,200,.14);background:rgba(255,255,255,.02);color:#9fb4c4;border-radius:8px;padding:7px 9px;font:600 11.5px/1.3 inherit;cursor:pointer;}
+  .arcCase b{font-weight:600;color:#c9d8e2;}
+  .arcCase .stars{font-size:11px;color:#e7c98f;letter-spacing:.08em;white-space:nowrap;}
+  .arcCase:disabled{opacity:.42;cursor:default;}
+  .arcCase:not(:disabled):hover{border-color:rgba(121,214,208,.45);}
+  .achRow{display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px dashed rgba(120,170,200,.1);font-size:11px;line-height:1.5;color:#6f8799;}
+  .achRow:last-child{border-bottom:0;}
+  .achRow b{flex:0 0 88px;color:#8299aa;font-size:10.5px;font-weight:600;}
+  .achRow.on{color:#cfe3ea;}
+  .achRow.on b{color:#e7c98f;}
+
+  .toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,10px);z-index:90;padding:9px 14px;border-radius:999px;border:1px solid rgba(224,184,106,.4);background:rgba(12,18,26,.96);color:#e7c98f;font-size:11.5px;letter-spacing:.06em;opacity:0;pointer-events:none;transition:.25s;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis;}
+  .toast.on{opacity:1;transform:translate(-50%,0);}
+
+  @media (max-width:420px){
+    .brand span{display:none}
+    .tools button{padding:6px 9px}
+    .casebar h2{font-size:17px}
+    .actions button{min-width:72px;font-size:12.5px}
+    .chSeg{padding:5px 6px;font-size:9.5px}
+  }
+  @media (max-height:620px){
+    .msg{min-height:36px}
+    .panel{padding:16px 14px}
+    .titlePanel{padding:18px 14px}
+    .chapterStrip{display:none}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <div class="brand"><b>雨夜疑云</b><span>PHYSICS DETECTIVE</span></div>
+    <div class="tools">
+      <button id="clueBtn" type="button">线索 0/15</button>
+      <button id="menuBtn" type="button">菜单</button>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="wrap">
+      <div class="casebar">
+        <div class="l">
+          <div class="k" id="caseKicker">CASE 01 · 运动学</div>
+          <h2 id="caseName">坠落的距离</h2>
+          <div class="place" id="casePlace">旧公寓 · 五楼书房</div>
+        </div>
+        <div class="side">
+          <div class="prog" id="prog">01 / 15</div>
+          <div class="score" id="scoreEl">0000</div>
+        </div>
+      </div>
+
+      <div class="chapterStrip" id="chapterStrip"></div>
+
+      <div class="board">
+        <canvas id="cv" width="720" height="420"></canvas>
+        <div class="stamp" id="stamp">现场重建</div>
+      </div>
+
+      <div class="evidence"><b>现场记录</b><span id="evidence"></span></div>
+
+      <div class="control">
+        <div class="ctitle"><span id="ctrlLabel">变量</span><b id="ctrlVal">0</b></div>
+        <input id="slider" type="range" min="0" max="100" step="0.1" value="0">
+      </div>
+
+      <div class="actions">
+        <button id="runBtn" type="button">运行模拟</button>
+        <button id="checkBtn" type="button">比对证据</button>
+        <button id="formulaBtn" type="button" class="ghost">公式</button>
+        <button id="hintBtn" type="button" class="ghost">辅助</button>
+      </div>
+
+      <div class="msg" id="msg"><b>方法：</b>先读现场记录，再拖动变量，让模拟结果和物证对上。</div>
+    </div>
+  </main>
+</div>
+
+<div class="overlay hide" id="dlg">
+  <div class="panel">
+    <div class="kicker" id="dlgKicker">档案</div>
+    <h2 id="dlgTitle">标题</h2>
+    <div id="dlgBody"></div>
+    <div class="acts" id="dlgActs"></div>
+  </div>
+</div>
+
+<div class="overlay hide" id="titleBox">
+  <div class="panel titlePanel">
+    <div class="kicker">PHYSICS DETECTIVE · 15 CASES</div>
+    <h1>雨夜疑云</h1>
+    <p class="sub">三章十五处现场。雨停之前，把每一道公式都变成证据。</p>
+    <div class="diffRow" id="diffRow"></div>
+    <div class="acts" id="titleActs"></div>
+    <div class="best" id="titleBest"></div>
+    <div class="meta">15 个随机化案件 · 3 个章节 · 2 种难度 · 自动存档</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  var SAVE_KEY = 'rain_case_v2';
+  var STATS_KEY = 'rain_stats_v1';
+  var G = 9.8;
+
+  /* ---------------- 工具 ---------------- */
+  function rand(a, b, step) {
+    step = step || 0.1;
+    var n = Math.floor((b - a) / step + 1e-9);
+    return a + Math.floor(Math.random() * (n + 1)) * step;
+  }
+  function randInt(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
+  function shuffled(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+  function pad(n, w) {
+    var s = '' + n;
+    while (s.length < w) s = '0' + s;
+    return s;
+  }
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  function starsText(n) {
+    n = clamp(n || 0, 0, 3);
+    return '★★★'.slice(0, n) + '☆☆☆'.slice(0, 3 - n);
+  }
+  function isPermN(o, n) {
+    if (!Array.isArray(o) || o.length !== n) return false;
+    var seen = {};
+    for (var i = 0; i < n; i++) {
+      var v = o[i];
+      if (typeof v !== 'number' || v < 0 || v >= n || seen[v]) return false;
+      seen[v] = 1;
+    }
+    return true;
+  }
+  function makeOrder(n) {
+    var a = [];
+    for (var i = 0; i < n; i++) a.push(i);
+    return shuffled(a);
+  }
+  function mirrorSolution(targetX) {
+    var S = { x: 650, y: 258 }, M = { x: 160, y: 204 };
+    var dx = M.x - S.x, dy = M.y - S.y, il = Math.sqrt(dx * dx + dy * dy);
+    dx /= il; dy /= il;
+    var best = 16, bestErr = 1e9;
+    for (var a = -10; a <= 50; a += 0.1) {
+      var th = a * Math.PI / 180;
+      var nx = Math.cos(th), ny = -Math.sin(th);
+      var dn = dx * nx + dy * ny;
+      var rx = dx - 2 * dn * nx, ry = dy - 2 * dn * ny;
+      if (ry > -0.05) continue;
+      var k = (48 - M.y) / ry;
+      var xx = M.x + rx * k;
+      var err = Math.abs(xx - targetX);
+      if (err < bestErr) { bestErr = err; best = a; }
+    }
+    return { angle: best, err: bestErr };
+  }
+
+  /* ---------------- 案件 ---------------- */
+  var CASES = [
+    {
+      id: 'c1', ch: 0, kicker: 'CASE 01 · 运动学', name: '坠落的距离', place: '旧公寓 · 五楼书房',
+      ctrl: '坠落高度', unit: 'm', min: 6, max: 30, step: 0.1,
+      formula: '水平抛出：x = v₀ × √(2h ÷ g)，取 g = 9.8 m/s²。',
+      gen: function () {
+        var floor = randInt(4, 7);
+        var h = floor * 3 + 0.2;
+        var v0 = rand(3.6, 4.6, 0.1);
+        var x = v0 * Math.sqrt(2 * h / G);
+        return {
+          floor: floor, h: h, v0: v0, x: x, target: x, tol: 0.12,
+          start: 20,
+          evidence: '窗台碎片横向飞出，初速约 ' + v0.toFixed(1) + ' m/s；尸体落点距墙 ' + x.toFixed(2) + ' m。',
+          q: '死者从哪一层坠落？',
+          options: [(floor - 2) + ' 楼', floor + ' 楼', (floor + 1) + ' 楼'], answer: 1,
+          explain: 't = ' + x.toFixed(2) + ' ÷ ' + v0.toFixed(1) + ' ≈ ' + (x / v0).toFixed(2) + ' s，h = ½ × 9.8 × t² ≈ ' + h.toFixed(1) + ' m。按每层 3 m，约为第 ' + floor + ' 层。',
+          clue: '坠落高度对应 ' + floor + ' 楼。那是死者的书房，门锁完好，只有研究助理有备用钥匙。'
+        };
+      },
+      metric: function (v, r) { return r.v0 * Math.sqrt(2 * v / G); },
+      fmt: function (m) { return '落点 ' + m.toFixed(2) + ' m'; },
+      valText: function (v) { return v.toFixed(1) + ' m'; },
+      draw: 'd1'
+    },
+    {
+      id: 'c2', ch: 0, kicker: 'CASE 02 · 摩擦', name: '二十三米的刹车痕', place: '滨河路 · 雨夜',
+      ctrl: '碰撞前车速', unit: 'km/h', min: 30, max: 90, step: 0.2,
+      formula: '刹车距离：L = v² ÷ (2μg)，v 以 m/s 计，μ = 0.6。',
+      gen: function () {
+        var v = randInt(54, 68);
+        var L = Math.pow(v / 3.6, 2) / (2 * 0.6 * G);
+        var over = v - 50;
+        return {
+          v: v, L: L, over: over, target: L, tol: 0.6,
+          start: 40,
+          evidence: '雨天路面摩擦系数约 0.6；监控测得刹车痕长 ' + L.toFixed(1) + ' m。',
+          q: '这辆车是否超速？（该路段限速 50）',
+          options: ['没有超速', '超速约 ' + over + ' km/h', '超速约 ' + (over + 14) + ' km/h'], answer: 1,
+          explain: 'v = √(2 × 0.6 × 9.8 × ' + L.toFixed(1) + ') ≈ ' + (Math.sqrt(2 * 0.6 * G * L)).toFixed(1) + ' m/s ≈ ' + v + ' km/h。该路段限速 50。',
+          clue: '黑色轿车在限速 50 的路段跑出约 ' + v + '。它的行车记录仪缺失了 17 分钟。'
+        };
+      },
+      metric: function (v) { var s = v / 3.6; return s * s / (2 * 0.6 * G); },
+      fmt: function (m) { return '滑痕 ' + m.toFixed(1) + ' m'; },
+      valText: function (v) { return v.toFixed(1) + ' km/h'; },
+      draw: 'd2'
+    },
+    {
+      id: 'c3', ch: 0, kicker: 'CASE 03 · 光学', name: '镜子里的光路', place: '旧公寓 · 走廊尽头',
+      ctrl: '镜面角度', unit: '°', min: -10, max: 40, step: 0.2,
+      formula: '镜面反射：入射角等于反射角，反射光沿法线对称方向离开镜面。',
+      gen: function () {
+        var winX = randInt(320, 430);
+        var sol = mirrorSolution(winX);
+        var old = Math.max(6, Math.round(sol.angle - 5));
+        return {
+          winX: winX, angle: sol.angle, oldLimit: old, target: sol.angle, tol: 0.9,
+          start: 0,
+          evidence: '窗帘焦痕在顶窗偏' + (winX < 375 ? '左' : '右') + '；镜架旧螺丝印只到 ' + old + '°。',
+          q: '镜面角度说明了什么？',
+          options: ['光来自左侧走廊', '镜子最近被人动过', '窗外有人举着灯'], answer: 1,
+          explain: 'θ ≈ ' + sol.angle.toFixed(1) + '° 时，反射光正好落在' + (winX < 375 ? '左' : '右') + '上窗。这个角度超出了镜架旧螺丝印的 ' + old + '°，说明镜子被人重新固定过。',
+          clue: '镜架上有新的划痕，指纹属于研究助理。他重新固定过镜子，制造了错误的光源方向。'
+        };
+      },
+      metric: function (v) { return v; },
+      fmt: function (m) { return '镜面 ' + m.toFixed(1) + '°'; },
+      valText: function (v) { return v.toFixed(1) + '°'; },
+      draw: 'd3'
+    },
+    {
+      id: 'c4', ch: 0, kicker: 'CASE 04 · 动量', name: '路口的夹角', place: '十字路口 · 雨夜',
+      ctrl: 'B 车速度', unit: 'km/h', min: 10, max: 80, step: 0.5,
+      formula: '动量合成：tanθ = (m_B · v_B) ÷ (m_A · v_A)。',
+      gen: function () {
+        var vB = rand(31, 42, 0.5);
+        var theta = Math.atan((800 * (vB / 3.6)) / (1200 * (30 / 3.6))) * 180 / Math.PI;
+        return {
+          vB: vB, theta: theta, target: theta, tol: 0.6,
+          start: 20,
+          evidence: 'A 车 1200 kg，沿主路 30 km/h；B 车 800 kg 从侧路驶来。碰撞后两车夹角 ' + theta.toFixed(1) + '°。',
+          q: '碰撞前谁更快？',
+          options: ['A 车，30 km/h', 'B 车，约 ' + Math.round(vB) + ' km/h', '两车一样快'], answer: 1,
+          explain: 'vB = tan' + theta.toFixed(1) + '° × 1200 × (30 ÷ 3.6) ÷ 800 ≈ ' + vB.toFixed(1) + ' km/h。侧路限速 30。',
+          clue: 'B 车在路口没有减速，实测约 ' + Math.round(vB) + ' km/h。黑色轿车，还是同一辆。'
+        };
+      },
+      metric: function (v) {
+        var va = 30 / 3.6, vb = v / 3.6;
+        return Math.atan((800 * vb) / (1200 * va)) * 180 / Math.PI;
+      },
+      fmt: function (m) { return '夹角 ' + m.toFixed(1) + '°'; },
+      valText: function (v) { return v.toFixed(1) + ' km/h'; },
+      draw: 'd4'
+    },
+    {
+      id: 'c5', ch: 0, kicker: 'CASE 05 · 声速', name: '迟到的枪声', place: '河岸 · 雨夜',
+      ctrl: '对岸距离', unit: 'm', min: 50, max: 400, step: 1,
+      formula: '声速测距：s = v × t，取 v = 340 m/s。',
+      gen: function () {
+        var d = randInt(180, 380);
+        var t = d / 340;
+        return {
+          d: d, t: t, target: t, tol: 0.015,
+          start: 100,
+          evidence: '监控拍到枪口闪光 ' + t.toFixed(2) + ' 秒后，目击者才听到枪声。声速取 340 m/s。',
+          q: '枪手最可能在哪？',
+          options: ['同一栋楼内', '河对岸约 ' + d + ' m', '一公里以外'], answer: 1,
+          explain: 's = 340 × ' + t.toFixed(2) + ' = ' + Math.round(340 * t) + ' m。枪声来自河对岸，不是同一栋楼。',
+          clue: '河对岸仓库的灯在枪响后熄灭。仓库的登记人，还是研究助理。'
+        };
+      },
+      metric: function (v) { return v / 340; },
+      fmt: function (m) { return '延迟 ' + m.toFixed(2) + ' s'; },
+      valText: function (v) { return Math.round(v) + ' m'; },
+      draw: 'd5'
+    },
+    {
+      id: 'c6', ch: 1, kicker: 'CASE 06 · 液体压强', name: '水塔的压力', place: '旧仓库 · 水塔平台',
+      ctrl: '水塔水位高度', unit: 'm', min: 5, max: 40, step: 0.05,
+      formula: '液体压强：p = ρgh，水的密度取 1000 kg/m³。',
+      gen: function () {
+        var h = randInt(12, 32);
+        var p = 9.8 * h;
+        return {
+          h: h, p: p, target: p, tol: 1.5,
+          start: 8,
+          evidence: '消防栓压力表读数 ' + p.toFixed(0) + ' kPa；水的密度取 1000 kg/m³。',
+          q: '水塔水位大约多高？',
+          options: ['约 ' + (h - 4) + ' m', '约 ' + h + ' m', '约 ' + (h + 5) + ' m'], answer: 1,
+          explain: 'h = p ÷ (ρg) = ' + p.toFixed(0) + ' ÷ (1000 × 9.8) ≈ ' + h + ' m。',
+          clue: '水塔水位对应约 ' + h + ' m。物业记录里，那晚有人上过水塔平台。'
+        };
+      },
+      metric: function (v) { return 9.8 * v; },
+      fmt: function (m) { return '压力 ' + m.toFixed(0) + ' kPa'; },
+      valText: function (v) { return v.toFixed(1) + ' m'; },
+      draw: 'd6'
+    },
+    {
+      id: 'c7', ch: 1, kicker: 'CASE 07 · 单摆', name: '走慢的落地钟', place: '旧宅 · 门厅',
+      ctrl: '摆长', unit: 'm', min: 0.6, max: 1.4, step: 0.005,
+      formula: '单摆周期：T = 2π × √(L ÷ g)。',
+      gen: function () {
+        var L = rand(1.02, 1.12, 0.01);
+        var T = 2 * Math.PI * Math.sqrt(L / G);
+        return {
+          L: L, T: T, target: T, tol: 0.012,
+          start: 0.8,
+          evidence: '落地钟摆锤实测完成 30 次完整摆动用时 ' + (T * 30).toFixed(1) + ' s。',
+          q: '钟为什么走慢？',
+          options: ['摆长被调长了', '摆长被调短了', '当地重力变小了'], answer: 0,
+          explain: '实测周期 T ≈ ' + T.toFixed(3) + ' s，标准秒摆应接近 2.000 s。由 T = 2π√(L/g) 反推，摆长约 ' + L.toFixed(3) + ' m。',
+          clue: '摆长被调到约 ' + L.toFixed(2) + ' m，比标准秒摆长。工具箱里有一把新扳手。'
+        };
+      },
+      metric: function (v) { return 2 * Math.PI * Math.sqrt(v / G); },
+      fmt: function (m) { return '周期 ' + m.toFixed(2) + ' s'; },
+      valText: function (v) { return v.toFixed(3) + ' m'; },
+      draw: 'd7'
+    },
+    {
+      id: 'c8', ch: 1, kicker: 'CASE 08 · 胡克定律', name: '弹开的卷帘门', place: '旧仓库 · 后门',
+      ctrl: '弹簧压缩量', unit: 'cm', min: 5, max: 30, step: 0.2,
+      formula: '胡克定律：F = kx，x 以 m 计。',
+      gen: function () {
+        var x = randInt(12, 24);
+        var k = 6000;
+        var F = k * x / 100;
+        return {
+          x: x, k: k, F: F, target: F, tol: 40,
+          start: 8,
+          evidence: '卷帘门弹簧标注劲度 k = 6000 N/m；现场测得压缩量 ' + x + ' cm。',
+          q: '这股弹力能否弹开 60 kg 的门闩（约需 600 N）？',
+          options: ['不能，弹力不足 600 N', '能，弹力约 ' + Math.round(F) + ' N', '刚好 600 N'], answer: 1,
+          explain: 'F = 6000 × ' + (x / 100).toFixed(2) + ' = ' + Math.round(F) + ' N，已经超过门闩所需的约 600 N。',
+          clue: '弹簧被压到 ' + x + ' cm，弹力约 ' + Math.round(F) + ' N。这个力度足以弹开门闩，也能解释门框上的新凹痕。'
+        };
+      },
+      metric: function (v) { return 6000 * v / 100; },
+      fmt: function (m) { return '弹力 ' + m.toFixed(0) + ' N'; },
+      valText: function (v) { return v.toFixed(1) + ' cm'; },
+      draw: 'd8'
+    },
+    {
+      id: 'c9', ch: 1, kicker: 'CASE 09 · 折射', name: '水下的硬币', place: '旧宅 · 后院水池',
+      ctrl: '实际水深', unit: 'm', min: 0.6, max: 3.0, step: 0.01,
+      formula: '视深：h′ = h ÷ n，水的折射率 n = 1.33。',
+      gen: function () {
+        var H = rand(1.0, 2.4, 0.1);
+        var app = H / 1.33;
+        return {
+          H: H, app: app, target: app, tol: 0.03,
+          start: 0.8,
+          evidence: '池底硬币从岸上看，视深约 ' + app.toFixed(2) + ' m；水的折射率取 1.33。',
+          q: '硬币为什么会“浮起来”？',
+          options: ['光从水进入空气发生折射', '水面反射了硬币', '池底有气泡'], answer: 0,
+          explain: 'h = h′ × n = ' + app.toFixed(2) + ' × 1.33 ≈ ' + H.toFixed(2) + ' m。光从水进入空气时折射，眼睛看到的是更浅的虚像。',
+          clue: '实际水深约 ' + H.toFixed(1) + ' m。池底捞出的防水袋里，装着仓库的备用钥匙。'
+        };
+      },
+      metric: function (v) { return v / 1.33; },
+      fmt: function (m) { return '视深 ' + m.toFixed(2) + ' m'; },
+      valText: function (v) { return v.toFixed(2) + ' m'; },
+      draw: 'd9'
+    },
+    {
+      id: 'c10', ch: 1, kicker: 'CASE 10 · 热膨胀', name: '顶死的钢轨', place: '铁路道口 · 凌晨',
+      ctrl: '温升', unit: '°C', min: 5, max: 60, step: 0.5,
+      formula: '线膨胀：ΔL = L × α × ΔT，钢的 α = 1.2×10⁻⁵ /°C。',
+      gen: function () {
+        var dT = randInt(14, 40);
+        var dL = 20 * 1.2e-5 * dT * 1000;
+        return {
+          dT: dT, dL: dL, target: dL, tol: 0.4,
+          start: 10,
+          evidence: '20 m 钢轨两端缝隙被顶死，实测伸长 ' + dL.toFixed(1) + ' mm；钢的线膨胀系数 1.2×10⁻⁵ /°C。',
+          q: '这说明当晚钢轨经历了什么？',
+          options: ['被人为切割', '温度升高导致伸长', '列车超载压弯'], answer: 1,
+          explain: 'ΔT = ΔL ÷ (Lα) = ' + (dL / 1000).toFixed(4) + ' ÷ (20 × 1.2×10⁻⁵) ≈ ' + dT + ' °C。',
+          clue: '钢轨温度比当夜气温高出约 ' + dT + ' °C。附近的检修记录被人撕掉了一页。'
+        };
+      },
+      metric: function (v) { return 20 * 1.2e-5 * v * 1000; },
+      fmt: function (m) { return '伸长 ' + m.toFixed(1) + ' mm'; },
+      valText: function (v) { return v.toFixed(1) + ' °C'; },
+      draw: 'd10'
+    },
+    {
+      id: 'c11', ch: 1, kicker: 'CASE 11 · 欧姆定律', name: '多出来的电阻', place: '旧仓库 · 配电间',
+      ctrl: '隐藏电阻', unit: 'Ω', min: 2, max: 20, step: 0.005,
+      formula: '欧姆定律：I = U ÷ R。',
+      gen: function () {
+        var R = rand(3, 14, 0.5);
+        var I = 12 / R;
+        return {
+          R: R, I: I, target: I, tol: 0.03,
+          start: 5,
+          evidence: '实验电源 12 V，电流表读数 ' + I.toFixed(2) + ' A；线路里多了一只不明元件。',
+          q: '多出来的电阻最可能是什么？',
+          options: ['老化的接头', '被人串入的定时器', '正常线路损耗'], answer: 1,
+          explain: 'R = U ÷ I = 12 ÷ ' + I.toFixed(2) + ' ≈ ' + R.toFixed(1) + ' Ω，远高于线路本身的电阻。',
+          clue: '隐藏电阻约 ' + R.toFixed(1) + ' Ω，和仓库里那只定时器的线圈一致。'
+        };
+      },
+      metric: function (v) { return 12 / v; },
+      fmt: function (m) { return '电流 ' + m.toFixed(2) + ' A'; },
+      valText: function (v) { return v.toFixed(2) + ' Ω'; },
+      draw: 'd11'
+    },
+    {
+      id: 'c12', ch: 2, kicker: 'CASE 12 · 抛体', name: '天台的落点', place: '旧公寓 · 天台',
+      ctrl: '发射角', unit: '°', min: 10, max: 45, step: 0.2,
+      formula: '斜抛射程：R = v₀² × sin(2θ) ÷ g，取 v₀ = 18 m/s。',
+      gen: function () {
+        var ang = randInt(25, 42);
+        var range = 18 * 18 * Math.sin(2 * ang * Math.PI / 180) / G;
+        return {
+          ang: ang, range: range, target: range, tol: 0.35,
+          start: 12,
+          evidence: '物体从 18 m/s 斜抛出去，落点距楼体 ' + range.toFixed(1) + ' m。',
+          q: '发射角约为多少？',
+          options: [(ang - 8) + '°', ang + '°', (ang + 7) + '°'], answer: 1,
+          explain: 'R = 18² × sin(2×' + ang + '°) ÷ 9.8 ≈ ' + range.toFixed(1) + ' m。',
+          clue: '发射角约 ' + ang + '°，落点 ' + range.toFixed(0) + ' m。天台边缘的鞋印朝向河对岸。'
+        };
+      },
+      metric: function (v) { return 18 * 18 * Math.sin(2 * v * Math.PI / 180) / G; },
+      fmt: function (m) { return '射程 ' + m.toFixed(1) + ' m'; },
+      valText: function (v) { return v.toFixed(1) + '°'; },
+      draw: 'd12'
+    },
+    {
+      id: 'c13', ch: 2, kicker: 'CASE 13 · 视重', name: '电梯里的读数', place: '旧公寓 · 电梯',
+      ctrl: '电梯加速度', unit: 'm/s²', min: -3, max: 5, step: 0.02,
+      formula: '视重：N = m(g + a)，向上为正。',
+      gen: function () {
+        var a = rand(1.0, 3.0, 0.1);
+        var N = 70 * (G + a);
+        return {
+          a: a, N: N, target: N, tol: 6,
+          start: 0,
+          evidence: '电梯里体重秤读数 ' + N.toFixed(0) + ' N；乘员 70 kg。',
+          q: '电梯当时在做什么？',
+          options: ['加速上升或减速下降', '匀速运动', '加速下降或减速上升'], answer: 0,
+          explain: 'a = N ÷ m − g = ' + N.toFixed(0) + ' ÷ 70 − 9.8 ≈ ' + a.toFixed(1) + ' m/s²，方向向上。',
+          clue: '电梯加速度约 ' + a.toFixed(1) + ' m/s²，方向向上。监控里，那晚只有一个人按了顶层。'
+        };
+      },
+      metric: function (v) { return 70 * (G + v); },
+      fmt: function (m) { return '读数 ' + m.toFixed(0) + ' N'; },
+      valText: function (v) { return v.toFixed(1) + ' m/s²'; },
+      draw: 'd13'
+    },
+    {
+      id: 'c14', ch: 2, kicker: 'CASE 14 · 圆周运动', name: '转快的唱片', place: '旧宅 · 书房',
+      ctrl: '唱片转速', unit: 'rpm', min: 20, max: 90, step: 0.5,
+      formula: '线速度：v = 2πnr，r = 0.15 m，n 以转/秒计。',
+      gen: function () {
+        var n = randInt(45, 75);
+        var v = 2 * Math.PI * (n / 60) * 0.15;
+        return {
+          n: n, v: v, target: v, tol: 0.02,
+          start: 30,
+          evidence: '唱片边缘贴纸的线速度测得 ' + v.toFixed(2) + ' m/s；唱片半径 0.15 m。',
+          q: '转速异常说明什么？',
+          options: ['唱机被人调过速', '唱片直径不对', '正常播放（33⅓ 转）'], answer: 0,
+          explain: 'n = v ÷ (2πr) × 60 = ' + v.toFixed(2) + ' ÷ (2π × 0.15) × 60 ≈ ' + n + ' rpm，远高于 33⅓。',
+          clue: '转速约 ' + n + ' rpm，远高于 33⅓。唱机下面压着一张仓库门禁卡。'
+        };
+      },
+      metric: function (v) { return 2 * Math.PI * (v / 60) * 0.15; },
+      fmt: function (m) { return '线速度 ' + m.toFixed(2) + ' m/s'; },
+      valText: function (v) { return v.toFixed(1) + ' rpm'; },
+      draw: 'd14'
+    },
+    {
+      id: 'c15', ch: 2, kicker: 'CASE 15 · 力矩', name: '撬棍的支点', place: '旧仓库 · 侧门',
+      ctrl: '手施加的力', unit: 'N', min: 100, max: 400, step: 2,
+      formula: '力矩平衡：F₁d₁ = F₂d₂。撬起重物所需 F = G × d₁ ÷ d₂。',
+      gen: function () {
+        var F = randInt(160, 260);
+        var load = F * 1.2 / 0.4;
+        return {
+          F: F, load: load, target: load, tol: 15,
+          start: 120,
+          evidence: '撬棍支点距重物 0.4 m，距施力端 1.2 m；重物重 ' + load.toFixed(0) + ' N。',
+          q: '如果把支点向重物移近，所需力会？',
+          options: ['变大', '变小', '不变'], answer: 1,
+          explain: 'F = ' + load.toFixed(0) + ' × 0.4 ÷ 1.2 ≈ ' + F + ' N。支点靠近重物后 d₁ 变小，所需力随之变小。',
+          clue: '施力约 ' + F + ' N，和一个人能发出的力量吻合。撬棍上的掌纹属于研究助理。'
+        };
+      },
+      metric: function (v) { return v * 1.2 / 0.4; },
+      fmt: function (m) { return '可撬起 ' + m.toFixed(0) + ' N'; },
+      valText: function (v) { return v.toFixed(0) + ' N'; },
+      draw: 'd15'
+    }
+  ];
+
+  /* 第二问：主推断通过后的追问，考察对同一物理量更深一步的理解 */
+  var Q2 = {
+    c1: { q: '同样的坠落高度，如果初速翻倍，水平落点会怎样？', options: ['变成原来的 2 倍', '保持不变', '缩短一半'], answer: 0 },
+    c2: { q: '同样的车速，如果路面干燥、摩擦系数更大，刹车距离会怎样？', options: ['更短', '更长', '不变'], answer: 0 },
+    c3: { q: '镜面角度超出了旧螺丝印的范围，反射光被引到了哪里？', options: ['原本照不到的位置', '它原来照的位置', '镜子背面'], answer: 0 },
+    c4: { q: '如果 A 车更重，在同样的 B 车速度下，碰撞夹角会怎样？', options: ['变小', '变大', '不变'], answer: 0 },
+    c5: { q: '气温更低时声速更小，同样的距离，枪声会怎样？', options: ['更晚到达', '更早到达', '不变'], answer: 0 },
+    c6: { q: '水塔水位继续升高，消防栓的压力会怎样？', options: ['升高', '降低', '不变'], answer: 0 },
+    c7: { q: '要让这只走慢的钟走准，摆长应该怎样调？', options: ['调短一些', '调长一些', '不用动'], answer: 0 },
+    c8: { q: '弹簧压缩量越大，它产生的弹力会怎样？', options: ['越大', '越小', '不变'], answer: 0 },
+    c9: { q: '从岸上看，硬币的视深和实际水深相比？', options: ['更浅', '更深', '一样'], answer: 0 },
+    c10: { q: '同样的温升下，如果钢轨更短，伸长量会怎样？', options: ['更小', '更大', '不变'], answer: 0 },
+    c11: { q: '线路串入电阻后，同样的电压下电流会怎样？', options: ['变小', '变大', '不变'], answer: 0 },
+    c12: { q: '同样初速下，发射角接近 45° 时射程会怎样？', options: ['接近最大', '最小', '为零'], answer: 0 },
+    c13: { q: '电梯向上加速时，体重秤的读数比静止时怎样？', options: ['偏大', '偏小', '一样'], answer: 0 },
+    c14: { q: '唱片转速越快，边缘的线速度会怎样？', options: ['越大', '越小', '不变'], answer: 0 },
+    c15: { q: '这根撬棍能省多少力，主要取决于什么？', options: ['两段力臂的比例', '撬棍的颜色', '施力的速度'], answer: 0 }
+  };
+
+  function genRun(i) {
+    var r = CASES[i].gen();
+    if (Q2[CASES[i].id]) r.q2 = Q2[CASES[i].id];
+    return r;
+  }
+
+  var CH = [
+    { name: '第一章 · 雨夜', short: '一章 · 雨夜', range: [0, 4] },
+    { name: '第二章 · 旧案', short: '二章 · 旧案', range: [5, 9] },
+    { name: '第三章 · 终局', short: '三章 · 终局', range: [10, 14] }
+  ];
+
+  var IDX = {};
+  for (var ci = 0; ci < CASES.length; ci++) IDX[CASES[ci].id] = ci;
+
+  var FINAL = [
+    {
+      q: '那晚我一直在实验室，从没靠近过旧公寓。',
+      correct: 'c3',
+      pool: ['c3', 'c7', 'c9', 'c15'],
+      ok: '镜架上的新划痕和指纹把你留在了走廊。你说的“没靠近”，不成立。',
+      no: '这条证据和公寓现场没有直接关系，换一条。'
+    },
+    {
+      q: '那辆车当晚一直停在车库，没出过城。',
+      correct: 'c2',
+      pool: ['c2', 'c6', 'c10', 'c12'],
+      ok: '滨河路的刹车痕和缺失的十七分钟，说明车不仅出城，还超了速。',
+      no: '这和车当晚在哪没有直接关系，换一条。'
+    },
+    {
+      q: '河对岸的仓库只是放旧书，那晚我没去过。',
+      correct: 'c5',
+      pool: ['c5', 'c8', 'c11', 'c13'],
+      ok: '枪声来自河对岸，枪响后仓库的灯熄灭。你在那里。',
+      no: '仓库的灯和枪声，比这条线索更能说明问题。'
+    }
+  ];
+
+  var ACH = [
+    { id: 'first', name: '第一现场', desc: '完成第一个案件' },
+    { id: 'ch1', name: '雨夜归案', desc: '完成第一章' },
+    { id: 'ch2', name: '旧案重启', desc: '完成第二章' },
+    { id: 'ch3', name: '十五案齐', desc: '归档全部十五个现场' },
+    { id: 'perfectCase', name: '分毫不差', desc: '单个案件拿到三星' },
+    { id: 'allStar', name: '完整案卷', desc: '全部案件三星' },
+    { id: 'noHint', name: '只凭双手', desc: '全程不用辅助推算结案' },
+    { id: 'perfectEnding', name: '雨停之后', desc: '终局对质三次全中' },
+    { id: 'hardClear', name: '严苛侦探', desc: '在严苛模式下结案' },
+    { id: 'practice', name: '重演现场', desc: '在档案室重演任意案件' }
+  ];
+  var ACH_BY_ID = {};
+  for (var ai = 0; ai < ACH.length; ai++) ACH_BY_ID[ACH[ai].id] = ACH[ai];
+
+  /* ---------------- 存档 ---------------- */
+  var ST = null;
+  var P = null;
+  var P_RETURN = 0;
+  var STATS = null;
+
+  function defaultStats() {
+    return {
+      best: {
+        standard: { score: 0, rank: '—', stars: 0 },
+        hard: { score: 0, rank: '—', stars: 0 }
+      },
+      endings: {}, ach: {}, caseStars: {}, plays: 0
+    };
+  }
+  function loadStats() {
+    try {
+      var d = JSON.parse(localStorage.getItem(STATS_KEY) || 'null');
+      if (!d || typeof d !== 'object') return defaultStats();
+      var base = defaultStats();
+      if (d.best && d.best.standard) base.best.standard = d.best.standard;
+      if (d.best && d.best.hard) base.best.hard = d.best.hard;
+      base.endings = d.endings || {};
+      base.ach = d.ach || {};
+      base.caseStars = d.caseStars || {};
+      base.plays = d.plays || 0;
+      return base;
+    } catch (e) { return defaultStats(); }
+  }
+  function saveStats() { try { localStorage.setItem(STATS_KEY, JSON.stringify(STATS)); } catch (e) {} }
+
+  function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(ST)); } catch (e) {} }
+  var saveT = 0;
+  function saveSoon() { clearTimeout(saveT); saveT = setTimeout(save, 180); }
+
+  function newRun(diff, countPlay) {
+    ST = {
+      idx: 0,
+      diff: diff === 'hard' ? 'hard' : 'standard',
+      cs: [],
+      done: false,
+      final: { round: 0, correct: 0, wrong: 0, firstTry: 0, done: false, ending: null, order: null, wrongPicks: [], fb: '' },
+      t0: Date.now(),
+      elapsed: 0
+    };
+    for (var i = 0; i < CASES.length; i++) {
+      var run = genRun(i);
+      ST.cs.push({
+        run: run, solved: false, stars: 0, compares: 0, qWrong: 0,
+        hint: false, qOrder: null, q2Order: null, q1pass: false, v: run.start
+      });
+    }
+    if (countPlay) { STATS.plays = (STATS.plays || 0) + 1; saveStats(); }
+    save();
+  }
+
+  function loadSave() {
+    try {
+      var d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
+      if (!d || !Array.isArray(d.cs) || d.cs.length !== CASES.length) return false;
+      ST = {
+        idx: clamp(typeof d.idx === 'number' ? d.idx : 0, 0, CASES.length - 1),
+        diff: d.diff === 'hard' ? 'hard' : 'standard',
+        cs: [],
+        done: !!d.done,
+        final: d.final && typeof d.final.round === 'number' ? d.final : { round: 0, correct: 0, wrong: 0, firstTry: 0, done: false, ending: null, order: null, wrongPicks: [], fb: '' },
+        t0: d.t0 || Date.now(),
+        elapsed: d.elapsed || 0
+      };
+      for (var i = 0; i < CASES.length; i++) {
+        var s = d.cs[i] || {};
+        var run = s.run;
+        if (!run || typeof run.target !== 'number' || typeof run.evidence !== 'string') run = genRun(i);
+        else if (!run.q2 && Q2[CASES[i].id]) run.q2 = Q2[CASES[i].id];
+        ST.cs.push({
+          run: run,
+          solved: !!s.solved,
+          stars: clamp(s.stars || 0, 0, 3),
+          compares: s.compares || 0,
+          qWrong: s.qWrong || 0,
+          hint: !!s.hint,
+          qOrder: Array.isArray(s.qOrder) ? s.qOrder : null,
+          q2Order: Array.isArray(s.q2Order) ? s.q2Order : null,
+          q1pass: !!s.q1pass,
+          v: typeof s.v === 'number' ? s.v : run.start
+        });
+      }
+      if (!ST.final.wrongPicks) ST.final.wrongPicks = [];
+      while (ST.idx < CASES.length - 1 && ST.cs[ST.idx].solved) ST.idx++;
+      return true;
+    } catch (e) { return false; }
+  }
+
+  function curState() { return P ? P : ST.cs[ST.idx]; }
+  function curRun() { return P ? P.run : ST.cs[ST.idx].run; }
+  function solvedCount() {
+    var n = 0;
+    for (var i = 0; i < ST.cs.length; i++) if (ST.cs[i].solved) n++;
+    return n;
+  }
+  function allSolved() { return solvedCount() === CASES.length; }
+  function totalStars() {
+    var n = 0;
+    for (var i = 0; i < ST.cs.length; i++) n += ST.cs[i].stars || 0;
+    return n;
+  }
+  function caseScore(cs) {
+    if (!cs || !cs.solved) return 0;
+    return 40 + (cs.stars || 0) * 40 + (cs.qWrong === 0 ? 20 : 0) - (cs.hint ? 20 : 0);
+  }
+  function finalScore() {
+    if (!ST.final || !ST.final.done) return 0;
+    return (ST.final.firstTry || 0) * 40 + (ST.final.firstTry === 3 ? 40 : 0);
+  }
+  function totalScore() {
+    var n = 0;
+    for (var i = 0; i < ST.cs.length; i++) n += caseScore(ST.cs[i]);
+    return n + finalScore();
+  }
+  function rankOf(score) {
+    if (score >= 2500) return 'SS';
+    if (score >= 2200) return 'S';
+    if (score >= 1800) return 'A';
+    if (score >= 1400) return 'B';
+    return 'C';
+  }
+  function hasProgress() {
+    if (!ST) return false;
+    if (ST.final && (ST.final.round > 0 || ST.final.done)) return true;
+    for (var i = 0; i < ST.cs.length; i++) if (ST.cs[i].solved) return true;
+    return false;
+  }
+  function resumeIdx() {
+    for (var i = 0; i < CASES.length; i++) if (!ST.cs[i].solved) return i;
+    return CASES.length - 1;
+  }
+  function chapterCount(ch) {
+    var r = CH[ch].range, n = 0;
+    for (var i = r[0]; i <= r[1]; i++) if (ST.cs[i].solved) n++;
+    return n;
+  }
+  function chapterDone(ch) { return chapterCount(ch) === 5; }
+
+  /* ---------------- DOM ---------------- */
+  var cv = document.getElementById('cv');
+  var ctx = cv.getContext('2d');
+  var slider = document.getElementById('slider');
+  var ctrlLabel = document.getElementById('ctrlLabel');
+  var ctrlVal = document.getElementById('ctrlVal');
+  var evidenceEl = document.getElementById('evidence');
+  var msgEl = document.getElementById('msg');
+  var dlg = document.getElementById('dlg');
+  var dlgTitle = document.getElementById('dlgTitle');
+  var dlgBody = document.getElementById('dlgBody');
+  var dlgActs = document.getElementById('dlgActs');
+  var dlgKicker = document.getElementById('dlgKicker');
+  var titleBox = document.getElementById('titleBox');
+  var toastEl = document.getElementById('toast');
+  var toastT = 0;
+
+  function toast(text) {
+    toastEl.textContent = text;
+    toastEl.classList.add('on');
+    clearTimeout(toastT);
+    toastT = setTimeout(function () { toastEl.classList.remove('on'); }, 2300);
+  }
+  function unlock(id) {
+    if (STATS.ach[id]) return;
+    STATS.ach[id] = 1;
+    saveStats();
+    var a = ACH_BY_ID[id];
+    if (a) toast('成就解锁 · ' + a.name);
+  }
+
+  /* ---------------- 界面 ---------------- */
+  function say(html) {
+    msgEl.innerHTML = html;
+    msgEl.classList.remove('flash');
+    void msgEl.offsetWidth;
+    msgEl.classList.add('flash');
+  }
+
+  function renderChapterStrip() {
+    var html = '';
+    for (var i = 0; i < CH.length; i++) {
+      var n = chapterCount(i);
+      var active = !P && ST.idx >= CH[i].range[0] && ST.idx <= CH[i].range[1];
+      var done = n === 5;
+      html += '<div class="chSeg' + (active ? ' active' : '') + (done ? ' done' : '') + '">' +
+        '<b>' + CH[i].short + '</b><span>' + n + '/5</span></div>';
+    }
+    document.getElementById('chapterStrip').innerHTML = html;
+  }
+
+  function updateHeader() {
+    var c = CASES[ST.idx];
+    document.getElementById('caseKicker').textContent = P ? 'REPLAY · 现场重演' : c.kicker;
+    document.getElementById('caseName').textContent = c.name;
+    document.getElementById('casePlace').textContent = c.place;
+    document.getElementById('prog').textContent = P ? '练习' : pad(ST.idx + 1, 2) + ' / 15';
+    document.getElementById('scoreEl').textContent = P ? '—' : pad(totalScore(), 4);
+    document.getElementById('clueBtn').textContent = '线索 ' + solvedCount() + '/15';
+    document.getElementById('stamp').textContent = P ? '练习现场' : '现场重建';
+    renderChapterStrip();
+  }
+
+  function renderCase(n) {
+    if (typeof n !== 'number' || n < 0 || n >= CASES.length) n = 0;
+    ST.idx = n;
+    var c = CASES[n], cs = curState(), run = curRun();
+    updateHeader();
+    slider.min = c.min;
+    slider.max = c.max;
+    slider.step = c.step;
+    var val = typeof cs.v === 'number' ? clamp(cs.v, c.min, c.max) : run.start;
+    slider.value = val;
+    ctrlLabel.textContent = c.ctrl + '（' + c.unit + '）';
+    ctrlVal.textContent = c.valText(val);
+    evidenceEl.textContent = run.evidence;
+    if (P) {
+      say('<b>练习模式。</b>本局成绩不计入主线，但会更新档案里的最佳评价。拖动变量，让模拟结果对上物证。');
+    } else {
+      say('<b>' + c.name + '。</b>' + run.evidence + ' 拖动变量，让模拟结果对上物证。');
+    }
+    drawCase(val, 1);
+    save();
+  }
+
+  slider.addEventListener('input', function () {
+    var v = parseFloat(slider.value);
+    var cs = curState();
+    cs.v = v;
+    ctrlVal.textContent = CASES[ST.idx].valText(v);
+    drawCase(v, 1);
+    saveSoon();
+  });
+
+  function runSim() {
+    var start = performance.now();
+    var my = ++animId;
+    function step(now) {
+      if (my !== animId) return;
+      var t = Math.min(1, (now - start) / 1300);
+      drawCase(parseFloat(slider.value), ease(t));
+      if (t < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+  var animId = 0;
+  function ease(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
+  document.getElementById('runBtn').addEventListener('click', runSim);
+
+  function tolerance(run) { return run.tol * ((ST.diff === 'hard' && !P) ? 0.62 : 1); }
+
+  function compare() {
+    var c = CASES[ST.idx], cs = curState(), run = curRun();
+    var v = parseFloat(slider.value);
+    var m = c.metric(v, run);
+    var diff = Math.abs(m - run.target);
+    if (!cs.solved) { cs.compares++; saveSoon(); }
+    if (diff <= tolerance(run)) {
+      if (cs.solved) {
+        showSolved(c, true);
+      } else {
+        tone(760, 0.1, 'triangle', 0.05);
+        showDeduction(c, cs, run);
+      }
+    } else {
+      say('还差一点。当前是 <b>' + c.fmt(m) + '</b>，现场记录是 <b>' + c.fmt(run.target) + '</b>。继续调，别急。');
+      tone(180, 0.09, 'sine', 0.03);
+    }
+    updateHeader();
+  }
+  document.getElementById('checkBtn').addEventListener('click', compare);
+
+  function useHint() {
+    var c = CASES[ST.idx], cs = curState(), run = curRun();
+    if (cs.solved) { say('这起案件已经归档。'); return; }
+    var lo = c.min, hi = c.max, bestV = lo, bestErr = Infinity;
+    for (var i = 0; i <= 2000; i++) {
+      var v = lo + (hi - lo) * i / 2000;
+      var err = Math.abs(c.metric(v, run) - run.target);
+      if (err < bestErr) { bestErr = err; bestV = v; }
+    }
+    cs.hint = true;
+    slider.value = bestV;
+    slider.dispatchEvent(new Event('input', { bubbles: true }));
+    say('<b>辅助推算：</b>滑块已推到最接近物证的位置。本案件最高只能拿两星（严苛模式一星），结算分 -20。');
+    tone(520, 0.08, 'sine', 0.04);
+    save();
+    updateHeader();
+  }
+  document.getElementById('hintBtn').addEventListener('click', useHint);
+
+  /* ---------------- 弹窗 ---------------- */
+  function dialog(title, body, actions, kicker, after) {
+    dlgKicker.textContent = kicker || '档案';
+    dlgTitle.textContent = title;
+    dlgBody.innerHTML = body || '';
+    dlgActs.innerHTML = '';
+    (actions && actions.length ? actions : [{ label: '继续' }]).forEach(function (a) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      if (a.ghost) b.className = 'ghost';
+      b.textContent = a.label;
+      if (a.disabled) b.disabled = true;
+      b.addEventListener('click', function () {
+        if (a.disabled) return;
+        if (a.keep) { if (a.fn) a.fn(); return; }
+        closeDialog();
+        if (a.fn) a.fn();
+      });
+      dlgActs.appendChild(b);
+    });
+    dlg.classList.remove('hide');
+    if (after) after();
+  }
+  function closeDialog() { dlg.classList.add('hide'); }
+
+  /* ---------------- 推断题 ---------------- */
+  function showDeduction(c, cs, run) {
+    if (cs.q1pass && run.q2) { showQ2(c, cs, run); return; }
+    var body = '<p>模拟与物证吻合。</p><p class="hl">' + run.explain + '</p><p><b>物证：</b>' + run.clue + '</p>' +
+      '<p style="margin-top:12px"><b>推断：</b>' + run.q + '</p>' +
+      '<p style="font-size:11px;color:#8ba3b5;margin-top:2px">选项顺序每轮不同，按证据判断。</p>' +
+      '<div id="askFb" style="min-height:16px;font-size:11.5px;color:#e08573;margin-top:4px"></div>';
+    if (!isPermN(cs.qOrder, run.options.length)) cs.qOrder = makeOrder(run.options.length);
+    var acts = cs.qOrder.map(function (oi, i) {
+      return {
+        label: String.fromCharCode(65 + i) + ' · ' + run.options[oi],
+        keep: true,
+        fn: function () {
+          if (oi !== run.answer) {
+            cs.qWrong++;
+            save();
+            var fb = document.getElementById('askFb');
+            if (fb) fb.textContent = '不对。再看一眼上面的数据。';
+            tone(160, 0.1, 'sine', 0.03);
+            return;
+          }
+          closeDialog();
+          tone(760, 0.1, 'triangle', 0.05);
+          if (run.q2) {
+            cs.q1pass = true;
+            save();
+            showQ2(c, cs, run);
+          } else {
+            finalizeCase();
+          }
+        }
+      };
+    });
+    acts.push({ label: '再比对一次', ghost: true, fn: function () { closeDialog(); compare(); } });
+    dialog('推断 · ' + c.name, body, acts, 'DEDUCTION');
+  }
+
+  function showQ2(c, cs, run) {
+    var q2 = run.q2;
+    if (!isPermN(cs.q2Order, q2.options.length)) cs.q2Order = makeOrder(q2.options.length);
+    var body = '<p class="ok">第一问通过。</p><p>' + run.explain + '</p>' +
+      '<p style="margin-top:12px"><b>追问：</b>' + q2.q + '</p>' +
+      '<div id="askFb" style="min-height:16px;font-size:11.5px;color:#e08573;margin-top:4px"></div>';
+    var acts = cs.q2Order.map(function (oi, i) {
+      return {
+        label: String.fromCharCode(65 + i) + ' · ' + q2.options[oi],
+        keep: true,
+        fn: function () {
+          if (oi !== q2.answer) {
+            cs.qWrong++;
+            save();
+            var fb = document.getElementById('askFb');
+            if (fb) fb.textContent = '还不对。把两条线索放在一起看。';
+            tone(160, 0.1, 'sine', 0.03);
+            return;
+          }
+          closeDialog();
+          tone(820, 0.12, 'triangle', 0.05);
+          finalizeCase();
+        }
+      };
+    });
+    acts.push({ label: '再比对一次', ghost: true, fn: function () { closeDialog(); compare(); } });
+    dialog('追问 · ' + c.name, body, acts, 'DEDUCTION');
+  }
+
+  function calcStars(cs) {
+    var s = 3;
+    if ((cs.compares || 0) > 1 || (cs.qWrong || 0) > 0) s = 2;
+    if ((cs.compares || 0) > 3 || (cs.qWrong || 0) > 1) s = 1;
+    if (cs.hint) s = Math.min(s, ST.diff === 'hard' ? 1 : 2);
+    return clamp(s, 1, 3);
+  }
+
+  function finalizeCase() {
+    var c = CASES[ST.idx], cs = curState();
+    cs.solved = true;
+    cs.stars = calcStars(cs);
+    if (P) { practiceDone(c, cs); return; }
+    save();
+    updateHeader();
+    if (c.id === 'c1') unlock('first');
+    if (cs.stars === 3) unlock('perfectCase');
+    if (allSolved() && totalStars() === CASES.length * 3) unlock('allStar');
+    var r = CASES[ST.idx].ch;
+    if (ST.idx === CH[0].range[1]) { chapterEnd(0); return; }
+    if (ST.idx === CH[1].range[1]) { chapterEnd(1); return; }
+    if (ST.idx === CASES.length - 1) { allClear(); return; }
+    caseCleared(c, cs);
+  }
+
+  function caseCleared(c, cs) {
+    var body = '<p class="ok">现场归档 · ' + starsText(cs.stars) + '</p>' +
+      '<p>' + cs.run.clue + '</p>' +
+      '<p style="font-size:11.5px;color:#8ba3b5">本案得分 ' + caseScore(cs) + '，累计侦查分 ' + totalScore() + '。</p>';
+    var ni = resumeIdx();
+    dialog('归档 · ' + c.name, body, [
+      { label: '前往第 ' + (ni + 1) + ' 案', fn: function () { renderCase(ni); } },
+      { label: '查看线索本', ghost: true, fn: clueBook }
+    ], 'CASE CLEAR');
+  }
+
+  function chapterEnd(ch) {
+    var body = '', title = '', acts = [];
+    if (ch === 0) {
+      title = '第一章完成 · 雨夜';
+      body = '<p>五个现场拼在一起：五楼书房、滨河路、走廊、十字路口、河岸。它们指向同一辆黑色轿车。</p>' +
+        '<p class="hl">但车牌是空的，车主栏只写着一个职位：研究助理。</p>' +
+        '<p>你翻到旧案卷的最后一页，发现五年前也有一场雨，也有一个人从五楼坠下。那起案子，结得太快了。</p>';
+      acts.push({ label: '进入第二章 · 旧案', fn: function () { renderCase(CH[1].range[0]); } });
+      unlock('ch1');
+    } else if (ch === 1) {
+      title = '第二章完成 · 旧案';
+      body = '<p>水塔、落地钟、卷帘门、水池、钢轨、配电间。五处旧案里的物理量，全部被人为改过。</p>' +
+        '<p class="hl">改动它们的人很懂实验，也很清楚怎样让证据看起来“正常”。</p>' +
+        '<p>你把研究助理的名字写在白板中央。还差最后五个现场，就能把整条证据链接上。</p>';
+      acts.push({ label: '进入第三章 · 终局', fn: function () { renderCase(CH[2].range[0]); } });
+      unlock('ch2');
+    }
+    acts.push({ label: '查看线索本', ghost: true, fn: clueBook });
+    dialog(title, body, acts, 'CHAPTER CLEAR');
+  }
+
+  function allClear() {
+    unlock('ch3');
+    if (allSolved() && totalStars() === CASES.length * 3) unlock('allStar');
+    dialog('十五案齐了',
+      '<p>十五处现场，十五组被人动过的数值。现在只剩最后一件事：让他自己把话说漏。</p>' +
+      '<p class="hl">终局对质：用三条最硬的物证，逐条推翻他的说法。</p>',
+      [
+        { label: '进入终局对质', fn: startFinale },
+        { label: '再看看线索', ghost: true, fn: clueBook }
+      ], 'ALL CLEAR');
+  }
+
+  function showSolved(c, again) {
+    if (!again) return;
+    var body = '<p>模拟与物证吻合。</p><p class="hl">' + curState().run.explain + '</p><p><b>物证：</b>' + curState().run.clue + '</p>';
+    dialog('已归档 · ' + c.name, body, nextActions(), 'CASE CLEAR');
+  }
+
+  function nextActions() {
+    var i = resumeIdx();
+    if (allSolved()) return [{ label: '进入终局对质', fn: startFinale }];
+    if (i === CASES.length - 1 && ST.cs[i].solved) return [{ label: '进入终局对质', fn: startFinale }];
+    return [{ label: '继续调查 · 第 ' + (i + 1) + ' 案', fn: function () { renderCase(i); } }];
+  }
+
+  /* ---------------- 终局 ---------------- */
+  function startFinale() {
+    if (!allSolved()) { say('还有现场没有归档。'); return; }
+    if (ST.final.done && ST.final.ending !== 'weak') { showReport(); return; }
+    var body = '<p>询问室里只有一盏灯。沈默坐在对面，手指一直敲着桌面。</p>' +
+      '<p>他会给出三句说法。每一句，你只能摆出一条物证。</p>' +
+      '<p class="hl">选错不会立刻失败，但会让他抓住空隙。三次都对，才算完整结案。</p>';
+    if (ST.final.done && ST.final.ending === 'weak') {
+      body += '<p class="bad">上一次对质，证据链断在最后一环。你可以重新来一次。</p>';
+    }
+    dialog('终局对质', body, [
+      {
+        label: ST.final.done ? '重新对质' : '开始对质', fn: function () {
+          if (ST.final.done) {
+            ST.final = { round: 0, correct: 0, wrong: 0, firstTry: 0, done: false, ending: null, order: null, wrongPicks: [], fb: '' };
+            ST.done = false;
+            save();
+          }
+          finalRound();
+        }
+      },
+      { label: '再看看线索', ghost: true, fn: clueBook }
+    ], 'FINAL');
+  }
+
+  function finalRound() {
+    var f = ST.final;
+    if (f.done) { showReport(); return; }
+    if (f.round >= FINAL.length) { finishGame(); return; }
+    var st = FINAL[f.round];
+    if (!isPermN(f.order, 4)) f.order = makeOrder(4);
+    if (!Array.isArray(f.wrongPicks)) f.wrongPicks = [];
+    var cards = '';
+    for (var i = 0; i < 4; i++) {
+      var id = st.pool[f.order[i]];
+      var idx = IDX[id];
+      cards += '<div class="evCard"><b>' + String.fromCharCode(65 + i) + '</b><span><b style="color:#c9d8e2">' +
+        CASES[idx].name + '</b>：' + ST.cs[idx].run.clue + '</span></div>';
+    }
+    var body = '<p style="font-size:10px;letter-spacing:.18em;color:#6d8fa5">对质 ' + (f.round + 1) + ' / 3</p>' +
+      '<div class="quote">沈默：“' + st.q + '”</div>' +
+      '<p>选一条最能推翻这句话的物证：</p>' + cards +
+      (f.fb ? '<p class="bad">' + f.fb + '</p>' : '') +
+      '<div id="finFb" style="min-height:14px;font-size:11.5px;color:#e08573"></div>';
+    var acts = [];
+    for (var j = 0; j < 4; j++) {
+      (function (pos) {
+        var id2 = st.pool[f.order[pos]];
+        var idx2 = IDX[id2];
+        var disabled = f.wrongPicks.indexOf(pos) >= 0;
+        acts.push({
+          label: String.fromCharCode(65 + pos) + ' · ' + CASES[idx2].name,
+          disabled: disabled,
+          keep: true,
+          fn: function () {
+            if (id2 === st.correct) {
+              if (f.wrongPicks.length === 0) f.firstTry++;
+              f.correct++;
+              f.fb = '';
+              save();
+              dialog('对质 · 命中', '<p class="ok">' + st.ok + '</p><p style="font-size:11.5px;color:#8ba3b5">他把手从桌面上收了回去。</p>', [
+                {
+                  label: f.round >= FINAL.length - 1 ? '听完最后一句' : '继续对质', fn: function () {
+                    f.round++;
+                    f.order = null;
+                    f.wrongPicks = [];
+                    f.fb = '';
+                    save();
+                    finalRound();
+                  }
+                }
+              ], 'PRESSED');
+            } else {
+              f.wrongPicks.push(pos);
+              f.wrong++;
+              f.fb = st.no;
+              save();
+              finalRound();
+              tone(150, 0.12, 'sine', 0.03);
+            }
+          }
+        });
+      })(j);
+    }
+    acts.push({ label: '暂停，回去看线索', ghost: true, fn: function () { save(); clueBook(); } });
+    dialog('对质 · 第 ' + (f.round + 1) + ' 轮', body, acts, 'FINAL');
+  }
+
+  function finishGame() {
+    var f = ST.final;
+    if (f.done) { showReport(); return; }
+    var first = f.firstTry || 0;
+    var ending = first >= 3 ? 'perfect' : (first === 2 ? 'normal' : 'weak');
+    f.done = true;
+    f.ending = ending;
+    ST.done = ending !== 'weak';
+    if (ending !== 'weak') ST.elapsed = Math.max(1, Math.round((Date.now() - ST.t0) / 60000));
+    save();
+    var score = totalScore();
+    var rank = rankOf(score);
+    if (ending !== 'weak') {
+      var key = ST.diff;
+      var rec = STATS.best[key];
+      if (score > rec.score) {
+        rec.score = score; rec.rank = rank; rec.stars = totalStars(); rec.date = Date.now();
+      }
+      STATS.endings[ending] = 1;
+      if (ending === 'perfect') unlock('perfectEnding');
+      if (ST.diff === 'hard') unlock('hardClear');
+      var noHint = true;
+      for (var i = 0; i < ST.cs.length; i++) if (ST.cs[i].hint) { noHint = false; break; }
+      if (noHint) unlock('noHint');
+      saveStats();
+    }
+    updateHeader();
+    showEnding(ending, score, rank);
+  }
+
+  function showEnding(ending, score, rank) {
+    var title = '', body = '', acts = [];
+    if (ending === 'perfect') {
+      title = '结案 · 雨停之后';
+      body = '<p>沈默在第三次对质后沉默了很久。他把口袋里的仓库钥匙放在桌上。</p>' +
+        '<p class="hl">“我只是想让她知道，那些数据不该被卖掉。”</p>' +
+        '<p>雨在凌晨四点停了。十五处现场，一条完整的证据链。</p>' +
+        '<p>评价 <b class="hl">' + rank + '</b> · 侦查分 <b class="hl">' + score + '</b> · 用时 ' + (ST.elapsed || 0) + ' 分钟 · 三星 ' + totalStars() + '/45</p>';
+      acts.push({ label: '查看档案室', fn: showArchive });
+    } else if (ending === 'normal') {
+      title = '结案 · 雨没停';
+      body = '<p>三条物证里有两条站得住。沈默被带走协助调查，案子结了。</p>' +
+        '<p class="hl">但案卷最后一页留着一行空白：他到底在仓库里等谁？</p>' +
+        '<p>评价 <b class="hl">' + rank + '</b> · 侦查分 <b class="hl">' + score + '</b> · 用时 ' + (ST.elapsed || 0) + ' 分钟 · 三星 ' + totalStars() + '/45</p>' +
+        '<p style="font-size:11.5px;color:#8ba3b5">三句对质全部一次选中，可以解锁隐藏结案。</p>';
+      acts.push({ label: '查看档案室', fn: showArchive });
+    } else {
+      title = '证据不足 · 雨还在下';
+      body = '<p>证据链断在最后一环。沈默走出询问室时，回头看了你一眼。</p>' +
+        '<p class="hl">“下次，把三条都带来。”</p>' +
+        '<p>你还有机会重新对质。回到那十五份档案里，挑最硬的三条。</p>' +
+        '<p style="font-size:11.5px;color:#8ba3b5">结案评价不会记录这次结果；重新对质不会清空案件进度。</p>';
+      acts.push({ label: '再对质一次', fn: function () { startFinale(); } });
+    }
+    acts.push({ label: '查看线索本', ghost: true, fn: clueBook });
+    acts.push({
+      label: '回到标题', ghost: true, fn: function () { showTitle(); }
+    });
+    dialog(title, body, acts, 'CASE CLOSED');
+  }
+
+  function showReport() {
+    if (!ST.final || !ST.final.done || ST.final.ending === 'weak') { startFinale(); return; }
+    var score = totalScore(), rank = rankOf(score);
+    var body = '<p>评价 <b class="hl">' + rank + '</b> · 侦查分 <b class="hl">' + score + '</b></p>' +
+      '<p>案件 ' + solvedCount() + ' / 15 · 三星 ' + totalStars() + ' / 45 · 用时 ' + (ST.elapsed || 0) + ' 分钟</p>' +
+      '<p>' + (ST.final.ending === 'perfect' ? '结局：雨停之后（完整口供）。' : '结局：雨没停（部分口供）。') + '</p>' +
+      '<p style="font-size:11.5px;color:#8ba3b5">档案室可以重演任意已结案件，重新抽一组数值。</p>';
+    dialog('结案报告', body, [
+      { label: '查看档案室', fn: showArchive },
+      {
+        label: '重新调查', ghost: true, fn: function () {
+          dialog('重新调查', '<p>会清空当前十五案的进度，成就与最佳记录保留。</p>', [
+            { label: '清空并重来', fn: function () { newRun(ST.diff, true); P = null; titleBox.classList.add('hide'); renderCase(0); } },
+            { label: '再想想', ghost: true }
+          ]);
+        }
+      },
+      { label: '回到标题', ghost: true, fn: showTitle }
+    ], 'REPORT');
+  }
+
+  /* ---------------- 线索本 / 档案室 ---------------- */
+  function clueBook() {
+    var body = '';
+    if (P) {
+      body += '<p class="hl">练习模式：这里只显示主线进度。</p>';
+    }
+    body += '<div class="arcGrid" style="margin-top:8px">';
+    for (var i = 0; i < CASES.length; i++) {
+      var cs = ST.cs[i];
+      var label = pad(i + 1, 2) + ' · ' + CASES[i].name;
+      var right = cs.solved ? starsText(cs.stars) : (i === resumeIdx() ? '当前' : '未结');
+      var disabled = !cs.solved && i !== resumeIdx();
+      body += '<button class="arcCase" type="button" data-ci="' + i + '"' + (disabled ? ' disabled' : '') + '>' +
+        '<b>' + label + '</b><span class="stars">' + right + '</span></button>';
+    }
+    body += '</div>';
+    body += '<p style="font-size:11px;color:#8ba3b5;margin-top:10px">已结案件可以回看或重演；带“当前”的是下一处现场。</p>';
+    dialog('线索本 · ' + solvedCount() + '/15', body, [{ label: '收起', ghost: true }], 'NOTEBOOK', function () {
+      Array.prototype.forEach.call(dlgBody.querySelectorAll('.arcCase'), function (el) {
+        el.addEventListener('click', function () {
+          var idx = parseInt(el.getAttribute('data-ci'), 10);
+          if (isNaN(idx)) return;
+          closeDialog();
+          P = null;
+          renderCase(idx);
+        });
+      });
+    });
+  }
+
+  function showArchive() {
+    var std = STATS.best.standard, hard = STATS.best.hard;
+    var body = '<div class="arcTop">' +
+      '<div class="arcStat"><b>' + (std.rank || '—') + '</b><span>标准 · 最佳评价</span></div>' +
+      '<div class="arcStat"><b>' + (std.score || 0) + '</b><span>标准 · 最高分</span></div>' +
+      '<div class="arcStat"><b>' + (hard.rank || '—') + '</b><span>严苛 · 最佳评价</span></div>' +
+      '<div class="arcStat"><b>' + (STATS.plays || 0) + '</b><span>调查次数</span></div>' +
+      '</div>';
+    body += '<p style="font-size:11px;color:#8ba3b5">结案记录：' +
+      (Object.keys(STATS.endings).length ? Object.keys(STATS.endings).map(function (k) {
+        return k === 'perfect' ? '雨停之后' : (k === 'normal' ? '雨没停' : k);
+      }).join(' · ') : '还没有结案') + '</p>';
+    body += '<p class="arcH"><span>案件档案</span><span>已结 ' + solvedCount() + '/15 · 三星 ' + totalStars() + '/45</span></p>';
+    body += '<div class="arcGrid">';
+    for (var i = 0; i < CASES.length; i++) {
+      var cs = ST.cs[i];
+      var bestPractice = STATS.caseStars[CASES[i].id] || 0;
+      var right = cs.solved ? starsText(cs.stars) : (bestPractice ? '练习 ' + starsText(bestPractice) : '未结');
+      body += '<button class="arcCase" type="button" data-ci="' + i + '"' + (cs.solved ? '' : ' disabled') + '>' +
+        '<b>' + pad(i + 1, 2) + ' · ' + CASES[i].name + '</b><span class="stars">' + right + '</span></button>';
+    }
+    body += '</div>';
+    var nAch = 0;
+    for (var k in STATS.ach) if (STATS.ach[k]) nAch++;
+    body += '<p class="arcH"><span>成就</span><span>' + nAch + '/' + ACH.length + '</span></p>';
+    body += '<div>';
+    for (var a = 0; a < ACH.length; a++) {
+      var on = !!STATS.ach[ACH[a].id];
+      body += '<div class="achRow' + (on ? ' on' : '') + '"><b>' + ACH[a].name + '</b><span>' + ACH[a].desc + '</span></div>';
+    }
+    body += '</div>';
+    body += '<p style="font-size:11px;color:#8ba3b5;margin-top:10px">点任意已结案件可以重演现场：重新抽一组数值，不影响主线。</p>';
+    dialog('档案室', body, [{ label: '关闭', ghost: true }], 'ARCHIVE', function () {
+      Array.prototype.forEach.call(dlgBody.querySelectorAll('.arcCase'), function (el) {
+        el.addEventListener('click', function () {
+          var idx = parseInt(el.getAttribute('data-ci'), 10);
+          if (isNaN(idx) || !ST.cs[idx].solved) return;
+          closeDialog();
+          startPractice(idx);
+        });
+      });
+    });
+  }
+
+  function startPractice(idx) {
+    if (!ST.cs[idx] || !ST.cs[idx].solved) return;
+    if (!P) P_RETURN = ST.idx;
+    P = {
+      ci: idx,
+      run: genRun(idx),
+      solved: false,
+      stars: 0,
+      compares: 0,
+      qWrong: 0,
+      hint: false,
+      qOrder: null,
+      q2Order: null,
+      q1pass: false,
+      v: null
+    };
+    P.v = P.run.start;
+    titleBox.classList.add('hide');
+    ST.idx = idx;
+    renderCase(idx);
+    tone(600, 0.08, 'sine', 0.04);
+  }
+
+  function practiceDone(c, ps) {
+    ps.stars = calcStars(ps);
+    var best = STATS.caseStars[c.id] || 0;
+    if (ps.stars > best) STATS.caseStars[c.id] = ps.stars;
+    unlock('practice');
+    saveStats();
+    updateHeader();
+    dialog('重演完成 · ' + c.name,
+      '<p class="ok">' + starsText(ps.stars) + '</p><p class="hl">' + ps.run.explain + '</p><p><b>物证：</b>' + ps.run.clue + '</p>' +
+      '<p style="font-size:11.5px;color:#8ba3b5">练习最佳：' + starsText(STATS.caseStars[c.id] || ps.stars) + '。本局不影响主线进度。</p>',
+      [
+        { label: '再演一次', fn: function () { startPractice(ps.ci); } },
+        { label: '返回档案室', ghost: true, fn: function () { P = null; showArchive(); } },
+        { label: '回到调查', ghost: true, fn: function () { P = null; renderCase(P_RETURN); } }
+      ], 'REPLAY');
+  }
+
+  /* ---------------- 标题 ---------------- */
+  function renderDiffChips() {
+    var row = document.getElementById('diffRow');
+    var locked = hasProgress() && !ST.done;
+    row.innerHTML = '';
+    [['standard', '标准'], ['hard', '严苛 · 容差更小']].forEach(function (pair) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip' + (ST.diff === pair[0] ? ' active' : '');
+      b.textContent = pair[1];
+      b.disabled = locked;
+      b.addEventListener('click', function () {
+        if (locked) return;
+        ST.diff = pair[0];
+        save();
+        renderDiffChips();
+        updateHeader();
+      });
+      row.appendChild(b);
+    });
+  }
+
+  function showTitle() {
+    P = null;
+    var acts = document.getElementById('titleActs');
+    acts.innerHTML = '';
+    var prog = hasProgress();
+
+    if (prog && !ST.done) {
+      var c = document.createElement('button');
+      c.type = 'button';
+      if (allSolved()) {
+        c.textContent = '进入终局对质';
+        c.addEventListener('click', function () {
+          titleBox.classList.add('hide');
+          startFinale();
+        });
+      } else {
+        c.textContent = '继续调查 · 第 ' + (resumeIdx() + 1) + ' 案';
+        c.addEventListener('click', function () {
+          titleBox.classList.add('hide');
+          renderCase(resumeIdx());
+        });
+      }
+      acts.appendChild(c);
+    }
+    if (ST.done) {
+      var r = document.createElement('button');
+      r.type = 'button';
+      r.textContent = '查看结案报告';
+      r.addEventListener('click', function () {
+        titleBox.classList.add('hide');
+        showReport();
+      });
+      acts.appendChild(r);
+    }
+
+    var n = document.createElement('button');
+    n.type = 'button';
+    if (prog && !ST.done) n.className = 'ghost';
+    n.textContent = ST.done ? '重新调查' : (prog ? '从头开始' : '开始调查');
+    n.addEventListener('click', function () {
+      if (prog) {
+        dialog('重新开始', '<p>当前十五案的进度会被清空，已获得的成就与最佳记录保留。</p>', [
+          {
+            label: '清空并重来', fn: function () {
+              newRun(ST.diff, true);
+              P = null;
+              titleBox.classList.add('hide');
+              renderCase(0);
+            }
+          },
+          { label: '再想想', ghost: true }
+        ]);
+      } else {
+        titleBox.classList.add('hide');
+        newRun(ST.diff, true);
+        renderCase(0);
+      }
+    });
+    acts.appendChild(n);
+
+    var a = document.createElement('button');
+    a.type = 'button'; a.className = 'ghost';
+    a.textContent = '档案室';
+    a.addEventListener('click', showArchive);
+    acts.appendChild(a);
+
+    var h = document.createElement('button');
+    h.type = 'button'; h.className = 'ghost';
+    h.textContent = '操作说明';
+    h.addEventListener('click', function () {
+      dialog('操作说明',
+        '<p>每案先读“现场记录”，拖动滑块调整物理量，点“运行模拟”看效果，再点“比对证据”。</p>' +
+        '<p>数值与物证对上后会进入推断题，答对才能归档。部分案件还有第二问。</p>' +
+        '<p>卡住时可以点“公式”；“辅助”会直接把滑块推到答案附近，但本案件最高只能拿两星（严苛一星），并扣 20 分。</p>' +
+        '<p>每轮调查的数值、选项顺序都会重新随机，不能靠记位置。十五案结束后进入终局对质。</p>' +
+        '<p>档案室可以重演已结案件，练习成绩单独记录，不影响主线。</p>',
+        [{ label: '知道了' }], 'HELP');
+    });
+    acts.appendChild(h);
+
+    renderDiffChips();
+    var best = STATS.best[ST.diff];
+    document.getElementById('titleBest').textContent = (hasProgress() && !ST.done)
+      ? '当前难度：' + (ST.diff === 'hard' ? '严苛' : '标准') + ' · 进度会自动保存'
+      : '最佳记录：' + (best.rank || '—') + ' · ' + (best.score || 0) + ' 分 · ' + (best.stars || 0) + ' 星';
+    titleBox.classList.remove('hide');
+  }
+
+  document.getElementById('clueBtn').addEventListener('click', clueBook);
+  document.getElementById('menuBtn').addEventListener('click', function () {
+    if (P) {
+      dialog('菜单 · 练习', '<p>当前正在重演《' + CASES[ST.idx].name + '》。</p>', [
+        { label: '继续练习', ghost: true },
+        { label: '退出练习，回到调查', fn: function () { P = null; renderCase(P_RETURN); } },
+        { label: '档案室', fn: showArchive },
+        { label: '回到标题', ghost: true, fn: showTitle }
+      ], 'MENU');
+      return;
+    }
+    var acts = [
+      { label: '继续', ghost: true },
+      { label: '线索本', fn: clueBook },
+      { label: '档案室', fn: showArchive }
+    ];
+    if (allSolved()) acts.push({ label: '进入终局对质', fn: startFinale });
+    acts.push({ label: '回到标题', ghost: true, fn: showTitle });
+    dialog('菜单', '<p>当前：第 ' + (ST.idx + 1) + ' 案　线索：' + solvedCount() + '/15　侦查分：' + totalScore() + '</p><p>进度会自动保存。</p>', acts, 'MENU');
+  });
+  document.getElementById('formulaBtn').addEventListener('click', function () {
+    var c = CASES[ST.idx];
+    dialog('公式 · ' + c.name, '<p>' + c.formula + '</p><p style="font-size:11.5px;color:#8ba3b5">把答案代进去，再回头调滑块。</p>', [{ label: '试一下' }], 'FORMULA');
+  });
+  dlg.addEventListener('click', function (e) { if (e.target === dlg) closeDialog(); });
+
+  document.addEventListener('keydown', function (e) {
+    if (!dlg.classList.contains('hide')) return;
+    if (e.target && e.target.tagName === 'INPUT') return;
+    if (e.code === 'Space') { e.preventDefault(); runSim(); }
+    else if (e.key === 'Enter') { compare(); }
+    else if (e.key === 'f' || e.key === 'F') { document.getElementById('formulaBtn').click(); }
+    else if (e.key === 'h' || e.key === 'H') { useHint(); }
+  });
+
+  /* ---------------- 音效 ---------------- */
+  var actx = null;
+  function tone(freq, dur, type, vol) {
+    try {
+      if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+      var o = actx.createOscillator(), g = actx.createGain();
+      o.type = type || 'sine';
+      o.frequency.value = freq;
+      g.gain.value = vol || 0.04;
+      g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime + dur);
+      o.connect(g); g.connect(actx.destination);
+      o.start(); o.stop(actx.currentTime + dur);
+    } catch (e) {}
+  }
+
+  /* ---------------- 绘制 ---------------- */
+  function bg(top, bottom) {
+    var gr = ctx.createLinearGradient(0, 0, 0, 420);
+    gr.addColorStop(0, top);
+    gr.addColorStop(1, bottom);
+    ctx.fillStyle = gr;
+    ctx.fillRect(0, 0, 720, 420);
+  }
+  function rain(t, alpha) {
+    ctx.strokeStyle = 'rgba(160,195,225,' + (alpha || 0.16) + ')';
+    ctx.lineWidth = 1;
+    for (var i = 0; i < 46; i++) {
+      var x = (i * 131 + 37) % 760 - 20;
+      var y = ((i * 97 + (t || 0) * 260) % 470) - 20;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x - 5, y + 14);
+      ctx.stroke();
+    }
+  }
+  function label(text, x, y, color, size, align) {
+    ctx.fillStyle = color || '#9fb4c4';
+    ctx.font = '600 ' + (size || 12) + 'px "Microsoft YaHei",sans-serif';
+    ctx.textAlign = align || 'left';
+    ctx.fillText(text, x, y);
+    ctx.textAlign = 'left';
+  }
+  function mono(text, x, y, color, size) {
+    ctx.fillStyle = color || '#79d6d0';
+    ctx.font = '700 ' + (size || 13) + 'px ui-monospace,Consolas,monospace';
+    ctx.fillText(text, x, y);
+  }
+  function line(x1, y1, x2, y2, color, width, dash) {
+    ctx.strokeStyle = color; ctx.lineWidth = width || 1;
+    if (dash) ctx.setLineDash(dash);
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    if (dash) ctx.setLineDash([]);
+  }
+  function dot(x, y, r, color, glow) {
+    ctx.fillStyle = color;
+    if (glow) { ctx.shadowColor = color; ctx.shadowBlur = glow; }
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+
+  function drawCase(v, t) {
+    ctx.clearRect(0, 0, 720, 420);
+    var c = CASES[ST.idx];
+    var fn = DRAW[c.draw];
+    if (fn) fn(v, t === undefined ? 1 : t, curRun());
+  }
+
+  /* case 1 */
+  function draw1(h, t, r) {
+    bg('#0a1420', '#12202c');
+    rain(t * 0.5, 0.13);
+    var ground = 350, baseX = 72, baseW = 196;
+    var top = Math.max(34, ground - h * 9.5);
+    ctx.fillStyle = 'rgba(18,30,42,.8)';
+    for (var i = 0; i < 6; i++) {
+      var bx = 300 + i * 74, bh = 60 + (i * 37) % 90;
+      ctx.fillRect(bx, ground - bh, 58, bh);
+    }
+    ctx.fillStyle = '#1b2836';
+    ctx.fillRect(baseX, top, baseW, ground - top);
+    ctx.strokeStyle = 'rgba(120,160,190,.2)';
+    ctx.lineWidth = 1;
+    for (var fy = top + 30; fy < ground; fy += 30) line(baseX, fy, baseX + baseW, fy, 'rgba(120,160,190,.18)', 1);
+    for (var wy = top + 8; wy < ground - 12; wy += 30) {
+      for (var wx = 0; wx < 4; wx++) {
+        var on = ((Math.floor(wy) + wx * 7) % 5) !== 0;
+        ctx.fillStyle = on ? 'rgba(224,184,106,.72)' : 'rgba(40,60,78,.7)';
+        ctx.fillRect(baseX + 16 + wx * 44, wy, 22, 16);
+      }
+    }
+    var bx0 = baseX + baseW, by0 = top;
+    ctx.fillStyle = '#2b3a49';
+    ctx.fillRect(bx0, by0, 52, 8);
+    line(bx0 + 4, by0, bx0 + 4, by0 - 26, 'rgba(160,190,210,.5)', 2);
+    line(bx0 + 48, by0, bx0 + 48, by0 - 26, 'rgba(160,190,210,.5)', 2);
+    line(bx0 + 4, by0 - 26, bx0 + 48, by0 - 26, 'rgba(160,190,210,.5)', 2);
+    var tf = Math.sqrt(2 * h / G);
+    var sx = bx0 + 24, sy = by0 - 4;
+    ctx.strokeStyle = 'rgba(121,214,208,.62)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 6]);
+    ctx.beginPath();
+    for (var s = 0; s <= 26; s++) {
+      var tt = tf * (s / 26);
+      var px = sx + r.v0 * tt * 15.5;
+      var py = sy + 0.5 * G * tt * tt * 9.5;
+      if (s === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+    var tx = sx + r.x * 15.5;
+    line(tx, ground + 4, tx, ground - 26, 'rgba(224,184,106,.9)', 2);
+    ctx.fillStyle = 'rgba(224,184,106,.85)';
+    ctx.beginPath(); ctx.moveTo(tx, ground - 26); ctx.lineTo(tx + 14, ground - 20); ctx.lineTo(tx, ground - 14); ctx.closePath(); ctx.fill();
+    label('现场落点 ' + r.x.toFixed(1) + ' m', tx + 5, ground + 20, '#e7c98f', 11);
+    var bt = tf * Math.min(1, t);
+    var bx2 = sx + r.v0 * bt * 15.5;
+    var by2 = sy + 0.5 * G * bt * bt * 9.5;
+    dot(bx2, by2, 6, '#8fe6e0', 14);
+    mono('h = ' + h.toFixed(1) + ' m', 22, 34, '#79d6d0', 15);
+    mono('落点 x = ' + (r.v0 * tf).toFixed(2) + ' m', 22, 56, '#9fb4c4', 12);
+    label('阳台', bx0 + 26, top - 32, '#8ba3b5', 10);
+  }
+
+  /* case 2 */
+  function draw2(v, t, r) {
+    bg('#0a121b', '#101c26');
+    rain(t * 0.5, 0.12);
+    ctx.fillStyle = 'rgba(16,26,38,.85)';
+    for (var i = 0; i < 7; i++) ctx.fillRect(20 + i * 104, 70, 72, 80);
+    ctx.fillStyle = '#16202a';
+    ctx.fillRect(0, 150, 720, 190);
+    line(0, 245, 720, 245, 'rgba(150,185,210,.25)', 2, [16, 16]);
+    ctx.fillStyle = '#24303b';
+    ctx.fillRect(0, 148, 720, 4);
+    ctx.fillRect(0, 338, 720, 4);
+    var skid = v / 3.6;
+    var len = skid * skid / (2 * 0.6 * G) * 6;
+    var shown = Math.max(0, Math.min(1, t === undefined ? 1 : t));
+    var startX = 120;
+    var carX = startX + len * shown - 76;
+    ctx.strokeStyle = 'rgba(20,14,12,.95)';
+    ctx.lineWidth = 7;
+    line(startX, 246, startX + len * shown, 246, 'rgba(20,14,12,.95)', 7);
+    line(startX, 254, startX + len * shown, 254, 'rgba(20,14,12,.95)', 7);
+    var tg = startX + r.L * 6;
+    line(tg, 226, tg, 276, 'rgba(224,184,106,.85)', 2, [5, 5]);
+    label('现场 ' + r.L.toFixed(1) + ' m', tg + 8, 236, '#e7c98f', 11);
+    ctx.fillStyle = '#1c232c'; ctx.fillRect(carX, 206, 76, 34);
+    ctx.fillStyle = '#0d1117'; ctx.fillRect(carX + 16, 196, 44, 12);
+    ctx.fillStyle = '#79d6d0'; ctx.fillRect(carX + 64, 214, 8, 6);
+    ctx.fillStyle = '#3c4650';
+    ctx.beginPath(); ctx.arc(carX + 16, 244, 8, 0, 6.283); ctx.fill();
+    ctx.beginPath(); ctx.arc(carX + 60, 244, 8, 0, 6.283); ctx.fill();
+    for (var m = 0; m <= 35; m += 5) {
+      var x = startX + m * 6;
+      line(x, 326, x, 336, 'rgba(150,185,210,.3)', 1);
+      label(String(m), x, 350, '#6d8fa5', 9, 'center');
+    }
+    mono('v = ' + v.toFixed(1) + ' km/h', 22, 34, '#79d6d0', 15);
+    mono('L = ' + (len / 6).toFixed(1) + ' m', 22, 56, '#9fb4c4', 12);
+    label('μ = 0.6 · 雨天', 22, 80, '#8ba3b5', 11);
+  }
+
+  /* case 3 */
+  function draw3(v, t, r) {
+    bg('#0a1118', '#0d151d');
+    ctx.fillStyle = '#111b24';
+    ctx.fillRect(60, 40, 600, 330);
+    ctx.strokeStyle = 'rgba(120,160,190,.16)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(60, 40, 600, 330);
+    ctx.strokeStyle = 'rgba(120,160,190,.07)';
+    for (var gx = 120; gx < 660; gx += 60) line(gx, 40, gx, 370, 'rgba(120,160,190,.07)', 1);
+    var T = { x: r.winX, y: 48 };
+    ctx.fillStyle = '#0c1620'; ctx.fillRect(T.x - 30, 40, 60, 14);
+    ctx.strokeStyle = 'rgba(121,214,208,.6)'; ctx.lineWidth = 2; ctx.strokeRect(T.x - 30, 40, 60, 14);
+    label('焦痕窗', T.x, 76, '#9fb4c4', 10, 'center');
+    var S = { x: 650, y: 258 };
+    ctx.fillStyle = '#0c1620'; ctx.fillRect(648, 228, 14, 60);
+    ctx.strokeStyle = 'rgba(224,184,106,.7)'; ctx.strokeRect(648, 228, 14, 60);
+    label('右侧光源', 630, 312, '#e7c98f', 10, 'right');
+    var M = { x: 160, y: 204 };
+    var th = v * Math.PI / 180;
+    var dx = Math.sin(th), dy = Math.cos(th);
+    line(M.x, M.y + 46, M.x, M.y + 62, 'rgba(150,185,210,.35)', 3);
+    ctx.fillStyle = 'rgba(150,185,210,.25)'; ctx.fillRect(M.x - 26, M.y + 62, 52, 5);
+    line(M.x - dx * 44, M.y - dy * 44, M.x + dx * 44, M.y + dy * 44, '#8fa3b2', 6);
+    line(M.x - dx * 44, M.y - dy * 44, M.x + dx * 44, M.y + dy * 44, 'rgba(230,240,245,.65)', 2);
+    var ix = M.x - S.x, iy = M.y - S.y;
+    var il = Math.sqrt(ix * ix + iy * iy); ix /= il; iy /= il;
+    var nx = Math.cos(th), ny = -Math.sin(th);
+    var dn = ix * nx + iy * ny;
+    var rx = ix - 2 * dn * nx, ry = iy - 2 * dn * ny;
+    var end = rayEdge(M.x, M.y, rx, ry);
+    line(S.x, S.y, M.x, M.y, 'rgba(121,214,208,.35)', 2, [7, 5]);
+    ctx.strokeStyle = 'rgba(224,184,106,.85)';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(M.x, M.y);
+    var tt = Math.max(0, Math.min(1, t));
+    ctx.lineTo(M.x + (end.x - M.x) * tt, M.y + (end.y - M.y) * tt);
+    ctx.stroke();
+    dot(S.x, S.y, 5, '#79d6d0', 10);
+    var hit = Math.abs(v - r.angle) <= 1.5;
+    dot(T.x, T.y, hit ? 12 : 8, hit ? 'rgba(224,184,106,.95)' : 'rgba(224,184,106,.25)', hit ? 20 : 0);
+    if (hit) {
+      ctx.strokeStyle = 'rgba(224,184,106,.5)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(T.x, T.y, 20, 0, 6.283); ctx.stroke();
+    }
+    ctx.strokeStyle = 'rgba(150,185,210,.35)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(M.x, M.y, 34, -Math.PI / 2 + th - 0.3, -Math.PI / 2 + th + 0.3); ctx.stroke();
+    mono('镜面 ' + v.toFixed(1) + '°', 100, 340, '#79d6d0', 14);
+    label('入射角 = 反射角', 220, 62, '#8ba3b5', 10);
+  }
+  function rayEdge(x, y, dx, dy) {
+    var best = 1e9;
+    if (dx > 0.0001) best = Math.min(best, (700 - x) / dx);
+    if (dx < -0.0001) best = Math.min(best, (60 - x) / dx);
+    if (dy > 0.0001) best = Math.min(best, (370 - y) / dy);
+    if (dy < -0.0001) best = Math.min(best, (40 - y) / dy);
+    if (!isFinite(best) || best < 0) best = 0;
+    return { x: x + dx * best, y: y + dy * best };
+  }
+
+  /* case 4 */
+  function draw4(v, t, r) {
+    bg('#0a1118', '#0f1a22');
+    rain(t * 0.4, 0.1);
+    ctx.fillStyle = '#18232d';
+    ctx.fillRect(0, 175, 720, 90);
+    ctx.fillRect(325, 40, 90, 340);
+    line(0, 220, 720, 220, 'rgba(150,185,210,.18)', 2, [14, 14]);
+    line(370, 40, 370, 380, 'rgba(150,185,210,.18)', 2, [14, 14]);
+    var C = { x: 370, y: 220 };
+    var ta = r.theta * Math.PI / 180;
+    line(C.x, C.y, C.x + Math.cos(ta) * 120, C.y + Math.sin(ta) * 120, 'rgba(224,184,106,.55)', 2, [6, 6]);
+    label('现场 ' + r.theta.toFixed(1) + '°', C.x + Math.cos(ta) * 124, C.y + Math.sin(ta) * 124 + 16, '#e7c98f', 11);
+    var ta2 = v / 3.6;
+    var ang = Math.atan((800 * ta2) / (1200 * (30 / 3.6)));
+    var ct = t >= 0.999 ? 0.8 : t;
+    var carA = { x: 120 + ct * 168, y: 205 };
+    var carB = { x: 355, y: 70 + ct * 104 };
+    ctx.fillStyle = '#23303b'; ctx.fillRect(carA.x, carA.y, 76, 30);
+    ctx.fillStyle = '#79d6d0'; ctx.fillRect(carA.x + 66, carA.y + 6, 8, 6);
+    ctx.fillStyle = '#333b44'; ctx.fillRect(carB.x, carB.y, 30, 70);
+    ctx.fillStyle = '#e7c98f'; ctx.fillRect(carB.x + 6, carB.y + 58, 6, 8);
+    label('A · 1200 kg', 128, 190, '#9fb4c4', 10);
+    label('B · 800 kg', 392, 84, '#9fb4c4', 10);
+    var ax = C.x + Math.cos(ang) * 96, ay = C.y + Math.sin(ang) * 96;
+    line(C.x, C.y, ax, ay, '#79d6d0', 3);
+    ctx.fillStyle = '#79d6d0';
+    ctx.beginPath();
+    ctx.moveTo(ax, ay);
+    ctx.lineTo(ax - Math.cos(ang - 0.4) * 12, ay - Math.sin(ang - 0.4) * 12);
+    ctx.lineTo(ax - Math.cos(ang + 0.4) * 12, ay - Math.sin(ang + 0.4) * 12);
+    ctx.closePath(); ctx.fill();
+    mono('夹角 ' + (ang * 180 / Math.PI).toFixed(1) + '°', 22, 34, '#79d6d0', 15);
+    mono('vA = 30 km/h', 22, 56, '#9fb4c4', 12);
+    label('主路限速 30', 560, 380, '#8ba3b5', 10);
+  }
+
+  /* case 5 */
+  function draw5(d, t, r) {
+    bg('#070d15', '#0a1420');
+    ctx.fillStyle = '#0e1923'; ctx.fillRect(0, 120, 720, 68);
+    var wg = ctx.createLinearGradient(0, 188, 0, 340);
+    wg.addColorStop(0, '#0b1a26'); wg.addColorStop(1, '#071019');
+    ctx.fillStyle = wg; ctx.fillRect(0, 188, 720, 152);
+    ctx.strokeStyle = 'rgba(120,170,200,.12)'; ctx.lineWidth = 1;
+    for (var i = 0; i < 8; i++) {
+      ctx.beginPath();
+      ctx.moveTo(0, 212 + i * 16);
+      ctx.bezierCurveTo(180, 208 + i * 16, 420, 220 + i * 16, 720, 212 + i * 16);
+      ctx.stroke();
+    }
+    ctx.fillStyle = '#101a22'; ctx.fillRect(0, 340, 720, 80);
+    ctx.fillStyle = '#16222c'; ctx.fillRect(20, 268, 170, 72);
+    ctx.fillStyle = 'rgba(40,60,78,.8)';
+    for (var nw = 36; nw < 180; nw += 34) ctx.fillRect(nw, 280, 18, 10);
+    ctx.fillStyle = '#1b2a34'; ctx.fillRect(74, 286, 74, 46);
+    ctx.strokeStyle = 'rgba(224,184,106,.55)'; ctx.lineWidth = 2; ctx.strokeRect(74, 286, 74, 46);
+    label('目击者', 111, 280, '#e7c98f', 10, 'center');
+    var farX = 120 + d * 1.1;
+    ctx.fillStyle = '#1a2733'; ctx.fillRect(farX - 40, 42, 80, 146);
+    ctx.fillStyle = 'rgba(40,60,78,.9)';
+    for (var wy = 54; wy < 170; wy += 22) {
+      ctx.fillRect(farX - 28, wy, 16, 10);
+      ctx.fillRect(farX + 12, wy, 16, 10);
+    }
+    var fy = 96;
+    ctx.strokeStyle = 'rgba(231,201,143,' + (0.3 + 0.7 * (1 - t)) + ')';
+    ctx.fillStyle = '#f0d59e';
+    ctx.beginPath(); ctx.arc(farX, fy, 5, 0, 6.283); ctx.fill();
+    for (var a = 0; a < 8; a++) {
+      var ag = a * Math.PI / 4;
+      ctx.beginPath();
+      ctx.moveTo(farX + Math.cos(ag) * 8, fy + Math.sin(ag) * 8);
+      ctx.lineTo(farX + Math.cos(ag) * (12 + 12 * (1 - t) + 4), fy + Math.sin(ag) * (12 + 12 * (1 - t) + 4));
+      ctx.stroke();
+    }
+    for (var rr = 0; rr < 3; rr++) {
+      var rad = 16 + ((t + rr * 0.3) % 1) * 130;
+      var al = t >= 1 ? 0 : 0.45 * (1 - ((t + rr * 0.3) % 1));
+      ctx.strokeStyle = 'rgba(121,214,208,' + al.toFixed(3) + ')';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(farX, fy, rad, 0, 6.283); ctx.stroke();
+    }
+    line(111, 250, farX, 250, 'rgba(224,184,106,.55)', 1, [5, 5]);
+    label(Math.round(d) + ' m', (111 + farX) / 2, 244, '#e7c98f', 11, 'center');
+    ctx.fillStyle = 'rgba(6,10,16,.75)'; ctx.fillRect(552, 300, 146, 52);
+    ctx.strokeStyle = 'rgba(120,170,200,.2)'; ctx.strokeRect(552, 300, 146, 52);
+    label('声延迟', 566, 320, '#8ba3b5', 10);
+    mono((d / 340).toFixed(2) + ' s', 566, 342, '#79d6d0', 18);
+    mono('v声 = 340 m/s', 22, 34, '#79d6d0', 13);
+  }
+
+  /* case 6 */
+  function draw6(h, t, r) {
+    bg('#08121b', '#0d1a24');
+    rain(t * 0.4, 0.08);
+    var ground = 352;
+    var tankY = clamp(ground - h * 6.6, 74, 268);
+    var tankH = 46;
+    line(105, tankY + 18, 105, ground, 'rgba(150,185,210,.25)', 1, [4, 5]);
+    label('水位 ' + h.toFixed(1) + ' m', 48, (tankY + ground) / 2, '#e7c98f', 11, 'center');
+    ctx.fillStyle = '#1a2936';
+    ctx.fillRect(130, tankY + tankH, 8, ground - tankY - tankH);
+    ctx.fillRect(222, tankY + tankH, 8, ground - tankY - tankH);
+    line(130, ground - 20, 238, tankY + tankH + 20, 'rgba(120,160,190,.3)', 3);
+    line(230, ground - 20, 130, tankY + tankH + 20, 'rgba(120,160,190,.3)', 3);
+    ctx.fillStyle = '#223444';
+    ctx.fillRect(118, tankY, 124, tankH);
+    ctx.strokeStyle = 'rgba(121,214,208,.45)'; ctx.lineWidth = 2;
+    ctx.strokeRect(118, tankY, 124, tankH);
+    var wl = tankY + tankH * (0.35 + (h % 10) / 25);
+    ctx.fillStyle = 'rgba(121,214,208,.16)';
+    ctx.fillRect(120, wl, 120, tankY + tankH - wl);
+    label('水塔', 180, tankY - 12, '#9fb4c4', 11, 'center');
+    line(240, tankY + tankH - 10, 300, tankY + tankH - 10, 'rgba(120,160,190,.5)', 7);
+    line(300, tankY + tankH - 10, 300, 320, 'rgba(120,160,190,.5)', 7);
+    line(300, 320, 442, 320, 'rgba(120,160,190,.5)', 7);
+    ctx.fillStyle = '#17242f'; ctx.fillRect(440, 168, 216, 192);
+    ctx.strokeStyle = 'rgba(120,160,190,.16)'; ctx.strokeRect(440, 168, 216, 192);
+    ctx.fillStyle = 'rgba(40,60,78,.75)';
+    for (var wy = 184; wy < 340; wy += 32) for (var wx = 456; wx < 640; wx += 38) ctx.fillRect(wx, wy, 22, 14);
+    var p = 9.8 * h;
+    var gx = 500, gy = 244;
+    dot(gx, gy, 24, '#0c1620', 0);
+    ctx.strokeStyle = 'rgba(224,184,106,.55)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(gx, gy, 24, 0, 6.283); ctx.stroke();
+    var na = -Math.PI * 0.8 + clamp(p / 320, 0, 1) * Math.PI * 0.6;
+    line(gx, gy, gx + Math.cos(na) * 18, gy + Math.sin(na) * 18, '#e7c98f', 2);
+    label('压力表', gx, gy + 42, '#8ba3b5', 10, 'center');
+    mono(p.toFixed(0) + ' kPa', gx + 40, gy + 6, '#79d6d0', 14);
+    mono('p = ρgh', 22, 34, '#79d6d0', 14);
+    label('ρ = 1000 kg/m³', 22, 58, '#9fb4c4', 11);
+  }
+
+  /* case 7 */
+  function draw7(L, t, r) {
+    bg('#0a1018', '#0e1720');
+    var cx = 360, cy = 132, rad = 88;
+    ctx.fillStyle = 'rgba(150,185,210,.08)';
+    ctx.beginPath(); ctx.arc(cx, cy, rad, 0, 6.283); ctx.fill();
+    ctx.strokeStyle = 'rgba(150,185,210,.4)'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(cx, cy, rad, 0, 6.283); ctx.stroke();
+    for (var i = 0; i < 12; i++) {
+      var a = i * Math.PI / 6;
+      var r1 = i % 3 === 0 ? rad - 16 : rad - 9;
+      line(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1, cx + Math.cos(a) * (rad - 3), cy + Math.sin(a) * (rad - 3), 'rgba(180,205,220,.5)', 2);
+    }
+    line(cx, cy, cx + 32, cy - 20, 'rgba(200,220,235,.8)', 3);
+    line(cx, cy, cx - 18, cy - 46, 'rgba(200,220,235,.8)', 3);
+    dot(cx, cy, 4, '#e7c98f', 6);
+    var len = L * 115;
+    var sw = Math.sin(t * Math.PI * 2) * 0.2;
+    var bx = cx + Math.sin(sw) * len;
+    var by = cy + Math.cos(sw) * len;
+    ctx.strokeStyle = 'rgba(121,214,208,.22)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(cx, cy, len, Math.PI / 2 - 0.24, Math.PI / 2 + 0.24); ctx.stroke();
+    line(cx, cy, bx, by, '#8fa3b2', 4);
+    dot(bx, by, 14, '#79d6d0', 16);
+    dot(bx, by, 6, '#d9f7f4', 0);
+    var T = 2 * Math.PI * Math.sqrt(L / G);
+    mono('摆长 ' + L.toFixed(3) + ' m', 22, 34, '#79d6d0', 14);
+    mono('周期 ' + T.toFixed(3) + ' s', 22, 58, '#9fb4c4', 12);
+    label('标准秒摆约 0.994 m', 22, 82, '#8ba3b5', 10);
+    ctx.fillStyle = 'rgba(6,10,16,.75)'; ctx.fillRect(526, 300, 172, 54);
+    ctx.strokeStyle = 'rgba(120,170,200,.2)'; ctx.strokeRect(526, 300, 172, 54);
+    label('30 次摆动', 542, 320, '#8ba3b5', 10);
+    mono((T * 30).toFixed(1) + ' s', 542, 342, '#79d6d0', 17);
+    label('秒摆', 80, 300, '#6d8fa5', 10);
+  }
+
+  /* case 8 */
+  function draw8(x, t, r) {
+    bg('#0b1219', '#101a22');
+    var doorX = 560;
+    ctx.fillStyle = '#1a2733'; ctx.fillRect(doorX, 100, 120, 252);
+    ctx.strokeStyle = 'rgba(120,160,190,.22)'; ctx.strokeRect(doorX, 100, 120, 252);
+    for (var i = 0; i < 8; i++) line(doorX + 12, 118 + i * 28, doorX + 108, 118 + i * 28, 'rgba(120,160,190,.12)', 1);
+    dot(doorX + 96, 230, 7, '#e7c98f', 8);
+    ctx.fillStyle = '#23303b'; ctx.fillRect(150, 310, 80, 34);
+    label('墙', 190, 300, '#8ba3b5', 10, 'center');
+    var comp = (30 - x) * 5;
+    var sx0 = 230, sx1 = 400 - comp;
+    ctx.strokeStyle = '#9fb4c4'; ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(sx0, 214);
+    var segs = 12;
+    for (var s = 1; s <= segs; s++) {
+      var px = sx0 + (sx1 - sx0) * s / segs;
+      var py = s % 2 === 0 ? 228 : 200;
+      ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+    ctx.fillStyle = '#2f3f4d'; ctx.fillRect(sx1, 178, 70, 70);
+    ctx.strokeStyle = 'rgba(224,184,106,.35)'; ctx.strokeRect(sx1, 178, 70, 70);
+    label('弹簧 k = 6000 N/m', 230, 166, '#9fb4c4', 11);
+    var fl = clamp(r.F / 24, 30, 72);
+    line(sx1 + 70, 214, sx1 + 70 + fl, 214, '#e7c98f', 4);
+    ctx.fillStyle = '#e7c98f';
+    ctx.beginPath();
+    ctx.moveTo(sx1 + 70 + fl, 214);
+    ctx.lineTo(sx1 + 70 + fl - 12, 207);
+    ctx.lineTo(sx1 + 70 + fl - 12, 221);
+    ctx.closePath(); ctx.fill();
+    label('F', sx1 + 78 + fl, 206, '#e7c98f', 13);
+    mono('压缩 ' + x.toFixed(1) + ' cm', 22, 34, '#79d6d0', 14);
+    mono('F = ' + Math.round(6000 * x / 100) + ' N', 22, 58, '#9fb4c4', 13);
+    label('门闩所需约 600 N', 500, 96, '#8ba3b5', 10);
+    ctx.fillStyle = 'rgba(6,10,16,.7)'; ctx.fillRect(22, 300, 150, 46);
+    ctx.strokeStyle = 'rgba(120,170,200,.18)'; ctx.strokeRect(22, 300, 150, 46);
+    label('门闩', 32, 318, '#8ba3b5', 10);
+    mono('600 N', 32, 338, '#e7c98f', 15);
+  }
+
+  /* case 9 */
+  function draw9(H, t, r) {
+    bg('#081018', '#0b1620');
+    var surface = 150, bottom = 150 + H * 72;
+    var wg = ctx.createLinearGradient(0, surface, 0, bottom);
+    wg.addColorStop(0, 'rgba(40,110,135,.5)');
+    wg.addColorStop(1, 'rgba(10,35,52,.9)');
+    ctx.fillStyle = wg; ctx.fillRect(60, surface, 600, bottom - surface);
+    line(60, surface, 660, surface, 'rgba(150,220,235,.55)', 2);
+    ctx.fillStyle = 'rgba(15,28,38,.9)'; ctx.fillRect(60, bottom, 600, 352 - bottom);
+    for (var i = 0; i < 7; i++) {
+      ctx.strokeStyle = 'rgba(150,220,235,.07)'; ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(60, surface + 16 + i * 16);
+      ctx.bezierCurveTo(220, surface + 10 + i * 16, 480, surface + 24 + i * 16, 660, surface + 16 + i * 16);
+      ctx.stroke();
+    }
+    var eye = { x: 120, y: 88 }, surf = { x: 320, y: surface };
+    var coin = { x: 386, y: bottom - 8 };
+    var app = { x: 386, y: surface + (H / 1.33) * 72 };
+    line(coin.x, coin.y, surf.x, surf.y, 'rgba(121,214,208,.55)', 2);
+    line(surf.x, surf.y, eye.x, eye.y, 'rgba(121,214,208,.55)', 2);
+    line(app.x, app.y, eye.x, eye.y, 'rgba(224,184,106,.5)', 2, [6, 5]);
+    dot(eye.x, eye.y, 6, '#d9f7f4', 10);
+    label('眼睛', eye.x, eye.y - 14, '#9fb4c4', 10, 'center');
+    dot(coin.x, coin.y, 8, '#e7c98f', 12);
+    ctx.strokeStyle = 'rgba(224,184,106,.25)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(app.x, app.y, 8, 0, 6.283); ctx.stroke();
+    label('虚像', app.x + 16, app.y + 4, '#e7c98f', 10);
+    label('硬币', coin.x + 16, coin.y + 4, '#e7c98f', 10);
+    line(680, surface, 680, coin.y, 'rgba(150,185,210,.35)', 1, [4, 4]);
+    label('H', 690, (surface + coin.y) / 2, '#9fb4c4', 11);
+    mono('实际 ' + H.toFixed(2) + ' m', 22, 34, '#79d6d0', 14);
+    mono('视深 ' + (H / 1.33).toFixed(2) + ' m', 22, 58, '#9fb4c4', 12);
+    label('n = 1.33', 22, 82, '#8ba3b5', 11);
+  }
+
+  /* case 10 */
+  function draw10(dT, t, r) {
+    bg('#0a1018', '#111a22');
+    var cy = 236;
+    var dL = 20 * 1.2e-5 * dT * 1000;
+    var gap = Math.max(4, 20 - dL * 1.8);
+    ctx.fillStyle = '#1c2833'; ctx.fillRect(0, 214, 720, 30);
+    ctx.fillStyle = '#26333f'; ctx.fillRect(0, 278, 720, 30);
+    ctx.strokeStyle = 'rgba(180,205,220,.35)'; ctx.lineWidth = 2;
+    line(0, 216, 360 - gap / 2, 216, 'rgba(180,205,220,.35)', 2);
+    line(360 + gap / 2, 216, 720, 216, 'rgba(180,205,220,.35)', 2);
+    line(0, 290, 360 - gap / 2, 290, 'rgba(180,205,220,.28)', 2);
+    line(360 + gap / 2, 290, 720, 290, 'rgba(180,205,220,.28)', 2);
+    ctx.fillStyle = 'rgba(224,120,80,.5)';
+    ctx.fillRect(360 - gap / 2 - 14, 210, 14, 42);
+    ctx.fillRect(360 + gap / 2, 210, 14, 42);
+    line(360 - gap / 2 - 16, 262, 360 - gap / 2, 246, 'rgba(224,140,90,.75)', 2);
+    line(360 + gap / 2 + 16, 262, 360 + gap / 2, 246, 'rgba(224,140,90,.75)', 2);
+    label('顶死的缝隙', 360, 322, '#e08573', 10, 'center');
+    for (var i = 0; i < 6; i++) {
+      line(60 + i * 100, 214, 60 + i * 100, 244, 'rgba(120,160,190,.25)', 1);
+      line(60 + i * 100, 278, 60 + i * 100, 308, 'rgba(120,160,190,.2)', 1);
+    }
+    var tx = 616, ty = 108, th = 208;
+    ctx.fillStyle = '#0e1720'; ctx.fillRect(tx - 18, ty, 36, th);
+    ctx.strokeStyle = 'rgba(150,185,210,.4)'; ctx.lineWidth = 2; ctx.strokeRect(tx - 18, ty, 36, th);
+    var mh = clamp(dT / 60, 0.05, 1) * (th - 30);
+    ctx.fillStyle = '#e08573'; ctx.fillRect(tx - 8, ty + th - 10 - mh, 16, mh);
+    dot(tx, ty + th - 10, 10, '#e08573', 8);
+    for (var k = 0; k <= 6; k++) {
+      line(tx + 20, ty + th - 10 - k * (th - 30) / 6, tx + 30, ty + th - 10 - k * (th - 30) / 6, 'rgba(150,185,210,.35)', 1);
+      label(String(k * 10), tx + 34, ty + th - 6 - k * (th - 30) / 6, '#6d8fa5', 8);
+    }
+    mono('ΔT = ' + dT.toFixed(1) + ' °C', 22, 34, '#79d6d0', 14);
+    mono('ΔL = ' + dL.toFixed(1) + ' mm', 22, 58, '#9fb4c4', 12);
+    label('α = 1.2×10⁻⁵ /°C · L = 20 m', 22, 82, '#8ba3b5', 10);
+  }
+
+  /* case 11 */
+  function draw11(R, t, r) {
+    bg('#0a1018', '#0e1720');
+    var L = 150, T = 110, Rt = 570, B = 310;
+    ctx.strokeStyle = 'rgba(150,185,210,.55)'; ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(L, T); ctx.lineTo(Rt, T); ctx.lineTo(Rt, B); ctx.lineTo(L, B); ctx.lineTo(L, T);
+    ctx.stroke();
+    ctx.fillStyle = '#1a2733'; ctx.fillRect(L - 12, 180, 24, 70);
+    ctx.strokeStyle = 'rgba(224,184,106,.45)'; ctx.lineWidth = 2; ctx.strokeRect(L - 12, 180, 24, 70);
+    label('12 V', L - 14, 172, '#e7c98f', 11);
+    ctx.fillStyle = '#223444'; ctx.fillRect(318, T - 20, 86, 40);
+    ctx.strokeStyle = 'rgba(121,214,208,.45)'; ctx.strokeRect(318, T - 20, 86, 40);
+    label('R = ?', 361, T + 5, '#79d6d0', 12, 'center');
+    dot(Rt, 210, 32, '#0c1620', 0);
+    ctx.strokeStyle = 'rgba(224,184,106,.5)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(Rt, 210, 32, 0, 6.283); ctx.stroke();
+    var na = -Math.PI * 0.75 + clamp(r.I / 4, 0, 1) * Math.PI * 0.55;
+    line(Rt, 210, Rt + Math.cos(na) * 23, 210 + Math.sin(na) * 23, '#e7c98f', 2);
+    label('A', Rt, 258, '#8ba3b5', 11, 'center');
+    ctx.fillStyle = '#223444'; ctx.fillRect(318, B - 20, 86, 40);
+    ctx.strokeStyle = 'rgba(224,140,90,.45)'; ctx.strokeRect(318, B - 20, 86, 40);
+    label('定时器?', 361, B + 5, '#e08573', 10, 'center');
+    var len = 2 * (Rt - L) + 2 * (B - T);
+    for (var i = 0; i < 4; i++) {
+      var pos = ((t * 0.55 + i * 0.25) % 1) * len;
+      var px, py;
+      if (pos < Rt - L) { px = L + pos; py = T; }
+      else if (pos < (Rt - L) + (B - T)) { px = Rt; py = T + (pos - (Rt - L)); }
+      else if (pos < (Rt - L) * 2 + (B - T)) { px = Rt - (pos - (Rt - L) - (B - T)); py = B; }
+      else { px = L; py = B - (pos - (Rt - L) * 2 - (B - T)); }
+      dot(px, py, 3.5, 'rgba(121,214,208,.9)', 8);
+    }
+    mono('U = 12 V', 22, 34, '#79d6d0', 14);
+    mono('I = ' + (12 / R).toFixed(2) + ' A', 22, 58, '#9fb4c4', 12);
+    label('多出来的元件', 500, 360, '#8ba3b5', 10);
+  }
+
+  /* case 12 */
+  function draw12(ang, t, r) {
+    bg('#08111a', '#0c1a24');
+    rain(t * 0.4, 0.09);
+    ctx.fillStyle = '#17242f'; ctx.fillRect(40, 270, 170, 90);
+    ctx.strokeStyle = 'rgba(120,160,190,.16)'; ctx.strokeRect(40, 270, 170, 90);
+    ctx.fillStyle = 'rgba(40,60,78,.7)';
+    for (var wx = 56; wx < 190; wx += 34) ctx.fillRect(wx, 288, 18, 12);
+    var ground = 370, sx = 210, sy = 270, scale = 10.5;
+    ctx.fillStyle = '#101a22'; ctx.fillRect(0, ground, 720, 50);
+    var rad = ang * Math.PI / 180;
+    var v = 18, tf = 2 * v * Math.sin(rad) / G;
+    var range = v * v * Math.sin(2 * rad) / G;
+    ctx.strokeStyle = 'rgba(121,214,208,.5)'; ctx.lineWidth = 2;
+    ctx.setLineDash([6, 6]);
+    ctx.beginPath();
+    for (var s = 0; s <= 30; s++) {
+      var tt = tf * s / 30;
+      var px = sx + v * Math.cos(rad) * tt * scale;
+      var py = sy - (v * Math.sin(rad) * tt - 0.5 * G * tt * tt) * scale;
+      if (s === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+    var lx = sx + r.range * scale;
+    line(lx, ground, lx, ground - 26, 'rgba(224,184,106,.85)', 2);
+    label('落点 ' + r.range.toFixed(1) + ' m', lx + 6, ground + 20, '#e7c98f', 11);
+    var bt = Math.min(1, t);
+    var btt = tf * bt;
+    var bx = sx + v * Math.cos(rad) * btt * scale;
+    var by = sy - (v * Math.sin(rad) * btt - 0.5 * G * btt * btt) * scale;
+    dot(bx, by, 6, '#8fe6e0', 12);
+    ctx.strokeStyle = 'rgba(224,184,106,.5)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(sx, sy, 34, -rad, 0); ctx.stroke();
+    line(sx, sy, sx + 50, sy, 'rgba(150,185,210,.3)', 1, [4, 4]);
+    line(sx, sy, sx + Math.cos(rad) * 50, sy - Math.sin(rad) * 50, 'rgba(224,184,106,.6)', 2);
+    mono('θ = ' + ang.toFixed(1) + '°', 22, 34, '#79d6d0', 14);
+    mono('R = ' + range.toFixed(1) + ' m', 22, 58, '#9fb4c4', 12);
+    label('v₀ = 18 m/s', 22, 82, '#8ba3b5', 11);
+  }
+
+  /* case 13 */
+  function draw13(a, t, r) {
+    bg('#0a1018', '#0e1720');
+    var cx = 360, topY = 72, botY = 366;
+    ctx.strokeStyle = 'rgba(150,185,210,.18)'; ctx.lineWidth = 2;
+    ctx.strokeRect(258, topY, 204, botY - topY);
+    line(cx, 40, cx, 120, 'rgba(150,185,210,.45)', 3);
+    ctx.fillStyle = '#16232e'; ctx.fillRect(280, 140, 160, 190);
+    ctx.strokeStyle = 'rgba(120,160,190,.3)'; ctx.strokeRect(280, 140, 160, 190);
+    line(280, 206, 440, 206, 'rgba(120,160,190,.15)', 1);
+    line(280, 266, 440, 266, 'rgba(120,160,190,.15)', 1);
+    dot(360, 240, 16, '#223444', 0);
+    ctx.fillStyle = '#8fa3b2';
+    ctx.fillRect(336, 292, 48, 34);
+    dot(360, 214, 12, '#c9d8e2', 0);
+    line(360, 226, 360, 292, '#c9d8e2', 8);
+    line(336, 292, 384, 292, '#c9d8e2', 6);
+    ctx.fillStyle = '#1c2833'; ctx.fillRect(320, 326, 80, 12);
+    ctx.strokeStyle = 'rgba(224,184,106,.45)'; ctx.strokeRect(320, 326, 80, 12);
+    var al = clamp(Math.abs(a) / 3, 0, 1) * 70;
+    if (a >= 0) {
+      line(cx + 74, 250, cx + 74, 250 - al, '#79d6d0', 4);
+      ctx.fillStyle = '#79d6d0';
+      ctx.beginPath(); ctx.moveTo(cx + 74, 250 - al); ctx.lineTo(cx + 66, 250 - al + 12); ctx.lineTo(cx + 82, 250 - al + 12); ctx.closePath(); ctx.fill();
+      label('a', cx + 86, 246 - al / 2, '#79d6d0', 13);
+    } else {
+      line(cx + 74, 250, cx + 74, 250 + al, '#e08573', 4);
+      ctx.fillStyle = '#e08573';
+      ctx.beginPath(); ctx.moveTo(cx + 74, 250 + al); ctx.lineTo(cx + 66, 250 + al - 12); ctx.lineTo(cx + 82, 250 + al - 12); ctx.closePath(); ctx.fill();
+      label('a', cx + 86, 246 + al / 2, '#e08573', 13);
+    }
+    var N = 70 * (9.8 + a);
+    mono('N = ' + N.toFixed(0) + ' N', 22, 34, '#79d6d0', 14);
+    mono('a = ' + a.toFixed(1) + ' m/s²', 22, 58, '#9fb4c4', 12);
+    label('70 kg 乘员', 22, 82, '#8ba3b5', 11);
+    ctx.fillStyle = 'rgba(6,10,16,.75)'; ctx.fillRect(500, 300, 180, 54);
+    ctx.strokeStyle = 'rgba(120,170,200,.2)'; ctx.strokeRect(500, 300, 180, 54);
+    label('体重秤', 516, 320, '#8ba3b5', 10);
+    mono(N.toFixed(0) + ' N', 516, 342, '#79d6d0', 17);
+  }
+
+  /* case 14 */
+  function draw14(n, t, r) {
+    bg('#0a1018', '#0e1720');
+    var cx = 360, cy = 210, rad = 150;
+    ctx.fillStyle = '#111c26';
+    ctx.beginPath(); ctx.arc(cx, cy, rad + 12, 0, 6.283); ctx.fill();
+    ctx.strokeStyle = 'rgba(150,185,210,.3)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(cx, cy, rad + 12, 0, 6.283); ctx.stroke();
+    for (var i = 0; i < 5; i++) {
+      ctx.strokeStyle = 'rgba(150,185,210,' + (0.1 + i * 0.03) + ')'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(cx, cy, 44 + i * 25, 0, 6.283); ctx.stroke();
+    }
+    dot(cx, cy, 8, '#e7c98f', 8);
+    var ang = t * Math.PI * 2 * 1.6 + 0.4;
+    var px = cx + Math.cos(ang) * (rad - 14), py = cy + Math.sin(ang) * (rad - 14);
+    line(cx, cy, px, py, 'rgba(121,214,208,.25)', 2);
+    dot(px, py, 8, '#8fe6e0', 14);
+    var vx = -Math.sin(ang), vy = Math.cos(ang);
+    line(px, py, px + vx * 46, py + vy * 46, '#e7c98f', 3);
+    label('v', px + vx * 54, py + vy * 54, '#e7c98f', 12);
+    ctx.strokeStyle = 'rgba(224,184,106,.18)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(cx, cy, rad - 14, 0, 6.283); ctx.stroke();
+    mono('n = ' + n.toFixed(1) + ' rpm', 22, 34, '#79d6d0', 14);
+    mono('v = ' + (2 * Math.PI * (n / 60) * 0.15).toFixed(2) + ' m/s', 22, 58, '#9fb4c4', 12);
+    label('r = 0.15 m', 22, 82, '#8ba3b5', 11);
+    label('33⅓ 转是正常播放', 500, 380, '#8ba3b5', 10);
+  }
+
+  /* case 15 */
+  function draw15(F, t, r) {
+    bg('#0a1118', '#101a22');
+    var fx = 330, fy = 300, by = 256;
+    ctx.fillStyle = '#17242f'; ctx.fillRect(0, 350, 720, 70);
+    line(fx - 74, by - 12, fx + 216, by - 20, 'rgba(150,185,210,.45)', 6);
+    ctx.fillStyle = '#22303c';
+    ctx.beginPath(); ctx.moveTo(fx, fy); ctx.lineTo(fx - 26, fy + 44); ctx.lineTo(fx + 26, fy + 44); ctx.closePath(); ctx.fill();
+    label('支点', fx, fy + 62, '#8ba3b5', 10, 'center');
+    ctx.fillStyle = '#2a3a48'; ctx.fillRect(218, 190, 72, 58);
+    ctx.strokeStyle = 'rgba(224,184,106,.35)'; ctx.strokeRect(218, 190, 72, 58);
+    label('重物', 254, 182, '#9fb4c4', 10, 'center');
+    label(Math.round(r.load) + ' N', 254, 224, '#e7c98f', 11, 'center');
+    line(254, 300, 254, 258, '#e08573', 3);
+    ctx.fillStyle = '#e08573';
+    ctx.beginPath(); ctx.moveTo(254, 258); ctx.lineTo(247, 270); ctx.lineTo(261, 270); ctx.closePath(); ctx.fill();
+    var hx = fx + 216;
+    var fl = clamp(F / 2.6, 40, 96);
+    line(hx, by - 22, hx, by - 22 + fl, '#e7c98f', 4);
+    ctx.fillStyle = '#e7c98f';
+    ctx.beginPath(); ctx.moveTo(hx, by - 22 + fl); ctx.lineTo(hx - 8, by - 22 + fl - 12); ctx.lineTo(hx + 8, by - 22 + fl - 12); ctx.closePath(); ctx.fill();
+    label('F ≈ ' + Math.round(F) + ' N', hx + 14, by - 8, '#e7c98f', 11);
+    label('0.4 m', (254 + fx) / 2, 286, '#8ba3b5', 10, 'center');
+    label('1.2 m', (fx + hx) / 2, 286, '#8ba3b5', 10, 'center');
+    line(254, 272, fx, 272, 'rgba(150,185,210,.2)', 1, [4, 4]);
+    line(fx, 272, hx, 272, 'rgba(150,185,210,.2)', 1, [4, 4]);
+    mono('手施力 ' + Math.round(F) + ' N', 22, 34, '#79d6d0', 13);
+    mono('可撬起 ' + Math.round(F * 1.2 / 0.4) + ' N', 22, 58, '#9fb4c4', 13);
+    label('力矩平衡 F₁d₁ = F₂d₂', 22, 82, '#8ba3b5', 11);
+  }
+
+  var DRAW = {
+    d1: draw1, d2: draw2, d3: draw3, d4: draw4, d5: draw5,
+    d6: draw6, d7: draw7, d8: draw8, d9: draw9, d10: draw10,
+    d11: draw11, d12: draw12, d13: draw13, d14: draw14, d15: draw15
+  };
+
+  /* ---------------- 启动 ---------------- */
+  STATS = loadStats();
+  var hadSave = loadSave();
+  if (!hadSave) newRun('standard', false);
+  renderCase(ST.idx);
+  showTitle();
+
+  window.__RAIN = {
+    get state() {
+      return {
+        idx: ST.idx, diff: ST.diff,
+        solved: ST.cs.map(function (s) { return s.solved; }),
+        stars: ST.cs.map(function (s) { return s.stars; }),
+        done: ST.done, score: totalScore(), final: ST.final,
+        practice: !!P
+      };
+    },
+    cases: function () {
+      return CASES.map(function (c) {
+        return { id: c.id, name: c.name, min: c.min, max: c.max, step: c.step };
+      });
+    },
+    best: function (ci) {
+      var c = CASES[ci], run = (P && P.ci === ci) ? P.run : ST.cs[ci].run;
+      var lo = c.min, hi = c.max, bv = lo, be = Infinity;
+      for (var i = 0; i <= 2000; i++) {
+        var v = lo + (hi - lo) * i / 2000;
+        var err = Math.abs(c.metric(v, run) - run.target);
+        if (err < be) { be = err; bv = v; }
+      }
+      return { value: bv, target: run.target, tol: run.tol };
+    },
+    setVal: function (v) {
+      slider.value = v;
+      slider.dispatchEvent(new Event('input', { bubbles: true }));
+    },
+    compare: compare,
+    run: runSim,
+    closeDialog: closeDialog,
+    clueBook: clueBook,
+    archive: showArchive,
+    startFinale: startFinale,
+    finalPick: function (correct) {
+      var f = ST.final;
+      if (!f.order || !FINAL[f.round]) return false;
+      var st = FINAL[f.round];
+      for (var i = 0; i < 4; i++) {
+        var id = st.pool[f.order[i]];
+        if ((id === st.correct) === !!correct) {
+          var b = dlgActs.children[i];
+          if (b && !b.disabled) { b.click(); return true; }
+        }
+      }
+      return false;
+    },
+    answer: function (correct) {
+      var cs = curState(), run = curRun();
+      var order, ans;
+      if (cs.q1pass && run.q2) { order = cs.q2Order; ans = run.q2.answer; }
+      else { order = cs.qOrder; ans = run.answer; }
+      if (!order) return false;
+      for (var i = 0; i < order.length; i++) {
+        if ((order[i] === ans) === !!correct) {
+          var b = dlgActs.children[i];
+          if (b && !b.disabled) { b.click(); return true; }
+        }
+      }
+      return false;
+    },
+    jump: function (ci) { P = null; renderCase(ci); },
+    practice: function (ci) { startPractice(ci); },
+    newRun: function (diff) {
+      newRun(diff || 'standard', false);
+      P = null;
+      titleBox.classList.add('hide');
+      renderCase(0);
+    },
+    title: showTitle,
+    debugSolveAll: function () {
+      for (var i = 0; i < ST.cs.length; i++) {
+        var cs = ST.cs[i];
+        if (!cs.solved) { cs.solved = true; cs.stars = 3; cs.compares = 1; cs.qWrong = 0; cs.hint = false; }
+      }
+      ST.idx = CASES.length - 1;
+      save();
+      updateHeader();
+      closeDialog();
+      renderCase(CASES.length - 1);
+    },
+    get dialogOpen() { return !dlg.classList.contains('hide'); }
+  };
+})();
+</script>
+</body>
+</html>

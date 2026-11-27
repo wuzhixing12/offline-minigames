@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#070d18">
+<title>迷宫 · 离线小游戏</title>
+<style>
+  :root{
+    --text:#eaf2ff;--muted:#8ea3bd;--line:rgba(148,163,184,.16);
+    --gold:#fbbf24;--mint:#5eead4;--blue:#5b8def;--panel:#0b1424;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;min-height:100%;}
+  body{
+    min-height:100vh;color:var(--text);
+    font-family:"Segoe UI","Microsoft YaHei","PingFang SC","Hiragino Sans GB",sans-serif;
+    background:
+      radial-gradient(900px 620px at 8% -6%, rgba(91,141,239,.13), transparent 62%),
+      radial-gradient(760px 560px at 102% 104%, rgba(94,234,212,.10), transparent 62%),
+      radial-gradient(700px 500px at 50% 48%, rgba(148,163,184,.06), transparent 70%),
+      #070d18;
+    padding:20px 18px 24px;display:flex;justify-content:center;
+    -webkit-font-smoothing:antialiased;
+  }
+  button{font:inherit;color:inherit;cursor:pointer;}
+  .app{width:min(100%,900px);display:flex;flex-direction:column;gap:14px;}
+  header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+  h1{margin:0;font-size:24px;letter-spacing:.04em;}
+  header p{margin:5px 0 0;color:var(--muted);font-size:13px;}
+  .modes{display:flex;gap:6px;background:rgba(255,255,255,.04);padding:4px;border-radius:12px;border:1px solid var(--line);}
+  .modes button{
+    border:0;background:transparent;color:var(--muted);padding:8px 15px;border-radius:9px;
+    font-size:13.5px;transition:.18s;
+  }
+  .modes button:hover{color:var(--text);}
+  .modes button.on{background:rgba(91,141,239,.2);color:#dbeafe;box-shadow:inset 0 0 0 1px rgba(91,141,239,.4);}
+  .hud{
+    display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+    padding:11px 14px;border:1px solid var(--line);border-radius:14px;
+    background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.012));
+  }
+  .stat{display:flex;flex-direction:column;gap:2px;min-width:58px;}
+  .stat span{font-size:11px;color:var(--muted);letter-spacing:.08em;}
+  .stat b{font-size:16px;font-variant-numeric:tabular-nums;}
+  .spacer{flex:1;}
+  .btn{
+    border:1px solid var(--line);background:rgba(255,255,255,.04);padding:8px 13px;border-radius:10px;
+    font-size:13px;transition:.16s;white-space:nowrap;
+  }
+  .btn:hover{background:rgba(255,255,255,.09);border-color:rgba(148,163,184,.3);}
+  .btn em{font-style:normal;color:var(--gold);font-size:11px;margin-left:3px;}
+  .stage{
+    position:relative;display:flex;align-items:center;justify-content:center;
+    min-height:320px;border:1px solid var(--line);border-radius:18px;overflow:hidden;
+    background:linear-gradient(180deg,rgba(11,20,36,.72),rgba(7,13,24,.9));
+    box-shadow:0 18px 50px rgba(0,0,0,.35) inset;
+  }
+  canvas{display:block;outline:none;max-width:100%;touch-action:none;}
+  .pad{
+    display:grid;grid-template-columns:repeat(3,58px);grid-template-rows:repeat(2,46px);
+    gap:7px;justify-content:center;margin:0 auto;
+  }
+  .pad button{
+    border:1px solid var(--line);background:rgba(255,255,255,.045);border-radius:12px;
+    font-size:15px;color:#cfe0f5;cursor:pointer;transition:.16s;
+  }
+  .pad button:hover{background:rgba(91,141,239,.16);border-color:rgba(91,141,239,.42);}
+  .pad button:active{transform:translateY(1px);}
+  .pad .up{grid-column:2;grid-row:1;}
+  .pad .left{grid-column:1;grid-row:2;}
+  .pad .down{grid-column:2;grid-row:2;}
+  .pad .right{grid-column:3;grid-row:2;}
+  .achline{font-size:11.5px;color:#7f96b4;letter-spacing:.08em;text-align:center;margin:0;}
+  .win-score{font-size:13px;color:#9fd8ff;margin:8px 0 0;letter-spacing:.05em;}
+  .win-extra{font-size:12px;color:var(--muted);margin:2px 0 10px;}
+  .btn.on-fog{border-color:rgba(94,234,212,.5);background:rgba(94,234,212,.12);color:#bff8ec;}
+  .win{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    background:rgba(4,9,17,.72);backdrop-filter:blur(6px);animation:fade .25s ease;
+  }
+  .win[hidden]{display:none;}
+  .win-card{
+    width:min(88%,380px);border:1px solid rgba(251,191,36,.28);border-radius:18px;
+    background:linear-gradient(180deg,#101d31,#0a1322);padding:24px 22px;text-align:center;
+    box-shadow:0 30px 70px rgba(0,0,0,.5);
+  }
+  .win-card h2{margin:0 0 6px;font-size:22px;color:var(--gold);letter-spacing:.06em;}
+  .win-card .big{font-size:38px;font-weight:700;margin:12px 0 2px;font-variant-numeric:tabular-nums;}
+  .win-card p{margin:4px 0 18px;color:var(--muted);font-size:13px;}
+  .win-card .newrec{color:var(--mint);font-size:12.5px;margin-bottom:12px;}
+  .win-card button{
+    border:0;border-radius:11px;padding:11px 22px;font-size:14px;
+    background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#231400;font-weight:600;
+  }
+  .tip{margin:0;color:var(--muted);font-size:12.5px;text-align:center;}
+  @keyframes fade{from{opacity:0;}to{opacity:1;}}
+  @media (max-width:640px){
+    body{padding:14px 10px 18px;}
+    header{align-items:flex-start;}
+    .hud{gap:12px;}
+    .spacer{display:none;}
+    .hud .btn{margin-left:auto;}
+  }
+</style>
+<style id="tx-aurora-skin">
+/* tx-aurora-skin:maze */
+:root{--tx-a1:#5b8def;--tx-a2:#5eead4;}
+html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+::selection{background:rgba(91,141,239,0.38);color:#fff}
+*::-webkit-scrollbar{width:8px;height:8px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:rgba(91,141,239,0.26);border-radius:99px;border:2px solid transparent;background-clip:content-box}
+*::-webkit-scrollbar-thumb:hover{background:rgba(91,141,239,0.46);background-clip:content-box}
+body{background-color:#070d18!important;background-image:radial-gradient(1100px 640px at 6% -12%, rgba(91,141,239,0.16), transparent 62%), radial-gradient(900px 680px at 104% 112%, rgba(94,234,212,0.12), transparent 62%)!important}
+button{transition:transform .14s ease,filter .16s ease,box-shadow .2s ease,border-color .16s ease,background-color .16s ease}
+button:hover{filter:brightness(1.07)}
+button:active{transform:translateY(1px) scale(.995)}
+button:focus-visible{outline:2px solid rgba(91,141,239,0.72);outline-offset:2px}
+.overlay,.modal,.dialog,.sheet,#levels,#loading{background-image:radial-gradient(900px 520px at 50% 0%,rgba(91,141,239,0.15),transparent 62%),radial-gradient(720px 520px at 50% 100%,rgba(94,234,212,0.08),transparent 60%)!important}
+.overlay,.modal,.dialog,.sheet{backdrop-filter:blur(9px) saturate(1.1)}
+.overlay h1,.modal h1,.screen h1,.overlay-card h1,.win-card h1,.result-card h1,.bcard .btitle,.loadcard .ltitle{text-shadow:0 2px 30px rgba(91,141,239,0.45)}
+.overlay .screen,.overlay .panel,.overlay-card,.modal .panel,.win-card,.result-card,.bcard,.loadcard,.rules-dialog,.panel{box-shadow:0 38px 96px -34px rgba(0,0,0,.95), inset 0 1px 0 rgba(255,255,255,.07)!important}
+.bcard,.loadcard{border-color:rgba(91,141,239,0.34)!important}
+.overlay .panel,.overlay-card,.win-card,.result-card,.modal .panel{backdrop-filter:blur(10px) saturate(1.08);border-color:rgba(91,141,239,0.26)!important}
+</style>
+<style id="maze-extra">
+  .modes{flex-wrap:wrap}
+  .rating{font-size:26px;letter-spacing:6px;color:#fbbf24;margin:6px 0 4px;text-shadow:0 0 18px rgba(251,191,36,.45)}
+  .rating .dim{color:rgba(148,163,184,.35);text-shadow:none}
+  .toast{margin:10px auto 0;max-width:520px;padding:8px 16px;border-radius:10px;border:1px solid rgba(251,191,36,.28);
+    background:rgba(251,191,36,.08);color:#ffe9b8;font-size:12.5px;text-align:center;opacity:0;transition:opacity .2s}
+  .toast.show{opacity:1}
+  .stat .mini{font-size:11px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <h1>迷宫</h1>
+      <p>方向键 / WASD 移动，从左上角走到右下角的出口</p>
+    </div>
+    <div class="modes" id="modes">
+      <button data-size="easy" class="on">简单 17×13</button>
+      <button data-size="medium">中等 27×19</button>
+      <button data-size="hard">困难 35×25</button>
+      <button data-size="giant">巨型 45×31</button>
+      <button data-size="daily">每日迷宫</button>
+    </div>
+  </header>
+
+  <div class="hud">
+    <div class="stat"><span>步数</span><b id="steps">0</b></div>
+    <div class="stat"><span>用时</span><b id="time">0.0s</b></div>
+    <div class="stat"><span>星星</span><b id="star-count">0/0</b></div>
+    <div class="stat"><span>最佳</span><b id="best">—</b></div>
+    <div class="spacer"></div>
+    <button class="btn" id="fog" type="button">迷雾：关</button>
+    <button class="btn" id="hint" type="button">提示路线<em>+8s</em></button>
+    <button class="btn" id="new" type="button">新迷宫</button>
+  </div>
+
+  <div class="stage" id="stage">
+    <canvas id="cv" tabindex="0" aria-label="迷宫棋盘"></canvas>
+    <div class="win" id="win" hidden>
+      <div class="win-card">
+        <h2>走出去啦</h2>
+        <div class="rating" id="win-rating">★★★</div>
+        <div class="big" id="win-time">0.0s</div>
+        <p id="win-steps">0 步</p>
+        <div class="win-score" id="win-score">得分 0</div>
+        <div class="win-extra" id="win-extra"></div>
+        <div class="newrec" id="newrec" hidden>新的最佳纪录</div>
+        <button id="again" type="button">再来一局</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="pad" id="pad" aria-label="方向控制">
+    <button class="up" data-dir="up" type="button" aria-label="上">▲</button>
+    <button class="left" data-dir="left" type="button" aria-label="左">◀</button>
+    <button class="down" data-dir="down" type="button" aria-label="下">▼</button>
+    <button class="right" data-dir="right" type="button" aria-label="右">▶</button>
+  </div>
+
+  <p class="tip">方向键 / WASD / 滑动 / 方向键面板都能移动 · 先点亮所有星星，出口才会开启 · 成对的紫环会传送，红色尖刺会加时 · 提示会画出一条可行路线</p>
+  <div class="achline" id="achline">成就 0 / 8</div>
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  var SIZES = {
+    easy:   { c: 17, r: 13, hint: 8,  min: 72,  stars: 3 },
+    medium: { c: 27, r: 19, hint: 12, min: 150, stars: 3 },
+    hard:   { c: 35, r: 25, hint: 18, min: 260, stars: 4 },
+    giant:  { c: 45, r: 31, hint: 24, min: 360, stars: 5 },
+    daily:  { c: 31, r: 21, hint: 14, min: 190, stars: 4, daily: true }
+  };
+  var BEST_KEY = 'tx_maze_best_v2';
+
+  var stage = document.getElementById('stage');
+  var cv = document.getElementById('cv');
+  var ctx = cv.getContext('2d');
+  var elSteps = document.getElementById('steps');
+  var elTime = document.getElementById('time');
+  var elBest = document.getElementById('best');
+  var elStars = document.getElementById('star-count');
+  var winEl = document.getElementById('win');
+  var winTime = document.getElementById('win-time');
+  var winSteps = document.getElementById('win-steps');
+  var winRating = document.getElementById('win-rating');
+  var newrecEl = document.getElementById('newrec');
+  var toastEl = document.getElementById('toast');
+  var hintEm = document.querySelector('#hint em');
+  var elFog = document.getElementById('fog');
+  var elScore = document.getElementById('win-score');
+  var elExtra = document.getElementById('win-extra');
+  var elAch = document.getElementById('achline');
+
+  var cur = 'easy';
+  var cols = 17, rows = 13;
+  var cells = null;
+  var player = 0, goal = 0;
+  var steps = 0;
+  var stars = [], starsLeft = 0, starsTotal = 0;
+  var optimal = 0, usedHint = false;
+  var started = false, finished = false;
+  var startAt = 0, penalty = 0, elapsed = 0;
+  var timer = null;
+  var trail = [];
+  var hintPath = null, hintTimer = null, toastTimer = null;
+  var W = 0, H = 0, cell = 24, pad = 14, dpr = 1;
+  var portals = [], traps = [];
+  var teleports = 0, trapHits = 0;
+  var fogMode = false;
+  var achData = {};
+  var ACH_KEY = 'tx_maze_ach_v1';
+  var ACH_LIST = [
+    { id:'first',    name:'第一次出逃', desc:'走通任意一座迷宫' },
+    { id:'star3',    name:'精准路线',   desc:'拿到三星评级' },
+    { id:'nohint',   name:'凭记忆走',   desc:'不使用提示通关' },
+    { id:'fog',      name:'雾中行者',   desc:'在迷雾模式下通关' },
+    { id:'portal',   name:'门对门',     desc:'单局使用 3 次传送' },
+    { id:'clean',    name:'片叶不沾',   desc:'在有尖刺的迷宫里一次不踩' },
+    { id:'daily',    name:'每日打卡',   desc:'完成一次每日迷宫' },
+    { id:'speed',    name:'疾风步',     desc:'30 秒内通关中型或更大的迷宫' }
+  ];
+
+  function loadBest(){
+    try { return JSON.parse(localStorage.getItem(BEST_KEY) || '{}') || {}; }
+    catch(e){ return {}; }
+  }
+  function saveBest(o){
+    try { localStorage.setItem(BEST_KEY, JSON.stringify(o)); } catch(e){}
+  }
+  function fmt(t){
+    if (t == null) return '—';
+    return (Math.round(t * 10) / 10).toFixed(1) + 's';
+  }
+  function dailySeed(){
+    var d = new Date();
+    return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+  }
+  function mulberry32(a){
+    return function(){
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      var t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  function toast(msg){
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ toastEl.classList.remove('show'); }, 1600);
+  }
+  function starStr(n){
+    var s = '';
+    for (var i = 0; i < 3; i++) s += i < n ? '★' : '<span class="dim">★</span>';
+    return s;
+  }
+
+  function loadAch(){
+    try { return JSON.parse(localStorage.getItem(ACH_KEY) || '{}') || {}; }
+    catch(e){ return {}; }
+  }
+  function saveAch(){
+    try { localStorage.setItem(ACH_KEY, JSON.stringify(achData)); } catch(e){}
+  }
+  function achCount(){
+    var n = 0;
+    for (var k in achData) if (achData[k]) n++;
+    return n;
+  }
+  function renderAch(){
+    if (!elAch) return;
+    elAch.textContent = '成就 ' + achCount() + ' / ' + ACH_LIST.length +
+      (achCount() === ACH_LIST.length ? ' · 全部解锁' : '');
+  }
+  function unlockAch(id){
+    if (achData[id]) return;
+    achData[id] = 1;
+    saveAch();
+    var a = null;
+    for (var i = 0; i < ACH_LIST.length; i++) if (ACH_LIST[i].id === id) a = ACH_LIST[i];
+    if (a) toast('成就 · ' + a.name);
+    renderAch();
+  }
+  function renderFog(){
+    if (!elFog) return;
+    elFog.textContent = '迷雾：' + (fogMode ? '开' : '关');
+    elFog.classList.toggle('on-fog', fogMode);
+    try { localStorage.setItem('tx_maze_fog_v1', fogMode ? '1' : '0'); } catch(e){}
+  }
+
+  function generate(c, r, rand){
+    var n = c * r;
+    var walls = new Uint8Array(n);
+    for (var i = 0; i < n; i++) walls[i] = 15; // N E S W
+    var vis = new Uint8Array(n);
+    var stack = [0];
+    vis[0] = 1;
+    while (stack.length){
+      var idx = stack[stack.length - 1];
+      var x = idx % c, y = (idx / c) | 0;
+      var nb = [];
+      if (y > 0 && !vis[idx - c]) nb.push([idx - c, 1, 4]);
+      if (x < c - 1 && !vis[idx + 1]) nb.push([idx + 1, 2, 8]);
+      if (y < r - 1 && !vis[idx + c]) nb.push([idx + c, 4, 1]);
+      if (x > 0 && !vis[idx - 1]) nb.push([idx - 1, 8, 2]);
+      if (!nb.length){ stack.pop(); continue; }
+      var t = nb[(rand() * nb.length) | 0];
+      walls[idx] &= ~t[1];
+      walls[t[0]] &= ~t[2];
+      vis[t[0]] = 1;
+      stack.push(t[0]);
+    }
+    return walls;
+  }
+
+  function solve(sx, sy, tx, ty){
+    var prev = new Int32Array(cols * rows);
+    prev.fill(-1);
+    var q = [sy * cols + sx];
+    prev[q[0]] = q[0];
+    var head = 0;
+    while (head < q.length){
+      var i = q[head++];
+      if (i === ty * cols + tx) break;
+      var x = i % cols, y = (i / cols) | 0;
+      var w = cells[i];
+      var opts = [];
+      if (!(w & 1)) opts.push(i - cols);
+      if (!(w & 2)) opts.push(i + 1);
+      if (!(w & 4)) opts.push(i + cols);
+      if (!(w & 8)) opts.push(i - 1);
+      for (var k = 0; k < opts.length; k++){
+        var j = opts[k];
+        if (prev[j] === -1){
+          prev[j] = i;
+          q.push(j);
+        }
+      }
+    }
+    if (prev[ty * cols + tx] === -1) return null;
+    var path = [];
+    var curi = ty * cols + tx;
+    while (curi !== sy * cols + sx){
+      path.push(curi);
+      curi = prev[curi];
+    }
+    path.push(sy * cols + sx);
+    path.reverse();
+    return path;
+  }
+
+  function newMaze(){
+    var cfg = SIZES[cur];
+    cols = cfg.c;
+    rows = cfg.r;
+    var seed = cfg.daily ? dailySeed() : ((Date.now() ^ (Math.random() * 1e9)) >>> 0);
+    var rand = mulberry32(seed);
+    var tries = 0, bestLen = -1, bestWalls = null, bestPath = null;
+    cells = null;
+    while (tries < 8){
+      tries++;
+      cells = generate(cols, rows, rand);
+      var p = solve(0, 0, cols - 1, rows - 1);
+      var len = p ? p.length - 1 : 0;
+      if (len > bestLen){ bestLen = len; bestWalls = cells; bestPath = p; }
+      if (len >= cfg.min) break;
+    }
+    cells = bestWalls;
+    goal = cols * rows - 1;
+    optimal = bestPath ? bestPath.length - 1 : 0;
+
+    stars = [];
+    if (bestPath && bestPath.length > 2){
+      var want = Math.min(cfg.stars, bestPath.length - 2);
+      for (var s = 1; s <= want; s++){
+        var idx = bestPath[Math.round(s * bestPath.length / (want + 1))];
+        if (idx !== 0 && idx !== goal && stars.indexOf(idx) < 0) stars.push(idx);
+      }
+    }
+    starsTotal = stars.length;
+    starsLeft = starsTotal;
+
+    // 机关：传送门与尖刺都放在主路线之外，探索才有额外风险与捷径
+    portals = [];
+    traps = [];
+    var pathSet = {};
+    if (bestPath) for (var pi = 0; pi < bestPath.length; pi++) pathSet[bestPath[pi]] = 1;
+    var free = [];
+    for (var fi = 0; fi < cols * rows; fi++){
+      if (fi === 0 || fi === goal) continue;
+      if (stars.indexOf(fi) >= 0 || pathSet[fi]) continue;
+      free.push(fi);
+    }
+    function pickFree(){
+      if (!free.length) return -1;
+      var ri = (rand() * free.length) | 0;
+      return free.splice(ri, 1)[0];
+    }
+    var trapWant = { easy: 0, medium: 3, hard: 6, giant: 10, daily: 4 }[cur] || 0;
+    var portalWant = { easy: 0, medium: 1, hard: 2, giant: 2, daily: 2 }[cur] || 0;
+    for (var ti = 0; ti < trapWant; ti++){
+      var tidx = pickFree();
+      if (tidx >= 0) traps.push({ idx: tidx, used: 0 });
+    }
+    for (var pp = 0; pp < portalWant; pp++){
+      var pa = pickFree(), pb = pickFree();
+      if (pa >= 0 && pb >= 0) portals.push({ a: pa, b: pb });
+    }
+    teleports = 0;
+    trapHits = 0;
+
+    if (hintEm) hintEm.textContent = '+' + cfg.hint + 's';
+    player = 0;
+    steps = 0;
+    started = false;
+    finished = false;
+    usedHint = false;
+    startAt = 0;
+    penalty = 0;
+    elapsed = 0;
+    trail = [player];
+    hintPath = null;
+    if (hintTimer){ clearTimeout(hintTimer); hintTimer = null; }
+    if (timer){ clearInterval(timer); timer = null; }
+    winEl.hidden = true;
+    elSteps.textContent = '0';
+    elTime.textContent = '0.0s';
+    elStars.textContent = '0/' + starsTotal;
+    var best = loadBest()[cur];
+    elBest.textContent = best ? fmt(best.t) : '—';
+    layout();
+    cv.focus();
+  }
+
+  function layout(){
+    var availW = Math.max(260, stage.clientWidth - 8);
+    var availH = Math.max(280, window.innerHeight - 268);
+    cell = Math.floor(Math.min((availW - pad * 2) / cols, (availH - pad * 2) / rows));
+    cell = Math.max(12, Math.min(cell, 40));
+    W = cols * cell + pad * 2;
+    H = rows * cell + pad * 2;
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    cv.style.width = W + 'px';
+    cv.style.height = 'auto';
+    cv.style.aspectRatio = W + ' / ' + H;
+    cv.width = Math.round(W * dpr);
+    cv.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    stage.style.minHeight = Math.min(H + 20, Math.max(320, window.innerHeight - 240)) + 'px';
+    draw();
+  }
+
+  function cx(x){ return pad + x * cell + cell / 2; }
+  function cy(y){ return pad + y * cell + cell / 2; }
+
+  function draw(){
+    if (!cells) return;
+    ctx.clearRect(0, 0, W, H);
+
+    // 底板
+    ctx.fillStyle = 'rgba(9,17,31,.72)';
+    ctx.beginPath();
+    ctx.roundRect ? ctx.roundRect(pad * .5, pad * .5, W - pad, H - pad, 12) : ctx.rect(pad * .5, pad * .5, W - pad, H - pad);
+    ctx.fill();
+
+    // 足迹
+    if (trail.length > 1){
+      ctx.save();
+      ctx.strokeStyle = 'rgba(94,234,212,.16)';
+      ctx.lineWidth = Math.max(2, cell * .22);
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      for (var i = 0; i < trail.length; i++){
+        var ti = trail[i], tx = ti % cols, ty = (ti / cols) | 0;
+        if (i === 0) ctx.moveTo(cx(tx), cy(ty));
+        else ctx.lineTo(cx(tx), cy(ty));
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // 墙
+    ctx.save();
+    ctx.strokeStyle = 'rgba(91,141,239,.72)';
+    ctx.lineWidth = Math.max(2, Math.min(4, cell * .15));
+    ctx.lineCap = 'round';
+    for (var y = 0; y < rows; y++){
+      for (var x = 0; x < cols; x++){
+        var idx = y * cols + x;
+        var w = cells[idx];
+        var x0 = pad + x * cell, y0 = pad + y * cell;
+        var x1 = x0 + cell, y1 = y0 + cell;
+        ctx.beginPath();
+        if (w & 1){ ctx.moveTo(x0, y0); ctx.lineTo(x1, y0); }
+        if (w & 2){ ctx.moveTo(x1, y0); ctx.lineTo(x1, y1); }
+        if (w & 4){ ctx.moveTo(x0, y1); ctx.lineTo(x1, y1); }
+        if (w & 8){ ctx.moveTo(x0, y0); ctx.lineTo(x0, y1); }
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+
+    // 提示路线
+    if (hintPath && hintPath.length > 1){
+      ctx.save();
+      ctx.strokeStyle = 'rgba(251,191,36,.85)';
+      ctx.lineWidth = Math.max(2, cell * .2);
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.setLineDash([Math.max(3, cell * .3), Math.max(3, cell * .22)]);
+      ctx.beginPath();
+      for (var h = 0; h < hintPath.length; h++){
+        var hi = hintPath[h], hx = hi % cols, hy = (hi / cols) | 0;
+        if (h === 0) ctx.moveTo(cx(hx), cy(hy));
+        else ctx.lineTo(cx(hx), cy(hy));
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // 星星
+    ctx.save();
+    for (var si = 0; si < stars.length; si++){
+      var sx2 = stars[si] % cols, sy2 = (stars[si] / cols) | 0;
+      var sxp = cx(sx2), syp = cy(sy2), sr = Math.max(3, cell * .24);
+      ctx.shadowColor = 'rgba(251,191,36,.9)';
+      ctx.shadowBlur = 12;
+      ctx.fillStyle = '#fde68a';
+      ctx.beginPath();
+      ctx.moveTo(sxp, syp - sr);
+      ctx.lineTo(sxp + sr * .82, syp);
+      ctx.lineTo(sxp, syp + sr);
+      ctx.lineTo(sxp - sr * .82, syp);
+      ctx.closePath();
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = 'rgba(255,255,255,.85)';
+      ctx.beginPath(); ctx.arc(sxp - sr * .18, syp - sr * .2, Math.max(1, sr * .22), 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+
+    // 传送门
+    ctx.save();
+    for (var ppi = 0; ppi < portals.length; ppi++){
+      var pair = portals[ppi];
+      var items = [pair.a, pair.b];
+      for (var ii = 0; ii < 2; ii++){
+        var pix = items[ii] % cols, piy = (items[ii] / cols) | 0;
+        var pr = Math.max(3, cell * .26);
+        var ph = performance.now() / 700 + ppi + ii;
+        ctx.strokeStyle = 'rgba(167,139,250,.9)';
+        ctx.lineWidth = Math.max(1.5, cell * .08);
+        ctx.beginPath(); ctx.arc(cx(pix), cy(piy), pr, 0, Math.PI * 2); ctx.stroke();
+        ctx.strokeStyle = 'rgba(196,181,253,' + (0.45 + Math.sin(ph) * 0.25) + ')';
+        ctx.lineWidth = Math.max(1, cell * .045);
+        ctx.setLineDash([Math.max(2, cell * .1), Math.max(2, cell * .08)]);
+        ctx.beginPath(); ctx.arc(cx(pix), cy(piy), pr * 1.5, ph, ph + Math.PI * 1.4); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = 'rgba(221,214,254,.85)';
+        ctx.beginPath(); ctx.arc(cx(pix), cy(piy), Math.max(1.2, cell * .07), 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    ctx.restore();
+
+    // 尖刺陷阱
+    ctx.save();
+    for (var tpi = 0; tpi < traps.length; tpi++){
+      var trap = traps[tpi];
+      var tpx = trap.idx % cols, tpy = (trap.idx / cols) | 0;
+      var tr2 = Math.max(2.5, cell * .22);
+      ctx.fillStyle = trap.used ? 'rgba(148,163,184,.22)' : 'rgba(251,113,133,.82)';
+      ctx.strokeStyle = trap.used ? 'rgba(148,163,184,.3)' : 'rgba(255,205,211,.7)';
+      ctx.lineWidth = 1;
+      for (var sp = 0; sp < 3; sp++){
+        var sx3 = cx(tpx) + (sp - 1) * tr2 * .95;
+        ctx.beginPath();
+        ctx.moveTo(sx3, cy(tpy) + tr2 * .5);
+        ctx.lineTo(sx3 + tr2 * .38, cy(tpy) - tr2 * .45);
+        ctx.lineTo(sx3 - tr2 * .38, cy(tpy) + tr2 * .05);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+    ctx.restore();
+
+    // 出口
+    var gx = goal % cols, gy = (goal / cols) | 0;
+    var open = starsLeft <= 0;
+    ctx.save();
+    if (open){
+      ctx.shadowColor = 'rgba(94,234,212,.7)';
+      ctx.shadowBlur = 16;
+      ctx.fillStyle = '#5eead4';
+      ctx.beginPath();
+      ctx.arc(cx(gx), cy(gy), Math.max(4, cell * .26), 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.strokeStyle = 'rgba(148,163,184,.55)';
+      ctx.lineWidth = Math.max(1.5, cell * .07);
+      var er = Math.max(4, cell * .26);
+      ctx.beginPath(); ctx.arc(cx(gx), cy(gy), er, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(cx(gx) - er * .55, cy(gy) - er * .55);
+      ctx.lineTo(cx(gx) + er * .55, cy(gy) + er * .55);
+      ctx.moveTo(cx(gx) + er * .55, cy(gy) - er * .55);
+      ctx.lineTo(cx(gx) - er * .55, cy(gy) + er * .55);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // 玩家
+    var px = player % cols, py = (player / cols) | 0;
+    ctx.save();
+    ctx.shadowColor = 'rgba(251,191,36,.8)';
+    ctx.shadowBlur = 18;
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath();
+    ctx.arc(cx(px), cy(py), Math.max(4, cell * .3), 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    ctx.fillStyle = 'rgba(255,255,255,.9)';
+    ctx.beginPath();
+    ctx.arc(cx(px) - cell * .07, cy(py) - cell * .07, Math.max(1.5, cell * .08), 0, Math.PI * 2);
+    ctx.fill();
+
+    // 迷雾
+    if (fogMode){
+      var vx = cx(px), vy = cy(py);
+      var vg = ctx.createRadialGradient(vx, vy, cell * 1.7, vx, vy, cell * 5.6);
+      vg.addColorStop(0, 'rgba(4,9,17,0)');
+      vg.addColorStop(.55, 'rgba(4,9,17,.52)');
+      vg.addColorStop(.85, 'rgba(4,9,17,.9)');
+      vg.addColorStop(1, 'rgba(4,9,17,.97)');
+      ctx.fillStyle = vg;
+      ctx.fillRect(0, 0, W, H);
+    }
+  }
+
+  function tick(){
+    if (!started || finished) return;
+    elapsed = (performance.now() - startAt) / 1000 + penalty;
+    elTime.textContent = elapsed.toFixed(1) + 's';
+  }
+
+  function startClock(){
+    if (started) return;
+    started = true;
+    startAt = performance.now();
+    timer = setInterval(tick, 100);
+  }
+
+  function finish(){
+    finished = true;
+    if (timer){ clearInterval(timer); timer = null; }
+    elapsed = (performance.now() - startAt) / 1000 + penalty;
+    elTime.textContent = elapsed.toFixed(1) + 's';
+    var rating = 3;
+    var ratio = optimal > 0 ? steps / optimal : 9;
+    if (ratio > 1.8) rating = 1;
+    else if (ratio > 1.3) rating = 2;
+    if (usedHint && rating > 2) rating = 2;
+    var bests = loadBest();
+    var old = bests[cur] || {};
+    winTime.textContent = elapsed.toFixed(1) + 's';
+    winSteps.textContent = steps + ' 步 · 最短 ' + optimal + ' 步';
+    winRating.innerHTML = starStr(rating);
+
+    var score = Math.max(0, Math.round(
+      1200 - steps * 2.4 - elapsed * 4.5 + rating * 120 + starsTotal * 40 +
+      (!usedHint ? 100 : 0) + teleports * 30 - trapHits * 60 +
+      ({ easy: 0, medium: 80, hard: 160, giant: 240, daily: 140 }[cur] || 0)
+    ));
+    elScore.textContent = '得分 ' + score + ' · ' + (usedHint ? '用过提示' : '未用提示');
+    var extra = [];
+    if (fogMode) extra.push('迷雾模式');
+    if (teleports) extra.push('传送 ' + teleports + ' 次');
+    if (trapHits) extra.push('踩刺 ' + trapHits + ' 次');
+    if (cur === 'daily') extra.push('每日迷宫');
+    elExtra.textContent = extra.join(' · ') || '一路顺风';
+
+    unlockAch('first');
+    if (rating >= 3) unlockAch('star3');
+    if (!usedHint) unlockAch('nohint');
+    if (fogMode) unlockAch('fog');
+    if (teleports >= 3) unlockAch('portal');
+    if (trapHits === 0 && traps.length > 0) unlockAch('clean');
+    if (cur === 'daily') unlockAch('daily');
+    if (elapsed <= 30 && (cur === 'medium' || cur === 'hard' || cur === 'giant')) unlockAch('speed');
+
+    var isRec = !old.t || elapsed < old.t;
+    if (isRec || rating > (old.stars || 0) || !old.stars || score > (old.score || 0)){
+      bests[cur] = {
+        t: isRec ? elapsed : old.t,
+        s: isRec ? steps : old.s,
+        stars: Math.max(rating, old.stars || 0),
+        score: Math.max(score, old.score || 0)
+      };
+      saveBest(bests);
+      if (isRec) elBest.textContent = fmt(elapsed);
+    }
+    newrecEl.hidden = !isRec;
+    winEl.hidden = false;
+  }
+
+  function move(dx, dy, bit){
+    if (finished) return;
+    var x = player % cols, y = (player / cols) | 0;
+    if (cells[player] & bit) return;
+    var nx = x + dx, ny = y + dy;
+    if (nx < 0 || ny < 0 || nx >= cols || ny >= rows) return;
+    startClock();
+    player = ny * cols + nx;
+    steps++;
+    trail.push(player);
+    elSteps.textContent = steps;
+    var si = stars.indexOf(player);
+    if (si >= 0){
+      stars.splice(si, 1);
+      starsLeft--;
+      elStars.textContent = (starsTotal - starsLeft) + '/' + starsTotal;
+      if (starsLeft > 0) toast('收集星星 ' + (starsTotal - starsLeft) + '/' + starsTotal);
+      else toast('星星集齐，出口已开启');
+    }
+
+    var wrapped = false;
+    for (var pi2 = 0; pi2 < portals.length; pi2++){
+      if (portals[pi2].a === player){ player = portals[pi2].b; wrapped = true; break; }
+      if (portals[pi2].b === player){ player = portals[pi2].a; wrapped = true; break; }
+    }
+    if (wrapped){
+      teleports++;
+      trail = [player];
+      toast('传送门 → 另一端（第 ' + teleports + ' 次）');
+    }
+    for (var ti2 = 0; ti2 < traps.length; ti2++){
+      if (traps[ti2].idx === player && !traps[ti2].used){
+        traps[ti2].used = 1;
+        trapHits++;
+        penalty += 3;
+        tick();
+        toast('踩到尖刺 +3s');
+        break;
+      }
+    }
+
+    if (player === goal){
+      if (starsLeft > 0){
+        toast('出口还锁着：还差 ' + starsLeft + ' 颗星星');
+        draw();
+        return;
+      }
+      draw();
+      finish();
+      return;
+    }
+    draw();
+  }
+
+  function showHint(){
+    if (finished) return;
+    usedHint = true;
+    startClock();
+    var px = player % cols, py = (player / cols) | 0;
+    var gx = goal % cols, gy = (goal / cols) | 0;
+    hintPath = solve(px, py, gx, gy);
+    penalty += SIZES[cur].hint;
+    tick();
+    if (hintPath) draw();
+    if (hintTimer) clearTimeout(hintTimer);
+    hintTimer = setTimeout(function(){
+      hintPath = null;
+      hintTimer = null;
+      draw();
+    }, 1400);
+  }
+
+  document.addEventListener('keydown', function(e){
+    var k = e.key;
+    var handled = true;
+    if (k === 'ArrowUp' || k === 'w' || k === 'W') move(0, -1, 1);
+    else if (k === 'ArrowRight' || k === 'd' || k === 'D') move(1, 0, 2);
+    else if (k === 'ArrowDown' || k === 's' || k === 'S') move(0, 1, 4);
+    else if (k === 'ArrowLeft' || k === 'a' || k === 'A') move(-1, 0, 8);
+    else if (k === 'r' || k === 'R') newMaze();
+    else if (k === 'f' || k === 'F'){ fogMode = !fogMode; renderFog(); draw(); }
+    else handled = false;
+    if (handled) e.preventDefault();
+  });
+
+  document.getElementById('modes').addEventListener('click', function(e){
+    var b = e.target.closest('button[data-size]');
+    if (!b) return;
+    cur = b.getAttribute('data-size');
+    Array.prototype.forEach.call(this.querySelectorAll('button'), function(x){
+      x.classList.toggle('on', x === b);
+    });
+    newMaze();
+  });
+  document.getElementById('new').addEventListener('click', newMaze);
+  document.getElementById('hint').addEventListener('click', showHint);
+  document.getElementById('again').addEventListener('click', newMaze);
+  cv.addEventListener('click', function(){ cv.focus(); });
+
+  if (elFog) elFog.addEventListener('click', function(){
+    fogMode = !fogMode;
+    renderFog();
+    draw();
+  });
+
+  document.getElementById('pad').addEventListener('click', function(e){
+    var b = e.target.closest('button[data-dir]');
+    if (!b) return;
+    var d = b.getAttribute('data-dir');
+    if (d === 'up') move(0, -1, 1);
+    else if (d === 'right') move(1, 0, 2);
+    else if (d === 'down') move(0, 1, 4);
+    else if (d === 'left') move(-1, 0, 8);
+    cv.focus();
+  });
+
+  var swipe = null;
+  cv.addEventListener('pointerdown', function(e){
+    swipe = { x: e.clientX, y: e.clientY };
+    try { cv.setPointerCapture && cv.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  cv.addEventListener('pointermove', function(e){
+    if (!swipe) return;
+    var dx = e.clientX - swipe.x, dy = e.clientY - swipe.y;
+    var thr = Math.max(16, cell * .8);
+    if (Math.abs(dx) < thr && Math.abs(dy) < thr) return;
+    if (Math.abs(dx) > Math.abs(dy)) move(dx > 0 ? 1 : -1, 0, dx > 0 ? 2 : 8);
+    else move(0, dy > 0 ? 1 : -1, dy > 0 ? 4 : 1);
+    swipe = { x: e.clientX, y: e.clientY };
+    if (e.cancelable) e.preventDefault();
+  });
+  cv.addEventListener('pointerup', function(){ swipe = null; });
+  cv.addEventListener('pointercancel', function(){ swipe = null; });
+
+  var resizeTimer = null;
+  window.addEventListener('resize', function(){
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(layout, 120);
+  });
+
+  achData = loadAch();
+  renderAch();
+  try { fogMode = localStorage.getItem('tx_maze_fog_v1') === '1'; } catch(e){}
+  renderFog();
+  newMaze();
+  setTimeout(function(){ cv.focus(); }, 30);
+})();
+</script>
+</body>
+</html>
+

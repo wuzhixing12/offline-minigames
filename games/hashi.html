@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#070d18">
+<title>数桥 · 离线小游戏</title>
+<style>
+  :root{
+    --text:#eaf2ff;--muted:#8ea3bd;--line:rgba(148,163,184,.16);
+    --gold:#fbbf24;--mint:#5eead4;--rose:#fb7185;--blue:#5b8def;--panel:#0b1424;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;min-height:100%;}
+  body{
+    min-height:100vh;color:var(--text);
+    font-family:"Segoe UI","Microsoft YaHei","PingFang SC","Hiragino Sans GB",sans-serif;
+    background:
+      radial-gradient(900px 620px at 8% -6%, rgba(94,234,212,.11), transparent 62%),
+      radial-gradient(760px 560px at 102% 104%, rgba(91,141,239,.12), transparent 62%),
+      radial-gradient(720px 520px at 50% 48%, rgba(148,163,184,.06), transparent 70%),
+      #070d18;
+    padding:20px 18px 24px;display:flex;justify-content:center;
+    -webkit-font-smoothing:antialiased;
+  }
+  button{font:inherit;color:inherit;cursor:pointer;}
+  .app{width:min(100%,940px);display:flex;flex-direction:column;gap:13px;}
+  header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+  h1{margin:0;font-size:24px;letter-spacing:.04em;}
+  header p{margin:5px 0 0;color:var(--muted);font-size:13px;}
+  .modes{display:flex;gap:6px;background:rgba(255,255,255,.04);padding:4px;border-radius:12px;border:1px solid var(--line);}
+  .modes button{border:0;background:transparent;color:var(--muted);padding:8px 15px;border-radius:9px;font-size:13.5px;transition:.18s;}
+  .modes button:hover{color:var(--text);}
+  .modes button.on{background:rgba(94,234,212,.16);color:#d5fff8;box-shadow:inset 0 0 0 1px rgba(94,234,212,.38);}
+  .hud{
+    display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+    padding:11px 14px;border:1px solid var(--line);border-radius:14px;
+    background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.012));
+  }
+  .stat{display:flex;flex-direction:column;gap:2px;min-width:58px;}
+  .stat span{font-size:11px;color:var(--muted);letter-spacing:.08em;}
+  .stat b{font-size:16px;font-variant-numeric:tabular-nums;}
+  .spacer{flex:1;}
+  .btn{
+    border:1px solid var(--line);background:rgba(255,255,255,.04);padding:8px 13px;border-radius:10px;
+    font-size:13px;transition:.16s;white-space:nowrap;
+  }
+  .btn:hover{background:rgba(255,255,255,.09);border-color:rgba(148,163,184,.3);}
+  .btn.primary{
+    background:linear-gradient(135deg,rgba(94,234,212,.25),rgba(91,141,239,.22));
+    border-color:rgba(94,234,212,.45);color:#d9fff9;font-weight:600;
+  }
+  .btn.primary:hover{background:linear-gradient(135deg,rgba(94,234,212,.34),rgba(91,141,239,.3));}
+  .msg{min-height:19px;color:var(--muted);font-size:12.5px;transition:.2s;}
+  .msg.warn{color:var(--rose);}
+  .msg.good{color:var(--mint);}
+  .stage{
+    position:relative;display:flex;align-items:center;justify-content:center;
+    min-height:360px;border:1px solid var(--line);border-radius:18px;overflow:hidden;
+    background:
+      radial-gradient(circle at 50% 40%, rgba(91,141,239,.07), transparent 66%),
+      linear-gradient(180deg,rgba(11,20,36,.78),rgba(7,13,24,.92));
+    box-shadow:0 18px 50px rgba(0,0,0,.35) inset;
+  }
+  .board{position:relative;}
+  .board:before{
+    content:"";position:absolute;inset:0;
+    background-image:radial-gradient(circle, rgba(148,163,184,.13) 1px, transparent 1.2px);
+    background-size:26px 26px;opacity:.5;pointer-events:none;
+  }
+  .board svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;}
+  .bridge-under{stroke:rgba(94,234,212,.22);stroke-width:10;stroke-linecap:round;}
+  .bridge-top{stroke:#5eead4;stroke-width:4.5;stroke-linecap:round;filter:drop-shadow(0 0 5px rgba(94,234,212,.4));}
+  .ghost{stroke:rgba(91,141,239,.5);stroke-width:2.5;stroke-dasharray:6 8;stroke-linecap:round;}
+  .island{
+    position:absolute;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(180deg,#16294a,#0e1c33);
+    border:2px solid #33557f;color:#eaf2ff;font-weight:700;
+    font-variant-numeric:tabular-nums;cursor:pointer;z-index:2;
+    transition:border-color .16s, box-shadow .16s, color .16s, transform .12s;
+    user-select:none;
+  }
+  .island:hover{border-color:rgba(94,234,212,.6);transform:scale(1.05);}
+  .island.sel{border-color:var(--gold);color:var(--gold);box-shadow:0 0 0 4px rgba(251,191,36,.15),0 0 22px rgba(251,191,36,.35);}
+  .island.ok{border-color:rgba(94,234,212,.8);color:var(--mint);box-shadow:0 0 16px rgba(94,234,212,.22);}
+  .island.over{border-color:rgba(251,113,133,.85);color:var(--rose);box-shadow:0 0 16px rgba(251,113,133,.25);}
+  .win{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    background:rgba(4,9,17,.74);backdrop-filter:blur(6px);animation:fade .25s ease;z-index:5;
+  }
+  .win[hidden]{display:none;}
+  .win-card{
+    width:min(88%,380px);border:1px solid rgba(94,234,212,.28);border-radius:18px;
+    background:linear-gradient(180deg,#101d31,#0a1322);padding:24px 22px;text-align:center;
+    box-shadow:0 30px 70px rgba(0,0,0,.5);
+  }
+  .win-card h2{margin:0 0 6px;font-size:22px;color:var(--mint);letter-spacing:.06em;}
+  .win-card .big{font-size:36px;font-weight:700;margin:12px 0 2px;font-variant-numeric:tabular-nums;}
+  .win-card p{margin:4px 0 18px;color:var(--muted);font-size:13px;}
+  .win-card .newrec{color:var(--gold);font-size:12.5px;margin-bottom:12px;}
+  .win-card button{
+    border:0;border-radius:11px;padding:11px 22px;font-size:14px;
+    background:linear-gradient(135deg,#5eead4,#2dd4bf);color:#04201c;font-weight:600;
+  }
+  .tip{margin:0;color:var(--muted);font-size:12.5px;text-align:center;}
+  @keyframes fade{from{opacity:0;}to{opacity:1;}}
+  @media (max-width:680px){
+    body{padding:14px 10px 18px;}
+    .hud{gap:12px;}
+    .spacer{display:none;}
+  }
+</style>
+<style id="tx-aurora-skin">
+/* tx-aurora-skin:hashi */
+:root{--tx-a1:#5eead4;--tx-a2:#5b8def;}
+html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+::selection{background:rgba(94,234,212,0.38);color:#fff}
+*::-webkit-scrollbar{width:8px;height:8px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:rgba(94,234,212,0.26);border-radius:99px;border:2px solid transparent;background-clip:content-box}
+*::-webkit-scrollbar-thumb:hover{background:rgba(94,234,212,0.46);background-clip:content-box}
+body{background-color:#070d18!important;background-image:radial-gradient(1100px 640px at 6% -12%, rgba(94,234,212,0.16), transparent 62%), radial-gradient(900px 680px at 104% 112%, rgba(91,141,239,0.12), transparent 62%)!important}
+button{transition:transform .14s ease,filter .16s ease,box-shadow .2s ease,border-color .16s ease,background-color .16s ease}
+button:hover{filter:brightness(1.07)}
+button:active{transform:translateY(1px) scale(.995)}
+button:focus-visible{outline:2px solid rgba(94,234,212,0.72);outline-offset:2px}
+.overlay,.modal,.dialog,.sheet,#levels,#loading{background-image:radial-gradient(900px 520px at 50% 0%,rgba(94,234,212,0.15),transparent 62%),radial-gradient(720px 520px at 50% 100%,rgba(91,141,239,0.08),transparent 60%)!important}
+.overlay,.modal,.dialog,.sheet{backdrop-filter:blur(9px) saturate(1.1)}
+.overlay h1,.modal h1,.screen h1,.overlay-card h1,.win-card h1,.result-card h1,.bcard .btitle,.loadcard .ltitle{text-shadow:0 2px 30px rgba(94,234,212,0.45)}
+.overlay .screen,.overlay .panel,.overlay-card,.modal .panel,.win-card,.result-card,.bcard,.loadcard,.rules-dialog,.panel{box-shadow:0 38px 96px -34px rgba(0,0,0,.95), inset 0 1px 0 rgba(255,255,255,.07)!important}
+.bcard,.loadcard{border-color:rgba(94,234,212,0.34)!important}
+.overlay .panel,.overlay-card,.win-card,.result-card,.modal .panel{backdrop-filter:blur(10px) saturate(1.08);border-color:rgba(94,234,212,0.26)!important}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <h1>数桥</h1>
+      <p>点击两座岛架桥：1 座、2 座、取消；数字代表该岛需要的桥总数</p>
+    </div>
+    <div class="modes" id="modes">
+      <button data-diff="easy" class="on">简单 13 岛</button>
+      <button data-diff="medium">中等 20 岛</button>
+      <button data-diff="hard">困难 27 岛</button>
+    </div>
+  </header>
+
+  <div class="hud">
+    <div class="stat"><span>用时</span><b id="time">0.0s</b></div>
+    <div class="stat"><span>完成</span><b id="prog">0/13</b></div>
+    <div class="stat"><span>最佳</span><b id="best">—</b></div>
+    <div class="spacer"></div>
+    <button class="btn primary" id="check" type="button">校验</button>
+    <button class="btn" id="clear" type="button">清除</button>
+    <button class="btn" id="new" type="button">换一题</button>
+  </div>
+  <div class="msg" id="msg">先选一座岛，再点它同行或同列的另一座岛。</div>
+
+  <div class="stage" id="stage">
+    <div class="board" id="board">
+      <svg id="edges" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div id="nodes"></div>
+    </div>
+    <div class="win" id="win" hidden>
+      <div class="win-card">
+        <h2>全部连通</h2>
+        <div class="big" id="win-time">0.0s</div>
+        <p id="win-sub">13 座岛，桥数全部正确</p>
+        <div class="newrec" id="newrec" hidden>新的最佳纪录</div>
+        <button id="again" type="button">再来一题</button>
+      </div>
+    </div>
+  </div>
+
+  <p class="tip">规则：所有岛必须通过桥连成一整片；桥不能交叉；两座岛之间最多 2 座桥。点击已连的桥可循环切换。</p>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  var CFG = {
+    easy:   { c: 8,  r: 7,  n: 13 },
+    medium: { c: 10, r: 9,  n: 20 },
+    hard:   { c: 12, r: 10, n: 27 }
+  };
+  var MAX_D = 4;
+  var BEST_KEY = 'tx_hashi_best_v1';
+
+  var stage = document.getElementById('stage');
+  var boardEl = document.getElementById('board');
+  var svg = document.getElementById('edges');
+  var nodesEl = document.getElementById('nodes');
+  var elTime = document.getElementById('time');
+  var elProg = document.getElementById('prog');
+  var elBest = document.getElementById('best');
+  var msgEl = document.getElementById('msg');
+  var winEl = document.getElementById('win');
+  var winTime = document.getElementById('win-time');
+  var winSub = document.getElementById('win-sub');
+  var newrecEl = document.getElementById('newrec');
+
+  var diff = 'easy';
+  var islands = [];
+  var numbers = [];
+  var user = {};
+  var selected = -1;
+  var finished = false;
+  var started = false;
+  var startAt = 0;
+  var elapsed = 0;
+  var timer = null;
+  var cell = 56, pad = 34, nodeSize = 40, W = 0, H = 0;
+
+  function shuffle(a){
+    for (var i = a.length - 1; i > 0; i--){
+      var j = (Math.random() * (i + 1)) | 0;
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+  function keyOf(a, b){ return a < b ? a + '-' + b : b + '-' + a; }
+  function parseKey(k){ var p = k.split('-'); return [ +p[0], +p[1] ]; }
+
+  function potentialEdges(list){
+    var edges = [];
+    for (var i = 0; i < list.length; i++){
+      for (var j = i + 1; j < list.length; j++){
+        var a = list[i], b = list[j];
+        if (a.x === b.x){
+          var d = Math.abs(a.y - b.y);
+          if (d < 1 || d > MAX_D) continue;
+          var lo = Math.min(a.y, b.y), hi = Math.max(a.y, b.y), ok = true;
+          for (var k = 0; k < list.length; k++){
+            if (k === i || k === j) continue;
+            var p = list[k];
+            if (p.x === a.x && p.y > lo && p.y < hi){ ok = false; break; }
+          }
+          if (ok) edges.push({ a: i, b: j, dir: 'v', x: a.x, y1: lo, y2: hi });
+        } else if (a.y === b.y){
+          var d2 = Math.abs(a.x - b.x);
+          if (d2 < 1 || d2 > MAX_D) continue;
+          var lo2 = Math.min(a.x, b.x), hi2 = Math.max(a.x, b.x), ok2 = true;
+          for (var k2 = 0; k2 < list.length; k2++){
+            if (k2 === i || k2 === j) continue;
+            var p2 = list[k2];
+            if (p2.y === a.y && p2.x > lo2 && p2.x < hi2){ ok2 = false; break; }
+          }
+          if (ok2) edges.push({ a: i, b: j, dir: 'h', y: a.y, x1: lo2, x2: hi2 });
+        }
+      }
+    }
+    return edges;
+  }
+
+  function crosses(e1, e2){
+    if (e1.dir === e2.dir) return false;
+    var h = e1.dir === 'h' ? e1 : e2;
+    var v = e1.dir === 'v' ? e1 : e2;
+    return v.x > h.x1 && v.x < h.x2 && h.y > v.y1 && h.y < v.y2;
+  }
+
+  function generate(cfg){
+    for (var attempt = 0; attempt < 600; attempt++){
+      var seen = {}, list = [], guard = 0;
+      while (list.length < cfg.n && guard++ < 2000){
+        var x = (Math.random() * cfg.c) | 0;
+        var y = (Math.random() * cfg.r) | 0;
+        var k = y * cfg.c + x;
+        if (seen[k]) continue;
+        seen[k] = 1;
+        list.push({ x: x, y: y });
+      }
+      if (list.length < cfg.n) continue;
+
+      var edges = potentialEdges(list);
+      var degP = new Array(list.length).fill(0);
+      for (var i = 0; i < edges.length; i++){ degP[edges[i].a]++; degP[edges[i].b]++; }
+      var dead = false;
+      for (var q = 0; q < degP.length; q++){ if (!degP[q]){ dead = true; break; } }
+      if (dead) continue;
+
+      var par = [];
+      for (var p = 0; p < list.length; p++) par.push(p);
+      var find = function(x){ while (par[x] !== x){ par[x] = par[par[x]]; x = par[x]; } return x; };
+      for (var e0 = 0; e0 < edges.length; e0++){
+        var ra = find(edges[e0].a), rb = find(edges[e0].b);
+        if (ra !== rb) par[ra] = rb;
+      }
+      var root = find(0), broken = false;
+      for (var z = 0; z < list.length; z++){ if (find(z) !== root){ broken = true; break; } }
+      if (broken) continue;
+
+      var deg = new Array(list.length).fill(0);
+      var used = [];
+      var edgeCount = {};
+      var addEdge = function(e, amt){
+        if (deg[e.a] + amt > 8 || deg[e.b] + amt > 8) return false;
+        var ek = keyOf(e.a, e.b);
+        if ((edgeCount[ek] || 0) + amt > 2) return false;
+        for (var u = 0; u < used.length; u++){ if (crosses(e, used[u])) return false; }
+        deg[e.a] += amt; deg[e.b] += amt;
+        edgeCount[ek] = (edgeCount[ek] || 0) + amt;
+        used.push(e);
+        return true;
+      };
+
+      var par2 = [];
+      for (var p2 = 0; p2 < list.length; p2++) par2.push(p2);
+      var find2 = function(x){ while (par2[x] !== x){ par2[x] = par2[par2[x]]; x = par2[x]; } return x; };
+      var comps = list.length;
+      var order = shuffle(edges.slice());
+      for (var oi = 0; oi < order.length; oi++){
+        var e = order[oi];
+        var a2 = find2(e.a), b2 = find2(e.b);
+        if (a2 === b2) continue;
+        if (addEdge(e, 1)){ par2[a2] = b2; comps--; }
+      }
+      if (comps > 1) continue;
+
+      var target = Math.round(cfg.n * 2.1);
+      var total = 0;
+      for (var di = 0; di < deg.length; di++) total += deg[di];
+      var extra = shuffle(edges.slice());
+      for (var xi = 0; xi < extra.length && total < target; xi++){
+        var ex = extra[xi];
+        if (deg[ex.a] >= 8 || deg[ex.b] >= 8) continue;
+        var have = edgeCount[keyOf(ex.a, ex.b)] || 0;
+        if (have >= 2) continue;
+        var room = Math.min(8 - deg[ex.a], 8 - deg[ex.b], 2 - have);
+        if (room <= 0) continue;
+        var amt = Math.random() < .42 ? 2 : 1;
+        if (amt > room) amt = room;
+        if (addEdge(ex, amt)) total += amt;
+      }
+
+      var nums = deg.slice();
+      var bad = false;
+      for (var ni = 0; ni < nums.length; ni++){ if (nums[ni] < 1 || nums[ni] > 8){ bad = true; break; } }
+      if (bad) continue;
+      return { islands: list, numbers: nums };
+    }
+    // 兜底：蛇形单路径，保证一定有解
+    var grid = [], rowIdx = 0;
+    for (var gy = 0; gy < cfg.r && grid.length < cfg.n; gy += 2){
+      var xs = [];
+      for (var gx = 0; gx < cfg.c; gx += 2) xs.push(gx);
+      if (rowIdx % 2) xs.reverse();
+      for (var xi = 0; xi < xs.length && grid.length < cfg.n; xi++) grid.push({ x: xs[xi], y: gy });
+      rowIdx++;
+    }
+    var gd = new Array(grid.length).fill(0);
+    for (var gi = 0; gi < grid.length - 1; gi++){ gd[gi]++; gd[gi + 1]++; }
+    return { islands: grid, numbers: gd };
+  }
+
+  function loadBest(){
+    try { return JSON.parse(localStorage.getItem(BEST_KEY) || '{}') || {}; }
+    catch (e){ return {}; }
+  }
+  function saveBest(o){
+    try { localStorage.setItem(BEST_KEY, JSON.stringify(o)); } catch (e){}
+  }
+  function fmt(t){
+    return t == null ? '—' : (Math.round(t * 10) / 10).toFixed(1) + 's';
+  }
+
+  function newPuzzle(){
+    var cfg = CFG[diff];
+    var puzzle = generate(cfg);
+    islands = puzzle.islands;
+    numbers = puzzle.numbers;
+    user = {};
+    selected = -1;
+    finished = false;
+    started = false;
+    startAt = 0;
+    elapsed = 0;
+    if (timer){ clearInterval(timer); timer = null; }
+    winEl.hidden = true;
+    elTime.textContent = '0.0s';
+    elProg.textContent = '0/' + islands.length;
+    var best = loadBest()[diff];
+    elBest.textContent = fmt(best);
+    setMsg('先选一座岛，再点它同行或同列的另一座岛。', '');
+    layout();
+  }
+
+  function setMsg(text, cls){
+    msgEl.textContent = text;
+    msgEl.className = 'msg' + (cls ? ' ' + cls : '');
+  }
+
+  function layout(){
+    var cols = CFG[diff].c, rows = CFG[diff].r;
+    var availW = Math.max(280, stage.clientWidth - 24);
+    var availH = Math.max(300, window.innerHeight - 292);
+    cell = Math.floor(Math.min((availW - pad * 2) / (cols - 1), (availH - pad * 2) / (rows - 1)));
+    cell = Math.max(38, Math.min(cell, 74));
+    nodeSize = Math.max(30, Math.min(46, Math.round(cell * .6)));
+    W = (cols - 1) * cell + pad * 2;
+    H = (rows - 1) * cell + pad * 2;
+    boardEl.style.width = W + 'px';
+    boardEl.style.height = H + 'px';
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    render();
+  }
+
+  function center(is){
+    return {
+      x: pad + is.x * cell,
+      y: pad + is.y * cell
+    };
+  }
+
+  function alignedClear(a, b){
+    var A = islands[a], B = islands[b];
+    if (A.x !== B.x && A.y !== B.y) return false;
+    var dx = Math.sign(B.x - A.x), dy = Math.sign(B.y - A.y);
+    var x = A.x + dx, y = A.y + dy;
+    while (x !== B.x || y !== B.y){
+      for (var i = 0; i < islands.length; i++){
+        if (islands[i].x === x && islands[i].y === y) return false;
+      }
+      x += dx; y += dy;
+    }
+    return true;
+  }
+
+  function geoEdge(a, b){
+    var A = islands[a], B = islands[b];
+    if (A.y === B.y){
+      return { dir: 'h', y: A.y, x1: Math.min(A.x, B.x), x2: Math.max(A.x, B.x) };
+    }
+    return { dir: 'v', x: A.x, y1: Math.min(A.y, B.y), y2: Math.max(A.y, B.y) };
+  }
+
+  function bridgeCrosses(a, b){
+    var e = geoEdge(a, b);
+    for (var k in user){
+      if (!user.hasOwnProperty(k) || !user[k]) continue;
+      var pr = parseKey(k);
+      if (pr[0] === a || pr[0] === b || pr[1] === a || pr[1] === b) continue;
+      if (crosses(e, geoEdge(pr[0], pr[1]))) return true;
+    }
+    return false;
+  }
+
+  function degrees(){
+    var deg = new Array(islands.length).fill(0);
+    for (var k in user){
+      if (!user.hasOwnProperty(k) || !user[k]) continue;
+      var pr = parseKey(k);
+      deg[pr[0]] += user[k];
+      deg[pr[1]] += user[k];
+    }
+    return deg;
+  }
+
+  function render(){
+    var deg = degrees();
+    var html = '';
+
+    // 选中岛的可行方向提示
+    if (selected >= 0 && !finished){
+      for (var i = 0; i < islands.length; i++){
+        if (i === selected) continue;
+        if (!alignedClear(selected, i)) continue;
+        var ca = center(islands[selected]), cb = center(islands[i]);
+        html += '<line class="ghost" x1="' + ca.x + '" y1="' + ca.y + '" x2="' + cb.x + '" y2="' + cb.y + '"/>';
+      }
+    }
+
+    // 用户已架的桥
+    for (var k in user){
+      if (!user.hasOwnProperty(k) || !user[k]) continue;
+      var pr = parseKey(k);
+      var A = center(islands[pr[0]]), B = center(islands[pr[1]]);
+      var count = user[k];
+      var offs = count === 2 ? [-3.5, 3.5] : [0];
+      for (var oi = 0; oi < offs.length; oi++){
+        var off = offs[oi];
+        var ax = A.x, ay = A.y, bx = B.x, by = B.y;
+        if (A.y === B.y){ ay += off; by += off; }
+        else { ax += off; bx += off; }
+        html += '<line class="bridge-under" x1="' + ax + '" y1="' + ay + '" x2="' + bx + '" y2="' + by + '"/>';
+        html += '<line class="bridge-top" x1="' + ax + '" y1="' + ay + '" x2="' + bx + '" y2="' + by + '"/>';
+      }
+    }
+    svg.innerHTML = html;
+
+    // 岛屿节点
+    var ns = '';
+    for (var n = 0; n < islands.length; n++){
+      var c = center(islands[n]);
+      var cls = 'island';
+      if (selected === n) cls += ' sel';
+      else if (deg[n] === numbers[n]) cls += ' ok';
+      else if (deg[n] > numbers[n]) cls += ' over';
+      ns += '<div class="' + cls + '" data-i="' + n + '" style="width:' + nodeSize + 'px;height:' + nodeSize +
+        'px;left:' + (c.x - nodeSize / 2) + 'px;top:' + (c.y - nodeSize / 2) + 'px;font-size:' +
+        Math.round(nodeSize * .44) + 'px">' + numbers[n] + '</div>';
+    }
+    nodesEl.innerHTML = ns;
+
+    var done = 0;
+    for (var d = 0; d < degrees().length; d++){ if (deg[d] === numbers[d]) done++; }
+    elProg.textContent = done + '/' + islands.length;
+  }
+
+  function startClock(){
+    if (started || finished) return;
+    started = true;
+    startAt = performance.now();
+    timer = setInterval(function(){
+      elapsed = (performance.now() - startAt) / 1000;
+      elTime.textContent = elapsed.toFixed(1) + 's';
+    }, 100);
+  }
+
+  function pick(i){
+    if (finished) return;
+    if (selected < 0){
+      selected = i;
+      setMsg('已选中 ' + numbers[i] + ' 号岛，再点一座同行/同列、中间无遮挡的岛。', '');
+      render();
+      return;
+    }
+    if (selected === i){
+      selected = -1;
+      setMsg('已取消选择。', '');
+      render();
+      return;
+    }
+    var a = selected, b = i;
+    if (!alignedClear(a, b)){
+      selected = i;
+      setMsg('这两座岛不在同一条直线上，或中间还隔着别的岛。已改选新的岛。', 'warn');
+      render();
+      return;
+    }
+    var k = keyOf(a, b);
+    var now = user[k] || 0;
+    var next = now === 0 ? 1 : now === 1 ? 2 : 0;
+    if (next > 0 && bridgeCrosses(a, b)){
+      setMsg('这座桥会和已有的桥交叉，换个方向试试。', 'warn');
+      render();
+      return;
+    }
+    if (next === 0) delete user[k];
+    else user[k] = next;
+    selected = -1;
+    startClock();
+    setMsg(next === 0 ? '已拆除这座桥。' : '已架 ' + next + ' 座桥。', next === 0 ? '' : 'good');
+    render();
+  }
+
+  function connected(){
+    var par = [];
+    for (var i = 0; i < islands.length; i++) par.push(i);
+    var find = function(x){ while (par[x] !== x){ par[x] = par[par[x]]; x = par[x]; } return x; };
+    var any = false;
+    for (var k in user){
+      if (!user.hasOwnProperty(k) || !user[k]) continue;
+      var pr = parseKey(k);
+      any = true;
+      var ra = find(pr[0]), rb = find(pr[1]);
+      if (ra !== rb) par[ra] = rb;
+    }
+    if (!any) return false;
+    var root = find(0);
+    for (var j = 0; j < islands.length; j++){ if (find(j) !== root) return false; }
+    return true;
+  }
+
+  function check(){
+    if (finished) return;
+    var deg = degrees();
+    var bad = 0, over = 0;
+    for (var i = 0; i < islands.length; i++){
+      if (deg[i] !== numbers[i]) bad++;
+      if (deg[i] > numbers[i]) over++;
+    }
+    var conn = connected();
+    if (!bad && conn){
+      win();
+      return;
+    }
+    if (!bad){
+      setMsg('桥数都对了，但还有岛没连成一整片，检查一下空着的方向。', 'warn');
+    } else if (!conn){
+      setMsg('还有 ' + bad + ' 座岛的桥数不对（' + over + ' 座超出），并且整片还没连通。', 'warn');
+    } else {
+      setMsg('还有 ' + bad + ' 座岛的桥数不对' + (over ? '，其中 ' + over + ' 座超出' : '') + '。', 'warn');
+    }
+    render();
+  }
+
+  function win(){
+    finished = true;
+    if (timer){ clearInterval(timer); timer = null; }
+    elapsed = started ? (performance.now() - startAt) / 1000 : 0;
+    elTime.textContent = elapsed.toFixed(1) + 's';
+    var bests = loadBest();
+    var old = bests[diff];
+    winTime.textContent = elapsed.toFixed(1) + 's';
+    winSub.textContent = islands.length + ' 座岛，桥数全部正确且连成一片';
+    if (!old || elapsed < old){
+      bests[diff] = elapsed;
+      saveBest(bests);
+      newrecEl.hidden = false;
+      elBest.textContent = fmt(elapsed);
+    } else {
+      newrecEl.hidden = true;
+    }
+    winEl.hidden = false;
+    setMsg('完成！', 'good');
+    selected = -1;
+    render();
+  }
+
+  document.getElementById('modes').addEventListener('click', function(e){
+    var b = e.target.closest('button[data-diff]');
+    if (!b) return;
+    diff = b.getAttribute('data-diff');
+    Array.prototype.forEach.call(this.querySelectorAll('button'), function(x){
+      x.classList.toggle('on', x === b);
+    });
+    newPuzzle();
+  });
+
+  nodesEl.addEventListener('click', function(e){
+    var n = e.target.closest('.island');
+    if (!n) return;
+    pick(+n.getAttribute('data-i'));
+  });
+
+  boardEl.addEventListener('click', function(e){
+    if (e.target === boardEl || e.target === svg){
+      selected = -1;
+      setMsg('已取消选择。', '');
+      render();
+    }
+  });
+
+  document.getElementById('check').addEventListener('click', check);
+  document.getElementById('clear').addEventListener('click', function(){
+    if (finished) return;
+    user = {};
+    selected = -1;
+    setMsg('已清除所有桥，计时继续。', '');
+    render();
+  });
+  document.getElementById('new').addEventListener('click', newPuzzle);
+  document.getElementById('again').addEventListener('click', newPuzzle);
+
+  var rz = null;
+  window.addEventListener('resize', function(){
+    if (rz) clearTimeout(rz);
+    rz = setTimeout(layout, 120);
+  });
+
+  newPuzzle();
+})();
+</script>
+</body>
+</html>

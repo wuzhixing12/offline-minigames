@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>回路 · The Loop</title>
+<style>
+  :root{
+    --bg:#07110e;
+    --ink:#eef6ed;
+    --muted:#7e9a88;
+    --gold:#e0b34a;
+    --paper:#f0e8d4;
+    --body:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    --mono:ui-monospace,"Cascadia Mono",Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{
+    background:
+      radial-gradient(1000px 800px at 50% 0%,#17281f 0%,#0b1611 48%,#040806 100%);
+    color:var(--ink);font-family:var(--body);overflow:hidden;
+    -webkit-tap-highlight-color:transparent;user-select:none;
+    display:flex;align-items:center;justify-content:center;
+  }
+  #app{width:100%;height:100%;display:flex;flex-direction:column;padding:8px 10px 6px;gap:6px;max-width:1080px}
+  header{display:flex;align-items:center;gap:12px;padding:7px 14px;border-radius:12px;
+    background:rgba(10,22,17,.82);border:1px solid rgba(224,179,74,.14);
+    box-shadow:0 10px 36px rgba(0,0,0,.45);backdrop-filter:blur(8px);flex-wrap:wrap}
+  .brand b{font-size:15px;letter-spacing:.26em;
+    background:linear-gradient(92deg,#f5e6b8,#e0b34a 52%,#9fd8b0);
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .brand span{display:block;font-size:8px;letter-spacing:.36em;color:#617c6a;margin-top:1px}
+  .levelinfo{display:flex;align-items:baseline;gap:7px;font-size:10px;color:#8aa595;margin-left:auto}
+  .levelinfo b{font-family:var(--mono);font-size:15px;color:#f0e8d4}
+  .prog{width:84px;height:5px;border-radius:99px;background:rgba(240,232,212,.14);overflow:hidden;margin-left:4px;
+    box-shadow:inset 0 0 0 1px rgba(240,232,212,.06)}
+  .prog i{display:block;height:100%;width:0;border-radius:99px;
+    background:linear-gradient(90deg,#e0b34a,#9fd8b0);box-shadow:0 0 9px rgba(224,179,74,.55);transition:width .35s ease}
+  .reset{border:1px solid rgba(224,179,74,.25);background:rgba(10,22,17,.8);color:#cbbf9e;
+    padding:4px 10px;border-radius:8px;font-size:10px;cursor:pointer;font-family:var(--body)}
+  .reset:hover{border-color:rgba(224,179,74,.6)}
+  .stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+  canvas{display:block;max-width:100%;max-height:100%;
+    border-radius:16px;touch-action:none;cursor:crosshair;
+    box-shadow:0 30px 80px rgba(0,0,0,.7),0 0 0 1px rgba(224,179,74,.12)}
+  footer{display:flex;justify-content:center;gap:16px;font-size:10px;color:#6b8574;padding-bottom:1px;flex-wrap:wrap;min-height:14px}
+  footer b{color:#b6c9b8;font-weight:600}
+  #status{color:#cbbf9e;letter-spacing:.06em}
+  #status.bad{color:#fb7185}
+  #status.good{color:#a3e635}
+  .overlay{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:18px;
+    background:radial-gradient(700px 540px at 50% 42%,rgba(10,26,17,.84),rgba(2,5,3,.96));backdrop-filter:blur(9px)}
+  .overlay.hide{display:none}
+  .panel{width:min(440px,94vw);max-height:94vh;overflow:auto;padding:26px 24px 22px;border-radius:22px;text-align:center;
+    background:linear-gradient(180deg,rgba(18,32,24,.98),rgba(5,10,7,.98));
+    border:1px solid rgba(224,179,74,.24);box-shadow:0 40px 100px rgba(0,0,0,.74),inset 0 1px 0 rgba(255,255,255,.06)}
+  .loopart{width:86px;height:86px;margin:0 auto 14px;position:relative}
+  .loopart:before{content:"";position:absolute;inset:8px;border-radius:50%;
+    border:3px solid #e0b34a;border-right-color:transparent;border-bottom-color:rgba(224,179,74,.25);
+    animation:spin 5s linear infinite;filter:drop-shadow(0 0 9px rgba(224,179,74,.35))}
+  .loopart:after{content:"";position:absolute;inset:24px;border-radius:50%;background:#e0b34a;
+    box-shadow:0 0 24px rgba(224,179,74,.55)}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  h1{margin:0 0 3px;font-size:clamp(25px,6vw,33px);letter-spacing:.26em;
+     background:linear-gradient(96deg,#f5e6b8,#e0b34a 52%,#9fd8b0);
+     -webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{font-size:9px;letter-spacing:.4em;color:#617c6a;margin-bottom:16px}
+  .rules{text-align:left;font-size:12px;line-height:1.9;color:#b6c9b8;margin:0 0 18px;padding:12px 15px;border-radius:12px;
+    background:rgba(8,18,12,.82);border:1px solid rgba(224,179,74,.13)}
+  .rules b{color:#f0e8d4}
+  .rules .sym{display:inline-block;width:11px;height:11px;vertical-align:-1px;margin:0 2px}
+  .rules .hex{background:#e0b34a;clip-path:polygon(50% 0,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%)}
+  .rules .dotb{background:#1b2118;border-radius:50%}
+  .rules .dotw{background:#fff;border-radius:50%;border:1px solid #8a8270}
+  .cta{width:100%;padding:13px 18px;border-radius:13px;border:0;cursor:pointer;font-family:var(--body);
+    font-size:14px;letter-spacing:.16em;font-weight:700;color:#20170a;
+    background:linear-gradient(96deg,#f5e6b8,#e0b34a 52%,#9fd8b0);
+    box-shadow:0 14px 34px rgba(224,179,74,.22);transition:.16s}
+  .cta:hover{filter:brightness(1.08);transform:translateY(-1px)}
+  .cta:active{transform:translateY(1px)}
+  .bigscore{font-family:var(--mono);font-size:44px;line-height:1;color:#e0b34a;text-shadow:0 0 30px rgba(224,179,74,.4);margin:12px 0 4px}
+  .bestline{font-size:11px;color:#7e9a88;margin-bottom:8px;line-height:1.8}
+  .bestline b{color:#f0e8d4}
+  .rankline{font-size:12px;color:#b6c9b8;margin-bottom:18px;line-height:1.7}
+</style>
+
+<style id="tx-space">
+/* tx-space: short landscape play-space boost */
+@media (max-height:560px) and (orientation:landscape){
+  #app{max-width:none;height:100%;display:grid;grid-template-columns:minmax(0,1fr) 220px;
+    grid-template-rows:auto 1fr;grid-template-areas:"stage header" "stage footer";
+    padding:6px 8px;gap:6px 10px}
+  header{grid-area:header;flex-direction:column;align-items:stretch;gap:6px;padding:7px 9px;flex-wrap:nowrap}
+  .brand b{font-size:13px;letter-spacing:.18em}
+  .brand span{font-size:7px;letter-spacing:.24em}
+  .levelinfo{margin-left:0;display:flex;flex-wrap:wrap;align-items:center;gap:5px;font-size:10px}
+  .prog{width:100%;margin-left:0}
+  .reset{width:100%;padding:6px 8px;font-size:10px}
+  .stage{grid-area:stage;height:100%;min-height:0}
+  canvas{max-width:100%;max-height:100%}
+  footer{grid-area:footer;flex-direction:column;align-items:flex-start;gap:3px;font-size:9px;padding:2px 2px 0;min-height:0}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="brand"><b>回路</b><span>THE LOOP</span></div>
+    <div class="levelinfo">第 <b id="lv">1</b> / <span id="lvTotal">30</span> 关<div class="prog" title="关卡进度"><i id="progFill"></i></div></div>
+    <button class="reset" id="btnClear">清空回路</button>
+  </header>
+  <div class="stage"><canvas id="cv"></canvas></div>
+  <footer><span><b>拖拽</b> 从起点画到终点</span><span><b>回退</b> 拖回上一格</span><span id="status">经过所有金色符文</span></footer>
+</div>
+<div class="overlay" id="ovStart">
+  <div class="panel">
+    <div class="loopart"></div>
+    <h1>回路</h1>
+    <div class="sub">30 PANELS · ONE TRUE LINE</div>
+    <div class="rules">
+      从绿色的<b>起点</b>出发，拖出一条不间断的线，接到另一端的终点。<br>
+      线只能上下左右走，不能穿过石墙，也不能回头重复。<br>
+      金色<span class="sym hex"></span><b>六边形</b>必须全部经过。<br>
+      黑白<span class="sym dotb"></span><span class="sym dotw"></span><b>成对圆点</b>必须在线上相邻。<br>
+      没有提示，也没有唯一答案——只要规则全部满足。
+    </div>
+    <button class="cta" id="btnStart">开始画线</button>
+  </div>
+</div>
+<div class="overlay hide" id="ovEnd">
+  <div class="panel">
+    <div class="loopart"></div>
+    <h1 style="font-size:27px;letter-spacing:.22em">全部接通</h1>
+    <div class="sub">ALL LOOPS CLOSED</div>
+    <div class="bigscore" id="endScore">6</div>
+    <div class="bestline">完成关卡 <b id="endBest">6 / 6</b></div>
+    <div class="rankline">所有面板全部闭合。线没有说谎。</div>
+    <button class="cta" id="btnAgain">重新开始</button>
+  </div>
+</div>
+<script>
+(function(){
+  'use strict';
+  var cv = document.getElementById('cv');
+  var ctx = cv.getContext('2d');
+  var N = 6, CELL = 62, PAD = 44;
+  var W = PAD*2 + N*CELL, H = W;
+  var DPR = Math.min(2, window.devicePixelRatio || 1);
+  cv.width = W*DPR; cv.height = H*DPR;
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+
+  var stageEl = document.querySelector('.stage');
+  function fit(){
+    var aw = stageEl.clientWidth, ah = stageEl.clientHeight;
+    var side = Math.max(200, Math.floor(Math.min(aw, ah)));
+    cv.style.width = side + 'px';
+    cv.style.height = side + 'px';
+  }
+  window.addEventListener('resize', fit);
+  fit();
+
+  var LEVELS = [
+    { name:'First Line', start:[0,5], end:[5,0], walls:[], hexes:[], pairs:[],
+      rule:'从起点画到终点' },
+    { name:'Monolith', start:[0,5], end:[5,0], walls:[[2,2],[3,2],[2,3],[3,3]], hexes:[], pairs:[],
+      rule:'绕开中央的石碑' },
+    { name:'Chain', start:[0,5], end:[5,0], walls:[], hexes:[[1,1],[2,2],[3,3],[4,4]], pairs:[],
+      rule:'经过全部四枚符文' },
+    { name:'Resonance', start:[0,5], end:[5,0], walls:[[3,3],[3,4]], hexes:[], pairs:[[[1,2],[1,3]],[[4,1],[4,2]]],
+      rule:'让两组黑白点各自相邻' },
+    { name:'The Crack', start:[0,5], end:[5,0], walls:[[2,0],[2,1],[2,3],[2,4],[2,5]], hexes:[[1,1],[4,4]], pairs:[],
+      rule:'只有一处裂缝可以穿过' },
+    { name:'Last Circuit', start:[0,5], end:[5,0], walls:[[1,3],[1,4],[3,1],[3,2]], hexes:[[3,4]], pairs:[[[2,1],[2,2]],[[4,3],[4,4]]],
+      rule:'所有规则同时生效' },
+    { name:'Narrow Gate', start:[0,5], end:[5,0], walls:[[4,0],[3,3],[5,3],[5,5],[3,0],[2,3],[0,1]], hexes:[[0,3],[4,2]], pairs:[[[4,1],[5,1]]], rule:'石墙之间只剩一条缝' },
+    { name:'Twin Current', start:[0,0], end:[5,5], walls:[[4,0],[3,5],[1,5],[4,1],[0,4],[1,4],[4,4],[2,5]], hexes:[[4,3],[0,1]], pairs:[[[1,2],[1,3]]], rule:'两股水流各走一边' },
+    { name:'Stairfall', start:[0,5], end:[5,0], walls:[[5,2],[4,4],[0,0],[5,1],[2,5],[3,0],[1,5],[2,1],[2,0]], hexes:[[2,2],[5,3]], pairs:[[[4,1],[4,0]]], rule:'顺着阶梯折返' },
+    { name:'Silent Bell', start:[0,0], end:[5,5], walls:[[5,2],[4,1],[5,4],[4,4],[5,1],[3,4],[0,3],[5,0]], hexes:[[0,2],[1,2],[2,3]], pairs:[[[2,1],[1,1]]], rule:'钟形的空地需要绕行' },
+    { name:'Rope Bridge', start:[0,4], end:[5,1], walls:[[2,5],[4,4],[4,2],[5,0],[5,5],[1,2],[5,4],[3,3]], hexes:[[0,0],[2,3],[4,1]], pairs:[[[2,0],[2,1]],[[0,3],[0,2]]], rule:'只容一线通过' },
+    { name:'Three Stones', start:[0,2], end:[5,3], walls:[[4,0],[3,0],[0,5],[0,3],[1,4],[5,1],[1,3],[5,5],[1,5]], hexes:[[4,4],[5,4],[1,2]], pairs:[[[2,1],[3,1]],[[3,2],[2,2]]], rule:'三块石碑之间穿行' },
+    { name:'Blind Angle', start:[4,5], end:[1,0], walls:[[1,2],[2,2],[3,1],[4,2],[3,2],[4,0],[5,3],[4,3],[4,1],[3,0]], hexes:[[2,4],[3,5],[3,4]], pairs:[[[2,3],[1,3]],[[0,5],[0,4]]], rule:'先向内，再向外' },
+    { name:'Salt Line', start:[1,5], end:[4,0], walls:[[0,4],[4,4],[4,3],[5,4],[5,3],[5,0],[0,0],[5,5],[2,2],[3,4]], hexes:[[1,4],[2,4],[4,2],[5,1]], pairs:[[[4,1],[3,1]],[[2,1],[2,0]]], rule:'盐线把面板切成两半' },
+    { name:'Tide Lock', start:[0,5], end:[5,0], walls:[[2,2],[2,4],[3,0],[1,1],[5,4],[1,0],[0,1],[4,0],[3,5],[0,2],[0,0]], hexes:[[1,3],[0,3],[3,3],[4,3]], pairs:[[[4,1],[4,2]],[[5,3],[5,2]]], rule:'闸门只开一处' },
+    { name:'Spiral Ward', start:[0,4], end:[5,1], walls:[[1,2],[4,5],[0,5],[5,3],[2,0],[5,4],[1,0],[1,1],[3,0],[4,4],[4,2]], hexes:[[2,5],[3,1],[3,2],[2,4]], pairs:[[[2,2],[2,1]],[[2,3],[3,3]]], rule:'沿着螺旋向内' },
+    { name:'Broken Compass', start:[0,5], end:[5,0], walls:[[1,5],[3,5],[0,2],[1,0],[3,2],[5,2],[1,1],[1,4],[1,2],[2,5],[2,0],[0,1]], hexes:[[5,4],[4,5],[4,2],[0,3]], pairs:[[[2,3],[2,4]],[[3,0],[4,0]]], rule:'方向感在这里失效' },
+    { name:'Iron Garden', start:[0,0], end:[5,5], walls:[[5,0],[4,0],[1,1],[4,1],[4,2],[3,0],[1,4],[2,3],[3,1],[5,1],[1,0],[0,4]], hexes:[[4,5],[5,4],[3,4],[2,2]], pairs:[[[4,4],[4,3]],[[3,2],[3,3]],[[0,1],[0,2]]], rule:'铁栅栏之间找路' },
+    { name:'Echo Room', start:[5,0], end:[0,5], walls:[[3,0],[3,3],[5,1],[0,3],[0,2],[1,1],[0,0],[1,0],[1,2],[5,3],[3,1],[2,1],[0,1]], hexes:[[1,4],[1,3],[4,2],[4,0]], pairs:[[[2,5],[1,5]],[[4,4],[5,4]],[[5,5],[4,5]]], rule:'回声只走直角' },
+    { name:'Pale Horizon', start:[4,5], end:[1,0], walls:[[5,2],[4,3],[3,5],[5,3],[2,5],[5,5],[5,4],[1,4],[2,4],[2,3],[1,5],[1,1],[0,4]], hexes:[[5,0],[4,2],[0,0],[2,2],[4,1]], pairs:[[[3,1],[2,1]],[[1,2],[1,3]],[[0,3],[0,2]]], rule:'沿着最外圈走完' },
+    { name:'The Keeper', start:[0,4], end:[5,1], walls:[[2,2],[1,2],[4,2],[5,0],[0,3],[2,3],[0,1],[1,1],[0,5],[0,2],[5,2],[1,3],[1,5],[1,0]], hexes:[[5,5],[3,4],[2,1],[4,0],[2,0]], pairs:[[[3,2],[3,1]],[[2,4],[2,5]],[[4,4],[4,5]]], rule:'守门人堵住了正门' },
+    { name:'Sunken Nave', start:[1,5], end:[4,0], walls:[[5,1],[0,5],[5,5],[0,4],[3,2],[5,0],[0,1],[0,0],[4,3]], hexes:[[0,3],[5,3],[1,4],[1,2],[3,4]], pairs:[[[1,1],[1,0]],[[3,1],[2,1]],[[4,2],[4,1]]], rule:'沉没的中殿有四个出口' },
+    { name:'Glass Teeth', start:[0,5], end:[5,0], walls:[[1,1],[0,3],[0,4],[1,0],[0,1],[3,1],[3,0],[0,2],[0,0],[4,1],[2,0],[4,0],[2,1],[4,4],[1,2]], hexes:[[1,3],[5,2],[4,5],[4,2],[3,5]], pairs:[[[4,3],[3,3]],[[2,3],[2,2]],[[3,4],[2,4]]], rule:'玻璃齿缝不可回头' },
+    { name:'Long Winter', start:[0,0], end:[5,5], walls:[[2,1],[1,0],[4,2],[2,2],[1,1],[5,0],[0,4],[2,3],[1,2]], hexes:[[3,2],[2,5],[4,4],[0,3],[3,5]], pairs:[[[1,4],[1,5]],[[0,1],[0,2]],[[4,0],[4,1]]], rule:'最长的冬天需要耐心' },
+    { name:'Nine Bridges', start:[0,5], end:[5,0], walls:[[1,5],[3,4],[2,0],[1,4],[5,5],[2,5],[3,5],[4,4],[4,0],[2,3],[2,4],[3,0],[5,4],[4,5],[1,3]], hexes:[[1,0],[2,1],[1,2],[0,3],[0,4]], pairs:[[[4,1],[4,2]],[[4,3],[5,3]],[[0,1],[0,0]]], rule:'九座桥只连一次' },
+    { name:'The Watcher', start:[0,4], end:[5,1], walls:[[2,1],[4,1],[4,2],[0,5],[3,2],[3,0],[2,2]], hexes:[[3,3],[0,3],[1,2],[2,3],[1,5],[4,5]], pairs:[[[5,5],[5,4]],[[4,3],[4,4]],[[3,5],[3,4]]], rule:'它一直在看你的线' },
+    { name:'Low Ceiling', start:[4,5], end:[1,0], walls:[[2,0],[2,2],[5,1],[4,1],[4,3],[3,0],[3,1],[4,0],[5,5],[2,1],[1,3],[1,4],[5,0]], hexes:[[1,2],[4,2],[0,0],[1,1],[0,4]], pairs:[[[4,4],[5,4]],[[1,5],[0,5]],[[3,3],[2,3]]], rule:'低矮的天花板压着走' },
+    { name:'Final Draft', start:[0,2], end:[5,3], walls:[[2,2],[5,1],[5,0],[0,5],[1,2],[1,1],[5,2],[0,3],[0,4]], hexes:[[3,5],[2,0],[2,3],[1,0],[3,2],[1,3]], pairs:[[[3,3],[4,3]],[[4,0],[4,1]],[[1,5],[2,5]]], rule:'最后一次改稿' },
+    { name:'Closed Hand', start:[2,0], end:[3,5], walls:[[3,3],[0,4],[3,0],[2,3],[0,5],[2,5],[0,3],[1,5],[2,2]], hexes:[[4,3],[5,4],[0,2],[1,4],[1,3],[2,4]], pairs:[[[5,5],[4,5]],[[0,0],[0,1]],[[4,1],[4,0]]], rule:'拳头里没有捷径' },
+    { name:'Last Panel', start:[1,5], end:[4,0], walls:[[4,3],[0,0],[2,3],[1,0],[5,0],[4,4],[0,4]], hexes:[[1,2],[4,1],[0,2],[1,1],[5,1],[0,3]], pairs:[[[2,2],[3,2]],[[2,5],[2,4]],[[3,1],[2,1]]], rule:'最后一块面板' }
+  ];
+
+  var state = 'idle';
+  var level = 0, path = [], dragging = false, flash = 0, flashGood = 0;
+  var progress = 0, t = 0, lastT = 0, doneT = 0;
+  var hover = null;
+
+  try { progress = parseInt(localStorage.getItem('tx_loop_progress_v1') || '0', 10) || 0; } catch(e){ progress = 0; }
+  progress = Math.max(0, Math.min(LEVELS.length, progress));
+
+  var ac = null;
+  function sfx(freq, dur, type, vol, slide){
+    try {
+      if (!ac){ var AC = window.AudioContext || window.webkitAudioContext; if(!AC) return; ac = new AC(); }
+      if (ac.state === 'suspended') ac.resume();
+      var o = ac.createOscillator(), g = ac.createGain();
+      o.type = type || 'sine';
+      o.frequency.setValueAtTime(freq, ac.currentTime);
+      if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30,freq+slide), ac.currentTime+dur);
+      g.gain.setValueAtTime(0.0001, ac.currentTime);
+      g.gain.exponentialRampToValueAtTime(vol || 0.04, ac.currentTime+0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime+dur);
+      o.connect(g); g.connect(ac.destination);
+      o.start(); o.stop(ac.currentTime+dur+0.02);
+    } catch(e){}
+  }
+
+  function L(){ return LEVELS[level]; }
+  function key(c){ return c[0] + ',' + c[1]; }
+  function same(a,b){ return a[0]===b[0] && a[1]===b[1]; }
+  function isWall(x,y){ return L().walls.some(function(w){ return w[0]===x && w[1]===y; }); }
+  function inBounds(x,y){ return x>=0 && y>=0 && x<N && y<N; }
+  function pathIndex(x,y){ for (var i=0;i<path.length;i++) if (path[i][0]===x && path[i][1]===y) return i; return -1; }
+
+  function resetPath(){
+    path = []; dragging = false; hover = null;
+    setStatus(L().rule, '');
+    draw();
+  }
+
+  function startLevel(i){
+    level = i;
+    state = 'play';
+    path = []; dragging = false; flash = 0; flashGood = 0; hover = null;
+    document.getElementById('lv').textContent = String(level+1);
+    renderProgress();
+    setStatus(L().rule, '');
+    document.getElementById('ovStart').classList.add('hide');
+    document.getElementById('ovEnd').classList.add('hide');
+    draw();
+  }
+
+  function renderProgress(){
+    var fill = document.getElementById('progFill');
+    var pct = LEVELS.length ? Math.round(progress / LEVELS.length * 100) : 0;
+    fill.style.width = pct + '%';
+    fill.parentNode.title = '已完成 ' + Math.min(progress, LEVELS.length) + ' / ' + LEVELS.length + ' 关';
+  }
+
+  function setStatus(txt, cls){
+    var el = document.getElementById('status');
+    el.textContent = txt;
+    el.className = cls || '';
+  }
+
+  function validate(){
+    var L0 = L();
+    if (!path.length) return { ok:false, why:'从起点开始拖拽' };
+    var last = path[path.length-1];
+    if (!same(last, L0.end)) return { ok:false, why:'线还没有接到终点' };
+    for (var i=0;i<L0.hexes.length;i++){
+      if (pathIndex(L0.hexes[i][0], L0.hexes[i][1]) < 0) return { ok:false, why:'还有金色符文没有经过' };
+    }
+    for (var p=0;p<L0.pairs.length;p++){
+      var a = pathIndex(L0.pairs[p][0][0], L0.pairs[p][0][1]);
+      var b = pathIndex(L0.pairs[p][1][0], L0.pairs[p][1][1]);
+      if (a < 0 || b < 0 || Math.abs(a-b) !== 1) return { ok:false, why:'有一组黑白点没有相邻' };
+    }
+    return { ok:true };
+  }
+
+  function succeed(){
+    state = 'success';
+    flashGood = 1;
+    progress = Math.max(progress, level+1);
+    try { localStorage.setItem('tx_loop_progress_v1', String(progress)); } catch(e){}
+    renderProgress();
+    setStatus('回路闭合', 'good');
+    sfx(523,.16,'sine',.05); setTimeout(function(){sfx(659,.18,'sine',.045);},110); setTimeout(function(){sfx(784,.32,'sine',.045);},220);
+    setTimeout(function(){
+      if (level >= LEVELS.length-1){
+        state = 'all';
+        document.getElementById('endScore').textContent = LEVELS.length;
+        document.getElementById('endBest').textContent = LEVELS.length + ' / ' + LEVELS.length;
+        document.getElementById('ovEnd').classList.remove('hide');
+      } else {
+        startLevel(level+1);
+      }
+    }, 780);
+  }
+
+  function fail(why){
+    flash = 1;
+    setStatus(why, 'bad');
+    sfx(150,.18,'sawtooth',.04,-40);
+    setTimeout(function(){ if (state === 'play'){ flash = Math.max(0, flash); } }, 240);
+  }
+
+  function cellAt(px,py){
+    var x = Math.floor((px-PAD)/CELL), y = Math.floor((py-PAD)/CELL);
+    if (!inBounds(x,y)) return null;
+    return [x,y];
+  }
+
+  function pointerCell(e){
+    var rc = cv.getBoundingClientRect();
+    var x = (e.clientX - rc.left)/rc.width*W;
+    var y = (e.clientY - rc.top)/rc.height*H;
+    return cellAt(x,y);
+  }
+
+  function canExtend(cell){
+    if (!path.length) return same(cell, L().start);
+    var last = path[path.length-1];
+    if (Math.abs(last[0]-cell[0]) + Math.abs(last[1]-cell[1]) !== 1) return false;
+    if (pathIndex(cell[0],cell[1]) >= 0) return false;
+    if (isWall(cell[0],cell[1])) return false;
+    return true;
+  }
+
+  function tryCell(cell){
+    if (!cell) return;
+    if (isWall(cell[0],cell[1])) return;
+    var idx = pathIndex(cell[0],cell[1]);
+    if (idx >= 0){
+      if (idx < path.length-1) path = path.slice(0, idx+1);
+      return;
+    }
+    if (canExtend(cell)){
+      path.push(cell);
+      sfx(300 + Math.min(600, path.length*26), 0.045, 'sine', 0.018, 26);
+      if (same(cell, L().end) && validate().ok) { /* wait for release */ }
+    }
+  }
+
+  cv.addEventListener('pointerdown', function(e){
+    e.preventDefault();
+    if (state !== 'play') return;
+    var cell = pointerCell(e);
+    if (!cell) return;
+    if (!path.length){
+      if (same(cell, L().start)){ path = [cell.slice()]; dragging = true; hover = cell; sfx(330,.08,'sine',.03); }
+      return;
+    }
+    var idx = pathIndex(cell[0],cell[1]);
+    if (idx >= 0){ path = path.slice(0, idx+1); dragging = true; hover = cell; return; }
+    if (canExtend(cell)){ path.push(cell); dragging = true; hover = cell; }
+  });
+  cv.addEventListener('pointermove', function(e){
+    if (state !== 'play') return;
+    var cell = pointerCell(e);
+    hover = cell;
+    if (dragging && cell) tryCell(cell);
+  });
+  function release(){
+    if (state !== 'play'){ dragging = false; return; }
+    dragging = false;
+    if (!path.length) return;
+    var v = validate();
+    if (v.ok){ succeed(); }
+    else {
+      var last = path[path.length-1];
+      if (same(last, L().end)) fail(v.why);
+      else setStatus(L().rule + ' · 继续拖到终点', '');
+    }
+  }
+  window.addEventListener('pointerup', release);
+  window.addEventListener('pointercancel', function(){ dragging = false; });
+
+  document.getElementById('btnClear').addEventListener('click', function(){ if (state === 'play'){ resetPath(); } });
+  document.getElementById('btnStart').addEventListener('click', function(){ startLevel(Math.min(progress, LEVELS.length-1)); });
+  document.getElementById('btnAgain').addEventListener('click', function(){ progress = 0; try { localStorage.setItem('tx_loop_progress_v1','0'); } catch(e){} startLevel(0); });
+
+  function drawPanel(){
+    ctx.fillStyle = '#0b1510';
+    ctx.fillRect(0,0,W,H);
+    // panel label
+    var pn = String(level+1);
+    while (pn.length < 2) pn = '0' + pn;
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'rgba(224,179,74,.66)';
+    ctx.font = '600 9px ui-monospace,"Cascadia Mono",Consolas,monospace';
+    var label = 'PANEL ' + pn + ' / ' + LEVELS.length + '  ·  ' + L().name.toUpperCase();
+    var labelW = ctx.measureText(label).width;
+    if (labelW > W - 24) label = 'PANEL ' + pn + ' / ' + LEVELS.length;
+    ctx.fillText(label, W/2, 17);
+    ctx.restore();
+    var boardX = PAD-18, boardY = PAD-18, boardW = N*CELL+36;
+    // stone frame
+    var fg = ctx.createLinearGradient(boardX, boardY, boardX, boardY+boardW);
+    fg.addColorStop(0,'#26352a'); fg.addColorStop(.5,'#1a271f'); fg.addColorStop(1,'#111b14');
+    ctx.fillStyle = fg;
+    if (ctx.roundRect){ ctx.beginPath(); ctx.roundRect(boardX, boardY, boardW, boardW, 10); ctx.fill(); }
+    else ctx.fillRect(boardX, boardY, boardW, boardW);
+    // paper
+    var pg = ctx.createLinearGradient(0,0,0,H);
+    pg.addColorStop(0,'#f3ecd9'); pg.addColorStop(.6,'#ece3cd'); pg.addColorStop(1,'#e4d8bd');
+    ctx.fillStyle = pg;
+    ctx.fillRect(PAD-5, PAD-5, N*CELL+10, N*CELL+10);
+    // paper texture
+    for (var i=0;i<90;i++){
+      var x = PAD-5 + ((i*73.7)%((N*CELL+10)));
+      var y = PAD-5 + ((i*131.3)%((N*CELL+10)));
+      ctx.fillStyle = 'rgba(120,102,70,' + (0.02 + (i%5)*0.006) + ')';
+      ctx.fillRect(x, y, 2.2, 1.1);
+    }
+    // grid
+    ctx.strokeStyle = 'rgba(116,101,70,.20)'; ctx.lineWidth = 1;
+    for (var g=0;g<=N;g++){
+      ctx.beginPath(); ctx.moveTo(PAD + g*CELL + .5, PAD); ctx.lineTo(PAD + g*CELL + .5, PAD+N*CELL); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(PAD, PAD + g*CELL + .5); ctx.lineTo(PAD+N*CELL, PAD + g*CELL + .5); ctx.stroke();
+    }
+    // outer border
+    ctx.strokeStyle = 'rgba(70,60,40,.35)'; ctx.lineWidth = 2;
+    ctx.strokeRect(PAD+0.5, PAD+0.5, N*CELL-1, N*CELL-1);
+
+    // walls
+    L().walls.forEach(function(w){
+      var x = PAD + w[0]*CELL, y = PAD + w[1]*CELL;
+      var wg = ctx.createLinearGradient(x,y,x+CELL,y+CELL);
+      wg.addColorStop(0,'#3a4a3e'); wg.addColorStop(.5,'#253329'); wg.addColorStop(1,'#162018');
+      ctx.fillStyle = wg; ctx.fillRect(x+2,y+2,CELL-4,CELL-4);
+      ctx.strokeStyle = 'rgba(240,232,212,.10)'; ctx.lineWidth = 1;
+      ctx.strokeRect(x+5.5,y+5.5,CELL-11,CELL-11);
+      ctx.strokeStyle = 'rgba(0,0,0,.35)';
+      for (var k=0;k<3;k++){
+        ctx.beginPath(); ctx.moveTo(x+8, y+14+k*14); ctx.lineTo(x+CELL-8, y+14+k*14); ctx.stroke();
+      }
+      ctx.fillStyle = 'rgba(159,216,176,.14)';
+      ctx.beginPath(); ctx.arc(x+CELL/2, y+CELL/2, 7, 0, 6.28); ctx.fill();
+    });
+
+    // hexes
+    L().hexes.forEach(function(h){
+      var cx = PAD + h[0]*CELL + CELL/2, cy = PAD + h[1]*CELL + CELL/2;
+      var inPath = pathIndex(h[0],h[1]) >= 0;
+      ctx.save();
+      ctx.translate(cx,cy);
+      var gl = ctx.createRadialGradient(0,0,2,0,0,24);
+      gl.addColorStop(0,'rgba(224,179,74,.32)'); gl.addColorStop(1,'rgba(224,179,74,0)');
+      ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(0,0,24,0,6.28); ctx.fill();
+      ctx.beginPath();
+      for (var i2=0;i2<6;i2++){
+        var a = Math.PI/6 + i2*Math.PI/3;
+        var px = Math.cos(a)*13, py = Math.sin(a)*13;
+        if (i2===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+      }
+      ctx.closePath();
+      ctx.fillStyle = inPath ? '#f5d98f' : '#e0b34a';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(70,52,14,.55)'; ctx.lineWidth = 1.4; ctx.stroke();
+      if (inPath){
+        ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.arc(0,0,6,0,6.28); ctx.stroke();
+      }
+      ctx.restore();
+    });
+
+    // dot pairs
+    L().pairs.forEach(function(pair){
+      pair.forEach(function(p, idx){
+        var cx = PAD + p[0]*CELL + CELL/2, cy = PAD + p[1]*CELL + CELL/2;
+        var inPath = pathIndex(p[0],p[1]) >= 0;
+        var isBlack = idx === 0;
+        ctx.save();
+        ctx.translate(cx,cy);
+        ctx.shadowColor = 'rgba(20,20,16,.35)'; ctx.shadowBlur = 6;
+        ctx.fillStyle = isBlack ? '#1b2118' : '#fbf8ee';
+        ctx.beginPath(); ctx.arc(0,0,12,0,6.28); ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = isBlack ? 'rgba(255,255,255,.18)' : 'rgba(90,80,58,.7)';
+        ctx.lineWidth = 1.6; ctx.stroke();
+        if (inPath){
+          ctx.strokeStyle = isBlack ? 'rgba(159,216,176,.9)' : 'rgba(120,90,32,.8)';
+          ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.arc(0,0,16,0,6.28); ctx.stroke();
+        }
+        ctx.restore();
+      });
+    });
+
+    // start / end
+    var s = L().start, e = L().end;
+    var sx = PAD + s[0]*CELL + CELL/2, sy = PAD + s[1]*CELL + CELL/2;
+    var ex = PAD + e[0]*CELL + CELL/2, ey = PAD + e[1]*CELL + CELL/2;
+    // start
+    ctx.save();
+    ctx.shadowColor = 'rgba(49,116,72,.4)'; ctx.shadowBlur = 18;
+    ctx.fillStyle = '#1c3b29';
+    ctx.beginPath(); ctx.arc(sx,sy,15,0,6.28); ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = 'rgba(240,232,212,.8)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(sx,sy,10,0,6.28); ctx.stroke();
+    ctx.fillStyle = '#9fd8b0';
+    ctx.beginPath(); ctx.arc(sx,sy,4,0,6.28); ctx.fill();
+    ctx.restore();
+    // end
+    ctx.save();
+    ctx.fillStyle = 'rgba(28,24,18,.9)';
+    ctx.beginPath(); ctx.arc(ex,ey,16,0,6.28); ctx.fill();
+    ctx.strokeStyle = '#e0b34a'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(ex,ey,16,0,6.28); ctx.stroke();
+    ctx.strokeStyle = 'rgba(240,232,212,.85)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(ex,ey,9,0,6.28); ctx.stroke();
+    ctx.fillStyle = '#e0b34a';
+    ctx.beginPath(); ctx.arc(ex,ey,4,0,6.28); ctx.fill();
+    ctx.restore();
+
+    // path
+    if (path.length){
+      ctx.save();
+      ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      // glow
+      ctx.strokeStyle = flashGood > 0 ? 'rgba(163,230,53,.45)' : 'rgba(224,179,74,.20)';
+      ctx.lineWidth = 22;
+      ctx.beginPath();
+      path.forEach(function(p, i){
+        var x = PAD + p[0]*CELL + CELL/2, y = PAD + p[1]*CELL + CELL/2;
+        if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      });
+      ctx.stroke();
+      // main
+      ctx.strokeStyle = flash > 0.2 ? '#b4453e' : (flashGood > 0 ? '#4f7a34' : '#28332b');
+      ctx.lineWidth = 13;
+      ctx.beginPath();
+      path.forEach(function(p, i){
+        var x = PAD + p[0]*CELL + CELL/2, y = PAD + p[1]*CELL + CELL/2;
+        if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      });
+      ctx.stroke();
+      // highlight
+      ctx.strokeStyle = flashGood > 0 ? 'rgba(230,255,190,.7)' : 'rgba(240,232,212,.22)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.restore();
+      // head
+      var hp = path[path.length-1];
+      var hx = PAD + hp[0]*CELL + CELL/2, hy = PAD + hp[1]*CELL + CELL/2;
+      ctx.save();
+      ctx.shadowColor = 'rgba(224,179,74,.8)'; ctx.shadowBlur = 12;
+      ctx.fillStyle = flashGood > 0 ? '#a3e635' : '#f5e6b8';
+      ctx.beginPath(); ctx.arc(hx,hy,6.5,0,6.28); ctx.fill();
+      ctx.restore();
+    }
+
+    // hover cell outline
+    if (hover && state === 'play' && !isWall(hover[0],hover[1])){
+      var hx2 = PAD + hover[0]*CELL, hy2 = PAD + hover[1]*CELL;
+      ctx.strokeStyle = 'rgba(224,179,74,.45)'; ctx.lineWidth = 1.5;
+      ctx.strokeRect(hx2+4.5, hy2+4.5, CELL-9, CELL-9);
+    }
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    drawPanel();
+    if (flash > 0){
+      flash = Math.max(0, flash - 0.03);
+      ctx.fillStyle = 'rgba(180,60,50,' + (flash*0.10) + ')';
+      ctx.fillRect(PAD-5,PAD-5,N*CELL+10,N*CELL+10);
+    }
+    if (flashGood > 0) flashGood = Math.max(0, flashGood - 0.02);
+  }
+
+  function loop(now){
+    var dt = Math.min(0.04, (now-lastT)/1000 || 0.016);
+    lastT = now; t += dt;
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  // idle preview path
+  path = [[0,5],[0,4],[1,4],[1,3],[2,3],[2,2],[3,2],[3,1],[4,1],[4,0],[5,0]];
+  document.getElementById('lvTotal').textContent = String(LEVELS.length);
+  renderProgress();
+  draw();
+  window.__LOOP__ = {
+    levels: LEVELS,
+    startLevel: startLevel,
+    get level(){ return level; },
+    get state(){ return state; },
+    get path(){ return path; },
+    get progress(){ return progress; }
+  };
+  requestAnimationFrame(function(n){ lastT = n; requestAnimationFrame(loop); });
+})();
+</script>
+</body>
+</html>
+

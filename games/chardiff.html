@@ -78,7 +78,7 @@
     display:grid;place-items:center;font-size:var(--fs);line-height:1;font-weight:600;
     color:#dff3ff;background:linear-gradient(160deg,rgba(255,255,255,.055),rgba(255,255,255,.018));
     box-shadow:inset 0 0 0 1px rgba(148,163,184,.075);
-    transition:background .14s ease,transform .14s ease,box-shadow .14s ease;
+    transition:background .14s ease,transform .14s ease,box-shadow .14s ease,color .45s ease;
   }
   .cell:hover{background:rgba(94,234,212,.09);}
   .cell:active{transform:scale(.95);}
@@ -107,8 +107,8 @@
   .foot{font-size:11.5px;color:#5f7286;letter-spacing:.03em;text-align:center;}
 
   .overlay{
-    position:absolute;inset:0;z-index:9;display:none;align-items:center;justify-content:center;padding:18px;
-    background:rgba(3,8,18,.76);backdrop-filter:blur(7px);border-radius:17px;
+    position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;padding:18px;
+    background:rgba(3,8,18,.76);backdrop-filter:blur(7px);border-radius:0;
   }
   .overlay.on{display:flex;animation:fadeIn .25s ease;}
   @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
@@ -131,6 +131,29 @@
   .res-grid b{display:block;margin-top:2px;font-size:17px;font-variant-numeric:tabular-nums;}
   .card .btn.primary{width:100%;padding:11px 14px;font-size:13.5px;}
   .card .btn.ghost{width:100%;margin-top:8px;}
+
+  .mode-note{color:#6ee7b7;font-weight:700;}
+  .mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:0 0 9px;}
+  .mode{
+    border:1px solid rgba(148,163,184,.18);border-radius:13px;padding:8px 10px;cursor:pointer;
+    background:linear-gradient(160deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
+    color:var(--text);text-align:left;transition:background .16s ease,border-color .16s ease,transform .16s ease;
+  }
+  .mode:hover{background:rgba(94,234,212,.10);border-color:rgba(94,234,212,.42);transform:translateY(-1px);}
+  .mode strong{display:block;font-size:13px;font-weight:800;letter-spacing:.03em;color:#ecfeff;}
+  .mode .m-tag{display:inline-block;margin-top:1px;font-size:10px;color:#6ee7b7;font-weight:700;letter-spacing:.06em;}
+  .mode em{display:block;margin-top:3px;font-size:10.2px;line-height:1.4;color:var(--muted);font-style:normal;min-height:26px;}
+  .mode i{display:block;margin-top:3px;font-size:10px;color:var(--amber);font-style:normal;}
+  .menu-foot{font-size:11.5px;color:var(--muted);margin-bottom:1px;}
+  .menu-foot b{color:#dff3ff;}
+  .card{max-height:calc(100% - 6px);overflow:auto;scrollbar-width:thin;width:min(100%,398px);}
+  .board.faded .cell:not(.found){color:rgba(223,243,255,.055);}
+  .board.faded .cell.hint{color:#04121f;}
+  .cell.warp{animation:warp .4s ease;}
+  @keyframes warp{0%,100%{transform:scale(1);}45%{transform:scale(1.12);background:rgba(56,189,248,.28);box-shadow:0 0 22px rgba(56,189,248,.65);}}
+  .cell.hint{animation:hint .52s ease;background:rgba(251,191,36,.28);box-shadow:0 0 24px rgba(251,191,36,.8);}
+  @keyframes hint{0%,100%{transform:scale(1);}50%{transform:scale(1.14);}}
+  #seen{font-size:15px;letter-spacing:.04em;}
 
   @media (max-width:620px){
     body{padding:14px 12px 18px;}
@@ -160,14 +183,14 @@
       <div class="logo">字</div>
       <div>
         <h1>汉字找茬</h1>
-        <p>满屏相同的字里，藏着一个不一样的</p>
+        <p><span class="mode-note" id="modeNote">经典模式</span> · 满屏相同的字里，藏着一个不一样的</p>
       </div>
     </div>
     <div class="stats">
       <div class="stat"><span>得分</span><b id="score">0</b></div>
-      <div class="stat"><span>时间</span><b id="time">60.0</b></div>
+      <div class="stat"><span id="timeLabel">时间</span><b id="time">60.0</b></div>
       <div class="stat"><span>连击</span><b id="combo" class="hot">0</b></div>
-      <div class="stat"><span>进度</span><b id="seen" class="hot">0 / 338</b></div>
+      <div class="stat"><span id="seenLabel">进度</span><b id="seen" class="hot">0 / 338</b></div>
       <div class="stat"><span>最佳</span><b id="best">—</b></div>
     </div>
   </div>
@@ -185,12 +208,13 @@
   <div class="panel">
     <div class="status" id="status"><i></i><span>点错扣 3 秒，连击越高分越多</span></div>
     <div class="actions">
+      <button class="btn" id="hint">提示</button>
       <button class="btn" id="skip">跳过</button>
       <button class="btn" id="pause">暂停</button>
       <button class="btn" id="restart">重开</button>
     </div>
   </div>
-  <p class="foot">每找对一个，棋盘会变大一点 · 空格暂停 · 支持鼠标和触屏</p>
+  <p class="foot">六种模式 · 空格暂停 · H 提示 · 支持鼠标和触屏</p>
 </div>
 
 <script>
@@ -198,7 +222,6 @@
   'use strict';
 
   var BEST_KEY = 'tx_chardiff_best_v1';
-  var TOTAL = 60;
   var PAIRS = [
     ['已','己'],['未','末'],['士','土'],['日','曰'],['人','入'],['力','刀'],['由','甲'],['田','由'],
     ['木','本'],['大','太'],['王','玉'],['乌','鸟'],['免','兔'],['折','拆'],['侯','候'],['拔','拨'],
@@ -245,6 +268,52 @@
     ['庄','压'],['在','左']
   ];
 
+  var MODE_DEFS = {
+    classic: {
+      name: '经典', tag: '60 秒', desc: '找 1 个异类字，棋盘逐步变大',
+      hint: '点错扣 3 秒，连击越高分越多',
+      time: 60000, wrong: 3000, bonus: 500, baseN: 5, maxN: 9, growEvery: 2,
+      oddCount: 1, scoreBase: 10, scoreCombo: 2, hintCost: 5000,
+      bestKey: 'tx_chardiff_best_classic_v1'
+    },
+    rush: {
+      name: '极速', tag: '30 秒', desc: '小棋盘快节奏，答对还能加时',
+      hint: '30 秒冲刺 · 答对 +0.8 秒',
+      time: 30000, wrong: 2000, bonus: 800, baseN: 4, maxN: 6, growEvery: 3,
+      oddCount: 1, scoreBase: 14, scoreCombo: 2, hintCost: 4000,
+      bestKey: 'tx_chardiff_best_rush_v1'
+    },
+    survival: {
+      name: '生存', tag: '3 条命', desc: '每盘限时，答错或超时扣 1 条命',
+      hint: '答错、超时或跳过都会扣 1 条命',
+      lives: 3, boardMs: 9000, boardMsMin: 5500, wrong: 0, bonus: 0,
+      baseN: 4, maxN: 8, growEvery: 3, oddCount: 1, scoreBase: 12, scoreCombo: 3,
+      hintCost: 2500, bestKey: 'tx_chardiff_best_survival_v1'
+    },
+    phantom: {
+      name: '幻影', tag: '记忆挑战', desc: '字形只亮 1.4 秒，随后淡出凭记忆找',
+      hint: '亮 1.4 秒后淡出，凭记忆点击',
+      time: 60000, wrong: 3000, bonus: 500, baseN: 5, maxN: 8, growEvery: 2,
+      oddCount: 1, scoreBase: 12, scoreCombo: 2, fadeDelay: 1400, hintCost: 4000,
+      bestKey: 'tx_chardiff_best_phantom_v1'
+    },
+    twin: {
+      name: '双子', tag: '2 个目标', desc: '每盘藏 2 个异类字，全部找出才换盘',
+      hint: '每盘有 2 个异类字，找齐才进入下一关',
+      time: 60000, wrong: 2000, bonus: 500, baseN: 5, maxN: 7, growEvery: 4,
+      oddCount: 2, scoreBase: 8, scoreCombo: 2, hintCost: 4000,
+      bestKey: 'tx_chardiff_best_twin_v1'
+    },
+    warp: {
+      name: '瞬移', tag: '会跑的字', desc: '异类字每 2.6 秒换一个位置',
+      hint: '异类字会换位置，看准了再点',
+      time: 60000, wrong: 3000, bonus: 500, baseN: 5, maxN: 6, growEvery: 3,
+      oddCount: 1, scoreBase: 12, scoreCombo: 2, warpInterval: 2600, hintCost: 4000,
+      bestKey: 'tx_chardiff_best_warp_v1'
+    }
+  };
+  var MODE_ORDER = ['classic', 'rush', 'survival', 'phantom', 'twin', 'warp'];
+
   var SEEN_KEY = 'tx_chardiff_seen_v1';
   var seenSet = {};
   var seenCount = 0;
@@ -282,28 +351,51 @@
   var board = document.getElementById('board');
   var scoreEl = document.getElementById('score');
   var timeEl = document.getElementById('time');
+  var timeLabel = document.getElementById('timeLabel');
   var comboEl = document.getElementById('combo');
   var bestEl = document.getElementById('best');
   var seenEl = document.getElementById('seen');
+  var seenLabel = document.getElementById('seenLabel');
+  var modeNote = document.getElementById('modeNote');
   var timeFill = document.getElementById('timefill');
   var timebar = document.getElementById('timebar');
   var overlay = document.getElementById('overlay');
   var ovCard = document.getElementById('ovCard');
   var statusEl = document.getElementById('status');
+  var hintBtn = document.getElementById('hint');
   var pauseBtn = document.getElementById('pause');
   var restartBtn = document.getElementById('restart');
   var skipBtn = document.getElementById('skip');
 
-  var score = 0, combo = 0, maxCombo = 0, found = 0, best = 0;
-  var left = TOTAL * 1000, lastTs = 0, raf = 0;
-  var running = false, paused = false, over = false;
-  var oddIndex = -1, baseChar = '', oddChar = '';
-  var curPid = -1, lastPid = -1, skips = 0;
-  var locked = false;
+  var score = 0, combo = 0, maxCombo = 0, found = 0;
+  var bestByMode = {};
+  var mode = 'classic';
+  var modeCfg = MODE_DEFS.classic;
+  var totalMs = 60000, left = 60000, boardLeft = 0;
+  var lives = 3, boardNo = 0, skips = 0;
+  var lastTs = 0, timerId = 0;
+  var running = false, paused = false, over = false, locked = false;
+  var oddIndices = [], baseChar = '', oddChar = '';
+  var curPid = -1, lastPid = -1;
+  var fadeTimer = 0, warpTimer = 0;
 
-  try { best = parseInt(localStorage.getItem(BEST_KEY) || '0', 10) || 0; } catch (e) { best = 0; }
-  bestEl.textContent = best > 0 ? best : '—';
-  loadSeen();
+  function loadBests() {
+    for (var i = 0; i < MODE_ORDER.length; i++) {
+      var key = MODE_ORDER[i];
+      var cfg = MODE_DEFS[key];
+      var val = 0;
+      try { val = parseInt(localStorage.getItem(cfg.bestKey) || '0', 10) || 0; } catch (e) {}
+      if (key === 'classic' && !val) {
+        try { val = parseInt(localStorage.getItem(BEST_KEY) || '0', 10) || 0; } catch (e) {}
+      }
+      bestByMode[key] = val;
+    }
+  }
+
+  function saveBest(key, value) {
+    bestByMode[key] = value;
+    try { localStorage.setItem(MODE_DEFS[key].bestKey, String(value)); } catch (e) {}
+  }
 
   function fmt(ms) {
     var s = Math.max(0, ms / 1000);
@@ -314,14 +406,36 @@
     statusEl.querySelector('span').textContent = text;
   }
 
+  function hearts() {
+    var s = '';
+    for (var i = 0; i < lives; i++) { s += '♥ '; }
+    return s.replace(/\s+$/, '') || '—';
+  }
+
+  function updateModeChrome() {
+    modeNote.textContent = modeCfg.name + '模式';
+    timeLabel.textContent = mode === 'survival' ? '本盘' : '时间';
+    seenLabel.textContent = mode === 'survival' ? '生命' : '进度';
+  }
+
   function updateHud() {
     scoreEl.textContent = String(score);
     comboEl.textContent = String(combo);
-    seenEl.textContent = seenCount + ' / ' + PAIRS.length;
-    timeEl.textContent = fmt(left);
-    var pct = Math.max(0, Math.min(100, left / (TOTAL * 1000) * 100));
+    bestEl.textContent = (bestByMode[mode] || 0) > 0 ? String(bestByMode[mode]) : '—';
+    var remain, span;
+    if (mode === 'survival') {
+      remain = boardLeft;
+      span = totalMs;
+      seenEl.textContent = lives > 0 ? hearts() : '—';
+    } else {
+      remain = left;
+      span = totalMs;
+      seenEl.textContent = seenCount + ' / ' + PAIRS.length;
+    }
+    timeEl.textContent = fmt(remain);
+    var pct = span > 0 ? Math.max(0, Math.min(100, remain / span * 100)) : 0;
     timeFill.style.width = pct + '%';
-    timebar.classList.toggle('low', left <= 15000);
+    timebar.classList.toggle('low', remain <= span * 0.25);
   }
 
   function layoutFont() {
@@ -353,136 +467,321 @@
 
   function newBoard() {
     if (!board) return;
-    var n = Math.min(9, 5 + Math.floor(found / 2));
+    var cfg = modeCfg;
+    var n = Math.min(cfg.maxN, cfg.baseN + Math.floor(found / cfg.growEvery));
+    boardNo += 1;
     curPid = pickPair();
     var pair = PAIRS[curPid];
     if (Math.random() < 0.5) { baseChar = pair[0]; oddChar = pair[1]; }
     else { baseChar = pair[1]; oddChar = pair[0]; }
-    var total = n * n;
-    oddIndex = Math.floor(Math.random() * total);
-    locked = false;
 
+    var count = n * n;
+    var oddCount = Math.min(cfg.oddCount || 1, count - 1);
+    oddIndices = [];
+    while (oddIndices.length < oddCount) {
+      var idx = Math.floor(Math.random() * count);
+      if (oddIndices.indexOf(idx) < 0) oddIndices.push(idx);
+    }
+    locked = false;
+    board.classList.remove('faded');
     board.dataset.n = String(n);
     board.style.setProperty('--n', String(n));
+
     var html = '';
-    for (var i = 0; i < total; i++) {
-      html += '<button type="button" class="cell" data-i="' + i + '">' + (i === oddIndex ? oddChar : baseChar) + '</button>';
+    for (var i = 0; i < count; i++) {
+      var ch = oddIndices.indexOf(i) >= 0 ? oddChar : baseChar;
+      html += '<button type="button" class="cell" data-i="' + i + '">' + ch + '</button>';
     }
     var ov = overlay;
     board.innerHTML = html;
     overlay = ov;
     board.appendChild(overlay);
+
     var cells = board.querySelectorAll('.cell');
     for (var k = 0; k < cells.length; k++) {
       cells[k].addEventListener('click', onCellClick);
     }
     layoutFont();
-    setStatus('第 ' + (found + 1) + ' 关 · ' + n + ' × ' + n);
+
+    if (mode === 'phantom') { fadeTimer = cfg.fadeDelay; }
+    if (mode === 'warp') { warpTimer = cfg.warpInterval; }
+    if (mode === 'survival') {
+      totalMs = Math.max(cfg.boardMsMin, cfg.boardMs - Math.floor((boardNo - 1) / 2) * 350);
+      boardLeft = totalMs;
+    } else {
+      totalMs = cfg.time;
+    }
+
+    updateHud();
+    setStatus('第 ' + boardNo + ' 关 · ' + n + ' × ' + n + (oddCount > 1 ? ' · 找齐 ' + oddCount + ' 个' : ''));
   }
 
   function onCellClick(e) {
     e.preventDefault();
     if (!running || paused || over || locked) return;
+    if (this.classList.contains('found')) return;
+    var cfg = modeCfg;
     var i = parseInt(this.dataset.i, 10);
-    var cell = this;
-    if (i === oddIndex) {
-      locked = true;
-      cell.classList.add('found');
-      var gain = 10 + combo * 2;
+    var hitAt = oddIndices.indexOf(i);
+
+    if (hitAt >= 0) {
+      var gain = cfg.scoreBase + combo * cfg.scoreCombo;
+      this.classList.add('found');
+      oddIndices.splice(hitAt, 1);
       score += gain;
-      combo++;
+      combo += 1;
       if (combo > maxCombo) maxCombo = combo;
-      found++;
-      left = Math.min(TOTAL * 1000, left + 500);
+      found += 1;
       markSeen(curPid);
+      if (mode === 'survival') {
+        boardLeft = Math.min(totalMs, boardLeft + (cfg.bonus || 0));
+      } else {
+        left = Math.min(totalMs, left + (cfg.bonus || 0));
+      }
       updateHud();
-      setStatus('找到了 · +' + gain);
-      setTimeout(function () { if (!over) newBoard(); }, 230);
+      var bonusText = cfg.bonus ? ' · +' + (cfg.bonus / 1000).toFixed(1) + 's' : '';
+      if (oddIndices.length === 0) {
+        locked = true;
+        setStatus('找到了 · +' + gain + bonusText);
+        setTimeout(function () { if (!over) newBoard(); }, 230);
+      } else {
+        setStatus('找到了 · +' + gain + bonusText + ' · 还剩 ' + oddIndices.length + ' 个');
+      }
     } else {
+      var cell = this;
       combo = 0;
-      left = Math.max(0, left - 3000);
       cell.classList.remove('wrong');
       void cell.offsetWidth;
       cell.classList.add('wrong');
       setTimeout(function () { cell.classList.remove('wrong'); }, 320);
+      if (mode === 'survival') {
+        loseLife('wrong');
+        return;
+      }
+      left = Math.max(0, left - cfg.wrong);
       updateHud();
-      setStatus('看仔细一点 · -3 秒');
+      setStatus('看仔细一点 · -' + (cfg.wrong / 1000) + ' 秒');
       if (left <= 0) finish();
     }
   }
 
+  function useHint() {
+    if (!running || paused || over || locked || !oddIndices.length) return;
+    var cfg = modeCfg;
+    var cost = cfg.hintCost || 5000;
+    if (mode === 'survival') {
+      if (boardLeft <= cost) { setStatus('时间不够使用提示了'); return; }
+      boardLeft -= cost;
+    } else {
+      if (left <= cost) { setStatus('时间不够使用提示了'); return; }
+      left -= cost;
+    }
+    var idx = oddIndices[0];
+    var cell = board.querySelector('.cell[data-i="' + idx + '"]');
+    if (cell) {
+      cell.classList.remove('hint');
+      void cell.offsetWidth;
+      cell.classList.add('hint');
+      setTimeout(function () { cell.classList.remove('hint'); }, 540);
+    }
+    updateHud();
+    setStatus('提示 · -' + (cost / 1000).toFixed(1) + ' 秒');
+  }
+
   function skip() {
     if (!running || paused || over || locked) return;
-    skips++;
-    newBoard();
+    skips += 1;
+    if (mode === 'survival') { loseLife('skip'); return; }
+    locked = true;
     setStatus('已跳过 · 不扣分也不加分');
-    updateHud();
+    setTimeout(function () { if (!over) newBoard(); }, 120);
   }
 
-  function loop(ts) {
-    if (!lastTs) lastTs = ts;
-    var dt = Math.min(60, ts - lastTs);
-    lastTs = ts;
-    if (running && !paused && !over) {
-      left -= dt;
-      if (left <= 0) { left = 0; updateHud(); finish(); }
-      else updateHud();
+  function loseLife(reason) {
+    if (over) return;
+    lives -= 1;
+    combo = 0;
+    locked = true;
+    if (lives <= 0) {
+      lives = 0;
+      updateHud();
+      finish();
+      return;
     }
-    raf = requestAnimationFrame(loop);
+    updateHud();
+    if (reason === 'timeout') { setStatus('本盘超时 · 剩余 ' + lives + ' 条命'); }
+    else if (reason === 'skip') { setStatus('跳过本盘 · 剩余 ' + lives + ' 条命'); }
+    else { setStatus('点错了 · 剩余 ' + lives + ' 条命'); }
+    setTimeout(function () { if (!over) newBoard(); }, 420);
   }
 
-  function start() {
+  function warpOdd() {
+    if (!running || paused || over || locked || oddIndices.length !== 1) return;
+    var n = parseInt(board.dataset.n, 10) || 5;
+    var total = n * n;
+    var from = oddIndices[0];
+    var to = from;
+    while (to === from) { to = Math.floor(Math.random() * total); }
+    var cells = board.querySelectorAll('.cell');
+    var a = cells[from], b = cells[to];
+    if (!a || !b) return;
+    a.textContent = baseChar;
+    b.textContent = oddChar;
+    oddIndices[0] = to;
+    a.classList.remove('warp', 'hint');
+    b.classList.remove('warp', 'hint');
+    void b.offsetWidth;
+    b.classList.add('warp');
+    setTimeout(function () { b.classList.remove('warp'); }, 420);
+    setStatus('异类字换位置了');
+  }
+
+  function updateModeTimers(dt) {
+    if (mode === 'phantom' && fadeTimer > 0) {
+      fadeTimer -= dt;
+      if (fadeTimer <= 0) {
+        fadeTimer = 0;
+        board.classList.add('faded');
+        setStatus('字形已淡出 · 凭记忆找');
+      }
+    }
+    if (mode === 'warp' && warpTimer > 0) {
+      warpTimer -= dt;
+      if (warpTimer <= 0) {
+        warpTimer = modeCfg.warpInterval;
+        warpOdd();
+      }
+    }
+  }
+
+  function tick() {
+    var now = Date.now();
+    if (!lastTs) lastTs = now;
+    var dt = now - lastTs;
+    lastTs = now;
+    if (dt < 0) { dt = 0; }
+    if (dt > 250) { dt = 250; }
+    if (running && !paused && !over && !locked) {
+      if (mode === 'survival') {
+        boardLeft -= dt;
+        if (boardLeft <= 0) {
+          boardLeft = 0;
+          updateHud();
+          loseLife('timeout');
+        } else {
+          updateHud();
+        }
+      } else {
+        left -= dt;
+        if (left <= 0) {
+          left = 0;
+          updateHud();
+          finish();
+        } else {
+          updateHud();
+        }
+      }
+      if (!locked) { updateModeTimers(dt); }
+    }
+  }
+
+  function start(modeKey) {
+    if (modeKey && MODE_DEFS[modeKey]) { mode = modeKey; }
+    modeCfg = MODE_DEFS[mode];
     score = 0; combo = 0; maxCombo = 0; found = 0;
-    left = TOTAL * 1000;
-    over = false; paused = false; running = true;
-    lastTs = 0;
+    boardNo = 0; skips = 0;
+    lives = modeCfg.lives || 3;
+    over = false; paused = false; running = true; locked = false;
+    lastTs = 0; fadeTimer = 0; warpTimer = 0;
+    if (modeCfg.time) {
+      totalMs = modeCfg.time;
+      left = totalMs;
+      boardLeft = 0;
+    } else {
+      totalMs = modeCfg.boardMs;
+      left = 0;
+      boardLeft = totalMs;
+    }
     overlay.classList.remove('on');
     pauseBtn.textContent = '暂停';
+    updateModeChrome();
     updateHud();
     newBoard();
-    if (!raf) raf = requestAnimationFrame(loop);
+    if (!timerId) { timerId = setInterval(tick, 100); }
   }
 
   function finish() {
     if (over) return;
-    over = true; running = false; paused = false;
-    if (score > best) {
-      best = score;
-      try { localStorage.setItem(BEST_KEY, String(best)); } catch (e) {}
-    }
-    bestEl.textContent = best > 0 ? best : '—';
-    setStatus('时间到');
+    over = true; running = false; paused = false; locked = true;
+    var prevBest = bestByMode[mode] || 0;
+    if (score > prevBest) { saveBest(mode, score); }
+    bestEl.textContent = (bestByMode[mode] || 0) > 0 ? String(bestByMode[mode]) : '—';
+    setStatus('本局结束');
+
+    var extraStat = mode === 'survival'
+      ? '<div><span>存活关卡</span><b>' + boardNo + '</b></div>'
+      : '<div><span>跳过次数</span><b>' + skips + '</b></div>';
+
     ovCard.innerHTML =
-      '<div class="kicker">TIME UP</div>' +
-      '<h2>时间到</h2>' +
-      '<p>换一组更像的字，再来一轮。</p>' +
+      '<div class="kicker">' + modeCfg.name + '模式结束</div>' +
+      '<h2>' + (mode === 'survival' ? '生命耗尽' : '时间到') + '</h2>' +
+      '<p>' + modeCfg.desc + '</p>' +
       '<div class="res-grid">' +
         '<div><span>本局得分</span><b>' + score + '</b></div>' +
         '<div><span>找到字数</span><b>' + found + '</b></div>' +
         '<div><span>最高连击</span><b>' + maxCombo + '</b></div>' +
         '<div><span>累计进度</span><b>' + seenCount + ' / ' + PAIRS.length + '</b></div>' +
-        '<div><span>跳过次数</span><b>' + skips + '</b></div>' +
-        '<div><span>历史最佳</span><b>' + (best > 0 ? best : '—') + '</b></div>' +
+        extraStat +
+        '<div><span>本模式最佳</span><b>' + ((bestByMode[mode] || 0) > 0 ? bestByMode[mode] : '—') + '</b></div>' +
       '</div>' +
-      '<button type="button" class="btn primary" id="again">再来一局</button>';
+      '<button type="button" class="btn primary" id="again">再来一局</button>' +
+      '<button type="button" class="btn ghost" id="menuBtn">换个模式</button>';
     overlay.classList.add('on');
-    ovCard.querySelector('#again').addEventListener('click', start);
+    ovCard.querySelector('#again').addEventListener('click', function () { start(mode); });
+    ovCard.querySelector('#menuBtn').addEventListener('click', showStart);
   }
 
   function showStart() {
+    over = false; running = false; paused = false; locked = false;
+    pauseBtn.textContent = '暂停';
+    board.classList.remove('faded');
+    score = 0; combo = 0; found = 0; boardNo = 0; lives = 0; skips = 0;
+    if (modeCfg.time) { totalMs = modeCfg.time; left = totalMs; boardLeft = 0; }
+    else { totalMs = modeCfg.boardMs; left = 0; boardLeft = totalMs; }
     overlay.classList.add('on');
-    ovCard.innerHTML =
-      '<div class="kicker">60 秒挑战</div>' +
+
+    var html = '<div class="kicker">选择模式</div>' +
       '<h2>汉字找茬</h2>' +
-      '<p>在一堆相同的汉字里，找出那个不一样的。找对加分并换新棋盘，点错扣 3 秒。</p>' +
-      '<div class="res-grid">' +
-        '<div><span>历史最佳</span><b>' + (best > 0 ? best : '—') + '</b></div>' +
-        '<div><span>挑战时间</span><b>60 秒</b></div>' +
-        '<div><span>题库</span><b>' + PAIRS.length + ' 组</b></div>' +
-        '<div><span>已找出</span><b>' + seenCount + ' / ' + PAIRS.length + '</b></div>' +
-      '</div>' +
-      '<button type="button" class="btn primary" id="startBtn">开始挑战</button>';
-    ovCard.querySelector('#startBtn').addEventListener('click', start);
+      '<p>六种找法，同一套形近字题库。选一个模式开始。</p>' +
+      '<div class="mode-grid">';
+    for (var i = 0; i < MODE_ORDER.length; i++) {
+      var key = MODE_ORDER[i];
+      var cfg = MODE_DEFS[key];
+      var best = bestByMode[key] || 0;
+      html += '<button type="button" class="mode" data-mode="' + key + '">' +
+        '<strong>' + cfg.name + '</strong>' +
+        '<span class="m-tag">' + cfg.tag + '</span>' +
+        '<em>' + cfg.desc + '</em>' +
+        '<i>最佳 ' + (best > 0 ? best : '—') + '</i>' +
+      '</button>';
+    }
+    html += '</div>' +
+      '<div class="menu-foot">已找出 <b>' + seenCount + ' / ' + PAIRS.length + '</b> 组形近字 · 提示会消耗时间</div>';
+    ovCard.innerHTML = html;
+
+    var btns = ovCard.querySelectorAll('.mode');
+    for (var k = 0; k < btns.length; k++) {
+      btns[k].addEventListener('click', function () { start(this.dataset.mode); });
+    }
+    updateModeChrome();
+    updateHud();
+    modeNote.textContent = '选择模式';
+    timeLabel.textContent = '时间';
+    seenLabel.textContent = '进度';
+    timeEl.textContent = '—';
+    seenEl.textContent = seenCount + ' / ' + PAIRS.length;
+    timeFill.style.width = '100%';
+    timebar.classList.remove('low');
   }
 
   function togglePause() {
@@ -493,12 +792,14 @@
       ovCard.innerHTML =
         '<div class="kicker">PAUSED</div>' +
         '<h2>已暂停</h2>' +
-        '<p>计时已经停住，准备好再继续。</p>' +
+        '<p>' + modeCfg.name + '模式 · 计时已经停住。</p>' +
         '<button type="button" class="btn primary" id="resume">继续游戏</button>' +
-        '<button type="button" class="btn ghost" id="quit">重新开始</button>';
+        '<button type="button" class="btn ghost" id="quit">重新开始</button>' +
+        '<button type="button" class="btn ghost" id="menuBtn">返回模式选择</button>';
       overlay.classList.add('on');
       ovCard.querySelector('#resume').addEventListener('click', togglePause);
-      ovCard.querySelector('#quit').addEventListener('click', start);
+      ovCard.querySelector('#quit').addEventListener('click', function () { start(mode); });
+      ovCard.querySelector('#menuBtn').addEventListener('click', showStart);
     } else {
       overlay.classList.remove('on');
     }
@@ -507,21 +808,23 @@
   board.addEventListener('click', function (e) {
     if (e.target === overlay) e.stopPropagation();
   });
+  hintBtn.addEventListener('click', function () { useHint(); this.blur(); });
   pauseBtn.addEventListener('click', function () { togglePause(); this.blur(); });
-  restartBtn.addEventListener('click', function () { start(); this.blur(); });
+  restartBtn.addEventListener('click', function () { start(mode); this.blur(); });
   skipBtn.addEventListener('click', function () { skip(); this.blur(); });
   document.addEventListener('keydown', function (e) {
     if (e.key === ' ') { e.preventDefault(); togglePause(); }
-    if (e.key.toLowerCase() === 'r') start();
+    if (e.key.toLowerCase() === 'r') start(mode);
+    if (e.key.toLowerCase() === 'h') useHint();
+    if (e.key === 'Escape' && running) showStart();
   });
   window.addEventListener('resize', layoutFont);
 
-  // build an empty board first, then show start overlay
+  loadBests();
   board.innerHTML = '';
   board.appendChild(overlay);
   showStart();
-  updateHud();
-  raf = requestAnimationFrame(loop);
+  timerId = setInterval(tick, 100);
 })();
 </script>
 </body>

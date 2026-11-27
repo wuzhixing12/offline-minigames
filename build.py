@@ -8,8 +8,8 @@
   python3 build.py new  mygame          生成 games/mygame.html 骨架 + index.html 占位块
 
 说明：
-  index.html 里 24 款老游戏（breakout / snake / tetris ...）在并入时已经去掉了各自的
-  <html><head> 外层，代码混在主文档里；对这些游戏，继续用编辑器手动改 index.html 即可。
+  index.html 里 80 款游戏的完整 HTML 都以 <textarea id="src-*" hidden> 内联在主文档里；
+  games/*.html 是从中拆出的独立副本，改动仍以 index.html 为准。
 
   从本脚本 new 命令创建的**新游戏**会有清晰的 INLINE 标记：
     <!-- INLINE: mygame -->   完整独立游戏 HTML   <!-- /INLINE: mygame -->

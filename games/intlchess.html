@@ -1,0 +1,2010 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Gambit · 国际象棋</title>
+<meta name="description" content="一款规则完整的国际象棋单页游戏，支持人机对战、双人对战、王车易位、吃过路兵、兵升变与完整和棋判定。">
+<style>
+  :root{
+    --serif:"Iowan Old Style","Palatino Linotype","Book Antiqua",Georgia,"Songti SC","STSong",serif;
+    --sans:"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,-apple-system,sans-serif;
+    --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+
+    --seed-paper:#f3ede2;
+    --seed-paper-2:#e9dfcd;
+    --seed-ink:#241f18;
+    --ink-2:#5a5042;
+    --ink-3:#6f6353;
+    --line:rgba(36,31,24,.12);
+    --green:#2c5c4b;
+    --green-deep:#1f4436;
+    --gold:#c09a5b;
+    --gold-soft:#e3cfa5;
+    --danger:#b2422f;
+    --sq-light-a:#efe3c9;
+    --sq-light-b:#e5d5b4;
+    --sq-dark-a:#9d7a56;
+    --sq-dark-b:#886848;
+    --card:rgba(255,251,243,.78);
+    --radius:16px;
+    --shadow:0 18px 40px -24px rgba(54,40,22,.45);
+    --focus:#8a6b3c;
+
+    /* 背景与表面 */
+    --bg-glow:#fffaf1;
+    --bg-warm:#f7ecd8;
+    --bg-hi:#f5efe4;
+    --bg-lo:#ece2d0;
+    --surface:#fffdf8;
+    --surface-dialog:#fbf7ee;
+    --surface-panel-a:#fdfaf2;
+    --surface-panel-b:#f1e6d2;
+    --tile:#f2e9d9;
+
+    /* 棋手头像 */
+    --avatar-light:#fcf7ec;
+    --avatar-ink:#2b2219;
+    --avatar-dark:#241c14;
+    --avatar-dark-ink:#f1e5cf;
+
+    /* 主色与状态卡 */
+    --green-cta:#356553;
+    --green-cta-deep:#1d3d30;
+    --green-cta-mid:#244c3d;
+    --green-hover:#3b6d5a;
+    --cream:#f6ecd6;
+    --cream-bright:#f8f2e4;
+    --status-a:#2f5b4a;
+    --status-b:#204335;
+    --status-c:#1b392d;
+    --status-text:#f4ecda;
+    --status-title:#fbf5e7;
+    --danger-soft:#f4b6a0;
+    --turn-light:#f8f2e2;
+    --turn-dark:#14100c;
+
+    /* 木框与棋子 */
+    --walnut-hi:#4a3625;
+    --walnut-mid:#39291b;
+    --walnut-lo:#2a1e13;
+    --piece-light:#fbf6e9;
+    --piece-light-stroke:#33271b;
+    --piece-dark:#1e1812;
+    --piece-dark-stroke:#2f2418;
+    --promo-dark:#201a14;
+    --coord-light:#6b5537;
+    --coord-dark:#f3e5c9;
+  }
+
+  *{box-sizing:border-box}
+  html,body{overflow-x:hidden}
+  body{
+    margin:0;
+    min-height:100vh;
+    font-family:var(--sans);
+    font-size:15px;
+    line-height:1.55;
+    color:var(--seed-ink);
+    background:
+      radial-gradient(1100px 620px at 12% -8%, var(--bg-glow) 0%, rgba(255,250,241,0) 62%),
+      radial-gradient(900px 520px at 108% 4%, var(--bg-warm) 0%, rgba(247,236,216,0) 58%),
+      linear-gradient(160deg,var(--bg-hi) 0%,var(--bg-lo) 100%);
+    -webkit-font-smoothing:antialiased;
+  }
+  body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    z-index:0;
+    pointer-events:none;
+    opacity:.7;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.05'/%3E%3C/svg%3E");
+  }
+
+  h1,h2,h3{font-family:var(--serif);font-weight:600;letter-spacing:.01em;margin:0}
+  p{margin:0}
+  button{font-family:inherit}
+  [hidden]{display:none !important}
+
+  .page{
+    position:relative;
+    z-index:1;
+    max-width:1220px;
+    margin:0 auto;
+    padding:24px clamp(16px,3vw,40px) 44px;
+  }
+
+  /* ---------- 顶栏 ---------- */
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    padding-bottom:18px;
+    border-bottom:1px solid var(--line);
+  }
+  .brand{display:flex;align-items:center;gap:13px;min-width:0}
+  .brand-mark{
+    width:46px;height:46px;flex:none;
+    display:grid;place-items:center;
+    border-radius:13px;
+    background:linear-gradient(150deg,var(--green-cta),var(--green-cta-deep));
+    color:var(--cream);
+    font-family:"Segoe UI Symbol","Apple Symbols","DejaVu Sans",sans-serif;
+    font-size:27px;
+    line-height:1;
+    box-shadow:inset 0 0 0 1px rgba(227,207,165,.38),0 10px 22px -12px rgba(29,61,48,.9);
+    padding-bottom:2px;
+  }
+  .brand-text{min-width:0}
+  .brand-text h1{
+    font-size:22px;
+    letter-spacing:.16em;
+    line-height:1.1;
+    text-transform:uppercase;
+  }
+  .brand-text p{
+    margin-top:4px;
+    font-size:11.5px;
+    letter-spacing:.09em;
+    color:var(--ink-3);
+    white-space:nowrap;
+  }
+  .top-actions{display:flex;align-items:center;gap:8px;flex:none}
+
+  /* ---------- 通用按钮 ---------- */
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:7px;
+    padding:9px 14px;
+    border:1px solid var(--line);
+    border-radius:10px;
+    background:rgba(255,252,246,.65);
+    color:var(--seed-ink);
+    font-size:13px;
+    font-weight:500;
+    letter-spacing:.01em;
+    cursor:pointer;
+    white-space:nowrap;
+    transition:background .18s ease,border-color .18s ease,transform .18s ease,box-shadow .18s ease,color .18s ease;
+  }
+  .btn:hover{
+    background:var(--surface);
+    border-color:rgba(36,31,24,.28);
+    transform:translateY(-1px);
+    box-shadow:0 6px 14px -10px rgba(50,36,20,.5);
+  }
+  .btn:active{transform:none;box-shadow:none}
+  .btn:disabled{opacity:.42;cursor:not-allowed;transform:none;box-shadow:none}
+  .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+  .btn svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+  .btn.primary{
+    background:linear-gradient(150deg,var(--green-cta),var(--green-cta-mid));
+    border-color:rgba(31,68,54,.9);
+    color:var(--cream-bright);
+    box-shadow:0 10px 20px -14px rgba(31,68,54,.9);
+  }
+  .btn.primary:hover{background:linear-gradient(150deg,var(--green-hover),var(--green-deep))}
+  .btn.icon{width:38px;height:38px;padding:0}
+  .btn.link{padding:4px 8px;border:0;background:none;color:var(--ink-3);font-size:12px}
+  .btn.link:hover{color:var(--seed-ink);transform:none;box-shadow:none;text-decoration:underline;text-underline-offset:3px}
+
+  /* ---------- 布局 ---------- */
+  .layout{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 352px;
+    gap:clamp(20px,3vw,38px);
+    align-items:start;
+    margin-top:26px;
+  }
+  .board-area{min-width:0;display:flex;justify-content:center}
+  .board-col{
+    width:min(100%,700px,max(320px,calc(100vh - 300px)));
+    display:flex;flex-direction:column;gap:2px;
+  }
+
+  /* ---------- 棋手条 ---------- */
+  .player-strip{width:100%;display:flex;align-items:center;min-height:48px;padding:7px 2px}
+  .player{display:flex;align-items:center;gap:10px;width:100%;min-width:0}
+  .avatar{
+    width:30px;height:30px;flex:none;
+    display:grid;place-items:center;
+    border-radius:9px;
+    font-family:"Segoe UI Symbol","Apple Symbols","DejaVu Sans",sans-serif;
+    font-size:18px;line-height:1;
+    border:1px solid rgba(36,31,24,.16);
+    transition:box-shadow .25s ease;
+    padding-bottom:1px;
+  }
+  .avatar.w{background:var(--avatar-light);color:var(--avatar-ink)}
+  .avatar.b{background:var(--avatar-dark);color:var(--avatar-dark-ink);border-color:var(--avatar-dark)}
+  .player.active .avatar{box-shadow:0 0 0 3px rgba(192,154,91,.3)}
+  .who{display:flex;align-items:center;gap:7px;flex:none;min-width:0}
+  .name{font-size:13px;font-weight:600;letter-spacing:.01em}
+  .player.active .name{color:var(--green-deep)}
+  .tag{font-size:11px;color:var(--ink-3);white-space:nowrap}
+  .live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex:none;animation:pulse 1.4s ease-in-out infinite}
+  .caps{
+    flex:1;min-width:0;
+    display:flex;align-items:center;gap:0;
+    font-family:"Segoe UI Symbol","Apple Symbols","DejaVu Sans",sans-serif;
+    font-size:15px;line-height:1;
+    color:var(--ink-3);
+    overflow:hidden;
+    white-space:nowrap;
+  }
+  .cap{letter-spacing:-.09em;opacity:.8}
+  .cap-empty{font-family:var(--sans);font-size:11px;letter-spacing:0;opacity:.5}
+  .adv{
+    flex:none;
+    font-family:var(--mono);
+    font-size:11.5px;font-weight:600;
+    color:var(--green-deep);
+    background:rgba(44,92,75,.1);
+    border-radius:20px;
+    padding:2px 8px;
+  }
+
+  /* ---------- 棋盘 ---------- */
+  .board-shell{
+    position:relative;
+    width:100%;
+    padding:clamp(8px,1.5vw,16px);
+    border-radius:18px;
+    background:
+      radial-gradient(130% 120% at 0% 0%, rgba(255,255,255,.1), rgba(255,255,255,0) 46%),
+      linear-gradient(150deg,var(--walnut-hi) 0%,var(--walnut-mid) 56%,var(--walnut-lo) 100%);
+    box-shadow:0 32px 58px -30px rgba(43,31,19,.75),inset 0 1px 0 rgba(255,255,255,.1);
+  }
+  .board-shell::after{
+    content:"";
+    position:absolute;inset:4px;
+    border:1px solid rgba(198,161,106,.32);
+    border-radius:14px;
+    pointer-events:none;
+  }
+  .board{
+    position:relative;
+    display:grid;
+    grid-template-columns:repeat(8,1fr);
+    grid-template-rows:repeat(8,1fr);
+    aspect-ratio:1/1;
+    border-radius:6px;
+    overflow:hidden;
+    container-type:inline-size;
+    touch-action:manipulation;
+    box-shadow:0 0 0 1px rgba(0,0,0,.4),inset 0 0 0 1px rgba(255,255,255,.05);
+  }
+  .sq{
+    position:relative;
+    display:grid;place-items:center;
+    border:0;padding:0;margin:0;
+    background:none;
+    color:inherit;font:inherit;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .sq.light{background:linear-gradient(140deg,var(--sq-light-a),var(--sq-light-b))}
+  .sq.dark{background:linear-gradient(140deg,var(--sq-dark-a),var(--sq-dark-b))}
+  .sq:focus{outline:none}
+  .sq:focus-visible{outline:2px solid var(--gold);outline-offset:-4px;z-index:4}
+  .sq.selectable,.sq.movable{cursor:pointer}
+  .board.locked .sq{cursor:default}
+
+  .sq.last::before{content:"";position:absolute;inset:0;background:rgba(205,168,95,.3);pointer-events:none}
+  .sq.selected::before{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:rgba(214,176,101,.48);
+    box-shadow:inset 0 0 0 3px rgba(44,92,75,.6);
+  }
+  .sq.in-check::after{
+    content:"";position:absolute;inset:4%;border-radius:50%;pointer-events:none;
+    background:radial-gradient(circle at center,rgba(182,62,40,.8) 0%,rgba(182,62,40,.35) 42%,rgba(182,62,40,0) 72%);
+    animation:checkGlow 1.5s ease-in-out infinite;
+  }
+  @keyframes checkGlow{0%,100%{opacity:.85}50%{opacity:.45}}
+
+  .dot{
+    position:relative;z-index:1;
+    width:26%;aspect-ratio:1;
+    border-radius:50%;
+    background:rgba(28,56,44,.38);
+    box-shadow:0 0 0 1px rgba(255,255,255,.14);
+  }
+  .dot.ring{
+    width:80%;
+    background:transparent;
+    border:.28cqw solid rgba(28,56,44,.46);
+    box-shadow:none;
+  }
+  .sq.movable:hover::before{content:"";position:absolute;inset:0;background:rgba(255,255,255,.16);pointer-events:none}
+  .sq.movable:hover .dot{transform:scale(1.08);transition:transform .12s ease}
+
+  .piece{
+    position:relative;z-index:2;
+    line-height:1;
+    font-family:"Segoe UI Symbol","Apple Symbols","DejaVu Sans",sans-serif;
+    font-size:9.3cqw;
+    transform:translateY(-1%);
+    pointer-events:none;
+    user-select:none;
+    filter:drop-shadow(0 .35cqw .3cqw rgba(25,16,8,.42));
+    transition:transform .14s ease;
+  }
+  .piece.w{color:var(--piece-light);-webkit-text-stroke:.33cqw var(--piece-light-stroke)}
+  .piece.b{color:var(--piece-dark);-webkit-text-stroke:.18cqw rgba(255,246,230,.38)}
+  .sq.selectable:hover .piece{transform:translateY(-5%)}
+  .sq.movable:hover .piece{transform:translateY(-4%) scale(1.02)}
+
+  .coord{
+    position:absolute;z-index:3;
+    font-size:clamp(8px,1.5cqw,11px);
+    font-weight:600;
+    line-height:1;
+    letter-spacing:.04em;
+    opacity:.7;
+    pointer-events:none;
+  }
+  .coord.file{right:.6cqw;bottom:.55cqw}
+  .coord.rank{left:.6cqw;top:.5cqw}
+  .light .coord{color:var(--coord-light)}
+  .dark .coord{color:var(--coord-dark)}
+
+  /* ---------- 棋盘浮层 ---------- */
+  .overlay{
+    position:absolute;inset:0;z-index:30;
+    display:grid;place-items:center;
+    padding:18px;
+    border-radius:18px;
+    background:rgba(32,24,15,.55);
+    backdrop-filter:blur(4px);
+    -webkit-backdrop-filter:blur(4px);
+  }
+  .promo-card,.result-card{
+    width:min(100%,320px);
+    padding:22px 24px 20px;
+    text-align:center;
+    border-radius:14px;
+    background:linear-gradient(165deg,var(--surface-panel-a),var(--surface-panel-b));
+    border:1px solid rgba(192,154,91,.55);
+    box-shadow:0 28px 60px -22px rgba(18,12,5,.6);
+  }
+  .overlay-eyebrow{
+    font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--green);margin-bottom:6px;
+  }
+  .promo-card h3{font-size:19px;margin-bottom:14px}
+  .promo-options{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+  .promo-btn{
+    width:100%;height:56px;
+    display:grid;place-items:center;
+    border:1px solid rgba(36,31,24,.14);
+    border-radius:11px;
+    background:var(--surface);
+    cursor:pointer;
+    transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease;
+  }
+  .promo-btn:hover{transform:translateY(-2px);border-color:var(--gold);box-shadow:0 10px 18px -12px rgba(60,45,25,.55)}
+  .promo-btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+  .promo-glyph{
+    font-family:"Segoe UI Symbol","Apple Symbols","DejaVu Sans",sans-serif;
+    font-size:clamp(26px,3.2vw,34px);line-height:1;
+  }
+  .promo-glyph.w{color:var(--piece-light);-webkit-text-stroke:1.3px var(--piece-dark-stroke);text-shadow:0 1px 2px rgba(0,0,0,.28)}
+  .promo-glyph.b{color:var(--promo-dark);-webkit-text-stroke:.7px rgba(255,244,224,.45)}
+
+  .result-card h2{font-size:27px;letter-spacing:.02em}
+  .result-card p#resultSub{margin-top:6px;font-size:13px;color:var(--ink-2);line-height:1.6}
+  .result-actions{display:flex;justify-content:center;gap:8px;margin-top:18px}
+
+  /* ---------- 侧栏 ---------- */
+  .panel{display:flex;flex-direction:column;gap:14px;min-width:0}
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:16px 18px;
+    box-shadow:var(--shadow);
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+  }
+  .card-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .eyebrow{
+    font-size:10px;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--ink-3);
+    margin:0 0 3px;
+  }
+  .card-meta{font-size:11.5px;color:var(--ink-3);white-space:nowrap}
+
+  .status-card{
+    background:
+      radial-gradient(120% 130% at 100% 0%, rgba(227,207,165,.16), rgba(227,207,165,0) 55%),
+      linear-gradient(155deg,var(--status-a) 0%,var(--status-b) 62%,var(--status-c) 100%);
+    border-color:rgba(255,255,255,.09);
+    color:var(--status-text);
+    box-shadow:0 26px 46px -28px rgba(24,52,40,.95);
+    padding:18px;
+  }
+  .status-top{display:flex;align-items:center;gap:12px}
+  .status-card .eyebrow{color:rgba(244,236,218,.55)}
+  .status-card h2{font-size:21px;line-height:1.2;color:var(--status-title)}
+  .status-sub{margin:10px 0 0 25px;font-size:12.5px;color:rgba(244,236,218,.72);min-height:18px}
+  .status-sub.danger{color:var(--danger-soft);font-weight:600}
+  .turn-dot{
+    width:13px;height:13px;border-radius:50%;flex:none;
+    position:relative;
+  }
+  .turn-dot.w{background:var(--turn-light);box-shadow:0 0 0 4px rgba(248,242,226,.16)}
+  .turn-dot.b{background:var(--turn-dark);border:1px solid rgba(255,255,255,.28);box-shadow:0 0 0 4px rgba(192,154,91,.3)}
+  .turn-dot.idle{background:var(--gold);box-shadow:0 0 0 4px rgba(192,154,91,.2)}
+  .turn-dot.thinking{animation:pulse 1.1s ease-in-out infinite}
+  @keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(.78);opacity:.55}}
+
+  .control-row{display:flex;gap:8px;margin:12px 0 4px}
+  .control-row .btn{flex:1;min-width:0}
+  .control-row .btn.icon{flex:0 0 40px;width:40px;height:40px}
+  .setting-row{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:8px 0 2px;
+  }
+  .setting-row + .setting-row{border-top:1px dashed rgba(36,31,24,.1);margin-top:6px;padding-top:10px}
+  .setting-label{font-size:12px;color:var(--ink-2);white-space:nowrap}
+  .seg{
+    display:inline-flex;gap:2px;padding:3px;
+    background:rgba(36,31,24,.045);
+    border:1px solid var(--line);
+    border-radius:9px;
+  }
+  .seg button{
+    border:0;background:transparent;
+    padding:5px 11px;border-radius:6px;
+    font-size:12px;color:var(--ink-2);
+    cursor:pointer;
+    transition:background .15s ease,color .15s ease,box-shadow .15s ease;
+  }
+  .seg button:hover{color:var(--seed-ink)}
+  .seg button.on{
+    background:var(--surface);color:var(--seed-ink);
+    font-weight:600;
+    box-shadow:0 1px 3px rgba(40,30,18,.14);
+  }
+  .seg button:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
+
+  .moves-body{
+    margin-top:9px;
+    max-height:min(246px,32vh);
+    overflow:auto;
+    scrollbar-width:thin;
+  }
+  .moves-body::-webkit-scrollbar{width:6px}
+  .moves-body::-webkit-scrollbar-thumb{background:rgba(36,31,24,.18);border-radius:3px}
+  .moves-empty{padding:22px 0;text-align:center;font-size:12.5px;color:var(--ink-3);opacity:.8}
+  .move-row{
+    display:grid;grid-template-columns:34px minmax(0,1fr) minmax(0,1fr);
+    gap:6px;align-items:baseline;
+    padding:5px 6px;border-radius:6px;
+    font-family:var(--mono);
+    font-size:12.5px;
+  }
+  .move-row:nth-child(odd){background:rgba(36,31,24,.028)}
+  .move-row.latest{background:rgba(192,154,91,.18)}
+  .move-row .num{color:var(--ink-3);font-size:11.5px}
+  .move-row .san{color:var(--seed-ink);letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  .hint-card{
+    display:flex;align-items:center;gap:9px;
+    padding:11px 14px;
+    border:1px dashed rgba(36,31,24,.2);
+    border-radius:12px;
+    background:rgba(255,252,246,.42);
+    color:var(--ink-2);
+    font-size:11.5px;
+    line-height:1.5;
+  }
+  .hint-dot{width:8px;height:8px;border-radius:50%;background:rgba(28,56,44,.4);flex:none}
+  .hint-ring{width:11px;height:11px;border-radius:50%;border:2px solid rgba(28,56,44,.42);flex:none}
+
+  .foot{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    margin-top:32px;padding-top:16px;
+    border-top:1px solid var(--line);
+    font-size:11px;color:var(--ink-3);
+    letter-spacing:.03em;
+  }
+
+  /* ---------- 规则弹层 ---------- */
+  .rules-dialog{
+    width:min(700px,calc(100vw - 28px));
+    max-height:86vh;
+    margin:auto;
+    padding:0;
+    border:0;
+    border-radius:18px;
+    background:var(--surface-dialog);
+    color:var(--seed-ink);
+    box-shadow:0 40px 90px -32px rgba(20,14,8,.7);
+    overflow:hidden;
+  }
+  .rules-dialog[open]{display:flex;flex-direction:column}
+  .rules-dialog::backdrop{background:rgba(28,22,15,.5);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+  .rules-head{
+    flex:none;
+    display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
+    padding:22px 26px 16px;
+    border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,var(--surface-panel-a),var(--surface-dialog));
+  }
+  .rules-head h2{font-size:22px;line-height:1.25}
+  .rules-body{
+    overflow:auto;
+    padding:6px 26px 28px;
+    scrollbar-width:thin;
+  }
+  .rules-body::-webkit-scrollbar{width:7px}
+  .rules-body::-webkit-scrollbar-thumb{background:rgba(36,31,24,.18);border-radius:4px}
+  .rule-section{padding-top:18px}
+  .rule-section + .rule-section{border-top:1px dashed rgba(36,31,24,.12);margin-top:18px}
+  .rule-section h3{
+    display:flex;align-items:baseline;gap:10px;
+    font-size:16.5px;margin-bottom:8px;
+  }
+  .rule-num{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;
+    color:var(--gold);font-style:normal;
+  }
+  .rule-section p{font-size:13px;line-height:1.75;color:var(--ink-2)}
+  .piece-list{display:grid;grid-template-columns:1fr 1fr;gap:12px 20px;margin-top:12px}
+  .piece-row{display:flex;gap:10px;align-items:flex-start}
+  .piece-icon{
+    width:36px;height:36px;flex:none;
+    display:grid;place-items:center;
+    border:1px solid var(--line);
+    border-radius:9px;
+    background:var(--tile);
+    font-family:"Segoe UI Symbol","Apple Symbols","DejaVu Sans",sans-serif;
+    font-size:23px;line-height:1;
+    padding-bottom:2px;
+  }
+  .piece-row strong{display:block;font-size:12.5px;font-weight:600}
+  .piece-row span{display:block;font-size:11.5px;color:var(--ink-2);line-height:1.6}
+  .rule-list{margin:8px 0 0;padding-left:17px;display:grid;gap:7px}
+  .rule-list li{font-size:12.5px;line-height:1.7;color:var(--ink-2)}
+  .rule-list li::marker{color:var(--gold)}
+  .rule-note{
+    margin-top:14px;padding:10px 12px;
+    border-left:2px solid var(--gold);
+    background:rgba(192,154,91,.1);
+    border-radius:0 8px 8px 0;
+    font-size:12px;color:var(--ink-2);
+    line-height:1.65;
+  }
+
+  /* ---------- 响应式 ---------- */
+  @media (max-width:1040px){
+    .layout{grid-template-columns:1fr;gap:22px}
+    .board-col{width:min(100%,640px);margin:0 auto;order:1}
+    .panel{width:min(100%,640px);margin:0 auto}
+  }
+  @media (max-width:560px){
+    .page{padding:16px 13px 30px}
+    .topbar{padding-bottom:14px;gap:10px}
+    .brand-mark{width:40px;height:40px;font-size:23px;border-radius:11px}
+    .brand-text h1{font-size:19px;letter-spacing:.13em}
+    .brand-text p{font-size:10.5px;letter-spacing:.05em}
+    .top-actions{gap:6px}
+    .top-actions .btn:not(.icon){padding:8px 11px;font-size:12px}
+    .layout{margin-top:18px}
+    .card{padding:14px}
+    .status-card{padding:16px}
+    .status-card h2{font-size:19px}
+    .status-sub{margin-left:25px}
+    .moves-body{max-height:180px}
+    .player-strip{min-height:44px}
+    .caps{font-size:14px}
+    .foot{flex-direction:column;align-items:flex-start;gap:4px;margin-top:24px}
+    .rules-head{padding:18px 18px 14px}
+    .rules-head h2{font-size:19px}
+    .rules-body{padding:4px 18px 22px}
+    .piece-list{grid-template-columns:1fr}
+    .promo-card,.result-card{padding:18px 18px 16px}
+  }
+  @media (max-width:420px){
+    .brand{gap:10px}
+    .brand-text p{display:none}
+    .top-actions .btn:not(.icon){padding:8px 9px;font-size:11.5px}
+    .player{gap:8px}
+    .avatar{width:28px;height:28px;font-size:17px}
+    .who{gap:5px}
+    .tag{font-size:10px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important}
+  }
+  @supports not (container-type:inline-size){
+    .piece{font-size:42px}
+    .coord{font-size:10px}
+  }
+</style>
+<style id="tx-aurora-skin">
+/* tx-aurora-skin:intlchess */
+:root{--tx-a1:#b08d57;--tx-a2:#3f7d5a;}
+html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+::selection{background:rgba(176,141,87,0.38);color:#2b2110}
+*::-webkit-scrollbar{width:8px;height:8px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:rgba(176,141,87,0.26);border-radius:99px;border:2px solid transparent;background-clip:content-box}
+*::-webkit-scrollbar-thumb:hover{background:rgba(176,141,87,0.46);background-clip:content-box}
+body{background-color:#f4efe4!important;background-image:radial-gradient(1100px 640px at 8% -12%, rgba(176,141,87,0.16), transparent 62%), radial-gradient(900px 680px at 104% 112%, rgba(63,125,90,0.12), transparent 62%)!important}
+button{transition:transform .14s ease,filter .16s ease,box-shadow .2s ease,border-color .16s ease,background-color .16s ease}
+button:hover{filter:brightness(1.07)}
+button:active{transform:translateY(1px) scale(.995)}
+button:focus-visible{outline:2px solid rgba(176,141,87,0.72);outline-offset:2px}
+.overlay,.modal,.dialog,.sheet,#levels,#loading{background-image:radial-gradient(900px 520px at 50% 0%,rgba(176,141,87,0.15),transparent 62%),radial-gradient(720px 520px at 50% 100%,rgba(63,125,90,0.08),transparent 60%)!important}
+.overlay,.modal,.dialog,.sheet{backdrop-filter:blur(9px) saturate(1.1)}
+.overlay h1,.modal h1,.screen h1,.overlay-card h1,.win-card h1,.result-card h1,.bcard .btitle,.loadcard .ltitle{text-shadow:0 2px 30px rgba(176,141,87,0.45)}
+.overlay .screen,.overlay .panel,.overlay-card,.modal .panel,.win-card,.result-card,.bcard,.loadcard,.rules-dialog,.panel{box-shadow:0 30px 80px -34px rgba(84,62,34,.55), inset 0 1px 0 rgba(255,255,255,.7)!important}
+.bcard,.loadcard{border-color:rgba(176,141,87,0.34)!important}
+.overlay .panel,.overlay-card,.win-card,.result-card,.modal .panel{backdrop-filter:blur(10px) saturate(1.08);border-color:rgba(176,141,87,0.26)!important}
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="topbar" data-component="app-header">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">♞</div>
+      <div class="brand-text">
+        <h1>Gambit</h1>
+        <p>国际象棋 · 完整规则单机版</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button type="button" class="btn icon" id="soundBtn" title="关闭音效" aria-label="切换音效" aria-pressed="true">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L13 5v14L7.5 14.5H4z"/><path d="M16.5 9.2a4.4 4.4 0 0 1 0 5.6"/></svg>
+      </button>
+      <button type="button" class="btn" id="rulesBtn">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 5.5A2.5 2.5 0 0 1 7 3h12.5v15H7a2.5 2.5 0 0 0-2.5 2.5v-15z"/><path d="M4.5 20.5A2.5 2.5 0 0 1 7 18h12.5"/></svg>
+        <span>规则</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="layout" data-component="game-layout">
+    <section class="board-area" data-component="game-board" aria-label="对局棋盘">
+      <div class="board-col">
+        <div class="player-strip" id="topPlayer"></div>
+        <div class="board-shell">
+          <div class="board" id="board" aria-label="国际象棋棋盘"></div>
+
+          <div class="overlay" id="promoOverlay" hidden>
+            <div class="promo-card" role="dialog" aria-modal="true" aria-labelledby="promoTitle">
+              <p class="overlay-eyebrow">Promotion</p>
+              <h3 id="promoTitle">选择升变棋子</h3>
+              <div class="promo-options" id="promoOptions"></div>
+              <button type="button" class="btn link" id="promoCancel">取消这一步</button>
+            </div>
+          </div>
+
+          <div class="overlay" id="endOverlay" hidden>
+            <div class="result-card" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+              <p class="overlay-eyebrow">Game Over</p>
+              <h2 id="resultTitle">对局结束</h2>
+              <p id="resultSub"></p>
+              <div class="result-actions">
+                <button type="button" class="btn primary" id="againBtn">再来一局</button>
+                <button type="button" class="btn" id="dismissBtn">查看棋盘</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="player-strip" id="bottomPlayer"></div>
+      </div>
+    </section>
+
+    <aside class="panel" data-component="game-panel">
+      <div class="card status-card" data-component="turn-status">
+        <div class="status-top">
+          <span class="turn-dot w" id="turnDot" aria-hidden="true"></span>
+          <div>
+            <p class="eyebrow">当前回合</p>
+            <h2 id="statusTitle">轮到你走棋</h2>
+          </div>
+        </div>
+        <p class="status-sub" id="statusSub" aria-live="polite">点击己方棋子查看可走位置</p>
+      </div>
+
+      <div class="card" data-component="game-settings">
+        <div class="card-head">
+          <p class="eyebrow">对局设置</p>
+          <span class="card-meta" id="modeMeta">人机对弈 · 标准</span>
+        </div>
+        <div class="control-row">
+          <button type="button" class="btn primary" id="newBtn">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a8 8 0 1 1-2.4-5.6"/><path d="M20 4.5v6h-6"/></svg>
+            <span>新对局</span>
+          </button>
+          <button type="button" class="btn" id="undoBtn">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 14.5 4.5 9.5l5-5"/><path d="M4.5 9.5h9a5.5 5.5 0 0 1 0 11H9"/></svg>
+            <span>悔棋</span>
+          </button>
+          <button type="button" class="btn icon" id="flipBtn" title="翻转棋盘" aria-label="翻转棋盘">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v17"/><path d="m8 7.5 4-4 4 4"/><path d="m8 16.5 4 4 4-4"/></svg>
+          </button>
+        </div>
+        <div class="setting-row">
+          <span class="setting-label">模式</span>
+          <div class="seg" id="modeSeg" role="group" aria-label="对局模式">
+            <button type="button" data-mode="ai">人机</button>
+            <button type="button" data-mode="pvp">双人</button>
+          </div>
+        </div>
+        <div class="setting-row" id="sideRow">
+          <span class="setting-label">执子</span>
+          <div class="seg" id="sideSeg" role="group" aria-label="选择执子">
+            <button type="button" data-side="w">执白</button>
+            <button type="button" data-side="b">执黑</button>
+          </div>
+        </div>
+        <div class="setting-row" id="levelRow">
+          <span class="setting-label">难度</span>
+          <div class="seg" id="levelSeg" role="group" aria-label="AI 难度">
+            <button type="button" data-level="1">入门</button>
+            <button type="button" data-level="2">标准</button>
+            <button type="button" data-level="3">进阶</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" data-component="move-log">
+        <div class="card-head">
+          <p class="eyebrow">棋谱</p>
+          <span class="card-meta" id="moveMeta">0 手</span>
+        </div>
+        <div class="moves-body" id="movesBody">
+          <div class="moves-empty">第一步由白方走出</div>
+        </div>
+      </div>
+
+      <div class="hint-card">
+        <span class="hint-dot" aria-hidden="true"></span>
+        <span class="hint-ring" aria-hidden="true"></span>
+        <p>圆点表示可走格，圆环表示可吃子；升变时在弹出面板中选择棋子。</p>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="foot" data-component="page-footer">
+    <span>GAMBIT · 本地单机对局 · 无需联网</span>
+    <span>规则依据 FIDE 基本竞赛规则精简说明</span>
+  </footer>
+</div>
+
+<dialog id="rulesDialog" class="rules-dialog" data-component="rules-reference" aria-labelledby="rulesTitle">
+  <div class="rules-head">
+    <div>
+      <p class="eyebrow">Rules</p>
+      <h2 id="rulesTitle">国际象棋规则速查</h2>
+    </div>
+    <button type="button" class="btn icon" id="closeRules" aria-label="关闭规则">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12"/><path d="m18 6-12 12"/></svg>
+    </button>
+  </div>
+  <div class="rules-body">
+    <section class="rule-section">
+      <h3><span class="rule-num">01</span>棋盘与目标</h3>
+      <p>棋盘为 8×8 方格，白方先行。白后在白格，白王起始于 e1，黑王起始于 e8。把对方的王置于无法解除的攻击之下（将死）即获胜。</p>
+    </section>
+
+    <section class="rule-section">
+      <h3><span class="rule-num">02</span>六种棋子走法</h3>
+      <div class="piece-list">
+        <div class="piece-row"><span class="piece-icon">♔</span><div><strong>王 King</strong><span>任意方向走 1 格，不能走入被攻击的格子。</span></div></div>
+        <div class="piece-row"><span class="piece-icon">♕</span><div><strong>后 Queen</strong><span>横、竖、斜线任意距离，不能越子。</span></div></div>
+        <div class="piece-row"><span class="piece-icon">♖</span><div><strong>车 Rook</strong><span>横线或竖线任意距离，不能越子。</span></div></div>
+        <div class="piece-row"><span class="piece-icon">♗</span><div><strong>象 Bishop</strong><span>斜线任意距离，不能越子；始终留在同色格。</span></div></div>
+        <div class="piece-row"><span class="piece-icon">♘</span><div><strong>马 Knight</strong><span>走“日”字（两格加一格），可以越过其他棋子。</span></div></div>
+        <div class="piece-row"><span class="piece-icon">♙</span><div><strong>兵 Pawn</strong><span>向前 1 格；初始位置可向前 2 格；斜前方吃子；不能后退。</span></div></div>
+      </div>
+    </section>
+
+    <section class="rule-section">
+      <h3><span class="rule-num">03</span>特殊规则</h3>
+      <ul class="rule-list">
+        <li><strong>王车易位：</strong>王与参与易位的车都未移动过，两者之间没有其他棋子，王不在将军中，且王经过与落点的格子都不被攻击。王向车方向移动 2 格，车越过王落在王的内侧。</li>
+        <li><strong>吃过路兵：</strong>一方的兵首次前进 2 格、与对方兵并排时，对方可以在紧接着的一步用该兵斜向吃掉它，落点是它经过的格子。</li>
+        <li><strong>兵升变：</strong>兵到达对方底线时，必须升变为后、车、象或马，不能保持为兵，也不能升变为王。</li>
+      </ul>
+    </section>
+
+    <section class="rule-section">
+      <h3><span class="rule-num">04</span>将军、将死与和棋</h3>
+      <ul class="rule-list">
+        <li><strong>将军：</strong>王正被对方棋子攻击，必须立即解除——移开王、吃掉攻击子或用其他子挡住线路。</li>
+        <li><strong>将死：</strong>被将军且没有任何合法走法，对局结束。</li>
+        <li><strong>逼和：</strong>轮到走棋的一方没有被将军，但没有任何合法走法，判和。</li>
+        <li><strong>其他和棋：</strong>子力不足以将死；连续 50 回合没有吃子、也没有兵移动；同一局面出现 3 次。本程序会自动判定以上三种和棋。</li>
+      </ul>
+      <div class="rule-note">本程序严格按照“走完后自己的王不能被攻击”来筛选合法走法，因此王车易位经过被攻击格、吃过路兵导致暴露王等情况都会被正确禁止。</div>
+    </section>
+
+    <section class="rule-section">
+      <h3><span class="rule-num">05</span>操作方式</h3>
+      <ul class="rule-list">
+        <li>点击己方棋子，棋盘上会显示全部合法落点；再次点击该棋子可取消选择。</li>
+        <li>点击绿点落子，点击圆环位置吃子。升变时在弹出的面板中选择升变棋子。</li>
+        <li>“悔棋”可撤销上一步；人机模式下会一直退回到你的回合。</li>
+        <li>“翻转棋盘”只改变视角，不改变棋局；“新对局”会清空当前棋谱。</li>
+      </ul>
+    </section>
+  </div>
+</dialog>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ============================================================
+     引擎：基础定义
+     ============================================================ */
+  const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+  const FILES = 'abcdefgh';
+  const GLYPH = { k: '\u265A', q: '\u265B', r: '\u265C', b: '\u265D', n: '\u265E', p: '\u265F' };
+  const NAME_CN = { k: '王', q: '后', r: '车', b: '象', n: '马', p: '兵' };
+  const VAL = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 0 };
+  const INITIAL_COUNT = { p: 8, n: 2, b: 2, r: 2, q: 1 };
+  const LEVEL_NAME = { 1: '入门', 2: '标准', 3: '进阶' };
+
+  const KNIGHT_DIRS = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+  const KING_DIRS = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+  const BISHOP_DIRS = [[-1,-1],[-1,1],[1,-1],[1,1]];
+  const ROOK_DIRS = [[-1,0],[1,0],[0,-1],[0,1]];
+  const QUEEN_DIRS = BISHOP_DIRS.concat(ROOK_DIRS);
+
+  const other = c => (c === 'w' ? 'b' : 'w');
+  const inBoard = (r, c) => r >= 0 && r < 8 && c >= 0 && c < 8;
+  const rowOf = i => i >> 3;
+  const colOf = i => i & 7;
+  const sqName = i => FILES[i & 7] + (8 - (i >> 3));
+
+  function parseFen(fen) {
+    const parts = fen.split(' ');
+    const board = new Array(64).fill(null);
+    let r = 0, c = 0;
+    for (const ch of parts[0]) {
+      if (ch === '/') { r++; c = 0; }
+      else if (ch >= '1' && ch <= '8') { c += Number(ch); }
+      else {
+        board[r * 8 + c] = { t: ch.toLowerCase(), c: ch === ch.toUpperCase() ? 'w' : 'b' };
+        c++;
+      }
+    }
+    const castling = parts[2] || '-';
+    const epText = parts[3] || '-';
+    return {
+      board,
+      turn: parts[1] === 'b' ? 'b' : 'w',
+      castling: {
+        wk: castling.includes('K'),
+        wq: castling.includes('Q'),
+        bk: castling.includes('k'),
+        bq: castling.includes('q')
+      },
+      ep: epText === '-' ? null : (FILES.indexOf(epText[0]) + (8 - Number(epText[1])) * 8),
+      half: Number(parts[4] || 0),
+      full: Number(parts[5] || 1)
+    };
+  }
+
+  function findKing(board, color) {
+    for (let i = 0; i < 64; i++) {
+      const p = board[i];
+      if (p && p.t === 'k' && p.c === color) return i;
+    }
+    return -1;
+  }
+
+  function isAttacked(board, sq, by) {
+    const r = rowOf(sq), c = colOf(sq);
+
+    const pawnRow = by === 'w' ? r + 1 : r - 1;
+    if (pawnRow >= 0 && pawnRow < 8) {
+      for (const dc of [-1, 1]) {
+        const cc = c + dc;
+        if (cc < 0 || cc > 7) continue;
+        const p = board[pawnRow * 8 + cc];
+        if (p && p.c === by && p.t === 'p') return true;
+      }
+    }
+
+    for (const [dr, dc] of KNIGHT_DIRS) {
+      const rr = r + dr, cc = c + dc;
+      if (!inBoard(rr, cc)) continue;
+      const p = board[rr * 8 + cc];
+      if (p && p.c === by && p.t === 'n') return true;
+    }
+
+    for (const [dr, dc] of KING_DIRS) {
+      const rr = r + dr, cc = c + dc;
+      if (!inBoard(rr, cc)) continue;
+      const p = board[rr * 8 + cc];
+      if (p && p.c === by && p.t === 'k') return true;
+    }
+
+    for (const [dr, dc] of BISHOP_DIRS) {
+      let rr = r + dr, cc = c + dc;
+      while (inBoard(rr, cc)) {
+        const p = board[rr * 8 + cc];
+        if (p) {
+          if (p.c === by && (p.t === 'b' || p.t === 'q')) return true;
+          break;
+        }
+        rr += dr; cc += dc;
+      }
+    }
+
+    for (const [dr, dc] of ROOK_DIRS) {
+      let rr = r + dr, cc = c + dc;
+      while (inBoard(rr, cc)) {
+        const p = board[rr * 8 + cc];
+        if (p) {
+          if (p.c === by && (p.t === 'r' || p.t === 'q')) return true;
+          break;
+        }
+        rr += dr; cc += dc;
+      }
+    }
+
+    return false;
+  }
+
+  function inCheck(s, color) {
+    const k = findKing(s.board, color);
+    return k >= 0 && isAttacked(s.board, k, other(color));
+  }
+
+  /* ============================================================
+     引擎：走法生成
+     ============================================================ */
+  function pushPawnMove(out, from, to, promoRow, captured) {
+    if (rowOf(to) === promoRow) {
+      for (const q of ['q', 'r', 'b', 'n']) {
+        out.push({ from, to, captured: captured || null, promo: q });
+      }
+    } else {
+      out.push({ from, to, captured: captured || null, promo: null });
+    }
+  }
+
+  function addCastles(s, out) {
+    const us = s.turn;
+    const b = s.board;
+    const them = other(us);
+    const home = us === 'w' ? 7 : 0;
+    const kingSq = home * 8 + 4;
+    const king = b[kingSq];
+    if (!king || king.t !== 'k' || king.c !== us) return;
+    if (isAttacked(b, kingSq, them)) return;
+
+    const kRight = us === 'w' ? s.castling.wk : s.castling.bk;
+    const qRight = us === 'w' ? s.castling.wq : s.castling.bq;
+
+    if (kRight && !b[home * 8 + 5] && !b[home * 8 + 6]) {
+      const rook = b[home * 8 + 7];
+      if (rook && rook.t === 'r' && rook.c === us &&
+          !isAttacked(b, home * 8 + 5, them) &&
+          !isAttacked(b, home * 8 + 6, them)) {
+        out.push({ from: kingSq, to: home * 8 + 6, captured: null, promo: null, castle: 'K' });
+      }
+    }
+
+    if (qRight && !b[home * 8 + 1] && !b[home * 8 + 2] && !b[home * 8 + 3]) {
+      const rook = b[home * 8];
+      if (rook && rook.t === 'r' && rook.c === us &&
+          !isAttacked(b, home * 8 + 3, them) &&
+          !isAttacked(b, home * 8 + 2, them)) {
+        out.push({ from: kingSq, to: home * 8 + 2, captured: null, promo: null, castle: 'Q' });
+      }
+    }
+  }
+
+  function pseudoMoves(s) {
+    const b = s.board;
+    const us = s.turn;
+    const them = other(us);
+    const out = [];
+
+    for (let i = 0; i < 64; i++) {
+      const p = b[i];
+      if (!p || p.c !== us) continue;
+      const r = rowOf(i), c = colOf(i);
+
+      if (p.t === 'p') {
+        const dir = us === 'w' ? -1 : 1;
+        const startRow = us === 'w' ? 6 : 1;
+        const promoRow = us === 'w' ? 0 : 7;
+        const one = i + dir * 8;
+
+        if (inBoard(r + dir, c) && !b[one]) {
+          pushPawnMove(out, i, one, promoRow, null);
+          const two = i + dir * 16;
+          if (r === startRow && inBoard(r + dir * 2, c) && !b[two]) {
+            out.push({ from: i, to: two, captured: null, promo: null, double: true });
+          }
+        }
+
+        for (const dc of [-1, 1]) {
+          const nr = r + dir, nc = c + dc;
+          if (!inBoard(nr, nc)) continue;
+          const to = nr * 8 + nc;
+          const target = b[to];
+          if (target && target.c === them) {
+            pushPawnMove(out, i, to, promoRow, target);
+          } else if (s.ep === to && !target) {
+            out.push({ from: i, to, captured: { t: 'p', c: them }, promo: null, ep: true });
+          }
+        }
+      } else if (p.t === 'n' || p.t === 'k') {
+        const dirs = p.t === 'n' ? KNIGHT_DIRS : KING_DIRS;
+        for (const [dr, dc] of dirs) {
+          const nr = r + dr, nc = c + dc;
+          if (!inBoard(nr, nc)) continue;
+          const to = nr * 8 + nc;
+          const target = b[to];
+          if (!target || target.c === them) {
+            out.push({ from: i, to, captured: target || null, promo: null });
+          }
+        }
+        if (p.t === 'k') addCastles(s, out);
+      } else {
+        const dirs = p.t === 'b' ? BISHOP_DIRS : p.t === 'r' ? ROOK_DIRS : QUEEN_DIRS;
+        for (const [dr, dc] of dirs) {
+          let nr = r + dr, nc = c + dc;
+          while (inBoard(nr, nc)) {
+            const to = nr * 8 + nc;
+            const target = b[to];
+            if (!target) {
+              out.push({ from: i, to, captured: null, promo: null });
+            } else {
+              if (target.c === them) out.push({ from: i, to, captured: target, promo: null });
+              break;
+            }
+            nr += dr; nc += dc;
+          }
+        }
+      }
+    }
+    return out;
+  }
+
+  /* ============================================================
+     引擎：执行 / 撤销
+     ============================================================ */
+  function clearCastleAt(s, sq) {
+    const ct = s.castling;
+    if (sq === 60) { ct.wk = false; ct.wq = false; }
+    else if (sq === 63) ct.wk = false;
+    else if (sq === 56) ct.wq = false;
+    else if (sq === 4) { ct.bk = false; ct.bq = false; }
+    else if (sq === 7) ct.bk = false;
+    else if (sq === 0) ct.bq = false;
+  }
+
+  function makeMove(s, m) {
+    const b = s.board;
+    const piece = b[m.from];
+    const us = piece.c;
+    const undo = {
+      ep: s.ep,
+      castling: {
+        wk: s.castling.wk, wq: s.castling.wq,
+        bk: s.castling.bk, bq: s.castling.bq
+      },
+      half: s.half,
+      full: s.full,
+      captured: null,
+      capSq: -1
+    };
+
+    let capSq = -1;
+    if (m.ep) capSq = m.to + (us === 'w' ? 8 : -8);
+    else if (b[m.to]) capSq = m.to;
+
+    if (capSq >= 0) {
+      undo.captured = b[capSq];
+      undo.capSq = capSq;
+      b[capSq] = null;
+    }
+
+    b[m.from] = null;
+    b[m.to] = m.promo ? { t: m.promo, c: us } : piece;
+
+    if (m.castle) {
+      const base = us === 'w' ? 56 : 0;
+      if (m.castle === 'K') {
+        b[base + 5] = b[base + 7];
+        b[base + 7] = null;
+      } else {
+        b[base + 3] = b[base];
+        b[base] = null;
+      }
+    }
+
+    clearCastleAt(s, m.from);
+    clearCastleAt(s, m.to);
+
+    s.ep = null;
+    if (m.double) {
+      const ep = (m.from + m.to) / 2;
+      const row = rowOf(ep), col = colOf(ep);
+      let canCapture = false;
+      for (const dc of [-1, 1]) {
+        const nc = col + dc;
+        if (!inBoard(row, nc)) continue;
+        const q = b[row * 8 + nc];
+        if (q && q.t === 'p' && q.c !== us) { canCapture = true; break; }
+      }
+      s.ep = canCapture ? ep : null;
+    }
+
+    s.half = (piece.t === 'p' || undo.captured) ? 0 : s.half + 1;
+    if (us === 'b') s.full++;
+    s.turn = other(us);
+    return undo;
+  }
+
+  function unmakeMove(s, m, undo) {
+    const b = s.board;
+    const us = other(s.turn);
+    const moved = b[m.to];
+
+    b[m.from] = m.promo ? { t: 'p', c: us } : moved;
+    b[m.to] = null;
+
+    if (m.castle) {
+      const base = us === 'w' ? 56 : 0;
+      if (m.castle === 'K') {
+        b[base + 7] = b[base + 5];
+        b[base + 5] = null;
+      } else {
+        b[base] = b[base + 3];
+        b[base + 3] = null;
+      }
+    }
+
+    if (undo.captured) b[undo.capSq] = undo.captured;
+
+    s.ep = undo.ep;
+    s.castling = undo.castling;
+    s.half = undo.half;
+    s.full = undo.full;
+    s.turn = us;
+  }
+
+  function legalMoves(s) {
+    const us = s.turn;
+    const result = [];
+    for (const m of pseudoMoves(s)) {
+      const undo = makeMove(s, m);
+      const kingSq = findKing(s.board, us);
+      const safe = kingSq >= 0 && !isAttacked(s.board, kingSq, other(us));
+      unmakeMove(s, m, undo);
+      if (safe) result.push(m);
+    }
+    return result;
+  }
+
+  /* ============================================================
+     引擎：局面判定
+     ============================================================ */
+  function posKey(s) {
+    let key = '';
+    for (let i = 0; i < 64; i++) {
+      const p = s.board[i];
+      key += p ? (p.c === 'w' ? p.t.toUpperCase() : p.t) : '.';
+    }
+    key += '|' + s.turn + '|';
+    key += (s.castling.wk ? 'K' : '') + (s.castling.wq ? 'Q' : '') +
+           (s.castling.bk ? 'k' : '') + (s.castling.bq ? 'q' : '');
+    key += '|' + (s.ep === null ? '-' : s.ep);
+    return key;
+  }
+
+  function insufficientMaterial(board) {
+    const pieces = [];
+    for (let i = 0; i < 64; i++) {
+      const p = board[i];
+      if (p && p.t !== 'k') pieces.push({ p, i });
+    }
+    if (pieces.length === 0) return true;
+    if (pieces.length === 1 && (pieces[0].p.t === 'b' || pieces[0].p.t === 'n')) return true;
+    if (pieces.length === 2 &&
+        pieces[0].p.t === 'b' && pieces[1].p.t === 'b' &&
+        pieces[0].p.c !== pieces[1].p.c) {
+      const c0 = (rowOf(pieces[0].i) + colOf(pieces[0].i)) % 2;
+      const c1 = (rowOf(pieces[1].i) + colOf(pieces[1].i)) % 2;
+      return c0 === c1;
+    }
+    return false;
+  }
+
+  function toSan(s, m) {
+    const piece = s.board[m.from];
+    let san = '';
+
+    if (m.castle) {
+      san = m.castle === 'K' ? 'O-O' : 'O-O-O';
+    } else if (piece.t === 'p') {
+      if (m.captured) san += FILES[colOf(m.from)] + 'x';
+      san += sqName(m.to);
+      if (m.promo) san += '=' + m.promo.toUpperCase();
+    } else {
+      san += piece.t.toUpperCase();
+      const peers = legalMoves(s).filter(o =>
+        o.to === m.to && o.from !== m.from &&
+        s.board[o.from] && s.board[o.from].t === piece.t && s.board[o.from].c === piece.c
+      );
+      if (peers.length) {
+        const sameFile = peers.some(o => colOf(o.from) === colOf(m.from));
+        const sameRank = peers.some(o => rowOf(o.from) === rowOf(m.from));
+        if (!sameFile) san += FILES[colOf(m.from)];
+        else if (!sameRank) san += String(8 - rowOf(m.from));
+        else san += sqName(m.from);
+      }
+      if (m.captured) san += 'x';
+      san += sqName(m.to);
+      if (m.promo) san += '=' + m.promo.toUpperCase();
+    }
+
+    const undo = makeMove(s, m);
+    const opp = s.turn;
+    const oppMoves = legalMoves(s);
+    if (inCheck(s, opp)) san += oppMoves.length ? '+' : '#';
+    unmakeMove(s, m, undo);
+    return san;
+  }
+
+  /* ============================================================
+     引擎：评估与人机搜索
+     ============================================================ */
+  const PST = {
+    p: [0,0,0,0,0,0,0,0, 50,50,50,50,50,50,50,50, 10,10,20,30,30,20,10,10, 5,5,10,25,25,10,5,5, 0,0,0,20,20,0,0,0, 5,-5,-10,0,0,-10,-5,5, 5,10,10,-20,-20,10,10,5, 0,0,0,0,0,0,0,0],
+    n: [-50,-40,-30,-30,-30,-30,-40,-50, -40,-20,0,0,0,0,-20,-40, -30,0,10,15,15,10,0,-30, -30,5,15,20,20,15,5,-30, -30,0,15,20,20,15,0,-30, -30,5,10,15,15,10,5,-30, -40,-20,0,5,5,0,-20,-40, -50,-40,-30,-30,-30,-30,-40,-50],
+    b: [-20,-10,-10,-10,-10,-10,-10,-20, -10,0,0,0,0,0,0,-10, -10,0,5,10,10,5,0,-10, -10,5,5,10,10,5,5,-10, -10,0,10,10,10,10,0,-10, -10,10,10,10,10,10,10,-10, -10,5,0,0,0,0,5,-10, -20,-10,-10,-10,-10,-10,-10,-20],
+    r: [0,0,0,0,0,0,0,0, 5,10,10,10,10,10,10,5, -5,0,0,0,0,0,0,-5, -5,0,0,0,0,0,0,-5, -5,0,0,0,0,0,0,-5, -5,0,0,0,0,0,0,-5, -5,0,0,0,0,0,0,-5, 0,0,0,5,5,0,0,0],
+    q: [-20,-10,-10,-5,-5,-10,-10,-20, -10,0,0,0,0,0,0,-10, -10,0,5,5,5,5,0,-10, -5,0,5,5,5,5,0,-5, 0,0,5,5,5,5,0,-5, -10,5,5,5,5,5,0,-10, -10,0,5,0,0,0,0,-10, -20,-10,-10,-5,-5,-10,-10,-20],
+    k: [-30,-40,-40,-50,-50,-40,-40,-30, -30,-40,-40,-50,-50,-40,-40,-30, -30,-40,-40,-50,-50,-40,-40,-30, -30,-40,-40,-50,-50,-40,-40,-30, -20,-30,-30,-40,-40,-30,-30,-20, -10,-20,-20,-20,-20,-20,-20,-10, 20,20,0,0,0,0,20,20, 20,30,10,0,0,10,30,20]
+  };
+
+  const MATE = 100000;
+
+  function evaluate(s) {
+    let score = 0;
+    let whiteBishops = 0, blackBishops = 0;
+    for (let i = 0; i < 64; i++) {
+      const p = s.board[i];
+      if (!p) continue;
+      if (p.t === 'b') { if (p.c === 'w') whiteBishops++; else blackBishops++; }
+      const idx = p.c === 'w' ? i : (i ^ 56);
+      const v = VAL[p.t] + (PST[p.t] ? PST[p.t][idx] : 0);
+      score += p.c === 'w' ? v : -v;
+    }
+    if (whiteBishops >= 2) score += 30;
+    if (blackBishops >= 2) score -= 30;
+    return score;
+  }
+
+  function moveOrderScore(m) {
+    let v = 0;
+    if (m.captured) v += VAL[m.captured.t] * 10;
+    if (m.promo) v += VAL[m.promo];
+    if (m.castle) v += 40;
+    return v;
+  }
+
+  function negamax(s, depth, alpha, beta, ply) {
+    const moves = legalMoves(s);
+    if (!moves.length) {
+      return inCheck(s, s.turn) ? -MATE + ply : 0;
+    }
+    if (depth <= 0) {
+      return s.turn === 'w' ? evaluate(s) : -evaluate(s);
+    }
+    moves.sort((a, b) => moveOrderScore(b) - moveOrderScore(a));
+    let best = -Infinity;
+    for (const m of moves) {
+      const undo = makeMove(s, m);
+      const v = -negamax(s, depth - 1, -beta, -alpha, ply + 1);
+      unmakeMove(s, m, undo);
+      if (v > best) best = v;
+      if (best > alpha) alpha = best;
+      if (alpha >= beta) break;
+    }
+    return best;
+  }
+
+  function aiChoose(s, level) {
+    const moves = legalMoves(s);
+    if (!moves.length) return null;
+    const depth = level === 1 ? 1 : level === 2 ? 2 : 3;
+    const scored = [];
+
+    for (const m of moves) {
+      const undo = makeMove(s, m);
+      let v = -negamax(s, depth - 1, -Infinity, Infinity, 1);
+      unmakeMove(s, m, undo);
+      if (level === 1) v += Math.random() * 40 - 20;
+      if (level === 2) v += Math.random() * 12 - 6;
+      scored.push({ m, v });
+    }
+
+    scored.sort((a, b) => b.v - a.v);
+    if (level <= 2) {
+      const margin = level === 1 ? 70 : 24;
+      const pool = scored.filter(x => x.v >= scored[0].v - margin);
+      return pool[Math.floor(Math.random() * pool.length)].m;
+    }
+    return scored[0].m;
+  }
+
+  /* ============================================================
+     界面：状态
+     ============================================================ */
+  const game = {
+    state: parseFen(START_FEN),
+    keyHistory: [],
+    history: [],
+    selected: null,
+    movesFrom: [],
+    orientation: 'w',
+    mode: 'ai',
+    humanColor: 'w',
+    aiColor: 'b',
+    level: 2,
+    over: false,
+    result: null,
+    check: false,
+    thinking: false,
+    lastMove: null,
+    endDismissed: false,
+    sound: true
+  };
+  game.keyHistory.push(posKey(game.state));
+
+  let promotion = null;
+  let aiTimer = null;
+  let aiToken = 0;
+  let lastMoveCount = 0;
+
+  const $ = id => document.getElementById(id);
+  const boardEl = $('board');
+  const topPlayerEl = $('topPlayer');
+  const bottomPlayerEl = $('bottomPlayer');
+  const turnDot = $('turnDot');
+  const statusTitle = $('statusTitle');
+  const statusSub = $('statusSub');
+  const modeMeta = $('modeMeta');
+  const movesBody = $('movesBody');
+  const moveMeta = $('moveMeta');
+  const undoBtn = $('undoBtn');
+  const promoOverlay = $('promoOverlay');
+  const promoOptions = $('promoOptions');
+  const endOverlay = $('endOverlay');
+  const resultTitle = $('resultTitle');
+  const resultSub = $('resultSub');
+  const modeSeg = $('modeSeg');
+  const sideSeg = $('sideSeg');
+  const levelSeg = $('levelSeg');
+  const sideRow = $('sideRow');
+  const levelRow = $('levelRow');
+  const rulesDialog = $('rulesDialog');
+  const soundBtn = $('soundBtn');
+
+  /* ============================================================
+     界面：渲染
+     ============================================================ */
+  function humanTurn() {
+    return game.mode === 'pvp' || game.state.turn === game.humanColor;
+  }
+
+  function humanCanPlay() {
+    return !game.over && !game.thinking && humanTurn();
+  }
+
+  function clearSelection() {
+    game.selected = null;
+    game.movesFrom = [];
+  }
+
+  function renderBoard() {
+    const st = game.state;
+    const targets = new Set(game.movesFrom.map(m => m.to));
+    const captures = new Set(game.movesFrom.filter(m => m.captured).map(m => m.to));
+    const canSelect = humanCanPlay();
+    const locked = !canSelect;
+    boardEl.classList.toggle('locked', locked);
+
+    let html = '';
+    for (let dr = 0; dr < 8; dr++) {
+      for (let dc = 0; dc < 8; dc++) {
+        const r = game.orientation === 'w' ? dr : 7 - dr;
+        const c = game.orientation === 'w' ? dc : 7 - dc;
+        const i = r * 8 + c;
+        const p = st.board[i];
+        const light = (r + c) % 2 === 0;
+        const cls = ['sq', light ? 'light' : 'dark'];
+
+        if (game.lastMove && (game.lastMove.from === i || game.lastMove.to === i)) cls.push('last');
+        if (game.selected === i) cls.push('selected');
+        if (targets.has(i)) cls.push('movable');
+        if (p && p.c === st.turn && canSelect) cls.push('selectable');
+        if (game.check && p && p.t === 'k' && p.c === st.turn) cls.push('in-check');
+
+        const label = (p ? NAME_CN[p.t] + '，' : '空，') + sqName(i);
+        html += '<button type="button" class="' + cls.join(' ') + '" data-sq="' + i + '" aria-label="' + label + '">';
+
+        if (targets.has(i)) {
+          html += '<span class="dot' + (captures.has(i) ? ' ring' : '') + '" aria-hidden="true"></span>';
+        }
+        if (p) {
+          html += '<span class="piece ' + p.c + '" aria-hidden="true">' + GLYPH[p.t] + '</span>';
+        }
+        if (dr === 7) html += '<span class="coord file" aria-hidden="true">' + FILES[c] + '</span>';
+        if (dc === 0) html += '<span class="coord rank" aria-hidden="true">' + (8 - r) + '</span>';
+        html += '</button>';
+      }
+    }
+    boardEl.innerHTML = html;
+  }
+
+  function materialOf(board, color) {
+    let sum = 0;
+    for (const p of board) {
+      if (p && p.c === color && p.t !== 'k') sum += VAL[p.t];
+    }
+    return sum;
+  }
+
+  function capturedBy(board, color) {
+    const remaining = { q: 0, r: 0, b: 0, n: 0, p: 0 };
+    for (const p of board) {
+      if (p && p.c !== color && p.t !== 'k') remaining[p.t]++;
+    }
+    return ['q', 'r', 'b', 'n', 'p'].map(t => ({
+      t,
+      n: Math.max(0, INITIAL_COUNT[t] - remaining[t])
+    }));
+  }
+
+  function playerHTML(color) {
+    const st = game.state;
+    const isAI = game.mode === 'ai';
+    const name = isAI
+      ? (color === game.humanColor ? '你' : 'AI 对手')
+      : (color === 'w' ? '白方' : '黑方');
+    const tag = isAI
+      ? (color === game.aiColor ? LEVEL_NAME[game.level] : '玩家')
+      : (color === 'w' ? '先手' : '后手');
+    const active = !game.over && st.turn === color;
+    const captured = capturedBy(st.board, color);
+    const diff = materialOf(st.board, 'w') - materialOf(st.board, 'b');
+
+    let capsHTML = '';
+    for (const item of captured) {
+      for (let k = 0; k < item.n; k++) {
+        capsHTML += '<span class="cap" aria-hidden="true">' + GLYPH[item.t] + '</span>';
+      }
+    }
+    if (!capsHTML) capsHTML = '<span class="cap-empty">—</span>';
+
+    let adv = '';
+    if (diff !== 0) {
+      const leading = diff > 0 ? 'w' : 'b';
+      if (leading === color) {
+        const pts = Math.abs(diff) / 100;
+        adv = '<span class="adv">+' + (Number.isInteger(pts) ? String(pts) : pts.toFixed(1)) + '</span>';
+      }
+    }
+
+    return '<div class="player' + (active ? ' active' : '') + '">' +
+        '<span class="avatar ' + color + '" aria-hidden="true">' + GLYPH.p + '</span>' +
+        '<div class="who"><span class="name">' + name + '</span><span class="tag">' + tag + '</span>' +
+          (active ? '<span class="live-dot" aria-hidden="true"></span>' : '') +
+        '</div>' +
+        '<div class="caps" aria-label="已吃掉对方 ' + captured.reduce((n, x) => n + x.n, 0) + ' 枚棋子">' + capsHTML + '</div>' +
+        adv +
+      '</div>';
+  }
+
+  function renderPlayers() {
+    topPlayerEl.innerHTML = playerHTML(other(game.orientation));
+    bottomPlayerEl.innerHTML = playerHTML(game.orientation);
+  }
+
+  function resultLabel(winner) {
+    if (!winner) return '和棋';
+    if (game.mode === 'ai') return winner === game.humanColor ? '你赢了' : 'AI 获胜';
+    return winner === 'w' ? '白方获胜' : '黑方获胜';
+  }
+
+  function renderStatus() {
+    const st = game.state;
+    turnDot.className = 'turn-dot ' + (game.over ? 'idle' : st.turn);
+    if (game.thinking) turnDot.classList.add('thinking');
+    statusSub.classList.remove('danger');
+
+    if (game.over) {
+      resultTitle.textContent = resultLabel(game.result && game.result.winner);
+      statusTitle.textContent = resultLabel(game.result && game.result.winner);
+      statusSub.textContent = game.result ? game.result.reason : '对局结束';
+      return;
+    }
+
+    if (game.thinking) {
+      statusTitle.textContent = 'AI 正在思考';
+      statusSub.textContent = '正在评估局面与候选走法…';
+      return;
+    }
+
+    if (game.mode === 'pvp') {
+      statusTitle.textContent = st.turn === 'w' ? '白方走棋' : '黑方走棋';
+    } else {
+      statusTitle.textContent = st.turn === game.humanColor ? '轮到你走棋' : 'AI 回合';
+    }
+
+    if (game.check) {
+      statusSub.textContent = '将军！必须立即解除';
+      statusSub.classList.add('danger');
+    } else if (game.selected !== null && st.board[game.selected] && game.movesFrom.length) {
+      const count = new Set(game.movesFrom.map(m => m.to)).size;
+      statusSub.textContent = NAME_CN[st.board[game.selected].t] + '有 ' + count + ' 个合法落点';
+    } else {
+      statusSub.textContent = game.mode === 'ai'
+        ? '点击己方棋子查看可走位置'
+        : '双方共用这一块棋盘';
+    }
+  }
+
+  function renderMoves() {
+    const h = game.history;
+    moveMeta.textContent = h.length ? '共 ' + h.length + ' 手' : '0 手';
+    if (!h.length) {
+      movesBody.innerHTML = '<div class="moves-empty">第一步由白方走出</div>';
+      lastMoveCount = 0;
+      return;
+    }
+    let html = '';
+    for (let i = 0; i < h.length; i += 2) {
+      const latest = i + 2 >= h.length ? ' latest' : '';
+      html += '<div class="move-row' + latest + '">' +
+        '<span class="num">' + (i / 2 + 1) + '.</span>' +
+        '<span class="san">' + (h[i] ? h[i].san : '') + '</span>' +
+        '<span class="san">' + (h[i + 1] ? h[i + 1].san : '') + '</span>' +
+      '</div>';
+    }
+    movesBody.innerHTML = html;
+    if (h.length !== lastMoveCount) {
+      movesBody.scrollTop = movesBody.scrollHeight;
+      lastMoveCount = h.length;
+    }
+  }
+
+  function renderControls() {
+    undoBtn.disabled = game.history.length === 0;
+    modeMeta.textContent = game.mode === 'ai'
+      ? '人机对弈 · ' + LEVEL_NAME[game.level]
+      : '双人对弈';
+
+    for (const btn of modeSeg.querySelectorAll('button')) {
+      btn.classList.toggle('on', btn.dataset.mode === game.mode);
+      btn.setAttribute('aria-pressed', String(btn.dataset.mode === game.mode));
+    }
+    for (const btn of sideSeg.querySelectorAll('button')) {
+      btn.classList.toggle('on', btn.dataset.side === game.humanColor);
+      btn.setAttribute('aria-pressed', String(btn.dataset.side === game.humanColor));
+    }
+    for (const btn of levelSeg.querySelectorAll('button')) {
+      btn.classList.toggle('on', Number(btn.dataset.level) === game.level);
+      btn.setAttribute('aria-pressed', String(Number(btn.dataset.level) === game.level));
+    }
+
+    sideRow.hidden = game.mode !== 'ai';
+    levelRow.hidden = game.mode !== 'ai';
+  }
+
+  function renderEnd() {
+    if (game.over && game.result && !game.endDismissed) {
+      resultTitle.textContent = resultLabel(game.result.winner);
+      resultSub.textContent = game.result.reason;
+      endOverlay.hidden = false;
+    } else {
+      endOverlay.hidden = true;
+    }
+  }
+
+  function render() {
+    renderBoard();
+    renderPlayers();
+    renderStatus();
+    renderMoves();
+    renderControls();
+    renderEnd();
+  }
+
+  /* ============================================================
+     音效
+     ============================================================ */
+  let audioCtx = null;
+
+  function ensureAudio() {
+    if (!audioCtx) {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return null;
+      audioCtx = new Ctx();
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }
+
+  function tone(freq, dur, type, gain, delay, slideTo) {
+    if (!game.sound) return;
+    try {
+      const ctx = ensureAudio();
+      if (!ctx) return;
+      const t0 = ctx.currentTime + (delay || 0);
+      const osc = ctx.createOscillator();
+      const amp = ctx.createGain();
+      osc.type = type || 'sine';
+      osc.frequency.setValueAtTime(freq, t0);
+      if (slideTo) osc.frequency.exponentialRampToValueAtTime(slideTo, t0 + dur);
+      amp.gain.setValueAtTime(0.0001, t0);
+      amp.gain.exponentialRampToValueAtTime(gain || 0.04, t0 + 0.008);
+      amp.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      osc.connect(amp).connect(ctx.destination);
+      osc.start(t0);
+      osc.stop(t0 + dur + 0.03);
+    } catch (err) { /* 忽略音频错误 */ }
+  }
+
+  function moveSound(m) {
+    if (game.over) {
+      if (game.result && game.result.winner) {
+        tone(392, 0.14, 'sine', 0.05, 0);
+        tone(523.25, 0.16, 'sine', 0.045, 0.11);
+        tone(659.25, 0.32, 'sine', 0.04, 0.22);
+      } else {
+        tone(392, 0.16, 'sine', 0.04, 0);
+        tone(392, 0.16, 'sine', 0.04, 0.18);
+      }
+      return;
+    }
+    if (game.check) {
+      tone(880, 0.08, 'triangle', 0.045, 0);
+      tone(660, 0.11, 'triangle', 0.04, 0.085);
+      return;
+    }
+    if (m.captured) {
+      tone(190, 0.09, 'square', 0.04, 0, 110);
+      tone(120, 0.12, 'sine', 0.035, 0.02);
+      return;
+    }
+    tone(380, 0.055, 'triangle', 0.035, 0, 300);
+  }
+
+  function selectSound() {
+    tone(600, 0.03, 'sine', 0.018, 0, 520);
+  }
+
+  function updateSoundBtn() {
+    soundBtn.setAttribute('aria-pressed', String(game.sound));
+    soundBtn.title = game.sound ? '关闭音效' : '开启音效';
+    soundBtn.innerHTML = game.sound
+      ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L13 5v14L7.5 14.5H4z"/><path d="M16.5 9.2a4.4 4.4 0 0 1 0 5.6"/></svg>'
+      : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L13 5v14L7.5 14.5H4z"/><path d="m17 9.5 4 5"/><path d="m21 9.5-4 5"/></svg>';
+  }
+
+  /* ============================================================
+     对局流程
+     ============================================================ */
+  function countKey(key) {
+    let n = 0;
+    for (const k of game.keyHistory) if (k === key) n++;
+    return n;
+  }
+
+  function checkGameEnd() {
+    const st = game.state;
+    const moves = legalMoves(st);
+    game.check = inCheck(st, st.turn);
+
+    if (!moves.length) {
+      game.over = true;
+      game.result = game.check
+        ? { winner: other(st.turn), reason: '将死' }
+        : { winner: null, reason: '逼和：没有合法走法' };
+    } else if (st.half >= 100) {
+      game.over = true;
+      game.result = { winner: null, reason: '五十回合规则：连续 50 回合无吃子、无兵移动' };
+    } else if (insufficientMaterial(st.board)) {
+      game.over = true;
+      game.result = { winner: null, reason: '子力不足，无法将死' };
+    } else if (countKey(posKey(st)) >= 3) {
+      game.over = true;
+      game.result = { winner: null, reason: '三次重复局面' };
+    } else {
+      game.over = false;
+      game.result = null;
+    }
+
+    if (game.over) game.endDismissed = false;
+  }
+
+  function playMove(m) {
+    const st = game.state;
+    if (!m || !st.board[m.from]) return;
+
+    const san = toSan(st, m);
+    const mover = st.turn;
+    const undo = makeMove(st, m);
+    game.history.push({ san, move: m, undo, color: mover });
+    game.keyHistory.push(posKey(st));
+    game.lastMove = { from: m.from, to: m.to };
+    clearSelection();
+
+    checkGameEnd();
+    moveSound(m);
+    render();
+
+    if (!game.over) scheduleAi();
+  }
+
+  function cancelAi() {
+    aiToken++;
+    game.thinking = false;
+    if (aiTimer) {
+      clearTimeout(aiTimer);
+      aiTimer = null;
+    }
+  }
+
+  function scheduleAi() {
+    if (game.mode !== 'ai' || game.over) return;
+    if (game.state.turn !== game.aiColor) return;
+
+    game.thinking = true;
+    const token = ++aiToken;
+    render();
+
+    aiTimer = setTimeout(function () {
+      aiTimer = null;
+      if (token !== aiToken) return;
+      let move = null;
+      try {
+        move = aiChoose(game.state, game.level);
+      } catch (err) {
+        move = null;
+      }
+      if (token !== aiToken) return;
+      game.thinking = false;
+      if (move) playMove(move);
+      else { checkGameEnd(); render(); }
+    }, 320);
+  }
+
+  function openPromotion(options) {
+    promotion = options;
+    const color = game.state.turn;
+    promoOptions.innerHTML = ['q', 'r', 'b', 'n'].map(function (t) {
+      return '<button type="button" class="promo-btn" data-promo="' + t + '" aria-label="升变为' + NAME_CN[t] + '">' +
+        '<span class="promo-glyph ' + color + '">' + GLYPH[t] + '</span></button>';
+    }).join('');
+    promoOverlay.hidden = false;
+  }
+
+  function closePromotion(deselect) {
+    promotion = null;
+    promoOverlay.hidden = true;
+    if (deselect) {
+      clearSelection();
+      render();
+    }
+  }
+
+  function onSquare(sq) {
+    if (game.over || game.thinking || promotion) return;
+    if (game.mode === 'ai' && game.state.turn !== game.humanColor) return;
+
+    const st = game.state;
+    const options = game.movesFrom.filter(m => m.to === sq);
+
+    if (game.selected !== null && options.length) {
+      if (options.some(m => m.promo)) { openPromotion(options); return; }
+      playMove(options[0]);
+      return;
+    }
+
+    const piece = st.board[sq];
+    if (piece && piece.c === st.turn) {
+      if (game.selected === sq) {
+        clearSelection();
+      } else {
+        game.selected = sq;
+        game.movesFrom = legalMoves(st).filter(m => m.from === sq);
+        selectSound();
+      }
+      render();
+      return;
+    }
+
+    if (game.selected !== null) {
+      clearSelection();
+      render();
+    }
+  }
+
+  function newGame() {
+    cancelAi();
+    closePromotion(false);
+    clearSelection();
+
+    game.state = parseFen(START_FEN);
+    game.keyHistory = [posKey(game.state)];
+    game.history = [];
+    game.lastMove = null;
+    game.over = false;
+    game.result = null;
+    game.check = false;
+    game.thinking = false;
+    game.endDismissed = false;
+
+    if (game.mode === 'ai') {
+      game.aiColor = other(game.humanColor);
+      game.orientation = game.humanColor;
+    }
+
+    render();
+    scheduleAi();
+  }
+
+  function confirmNewGame() {
+    if (game.history.length && !game.over) {
+      if (!window.confirm('开始新对局？当前棋局将被清空。')) return;
+    }
+    newGame();
+  }
+
+  function undo() {
+    if (!game.history.length) return;
+    cancelAi();
+    closePromotion(false);
+
+    do {
+      const last = game.history.pop();
+      unmakeMove(game.state, last.move, last.undo);
+      game.keyHistory.pop();
+      if (game.mode !== 'ai') break;
+      if (game.state.turn === game.humanColor) break;
+    } while (game.history.length);
+
+    game.over = false;
+    game.result = null;
+    game.endDismissed = false;
+    game.check = inCheck(game.state, game.state.turn);
+    clearSelection();
+
+    const prev = game.history[game.history.length - 1];
+    game.lastMove = prev ? { from: prev.move.from, to: prev.move.to } : null;
+
+    render();
+
+    if (game.mode === 'ai' && game.state.turn === game.aiColor) scheduleAi();
+  }
+
+  function setMode(mode) {
+    if (game.mode === mode) return;
+    if (game.history.length && !game.over) {
+      if (!window.confirm('切换模式将开始新对局，继续？')) { render(); return; }
+    }
+    game.mode = mode;
+    newGame();
+  }
+
+  function setHumanColor(color) {
+    if (game.humanColor === color) return;
+    if (game.history.length && !game.over) {
+      if (!window.confirm('切换执子将开始新对局，继续？')) { render(); return; }
+    }
+    game.humanColor = color;
+    game.aiColor = other(color);
+    newGame();
+  }
+
+  function setLevel(level) {
+    if (game.level === level) return;
+    game.level = level;
+    if (game.thinking) {
+      cancelAi();
+      scheduleAi();
+    }
+    render();
+  }
+
+  /* ============================================================
+     事件绑定
+     ============================================================ */
+  boardEl.addEventListener('click', function (e) {
+    const btn = e.target.closest('.sq');
+    if (!btn) return;
+    onSquare(Number(btn.dataset.sq));
+  });
+
+  $('newBtn').addEventListener('click', confirmNewGame);
+  undoBtn.addEventListener('click', undo);
+  $('flipBtn').addEventListener('click', function () {
+    game.orientation = other(game.orientation);
+    render();
+  });
+
+  modeSeg.addEventListener('click', function (e) {
+    const btn = e.target.closest('button[data-mode]');
+    if (btn) setMode(btn.dataset.mode);
+  });
+  sideSeg.addEventListener('click', function (e) {
+    const btn = e.target.closest('button[data-side]');
+    if (btn) setHumanColor(btn.dataset.side);
+  });
+  levelSeg.addEventListener('click', function (e) {
+    const btn = e.target.closest('button[data-level]');
+    if (btn) setLevel(Number(btn.dataset.level));
+  });
+
+  promoOptions.addEventListener('click', function (e) {
+    const btn = e.target.closest('[data-promo]');
+    if (!btn || !promotion) return;
+    const move = promotion.find(m => m.promo === btn.dataset.promo);
+    closePromotion(false);
+    if (move) playMove(move);
+  });
+  $('promoCancel').addEventListener('click', function () {
+    closePromotion(true);
+  });
+
+  $('againBtn').addEventListener('click', newGame);
+  $('dismissBtn').addEventListener('click', function () {
+    game.endDismissed = true;
+    renderEnd();
+  });
+
+  $('rulesBtn').addEventListener('click', function () {
+    if (typeof rulesDialog.showModal === 'function') rulesDialog.showModal();
+    else rulesDialog.setAttribute('open', '');
+  });
+  $('closeRules').addEventListener('click', function () {
+    if (typeof rulesDialog.close === 'function') rulesDialog.close();
+    else rulesDialog.removeAttribute('open');
+  });
+  rulesDialog.addEventListener('click', function (e) {
+    if (e.target === rulesDialog) {
+      const rect = rulesDialog.getBoundingClientRect();
+      const inside = e.clientX >= rect.left && e.clientX <= rect.right &&
+                     e.clientY >= rect.top && e.clientY <= rect.bottom;
+      if (!inside && typeof rulesDialog.close === 'function') rulesDialog.close();
+    }
+  });
+
+  soundBtn.addEventListener('click', function () {
+    game.sound = !game.sound;
+    updateSoundBtn();
+    if (game.sound) { tone(520, 0.06, 'sine', 0.03); }
+  });
+
+  /* ============================================================
+     初始化
+     ============================================================ */
+  updateSoundBtn();
+  render();
+})();
+</script>
+</body>
+</html>
+

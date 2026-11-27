@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>第七个房间 · 密室逃脱</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#07080c;color:#ece7dd;font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;user-select:none;}
+  #app{height:100%;display:flex;flex-direction:column;background:radial-gradient(circle at 50% 0,rgba(90,70,50,.16),transparent 55%),#07080c;}
+  .top{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid rgba(214,190,150,.12);background:rgba(8,9,13,.82);}
+  .roomtag{display:flex;align-items:baseline;gap:8px;min-width:0;}
+  .roomtag span{font-size:11px;letter-spacing:.24em;color:#b99a64;}
+  .roomtag b{font-size:16px;font-weight:700;letter-spacing:.12em;color:#f3ead8;white-space:nowrap;}
+  .tools{display:flex;gap:8px;}
+  .tools button{border:1px solid rgba(214,190,150,.24);background:rgba(255,255,255,.03);color:#d9c9ac;border-radius:999px;padding:7px 13px;font:600 12px/1 inherit;cursor:pointer;}
+  .tools button:hover{border-color:rgba(214,190,150,.55);color:#f3e6ca;}
+
+  #stage{flex:1 1 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:10px 12px 6px;min-height:0;}
+  .scene{position:relative;width:min(100%,720px);height:min(100%,520px);min-height:240px;border-radius:16px;overflow:hidden;border:1px solid rgba(214,190,150,.16);box-shadow:0 24px 70px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.02) inset;background:#191720;}
+  .scene.r1{background:linear-gradient(180deg,#1b1822 0,#171521 58%,#221a15 58%,#17100c 100%);}
+  .scene.r2{background:linear-gradient(180deg,#141d1c 0,#111917 56%,#241b12 56%,#150f0a 100%);}
+  .scene.r3{background:linear-gradient(180deg,#1c1419 0,#160f14 56%,#251712 56%,#140c09 100%);}
+  .scene.r4{background:linear-gradient(180deg,#1a1d24 0,#14171d 52%,#241c14 52%,#120d09 100%);}
+  .scene.r4::before{background:radial-gradient(circle at 50% 18%,rgba(190,214,255,.13),transparent 52%),radial-gradient(circle at 50% 100%,rgba(0,0,0,.55),transparent 55%);}
+  .scene::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 50% 32%,rgba(255,232,190,.13),transparent 58%),radial-gradient(circle at 50% 100%,rgba(0,0,0,.5),transparent 55%);}
+  .scene.dark::after{content:"";position:absolute;inset:0;background:rgba(2,4,10,.62);pointer-events:none;z-index:3;transition:background .3s;}
+  .amb{position:absolute;pointer-events:none;}
+  .floorline{left:0;right:0;top:58%;height:2px;background:linear-gradient(90deg,transparent,rgba(214,190,150,.2),transparent);}
+  .win{left:56%;top:12%;width:22%;height:20%;border:2px solid rgba(120,140,160,.22);background:linear-gradient(180deg,#0d1420,#0a0f18);z-index:1;}
+  .win::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(105deg,transparent 0 9px,rgba(150,180,210,.09) 9px 10px);}
+  .win::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:2px;background:rgba(120,140,160,.18);}
+
+  .hot{position:absolute;border:0;padding:0;background:transparent;cursor:pointer;z-index:5;border-radius:6px;}
+  .hot::after{content:"";position:absolute;inset:-3px;border:1px dashed rgba(230,205,160,0);border-radius:7px;transition:border-color .2s,box-shadow .2s;}
+  .hot:hover::after,.hot:focus-visible::after{border-color:rgba(230,205,160,.55);box-shadow:0 0 18px rgba(230,205,160,.14);}
+  .hot .lab{position:absolute;left:50%;bottom:-7px;transform:translateX(-50%);white-space:nowrap;font:600 10px/1 inherit;letter-spacing:.1em;color:#e8dcc2;background:rgba(8,9,13,.82);border:1px solid rgba(214,190,150,.28);border-radius:999px;padding:3px 7px;z-index:8;}
+  .hot:hover .lab{color:#fff3d8;border-color:rgba(214,190,150,.6);}
+  .hot[data-hot="deskDrawer"] .lab{left:auto;right:-10px;bottom:auto;top:50%;transform:translateY(-50%);}
+  .hot[data-hot="back1"],.hot[data-hot="back2"]{z-index:7;}
+
+  .d-door{background:linear-gradient(90deg,#2a2018,#3a2c20 45%,#241a13);border:1px solid rgba(214,190,150,.2);border-radius:4px 4px 2px 2px;box-shadow:inset 0 0 24px rgba(0,0,0,.55);}
+  .d-door::before{content:"";position:absolute;right:12%;top:47%;width:6px;height:6px;border-radius:50%;background:#c9a35f;box-shadow:0 0 8px rgba(201,163,95,.5);}
+  .d-painting{background:linear-gradient(160deg,#3d3220,#241d13);border:3px solid #6a5433;box-shadow:inset 0 0 0 2px #241a10,0 8px 20px rgba(0,0,0,.5);}
+  .d-painting::before{content:"";position:absolute;inset:8%;background:linear-gradient(150deg,#1c2a3a,#101821 60%,#2a2118);}
+  .glowcode{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font:700 clamp(10px,2.2vw,17px)/1 inherit;letter-spacing:.2em;white-space:nowrap;color:#8ff6d8;text-shadow:0 0 10px rgba(143,246,216,.9),0 0 26px rgba(143,246,216,.5);opacity:0;transition:opacity .3s;z-index:2;}
+  .scene.dark .glowcode{opacity:1;}
+  .d-mirror{background:linear-gradient(135deg,#39434b,#7d8c93 40%,#2f383f 70%,#59666d);border:2px solid #4b4436;border-radius:50% 50% 6px 6px;box-shadow:inset 0 0 30px rgba(0,0,0,.5);}
+  .d-mirror::before{content:"";position:absolute;left:18%;top:12%;width:22%;height:64%;background:linear-gradient(180deg,rgba(255,255,255,.26),transparent);transform:rotate(12deg);}
+  .d-switch{background:#2b2a25;border:1px solid rgba(214,190,150,.35);border-radius:3px;}
+  .d-switch::before{content:"";position:absolute;left:50%;top:18%;width:42%;height:34%;transform:translateX(-50%);background:#d8c08a;border-radius:1px;}
+  .d-drawer{background:linear-gradient(180deg,#392a1c,#281d13);border:1px solid rgba(214,190,150,.2);border-radius:3px;box-shadow:inset 0 2px 0 rgba(255,255,255,.05);}
+  .d-drawer::before,.d-drawer::after{content:"";position:absolute;top:38%;width:7px;height:7px;border-radius:50%;background:#9c8457;}
+  .d-drawer::before{left:34%;}.d-drawer::after{right:34%;}
+  .d-rug{background:radial-gradient(ellipse at 50% 50%,#4a2320,#2a1414 70%);border-radius:50%;border:1px solid rgba(230,205,160,.15);box-shadow:inset 0 0 22px rgba(0,0,0,.5);}
+  .d-rug::before{content:"";position:absolute;inset:16% 22%;border:1px dashed rgba(230,205,160,.2);border-radius:50%;}
+  .d-shelf{background:linear-gradient(180deg,#2c2118,#1c150f);border:1px solid rgba(214,190,150,.18);border-radius:3px;box-shadow:inset 0 0 22px rgba(0,0,0,.5);}
+  .d-shelf::before{content:"";position:absolute;left:8%;right:8%;top:30%;height:3px;background:#4a3a28;box-shadow:0 34px 0 #4a3a28;}
+  .d-shelf::after{content:"";position:absolute;left:12%;top:8%;width:62%;height:20%;background:linear-gradient(90deg,#8a2f2b 0 12%,transparent 12% 22%,#2f6a4a 22% 34%,transparent 34% 44%,#34507a 44% 56%,transparent 56%);}
+  .d-desk{background:linear-gradient(180deg,#3a2b1e,#241a12);border:1px solid rgba(214,190,150,.18);border-radius:3px;box-shadow:0 12px 26px rgba(0,0,0,.45);}
+  .d-desk::before{content:"";position:absolute;left:12%;top:18%;width:34%;height:46%;background:rgba(230,215,180,.85);transform:rotate(-4deg);box-shadow:0 1px 3px rgba(0,0,0,.4);}
+  .d-safe{background:linear-gradient(145deg,#33342f,#1d1e1a);border:2px solid #56543f;border-radius:4px;box-shadow:inset 0 0 26px rgba(0,0,0,.65);}
+  .d-safe::before{content:"";position:absolute;left:50%;top:50%;width:38%;height:38%;transform:translate(-50%,-50%);border-radius:50%;border:2px solid #7d7455;box-shadow:inset 0 0 0 3px #23231d;}
+  .d-safe::after{content:"";position:absolute;left:50%;top:14%;width:2px;height:20%;background:#9c8d5c;transform-origin:bottom center;}
+  .d-lamp{background:transparent;border:0;}
+  .d-lamp::before{content:"";position:absolute;left:50%;bottom:18%;width:2px;height:52%;background:#6b5a3d;transform:translateX(-50%);}
+  .d-lamp::after{content:"";position:absolute;left:50%;top:4%;width:70%;aspect-ratio:1.7;transform:translateX(-50%);background:linear-gradient(180deg,#e7c58c,#a9814e);border-radius:50% 50% 20% 20%;box-shadow:0 0 30px rgba(231,197,140,.32);}
+  .d-calendar{background:#ddd3bd;border-radius:2px;box-shadow:0 6px 14px rgba(0,0,0,.4);transform:rotate(2deg);}
+  .d-calendar::before{content:"";position:absolute;left:16%;top:16%;width:68%;height:3px;background:#a33c33;box-shadow:0 8px 0 rgba(80,70,60,.28),0 16px 0 rgba(80,70,60,.22);}
+  .d-calendar::after{content:"";position:absolute;left:24%;top:48%;width:42%;height:42%;border:2px solid #a33c33;border-radius:50%;transform:rotate(-12deg);}
+  .d-wire{background:#20242a;border:1px solid #4e5560;border-radius:4px;box-shadow:inset 0 0 18px rgba(0,0,0,.6);}
+  .d-wire::before{content:"";position:absolute;left:14%;top:22%;width:10%;height:10%;border-radius:50%;background:#d24b45;box-shadow:0 0 8px rgba(210,75,69,.7),14px 0 0 #d2b24b,28px 0 0 #4b8fd2;}
+  .d-wire::after{content:"";position:absolute;right:12%;top:24%;width:30%;height:52%;border:1px solid rgba(200,200,200,.18);border-radius:2px;background:repeating-linear-gradient(90deg,transparent 0 6px,rgba(200,200,200,.1) 6px 7px);}
+  .d-clock{background:radial-gradient(circle at 50% 50%,#e0c48c 0 2px,transparent 2.5px),radial-gradient(circle at 50% 50%,#23262d,#0d0f13);border:2px solid #6b5a3d;border-radius:50%;box-shadow:0 0 14px rgba(201,163,95,.16),inset 0 0 0 3px rgba(214,190,150,.08),inset 0 0 16px rgba(0,0,0,.65);}
+  .d-clock::before{content:"";position:absolute;left:50%;top:50%;width:2px;height:16%;background:#e0c48c;border-radius:2px;transform-origin:bottom center;transform:translate(-50%,-100%) rotate(270deg);}
+  .d-clock::after{content:"";position:absolute;left:50%;top:50%;width:2px;height:32%;background:#e0c48c;border-radius:2px;transform-origin:bottom center;transform:translate(-50%,-100%) rotate(90deg);}
+  .d-cabinet{background:linear-gradient(180deg,#3a2b1e,#241a12);border:1px solid rgba(214,190,150,.22);border-radius:3px;box-shadow:inset 0 0 18px rgba(0,0,0,.55),0 10px 22px rgba(0,0,0,.4);}
+  .d-cabinet::before{content:"";position:absolute;left:50%;top:7%;bottom:7%;width:1px;background:rgba(0,0,0,.55);border-left:1px solid rgba(214,190,150,.1);}
+  .d-cabinet::after{content:"";position:absolute;left:50%;top:46%;width:5px;height:5px;margin-left:-9px;border-radius:50%;background:#b08c4d;box-shadow:9px 0 0 #b08c4d;}
+  .d-walllamp{background:transparent;border:0;}
+  .d-walllamp::before{content:"";position:absolute;left:50%;top:4%;width:58%;height:40%;transform:translateX(-50%);background:linear-gradient(180deg,#6b5a3d,#3a2f20);border-radius:42% 42% 12% 12%;box-shadow:inset 0 2px 3px rgba(255,255,255,.12);}
+  .d-walllamp::after{content:"";position:absolute;left:50%;top:38%;width:150%;height:56%;transform:translateX(-50%);border-radius:50%;background:radial-gradient(circle at 50% 28%,rgba(255,220,150,0),rgba(255,220,150,0) 58%,transparent 70%);transition:background .25s,box-shadow .25s;}
+  .d-walllamp.lit::after{background:radial-gradient(circle at 50% 28%,rgba(255,232,176,.92),rgba(230,168,86,.34) 56%,transparent 74%);box-shadow:0 0 28px rgba(255,205,120,.4);}
+  .d-irondoor{background:repeating-linear-gradient(180deg,#2b2f34 0 12px,#23272b 12px 24px);border:3px solid #4a5058;border-radius:3px;box-shadow:inset 0 0 30px rgba(0,0,0,.75),0 0 0 2px rgba(0,0,0,.4);}
+  .d-irondoor::before{content:"";position:absolute;left:14%;top:12%;width:72%;height:76%;border:1px solid rgba(160,170,180,.16);border-radius:2px;}
+  .d-irondoor::after{content:"";position:absolute;right:14%;top:48%;width:9px;height:9px;border-radius:50%;background:#9aa3ab;box-shadow:0 0 8px rgba(150,160,170,.4);}
+  .d-box{background:linear-gradient(180deg,#4a3620,#2c2013);border:1px solid rgba(214,190,150,.25);border-radius:3px;box-shadow:inset 0 0 20px rgba(0,0,0,.5),0 8px 18px rgba(0,0,0,.4);}
+  .d-box::before{content:"";position:absolute;left:0;right:0;top:32%;height:3px;background:#7a5f36;}
+  .d-box::after{content:"";position:absolute;left:50%;top:32%;width:10px;height:14px;transform:translateX(-50%);background:#b08c4d;border-radius:2px;}
+  .d-altar{background:linear-gradient(180deg,#3b2a24,#241713);border:1px solid rgba(214,190,150,.2);border-radius:3px;box-shadow:0 12px 26px rgba(0,0,0,.5);}
+  .d-altar::before{content:"";position:absolute;left:0;right:0;top:0;height:38%;background:linear-gradient(180deg,#6b2a2a,#4a1d1d);border-bottom:1px solid rgba(230,205,160,.2);}
+  .d-photo{background:#0f0d0b;border:2px solid #7a6547;border-radius:2px;box-shadow:0 4px 10px rgba(0,0,0,.5);}
+  .d-photo::before{content:"";position:absolute;inset:12%;background:linear-gradient(160deg,#4d4a3f,#2a2722);}
+  .d-book{background:linear-gradient(90deg,#5c1f22,#401417);border-radius:2px 4px 4px 2px;box-shadow:2px 3px 8px rgba(0,0,0,.5);}
+  .d-book::before{content:"";position:absolute;left:12%;top:0;bottom:0;width:2px;background:rgba(230,205,160,.28);}
+  .d-candle{background:linear-gradient(180deg,#d9c9a3,#a69372);border-radius:2px;box-shadow:0 0 20px rgba(255,190,120,.2);}
+  .d-candle::before{content:"";position:absolute;left:50%;top:-26%;width:52%;aspect-ratio:1;transform:translateX(-50%);background:radial-gradient(circle at 50% 62%,#fff2b8,#f0a13d 55%,rgba(240,161,61,0) 72%);animation:flick 1.6s ease-in-out infinite;}
+  @keyframes flick{0%,100%{transform:translateX(-50%) scale(1);opacity:.9}50%{transform:translateX(-46%) scale(1.12,.92);opacity:1}}
+
+  .msg{flex:0 0 auto;width:min(100%,720px);min-height:58px;display:flex;align-items:center;gap:10px;padding:9px 13px;border:1px solid rgba(214,190,150,.14);border-radius:12px;background:rgba(14,15,20,.86);color:#c9c0ad;font-size:13px;line-height:1.65;}
+  .msg::before{content:"";flex:0 0 auto;width:4px;height:26px;border-radius:2px;background:linear-gradient(180deg,#c9a35f,#6b4f2a);}
+  .msg b{color:#f1e4c8;font-weight:600;}
+  .msg.flash{animation:msgflash .5s ease;}
+  @keyframes msgflash{0%{background:rgba(201,163,95,.22)}100%{background:rgba(14,15,20,.86)}}
+
+  footer{flex:0 0 auto;padding:8px 12px max(10px,env(safe-area-inset-bottom));border-top:1px solid rgba(214,190,150,.1);background:rgba(8,9,13,.94);}
+  .invbar{width:min(100%,720px);margin:0 auto;display:flex;align-items:center;gap:8px;}
+  .invlabel{flex:0 0 auto;font-size:10px;letter-spacing:.18em;color:#8a7a5e;padding-right:2px;}
+  #inv{display:flex;gap:7px;flex-wrap:nowrap;overflow-x:auto;padding:2px 0;scrollbar-width:none;}
+  #inv::-webkit-scrollbar{display:none;}
+  .item{flex:0 0 auto;display:flex;align-items:center;gap:6px;padding:7px 10px;border-radius:9px;border:1px solid rgba(214,190,150,.24);background:linear-gradient(180deg,rgba(201,163,95,.14),rgba(201,163,95,.05));color:#e5d7b8;font:600 12px/1 inherit;cursor:pointer;}
+  .item:hover{border-color:rgba(214,190,150,.6);}
+  .item .dot{width:6px;height:6px;border-radius:50%;background:#c9a35f;box-shadow:0 0 7px rgba(201,163,95,.7);}
+  .empty{font-size:11px;color:#665d4d;padding:8px 2px;}
+
+  .overlay{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(3,4,8,.82);backdrop-filter:blur(4px);}
+  .overlay.hide{display:none;}
+  .panel{width:min(94vw,430px);max-height:88vh;overflow:auto;padding:20px 18px 18px;border-radius:18px;border:1px solid rgba(214,190,150,.26);background:linear-gradient(165deg,#15161d,#0b0c11);box-shadow:0 30px 90px rgba(0,0,0,.7);}
+  .panel h2{margin:0 0 4px;font-size:19px;letter-spacing:.08em;color:#f3e8d2;}
+  .panel .kicker{font-size:10px;letter-spacing:.22em;color:#a5854f;margin-bottom:6px;}
+  .panel p{margin:8px 0;font-size:13px;line-height:1.8;color:#c5bca9;}
+  .panel .hl{color:#f0d9a4;}
+  .acts{display:flex;flex-direction:column;gap:8px;margin-top:16px;}
+  .acts .row{display:flex;gap:8px;}
+  .acts .row button{flex:1;}
+  .btn{border:0;border-radius:11px;padding:12px 16px;font:700 14px/1 inherit;cursor:pointer;color:#151006;background:linear-gradient(100deg,#e0c48c,#c9a35f);box-shadow:0 8px 22px rgba(201,163,95,.22);}
+  .btn:hover{filter:brightness(1.07);}
+  .btn.ghost{color:#d8cbb2;background:rgba(255,255,255,.04);border:1px solid rgba(214,190,150,.28);box-shadow:none;}
+  .btn:disabled{opacity:.4;cursor:default;filter:none;}
+
+  .keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px;}
+  .keypad button{padding:13px 0;border-radius:10px;border:1px solid rgba(214,190,150,.2);background:rgba(255,255,255,.04);color:#eee2c8;font:700 17px/1 inherit;cursor:pointer;}
+  .keypad button:active{background:rgba(201,163,95,.2);}
+  .keypad .wide{grid-column:span 1;}
+  .codeview{display:flex;justify-content:center;gap:10px;margin:16px 0 4px;}
+  .codeview span{width:38px;height:48px;display:flex;align-items:center;justify-content:center;border-bottom:2px solid rgba(214,190,150,.45);font:700 24px/1 inherit;color:#f6e9cc;background:rgba(255,255,255,.025);border-radius:6px 6px 0 0;}
+  .codeview span.on{border-color:#c9a35f;color:#ffe9b0;}
+  .shake{animation:shake .32s;}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+
+  .wireRow{display:flex;align-items:center;gap:8px;margin:10px 0;padding:8px;border:1px solid rgba(214,190,150,.14);border-radius:9px;background:rgba(255,255,255,.02);}
+  .wireRow .wname{flex:0 0 88px;display:flex;align-items:center;gap:7px;font-size:12px;}
+  .wireRow .wname i{width:9px;height:22px;border-radius:2px;display:inline-block;}
+  .wireRow .picks{display:flex;gap:6px;margin-left:auto;}
+  .wireRow .picks button{width:38px;padding:8px 0;border-radius:8px;border:1px solid rgba(214,190,150,.22);background:rgba(255,255,255,.03);color:#d9ccb0;font:700 12px/1 inherit;cursor:pointer;}
+  .wireRow .picks button.sel{background:rgba(201,163,95,.3);border-color:#c9a35f;color:#fff1cf;}
+  .symRow{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:14px 0 6px;}
+  .symRow button{padding:14px 0;border-radius:10px;border:1px solid rgba(214,190,150,.24);background:rgba(255,255,255,.03);color:#e8d8b6;font:700 15px/1 inherit;cursor:pointer;}
+  .symRow button:active{background:rgba(201,163,95,.2);}
+  .seqline{margin-top:8px;font-size:12px;color:#a99a7c;text-align:center;letter-spacing:.2em;min-height:18px;}
+
+  .titlePanel{text-align:center;padding:30px 22px 26px;}
+  .titlePanel h1{margin:10px 0 8px;font-size:clamp(30px,8vw,42px);letter-spacing:.14em;background:linear-gradient(100deg,#f6ead0,#d8b577 60%,#8f7448);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .titlePanel .sub{font-size:12.5px;line-height:1.9;color:#a99c85;margin:0 0 18px;}
+  .titlePanel .meta{font-size:10px;letter-spacing:.2em;color:#7c6c51;margin-top:16px;}
+  .endGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;}
+  .endCard{padding:11px;border-radius:10px;border:1px solid rgba(214,190,150,.18);background:rgba(255,255,255,.025);text-align:left;}
+  .endCard b{display:block;font-size:12px;color:#e8d7b5;margin-bottom:4px;}
+  .endCard span{font-size:10.5px;line-height:1.6;color:#8e8270;}
+  .endCard.lock{opacity:.5;}
+  @media (max-height:640px){.scene{min-height:200px}.msg{min-height:48px;font-size:12px}.panel{padding:16px 14px}.titlePanel{padding:22px 16px 20px}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <div class="roomtag"><span id="roomNo">01</span><b id="roomName">玄关</b></div>
+    <div class="tools">
+      <button id="hintBtn" type="button">提示</button>
+      <button id="menuBtn" type="button">菜单</button>
+    </div>
+  </header>
+
+  <div id="stage">
+    <div class="scene r1" id="scene"></div>
+    <div class="msg" id="msg"><b>调查提示：</b>点击房间里发亮的物件。地毯、抽屉、画框都值得看看。</div>
+  </div>
+
+  <footer>
+    <div class="invbar"><span class="invlabel">随身</span><div id="inv"><span class="empty">什么也没有</span></div></div>
+  </footer>
+</div>
+
+<div class="overlay hide" id="dlg">
+  <div class="panel" id="dlgPanel">
+    <div class="kicker" id="dlgKicker">调查</div>
+    <h2 id="dlgTitle">标题</h2>
+    <div id="dlgBody"></div>
+    <div class="acts" id="dlgActs"></div>
+  </div>
+</div>
+
+<div class="overlay hide" id="titleBox">
+  <div class="panel titlePanel">
+    <div class="kicker">ROOM SEVEN</div>
+    <h1>第七个房间</h1>
+    <p class="sub">你在旧公寓的玄关醒来，门从外面反锁。楼里的人都说，这栋楼没有第七个房间。</p>
+    <div class="acts" id="titleActs"></div>
+    <div class="meta">四间密室 · 两种结局 · 进度自动保存</div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var SAVE_KEY = 'seventh_save_v1';
+  var END_KEY = 'seventh_end_v1';
+
+  var ITEMS = {
+    key:   { name: '铜钥匙', desc: '齿痕很浅，只开过一次的锁。钥匙柄上刻着一个很小的“七”。' },
+    smallkey: { name: '小铜钥匙', desc: '比抽屉那把细一圈，齿口像一枚小月牙。鞋柜最底层找到的。' },
+    matches: { name: '火柴', desc: '一盒受潮又晾干的火柴，划三下能着一下。' },
+    receipt: { name: '欠租单', desc: '三号楼 07 室，欠租三年。落款处盖着物业的旧章。' },
+    note:  { name: '纸条',   desc: '字迹潦草：灯灭之后，画上才会出现数字。' },
+    tape:  { name: '绝缘胶带', desc: '半卷旧胶带，边缘发硬，但还能缠住裸露的线头。' },
+    fuse:  { name: '保险丝', desc: '保险箱里备着的旧保险丝。上面的额定电流被重新描过。' },
+    brass: { name: '铜牌',   desc: '掌心大小，正面刻着“七”，背面是一串被磨平的地址。' },
+    register: { name: '租客登记页', desc: '泛黄的登记页：三楼七号，租客一栏写着三个名字，最后一个被人用铅笔描过很多遍。' }
+  };
+
+  var ROOMS = {
+    1: {
+      name: '玄关', no: '01',
+      spots: [
+        { id: 'door',    label: '门',   cls: 'd-door',    x: 76, y: 30, w: 17, h: 40 },
+        { id: 'painting',label: '画',   cls: 'd-painting',x: 8,  y: 24, w: 22, h: 22, inner: '<span class="glowcode">3 7</span>' },
+        { id: 'mirror',  label: '镜子', cls: 'd-mirror',  x: 37, y: 21, w: 12, h: 23, inner: '<span class="glowcode">9 1</span>' },
+        { id: 'switch',  label: '灯',   cls: 'd-switch',  x: 62, y: 40, w: 4.5, h: 7 },
+        { id: 'clock',   label: '挂钟', cls: 'd-clock',   x: 51, y: 43, w: 8, h: 11 },
+        { id: 'drawer',  label: '抽屉', cls: 'd-drawer',  x: 10, y: 63, w: 25, h: 13 },
+        { id: 'cabinet', label: '鞋柜', cls: 'd-cabinet', x: 40, y: 66, w: 16, h: 16 },
+        { id: 'rug',     label: '地毯', cls: 'd-rug',     x: 16, y: 82, w: 30, h: 12 }
+      ],
+      extra: '<div class="amb floorline"></div><div class="amb win"></div>'
+    },
+    2: {
+      name: '书房', no: '02',
+      spots: [
+        { id: 'back1',   label: '回玄关', cls: 'd-door', x: 3, y: 30, w: 10, h: 40 },
+        { id: 'shelf',   label: '书架', cls: 'd-shelf', x: 17, y: 22, w: 24, h: 38 },
+        { id: 'lamp',    label: '台灯', cls: 'd-lamp',  x: 46, y: 44, w: 8, h: 14 },
+        { id: 'desk',    label: '书桌', cls: 'd-desk',  x: 42, y: 63, w: 27, h: 15 },
+        { id: 'deskDrawer', label: '抽屉', cls: 'd-drawer', x: 61, y: 71, w: 8, h: 6 },
+        { id: 'safe',    label: '保险箱', cls: 'd-safe', x: 76, y: 60, w: 17, h: 17 },
+        { id: 'calendar',label: '日历', cls: 'd-calendar', x: 50, y: 24, w: 11, h: 15 },
+        { id: 'wire',    label: '配电板', cls: 'd-wire', x: 71, y: 22, w: 19, h: 17 }
+      ],
+      extra: '<div class="amb floorline"></div>'
+    },
+    3: {
+      name: '密室', no: '03',
+      spots: [
+        { id: 'back2',  label: '回书房', cls: 'd-door', x: 3, y: 30, w: 10, h: 40 },
+        { id: 'photo',  label: '照片', cls: 'd-photo', x: 41, y: 30, w: 8, h: 10 },
+        { id: 'diary',  label: '日记', cls: 'd-book',  x: 53, y: 45, w: 7, h: 11 },
+        { id: 'candle', label: '蜡烛', cls: 'd-candle',x: 64, y: 44, w: 4, h: 13 },
+        { id: 'iron',   label: '铁门', cls: 'd-irondoor', x: 75, y: 24, w: 18, h: 44 },
+        { id: 'box',    label: '木箱', cls: 'd-box',   x: 9, y: 66, w: 19, h: 15 },
+        { id: 'altar',  label: '供桌', cls: 'd-altar', x: 34, y: 62, w: 28, h: 13 }
+      ],
+      extra: '<div class="amb floorline"></div>'
+    },
+    4: {
+      name: '阁楼', no: '04',
+      spots: [
+        { id: 'back3',  label: '回密室', cls: 'd-door', x: 3, y: 30, w: 10, h: 40 },
+        { id: 'lamp1',  label: '灯一', cls: 'd-walllamp', x: 17, y: 18, w: 6.5, h: 16 },
+        { id: 'lamp2',  label: '灯二', cls: 'd-walllamp', x: 34, y: 18, w: 6.5, h: 16 },
+        { id: 'lamp3',  label: '灯三', cls: 'd-walllamp', x: 51, y: 18, w: 6.5, h: 16 },
+        { id: 'lamp4',  label: '灯四', cls: 'd-walllamp', x: 68, y: 18, w: 6.5, h: 16 },
+        { id: 'exitdoor', label: '第七扇门', cls: 'd-irondoor', x: 78, y: 24, w: 17, h: 44 },
+        { id: 'chest',  label: '梁上暗格', cls: 'd-box', x: 40, y: 62, w: 20, h: 15 }
+      ],
+      extra: '<div class="amb floorline"></div>'
+    }
+  };
+
+  var HINTS = {
+    1: ['先看看脚下。地毯有一角翘起来了。', '抽屉的锁很小，铜钥匙应该就在这间屋子里。', '把灯关掉，画上会浮出前半组数字；后半组藏在镜子里，镜中的数字是左右反的。', '挂钟停在 9:15，鞋柜上的三位锁大概在等这个时间。', '门锁是四位：画给两个，镜子给两个，按顺序拼起来。'],
+    2: ['书架上的便签写着读法：第三本、第一本、第二本。', '保险箱是三位数，三个数字就在书脊上。', '书桌抽屉是圆孔小锁，玄关鞋柜里那把细钥匙也许能开。', '配电板要先包线头，再换保险丝，最后才轮到接线顺序。', '合闸之后才有电，台灯亮了才能看清灯罩下的字。'],
+    3: ['照片背面只剩两个符号，点上蜡烛，墙上会显出另外两个。', '没有火就回书房，书桌抽屉里有火柴。', '木箱上的符号要在有光的时候才看得清。', '铁门是三位旧式锁，书桌里的欠租单写着门牌号。', '铜牌是门锁最后缺的那一块；门后还有一层阁楼。'],
+    4: ['四盏壁灯是连着的：按一盏，它自己和左右两盏会同时切换。', '目标是四盏全亮。现在的状态是一亮一灭，试试从左往右依次按前三盏。', '全亮之后，梁上的暗格会打开；暗格里的登记页决定你能不能替他们说完。']
+  };
+
+  var S = { room: 1, inv: [], flags: {}, hintN: {}, started: false, ended: null };
+  var endings = { escape: false, truth: false };
+
+  var sceneEl = document.getElementById('scene');
+  var msgEl = document.getElementById('msg');
+  var invEl = document.getElementById('inv');
+  var dlg = document.getElementById('dlg');
+  var dlgTitle = document.getElementById('dlgTitle');
+  var dlgBody = document.getElementById('dlgBody');
+  var dlgActs = document.getElementById('dlgActs');
+  var dlgKicker = document.getElementById('dlgKicker');
+  var titleBox = document.getElementById('titleBox');
+
+  function has(id) { return S.inv.indexOf(id) >= 0; }
+  function addItem(id) { if (!has(id)) S.inv.push(id); }
+  function removeItem(id) { var i = S.inv.indexOf(id); if (i >= 0) S.inv.splice(i, 1); }
+  function f(k) { return !!S.flags[k]; }
+  function setf(k, v) { S.flags[k] = !!v; }
+
+  function save() {
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) {}
+  }
+  function loadEndings() {
+    try {
+      var e = JSON.parse(localStorage.getItem(END_KEY) || 'null');
+      if (e) { endings.escape = !!e.escape; endings.truth = !!e.truth; }
+    } catch (err) {}
+  }
+  function saveEndings() {
+    try { localStorage.setItem(END_KEY, JSON.stringify(endings)); } catch (e) {}
+  }
+  function loadSave() {
+    try {
+      var d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
+      if (d && d.started && d.room >= 1 && d.room <= 4) {
+        S.room = d.room;
+        S.inv = Array.isArray(d.inv) ? d.inv.filter(function (x) { return !!ITEMS[x]; }) : [];
+        S.flags = d.flags && typeof d.flags === 'object' ? d.flags : {};
+        S.hintN = d.hintN && typeof d.hintN === 'object' ? d.hintN : {};
+        S.started = true;
+        S.ended = d.ended || null;
+        /* 旧存档兼容：已合闸的玩家不再重复包线、换保险丝 */
+        if (S.flags.wireOk) { S.flags.taped = true; S.flags.fuseIn = true; }
+        if (S.flags.atticLit && !Array.isArray(S.flags.lamps)) S.flags.lamps = [1, 1, 1, 1];
+        return true;
+      }
+    } catch (e) {}
+    return false;
+  }
+
+  function say(html) {
+    msgEl.innerHTML = html;
+    msgEl.classList.remove('flash');
+    void msgEl.offsetWidth;
+    msgEl.classList.add('flash');
+  }
+
+  function renderInv() {
+    if (!S.inv.length) {
+      invEl.innerHTML = '<span class="empty">什么也没有</span>';
+      return;
+    }
+    invEl.innerHTML = '';
+    S.inv.forEach(function (id) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'item';
+      b.innerHTML = '<span class="dot"></span>' + ITEMS[id].name;
+      b.addEventListener('click', function () {
+        dialog('物品 · ' + ITEMS[id].name, '<p>' + ITEMS[id].desc + '</p>', [{ label: '收好' }]);
+      });
+      invEl.appendChild(b);
+    });
+  }
+
+  function lamps() {
+    if (!Array.isArray(S.flags.lamps) || S.flags.lamps.length !== 4) S.flags.lamps = [1, 0, 1, 0];
+    return S.flags.lamps;
+  }
+  function lampIndex(id) {
+    return /^lamp[1-4]$/.test(id) ? (parseInt(id.slice(4), 10) - 1) : -1;
+  }
+
+  function toggleLamp(i) {
+    if (i < 0 || i > 3) return;
+    var L = lamps();
+    [i - 1, i, i + 1].forEach(function (k) {
+      if (k >= 0 && k < 4) L[k] = L[k] ? 0 : 1;
+    });
+    save();
+    renderScene();
+    var allLit = L[0] && L[1] && L[2] && L[3];
+    if (allLit && !f('atticLit')) {
+      setf('atticLit', true);
+      save();
+      say('<b>四盏壁灯同时亮起。</b>梁上传来一声闷响，暗格被灯线拉开；第七扇门的锁舌也松了一格。');
+    } else if (allLit) {
+      say('四盏壁灯都亮着，梁上的暗格已经打开了。');
+    } else {
+      say('你按了一下壁灯，它和左右两盏同时切换——现在亮着 ' + L.filter(Boolean).length + ' 盏。');
+    }
+  }
+
+  function renderScene() {
+    var R = ROOMS[S.room];
+    sceneEl.className = 'scene r' + S.room + (S.room === 1 && f('lightsOff') ? ' dark' : '');
+    var html = R.extra || '';
+    R.spots.forEach(function (sp) {
+      var extraCls = '';
+      var li = lampIndex(sp.id);
+      if (li >= 0 && lamps()[li]) extraCls = ' lit';
+      html += '<button type="button" class="hot ' + sp.cls + extraCls + '" data-hot="' + sp.id + '" style="left:' + sp.x + '%;top:' + sp.y + '%;width:' + sp.w + '%;height:' + sp.h + '%">' +
+        (sp.inner || '') + '<span class="lab">' + sp.label + '</span></button>';
+    });
+    sceneEl.innerHTML = html;
+    Array.prototype.forEach.call(sceneEl.querySelectorAll('.hot'), function (b) {
+      b.addEventListener('click', function () { investigate(b.getAttribute('data-hot')); });
+    });
+    document.getElementById('roomNo').textContent = R.no;
+    document.getElementById('roomName').textContent = R.name;
+  }
+
+  function render() {
+    renderScene();
+    renderInv();
+  }
+
+  function dialog(title, bodyHtml, actions, kicker) {
+    dlgKicker.textContent = kicker || '调查';
+    dlgTitle.textContent = title;
+    dlgBody.innerHTML = bodyHtml || '';
+    dlgActs.innerHTML = '';
+    var list = actions && actions.length ? actions : [{ label: '继续' }];
+    list.forEach(function (a) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'btn' + (a.ghost ? ' ghost' : '');
+      b.textContent = a.label;
+      if (a.disabled) b.disabled = true;
+      b.addEventListener('click', function () {
+        if (a.disabled) return;
+        if (a.keep) { if (a.fn) a.fn(); return; }
+        closeDialog();
+        if (a.fn) a.fn();
+      });
+      dlgActs.appendChild(b);
+    });
+    dlg.classList.remove('hide');
+  }
+
+  function closeDialog() { dlg.classList.add('hide'); }
+
+  function goRoom(n) {
+    S.room = n;
+    S.started = true;
+    save();
+    render();
+    var intro = {
+      1: '玄关的灯还在闪。门从外面锁着，锁旁是一块四位数的键盘。',
+      2: '书房里有一股旧纸和灰尘的味道。靠墙的书架、桌上的台灯、墙角的保险箱。',
+      3: '密室比想象中干净。供桌、木箱、铁门，还有一支没有烧完的蜡烛。',
+      4: '阁楼比楼下更冷。四盏壁灯沿着横梁排开，尽头那扇门的门牌号是“七”。'
+    };
+    say('<b>' + ROOMS[n].name + '。</b>' + intro[n]);
+  }
+
+  /* ---------------- 调查逻辑 ---------------- */
+  function investigate(id) {
+    if (!S.started) S.started = true;
+    save();
+    switch (id) {
+      case 'rug':
+        if (!f('rugMoved')) {
+          setf('rugMoved', true);
+          addItem('key');
+          say('<b>你掀开地毯。</b>底下压着一把铜钥匙，还有一小片被踩碎的干花瓣。');
+        } else {
+          say('地毯下面只剩灰。');
+        }
+        break;
+
+      case 'drawer':
+        if (!f('drawerOpen')) {
+          if (has('key')) {
+            setf('drawerOpen', true);
+            addItem('note');
+            say('<b>铜钥匙刚好转动。</b>抽屉里只有一张折了两折的纸条。');
+            dialog('抽屉里的纸条', '<p>纸上写着：<span class="hl">灯灭之后，画上才会出现数字。</span></p><p>落款是一个被划掉的名字。</p>', [{ label: '收好纸条' }]);
+          } else {
+            say('抽屉锁着。<b>锁孔很小</b>，普通钥匙插不进去。');
+          }
+        } else {
+          say('抽屉空了，木头上有几道旧划痕。');
+        }
+        break;
+
+      case 'painting':
+        if (f('lightsOff')) {
+          setf('sawCode', true);
+          say('<b>荧光数字从画布上浮出来：3 7。</b>后面两个数字像是被人用力刮掉了，只剩一点指甲印。');
+        } else {
+          say('一幅雨夜街景，颜料已经发暗。画框背后有夹层，但现在什么也看不清。');
+        }
+        break;
+
+      case 'switch':
+        setf('lightsOff', !f('lightsOff'));
+        renderScene();
+        if (f('lightsOff')) {
+          say('<b>灯灭了。</b>房间里只剩窗外的雨声。画和镜子那边似乎有微光。');
+        } else {
+          say('<b>灯亮了。</b>画又变回一幅普通的旧画，镜子也只剩一层雾。');
+        }
+        break;
+
+      case 'mirror':
+        if (f('lightsOff')) {
+          say('<b>镜面上浮着两个反写的数字。</b>左右颠倒过来读，是 <b>1 9</b>。镜框背面还刻着三个小字：三、一、二。');
+        } else {
+          say('镜面蒙着一层雾。<b>镜子里的房间左右颠倒。</b>你伸手擦了一下，镜框背面刻着三个小字：三、一、二。');
+        }
+        break;
+
+      case 'clock':
+        setf('clockSeen', true);
+        say('<b>挂钟停在 9:15。</b>秒针卡在十二点的位置，像是有人故意让它停在这一刻。');
+        break;
+
+      case 'cabinet':
+        if (f('cabinetOpen')) { say('鞋柜里只剩几双发霉的旧鞋，最底层空了。'); break; }
+        openKeypad('鞋柜 · 三位数', 3, '915', function () {
+          setf('cabinetOpen', true);
+          addItem('smallkey');
+          renderInv(); save();
+          say('<b>柜门弹开。</b>最底层放着一把细小的铜钥匙，旁边还有一张早已过期的物业通知。');
+        }, '钟面上的时间就是密码。');
+        break;
+
+      case 'door':
+        if (f('door1Open')) { goRoom(2); return; }
+        openKeypad('门锁 · 四位数', 4, '3719', function () {
+          setf('door1Open', true);
+          renderScene();
+          say('<b>锁开了。</b>门后不是走廊，是一间书房。');
+          save();
+          setTimeout(function () { goRoom(2); }, 700);
+        }, '画给前半组，镜子给后半组。镜中的数字是左右反的。');
+        break;
+
+      /* ---- 书房 ---- */
+      case 'back1':
+        goRoom(1);
+        return;
+
+      case 'shelf':
+        setf('bookClue', true);
+        say('<b>三本硬皮书并排立着。</b>红脊烫金 9，绿脊 4，蓝脊 2。夹在中间的便签写着：密码按“第三本、第一本、第二本”排列。');
+        break;
+
+      case 'desk':
+        say('一叠账单，最上面那张写着：<b>11 月 7 日，电梯停运。</b>纸张边缘有被雨水泡过的痕迹。桌沿下还有一个上锁的小抽屉。');
+        break;
+
+      case 'deskDrawer':
+        if (f('deskDrawerOpen')) { say('抽屉开着，里面只剩一层纸灰。'); break; }
+        if (!has('smallkey')) {
+          say('抽屉是圆孔小锁，<b>比铜钥匙细一圈</b>。玄关那样的旧柜子里也许有配得上的钥匙。');
+          break;
+        }
+        setf('deskDrawerOpen', true);
+        addItem('matches');
+        addItem('receipt');
+        renderInv(); save();
+        say('<b>小钥匙刚好转开。</b>抽屉里有一盒火柴，还有一张压在底下的欠租单。');
+        setTimeout(function () {
+          dialog('书桌抽屉', '<p>欠租单上写着：<span class="hl">三号楼 · 07 室，欠租三年。</span></p><p>火柴受了潮，但盒侧有人用铅笔写了两个字：点灯。</p>', [{ label: '收好' }]);
+        }, 260);
+        break;
+
+      case 'calendar':
+        say('日历停在十一月。<b>7 号被红笔圈住</b>，背面有一行小字：别在夜里坐电梯。');
+        break;
+
+      case 'lamp':
+        if (!f('wireOk')) {
+          say('你拉了一下台灯开关，没有反应。灯泡是好的，<b>问题在配电板</b>。');
+          break;
+        }
+        setf('lampOn', !f('lampOn'));
+        if (f('lampOn')) say('<b>台灯亮了。</b>灯罩下压着一张便签：顺序看镜子。');
+        else say('你关掉台灯，房间重新暗下来。');
+        break;
+
+      case 'safe':
+        if (f('safeOpen')) { say('保险箱门开着，里面空了。'); break; }
+        if (!f('bookClue')) {
+          say('保险箱是三位数字锁。直接试太冒险了，先找找线索。');
+          break;
+        }
+        openKeypad('保险箱 · 三位数', 3, '294', function () {
+          setf('safeOpen', true);
+          addItem('tape'); addItem('fuse');
+          renderInv(); save();
+          say('<b>保险箱开了。</b>里面只有半卷绝缘胶带和一枚旧保险丝。');
+          setTimeout(function () {
+            dialog('保险箱里的东西', '<p>胶带还能用。保险丝很旧，但被仔细擦过。</p><p>保险箱内壁贴着一张便签：<span class="hl">别让灯再灭一次。</span></p>', [{ label: '收好' }]);
+          }, 260);
+        }, '书脊上的数字，按便签的顺序读。');
+        break;
+
+      case 'wire':
+        if (f('wireOk')) { say('配电板嗡嗡作响，电流稳定。三根线已经按旧标签接好，台灯也亮了。'); break; }
+        if (!f('taped')) {
+          if (has('tape')) {
+            removeItem('tape');
+            setf('taped', true);
+            renderInv(); save();
+            say('<b>你撕下一段绝缘胶带，把裸露的线头包好。</b>面板能打开了，但保险丝座还是空的。');
+          } else {
+            say('配电板外壳松了，但里面有一根线头裸露着。<b>直接碰会触电。</b>');
+          }
+          break;
+        }
+        if (!f('fuseIn')) {
+          if (has('fuse')) {
+            removeItem('fuse');
+            setf('fuseIn', true);
+            renderInv(); save();
+            say('<b>你换上保险丝。</b>面板通电了，指示灯闪了两下。还差把三根线接回端子上。');
+          } else {
+            say('线头包好了，但<b>保险丝座空着</b>。书房里应该还有一枚备用保险丝。');
+          }
+          break;
+        }
+        openWires();
+        break;
+
+      /* ---- 密室 ---- */
+      case 'back2':
+        goRoom(2);
+        return;
+
+      case 'photo':
+        setf('story1', true);
+        say('<b>照片里是一家三口。</b>他们站在一扇写着“七”的门前，三个人都没有笑。背面用铅笔写着：<b>月、？、门、？</b>——中间和最后两个符号被水泡烂了。');
+        save();
+        break;
+
+      case 'diary':
+        setf('story2', true);
+        say('<b>日记的最后一页：</b>“门从来不锁人，锁人的是那晚我们选择沉默。如果有人读到这里，请替我们把话说完。”纸页间还夹着半截烧过的火柴梗。');
+        save();
+        break;
+
+      case 'candle':
+        if (f('candleLit')) {
+          say('蜡烛烧得很稳，火光把墙上的划痕照得清清楚楚：<b>第二是眼，第四是钥匙。</b>');
+          break;
+        }
+        if (!has('matches')) {
+          say('蜡烛是新的，烛芯却干得发脆。你身上没有火。');
+          break;
+        }
+        removeItem('matches');
+        setf('candleLit', true);
+        renderInv(); save();
+        say('<b>火柴划了三次才着。</b>烛光一亮，墙上浮出几道旧划痕：<b>第二是眼，第四是钥匙。</b>');
+        break;
+
+      case 'altar':
+        say('供桌上摆着两副碗筷，第三个位置空着。桌布下面压着几根烧到一半的香，香灰被人抹平过。');
+        break;
+
+      case 'box':
+        if (f('boxOpen')) { say('木箱开着，里面只剩一层黑色绒布。'); break; }
+        if (!f('candleLit')) {
+          say('箱盖上嵌着四个符号按钮，<b>但暗得看不清刻的是什么</b>。得先有光。');
+          break;
+        }
+        openSymbols();
+        break;
+
+      case 'iron':
+        if (!f('boxOpen') || !has('brass')) {
+          say('铁门冰冰凉。<b>门锁是一个凹槽</b>，形状像一块小牌子；下面还剩三位数字的旧锁盘。');
+          break;
+        }
+        if (f('ironCode')) { goRoom(4); return; }
+        openKeypad('铁门 · 三位数', 3, '307', function () {
+          setf('ironCode', true);
+          save();
+          say('<b>铜牌嵌进凹槽，锁盘转到 3-0-7。</b>铁门后不是出口，是一段通往阁楼的窄梯。');
+          setTimeout(function () { goRoom(4); }, 800);
+        }, '旧锁盘旁刻着“物业编号”。欠租单上写过门牌。');
+        break;
+
+      /* ---- 阁楼 ---- */
+      case 'back3':
+        goRoom(3);
+        return;
+
+      case 'lamp1':
+      case 'lamp2':
+      case 'lamp3':
+      case 'lamp4':
+        toggleLamp(lampIndex(id));
+        return;
+
+      case 'chest':
+        if (!f('atticLit')) {
+          say('梁上的暗格被四道锁舌扣着，锁舌的拉线一直连到四盏壁灯。');
+          break;
+        }
+        if (has('register')) {
+          say('暗格里只剩一层灰。那页登记已经被你收进了外套。');
+          break;
+        }
+        addItem('register');
+        renderInv(); save();
+        say('<b>暗格弹开。</b>里面压着一页租客登记：三楼七号，租客一栏写着三个名字。');
+        setTimeout(function () {
+          dialog('租客登记页', '<p>三号楼 · 07 室。</p><p>租客一栏依次写着三个名字，最后一个被人用铅笔描过很多遍，纸都快磨破了。</p><p class="hl">门牌、名字、沉默，全都对上了。</p>', [{ label: '收好登记页' }]);
+        }, 260);
+        break;
+
+      case 'exitdoor':
+        if (!f('atticLit')) {
+          say('门缝里透出冷风，但门上的七个锁舌全部咬死。<b>四盏壁灯</b>似乎和它连着。');
+          break;
+        }
+        finalChoice();
+        break;
+
+      default:
+        say('这里什么也没有。');
+    }
+    save();
+  }
+
+  /* ---------------- 键盘锁 ---------------- */
+  function openKeypad(title, len, answer, onOk, hint) {
+    var val = '';
+    dlgKicker.textContent = '密码锁';
+    dlgTitle.textContent = title;
+    dlgBody.innerHTML = '<div class="codeview" id="codeview"></div><p style="text-align:center;font-size:11.5px;color:#8a7a5e;margin:6px 0 0">' + (hint || '') + '</p><div class="keypad" id="kp"></div>';
+    dlgActs.innerHTML = '';
+    var view = document.getElementById('codeview');
+    var kp = document.getElementById('kp');
+
+    function paint() {
+      view.innerHTML = '';
+      for (var i = 0; i < len; i++) {
+        var sp = document.createElement('span');
+        sp.textContent = val[i] || '';
+        if (val[i]) sp.className = 'on';
+        view.appendChild(sp);
+      }
+    }
+    paint();
+
+    function press(d) {
+      if (val.length >= len) return;
+      val += d;
+      paint();
+      if (val.length === len) setTimeout(check, 160);
+    }
+    function check() {
+      if (val === answer) {
+        closeDialog();
+        onOk && onOk();
+      } else {
+        view.classList.add('shake');
+        setTimeout(function () {
+          view.classList.remove('shake');
+          val = '';
+          paint();
+        }, 340);
+      }
+    }
+
+    ['1','2','3','4','5','6','7','8','9'].forEach(function (d) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.textContent = d;
+      b.addEventListener('click', function () { press(d); });
+      kp.appendChild(b);
+    });
+    var clr = document.createElement('button');
+    clr.type = 'button'; clr.textContent = '清除';
+    clr.addEventListener('click', function () { val = ''; paint(); });
+    kp.appendChild(clr);
+    var zero = document.createElement('button');
+    zero.type = 'button'; zero.textContent = '0';
+    zero.addEventListener('click', function () { press('0'); });
+    kp.appendChild(zero);
+    var ok = document.createElement('button');
+    ok.type = 'button'; ok.textContent = '确认';
+    ok.addEventListener('click', check);
+    kp.appendChild(ok);
+
+    var close = document.createElement('button');
+    close.type = 'button'; close.className = 'btn ghost';
+    close.style.marginTop = '10px';
+    close.textContent = '先不开了';
+    close.addEventListener('click', closeDialog);
+    dlgActs.appendChild(close);
+    dlg.classList.remove('hide');
+  }
+
+  /* ---------------- 接线 ---------------- */
+  function openWires() {
+    var picks = { red: '', blue: '', yellow: '' };
+    dlgKicker.textContent = '配电板';
+    dlgTitle.textContent = '把线接回去';
+    dlgBody.innerHTML = '<p>面板内侧的旧标签写着：<span class="hl">火线接 3，零线接 1，地线接 2。</span></p>' +
+      '<div id="wireRows"></div>' +
+      '<p style="font-size:11px;color:#8a7a5e">红色是火线，蓝色是零线，黄色是地线。</p>';
+    dlgActs.innerHTML = '';
+    var rows = document.getElementById('wireRows');
+    var wires = [
+      { id: 'red', name: '红色 · 火线', color: '#d24b45' },
+      { id: 'blue', name: '蓝色 · 零线', color: '#4b8fd2' },
+      { id: 'yellow', name: '黄色 · 地线', color: '#d2b24b' }
+    ];
+    wires.forEach(function (w) {
+      var row = document.createElement('div');
+      row.className = 'wireRow';
+      row.innerHTML = '<span class="wname"><i style="background:' + w.color + '"></i>' + w.name + '</span><span class="picks"></span>';
+      var picksEl = row.querySelector('.picks');
+      [1, 2, 3].forEach(function (n) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.textContent = String(n);
+        b.addEventListener('click', function () {
+          picks[w.id] = String(n);
+          Array.prototype.forEach.call(picksEl.children, function (c) { c.classList.remove('sel'); });
+          b.classList.add('sel');
+        });
+        picksEl.appendChild(b);
+      });
+      rows.appendChild(row);
+    });
+
+    var checkBtn = document.createElement('button');
+    checkBtn.type = 'button'; checkBtn.className = 'btn';
+    checkBtn.textContent = '合闸';
+    checkBtn.addEventListener('click', function () {
+      if (!picks.red || !picks.blue || !picks.yellow) {
+        say('<b>三根线都要接到端子上。</b>还差几根没选。');
+        return;
+      }
+      if (picks.red === '3' && picks.blue === '1' && picks.yellow === '2') {
+        closeDialog();
+        setf('wireOk', true);
+        save();
+        say('<b>电流接通了。</b>台灯亮起，墙后传来“咔哒”一声，书房尽头的一扇暗门弹开了。');
+        setTimeout(function () { goRoom(3); }, 900);
+      } else {
+        var rowsEl = document.getElementById('wireRows');
+        rowsEl.classList.remove('shake');
+        void rowsEl.offsetWidth;
+        rowsEl.classList.add('shake');
+        say('<b>啪的一声，跳闸了。</b>顺序不对，再想想标签。');
+      }
+    });
+
+    var row2 = document.createElement('div');
+    row2.className = 'acts';
+    row2.appendChild(checkBtn);
+    var back = document.createElement('button');
+    back.type = 'button'; back.className = 'btn ghost';
+    back.textContent = '先合上面板';
+    back.addEventListener('click', closeDialog);
+    row2.appendChild(back);
+    dlgActs.appendChild(row2);
+    dlg.classList.remove('hide');
+  }
+
+  /* ---------------- 符号锁 ---------------- */
+  function openSymbols() {
+    var seq = [];
+    var target = ['月', '眼', '门', '钥匙'];
+    dlgKicker.textContent = '木箱';
+    dlgTitle.textContent = '四个符号';
+    dlgBody.innerHTML = '<p>箱盖上嵌着四个按钮。照片背面那行字，应该就是顺序。</p><div class="symRow" id="symRow"></div><div class="seqline" id="seqline">按顺序按下四个符号</div>';
+    dlgActs.innerHTML = '';
+    var row = document.getElementById('symRow');
+    var line = document.getElementById('seqline');
+
+    target.forEach(function (s) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.textContent = s;
+      b.addEventListener('click', function () {
+        if (seq.length >= 4) return;
+        if (s !== target[seq.length]) {
+          seq = [];
+          line.textContent = '顺序不对，箱盖纹丝不动';
+          line.style.color = '#c97b6b';
+          return;
+        }
+        seq.push(s);
+        line.style.color = '#c9a35f';
+        line.textContent = seq.join(' · ');
+        if (seq.length === 4) {
+          setTimeout(function () {
+            closeDialog();
+            setf('boxOpen', true);
+            addItem('brass');
+            renderInv(); save();
+            say('<b>木箱开了。</b>黑色绒布上躺着一块铜牌，正面刻着“七”。');
+          }, 420);
+        }
+      });
+      row.appendChild(b);
+    });
+
+    var close = document.createElement('button');
+    close.type = 'button'; close.className = 'btn ghost';
+    close.textContent = '先不碰';
+    close.addEventListener('click', closeDialog);
+    dlgActs.appendChild(close);
+    dlg.classList.remove('hide');
+  }
+
+  /* ---------------- 结局 ---------------- */
+  function finalChoice() {
+    var extra = f('story1') && f('story2') && has('register');
+    var body = '<p>铜牌嵌进门上的最后一个凹槽。第七扇门后传来很轻的风声，像有人在等一句话。</p>' +
+      (extra
+        ? '<p>照片、日记、租客登记页都在你手上。<span class="hl">如果现在走，这些名字就再也没人知道。</span></p>'
+        : '<p>你握着铜牌，但手里的故事还不完整。<b>照片、日记、梁上的登记页</b>，也许还漏了什么。</p>');
+    var actions = [
+      { label: '推门离开', fn: function () { finishEnding('escape'); } }
+    ];
+    if (extra) {
+      actions.unshift({ label: '带走日记和登记页', fn: function () { finishEnding('truth'); } });
+    } else {
+      actions.push({ label: '回去再看看', ghost: true });
+    }
+    dialog('第七扇门', body, actions, 'ENDING');
+  }
+
+  function finishEnding(kind) {
+    endings[kind] = true;
+    saveEndings();
+    S.ended = kind;
+    save();
+    var isTruth = kind === 'truth';
+    dialog(
+      isTruth ? '结局 · 替他们说完' : '结局 · 活着出去',
+      isTruth
+        ? '<p>你把日记和那页租客登记一起塞进外套。铜牌转动时，墙里传来很轻的一声谢谢。</p><p>第二天，这栋楼第一次登记了第七个房间的租客——那一栏里写着三个名字。你把复印件留在物业前台。</p><p class="hl">有些房间不是用来住的，是用来记住的。</p>'
+        : '<p>门在身后合上，走廊的声控灯一盏接一盏亮起。雨还在下，楼里没有第七个房间的门牌。</p><p>你活了下来，但那三个名字被你留在了梁上。</p>',
+      [
+        { label: '查看结局档案', fn: showEndings },
+        { label: '重新开始', ghost: true, fn: function () { restart(); } }
+      ],
+      'ENDING'
+    );
+  }
+
+  function showEndings() {
+    dlgKicker.textContent = '结局档案';
+    dlgTitle.textContent = '两种出口';
+    dlgBody.innerHTML =
+      '<div class="endGrid">' +
+      '<div class="endCard ' + (endings.escape ? '' : 'lock') + '"><b>' + (endings.escape ? '活着出去' : '？？？') + '</b><span>' + (endings.escape ? '你推开了铁门，把雨声留在身后。' : '还没走到铁门前。') + '</span></div>' +
+      '<div class="endCard ' + (endings.truth ? '' : 'lock') + '"><b>' + (endings.truth ? '替他们说完' : '？？？') + '</b><span>' + (endings.truth ? '你带走日记和登记页，也给三个人留下了名字。' : '读完照片和日记，再从梁上带走登记页。') + '</span></div>' +
+      '</div>';
+    var acts = [{ label: '返回' }];
+    if (!S.started) acts.unshift({ label: '开始调查', fn: function () { startNew(); } });
+    dialog('结局档案', dlgBody.innerHTML, acts);
+  }
+
+  function restart() {
+    try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+    S = { room: 1, inv: [], flags: {}, hintN: {}, started: true, ended: null };
+    render();
+    goRoom(1);
+  }
+
+  function startNew() {
+    S = { room: 1, inv: [], flags: {}, hintN: {}, started: true, ended: null };
+    save();
+    titleBox.classList.add('hide');
+    render();
+    goRoom(1);
+  }
+
+  function continueGame() {
+    titleBox.classList.add('hide');
+    render();
+    say('<b>' + ROOMS[S.room].name + '。</b>你回到了刚才停下的地方。');
+  }
+
+  function showTitle() {
+    titleBox.classList.remove('hide');
+    var acts = document.getElementById('titleActs');
+    acts.innerHTML = '';
+    if (S.started && S.room >= 1) {
+      var c = document.createElement('button');
+      c.type = 'button'; c.className = 'btn';
+      c.textContent = '继续调查 · ' + ROOMS[S.room].name;
+      c.addEventListener('click', continueGame);
+      acts.appendChild(c);
+    }
+    var n = document.createElement('button');
+    n.type = 'button';
+    n.className = S.started ? 'btn ghost' : 'btn';
+    n.textContent = '从头开始';
+    n.addEventListener('click', function () {
+      if (S.started) {
+        dialog('重新开始', '<p>当前进度会被清空，已经解锁的结局档案会保留。</p>', [
+          { label: '清空并重来', fn: startNew },
+          { label: '再想想', ghost: true }
+        ]);
+      } else {
+        startNew();
+      }
+    });
+    acts.appendChild(n);
+    var e = document.createElement('button');
+    e.type = 'button'; e.className = 'btn ghost';
+    e.textContent = '结局档案';
+    e.addEventListener('click', showEndings);
+    acts.appendChild(e);
+    if (!S.started) {
+      var tip = document.createElement('button');
+      tip.type = 'button'; tip.className = 'btn ghost';
+      tip.textContent = '操作说明';
+      tip.addEventListener('click', function () {
+        dialog('操作说明', '<p>点击房间里的物件进行调查。得到的物品会放进底部随身栏，点一下可以查看描述。</p><p>密码锁和机关都在弹窗里操作。房间之间可以来回走。</p><p>卡住时点右上角“提示”。</p>', [{ label: '知道了' }], '帮助');
+      });
+      acts.appendChild(tip);
+    }
+    titleBox.classList.remove('hide');
+  }
+
+  /* ---------------- 顶部按钮 ---------------- */
+  document.getElementById('hintBtn').addEventListener('click', function () {
+    var room = S.room;
+    var n = S.hintN[room] || 0;
+    var list = HINTS[room];
+    var text = list[n % list.length];
+    S.hintN[room] = n + 1;
+    save();
+    dialog('提示 · ' + ROOMS[room].name, '<p>' + text + '</p>', [{ label: '再找找' }], 'HINT');
+  });
+
+  document.getElementById('menuBtn').addEventListener('click', function () {
+    dialog('菜单', '<p>房间：' + ROOMS[S.room].name + '　随身物品：' + S.inv.length + ' 件</p><p>进度会自动保存。已经解锁的结局不会因为重来而消失。</p>', [
+      { label: '继续调查', ghost: true },
+      { label: '查看结局', fn: showEndings },
+      { label: '回到标题', ghost: true, fn: showTitle }
+    ], 'MENU');
+  });
+
+  dlg.addEventListener('click', function (e) {
+    if (e.target === dlg) closeDialog();
+  });
+
+  /* ---------------- 启动 ---------------- */
+  loadEndings();
+  var hadSave = loadSave();
+  render();
+  document.getElementById('roomNo').textContent = ROOMS[S.room].no;
+  document.getElementById('roomName').textContent = ROOMS[S.room].name;
+  if (!hadSave) {
+    S = { room: 1, inv: [], flags: {}, hintN: {}, started: false, ended: null };
+    render();
+  }
+  showTitle();
+
+  window.__SEVENTH = {
+    get state() { return { room: S.room, inv: S.inv.slice(), flags: JSON.parse(JSON.stringify(S.flags)), started: S.started, ended: S.ended }; },
+    get endings() { return { escape: endings.escape, truth: endings.truth }; },
+    investigate: investigate,
+    goRoom: goRoom,
+    startNew: startNew,
+    closeDialog: closeDialog,
+    dialog: dialog,
+    finishEnding: finishEnding,
+    showEndings: showEndings
+  };
+})();
+</script>
+</body>
+</html>

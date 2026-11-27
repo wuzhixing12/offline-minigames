@@ -39,21 +39,20 @@
   var PADDLE_Y = H - 78;
   var PADDLE_H = 16;
   var BALL_R = 8;
-  /* 10 关数据：11 列字符画，'.' 空 / 数字 = 血量 / 'b' 炸弹砖 / 'g' 金砖 */
+  var BALL_SPEED = 620;
+  /* 20 关数据：11 列字符画，'.' 空 / 数字 = 血量 / 'b' 炸弹砖 / 'g' 金砖 */
   var LEVELS = [
     {
-      name: '霓虹序曲', speed: 430, paddleW: 150,
+      name: '霓虹序曲', paddleW: 150,
       rows: [
         '...........',
-        '11111111111',
-        '11111111111',
         '11111111111',
         '11111111111',
         '11111111111'
       ]
     },
     {
-      name: '交错脉冲', speed: 452, paddleW: 146,
+      name: '交错脉冲', paddleW: 146,
       rows: [
         '...........',
         '1.1.1.1.1.1',
@@ -65,20 +64,20 @@
       ]
     },
     {
-      name: '棱镜穹顶', speed: 474, paddleW: 142,
+      name: '棱镜穹顶', paddleW: 142,
       rows: [
-        '.....2.....',
-        '....222....',
-        '...22222...',
-        '..2222222..',
-        '.222222222.',
-        '..2222222..',
-        '...22222...',
-        '....222....'
+        '.....1.....',
+        '....111....',
+        '...11111...',
+        '..1111111..',
+        '.111111111.',
+        '..1111111..',
+        '...11111...',
+        '....111....'
       ]
     },
     {
-      name: '炸弹堡垒', speed: 496, paddleW: 138,
+      name: '炸弹堡垒', paddleW: 138,
       rows: [
         '11111111111',
         '1.........1',
@@ -91,7 +90,7 @@
       ]
     },
     {
-      name: '双螺旋', speed: 518, paddleW: 134,
+      name: '双螺旋', paddleW: 134,
       rows: [
         '22.......22',
         '.22.....22.',
@@ -105,7 +104,7 @@
       ]
     },
     {
-      name: '黄金回廊', speed: 540, paddleW: 130,
+      name: '黄金回廊', paddleW: 130,
       rows: [
         '33.......33',
         '.3g.....g3.',
@@ -119,9 +118,9 @@
       ]
     },
     {
-      name: '九层熔炉', speed: 562, paddleW: 126,
+      name: '九层熔炉', paddleW: 126,
       rows: [
-        '44444444444',
+        '44b44444b44',
         '3.........3',
         '3.3333333.3',
         '3.3.....3.3',
@@ -129,25 +128,25 @@
         '3.3.....3.3',
         '3.3333333.3',
         '3.........3',
-        '44444444444'
+        '44b44444b44'
       ]
     },
     {
-      name: '核心反应堆', speed: 584, paddleW: 122,
+      name: '核心反应堆', paddleW: 122,
       rows: [
-        '44444444444',
-        '4.........4',
+        '44b44444b44',
+        '4.4.4.4.4.4',
         '4.3333333.4',
-        '4.3.....3.4',
+        '4.3.4.4.3.4',
         '4.3.ggg.3.4',
-        '4.3.....3.4',
+        '4.3.4.4.3.4',
         '4.3333333.4',
-        '4.........4',
-        '44444444444'
+        '4.4.4.4.4.4',
+        '44b44444b44'
       ]
     },
     {
-      name: '碎裂星环', speed: 606, paddleW: 118,
+      name: '碎裂星环', paddleW: 118,
       rows: [
         '4.4.4.4.4.4',
         '.4.4.4.4.4.',
@@ -161,7 +160,7 @@
       ]
     },
     {
-      name: '终焉壁垒', speed: 630, paddleW: 114,
+      name: '终焉壁垒', paddleW: 114,
       rows: [
         '44444444444',
         '4g4444444g4',
@@ -174,11 +173,148 @@
         '4.4.4.4.4.4',
         '44444444444'
       ]
+    },
+    {
+      name: '镜像回廊', paddleW: 110,
+      rows: [
+        '2.2.2.2.2.2',
+        '.2.2.2.2.2.',
+        '2.2.2.2.2.2',
+        '..2.....2..',
+        '..2.bbb.2..',
+        '..2.....2..',
+        '2.2.2.2.2.2',
+        '.2.2.2.2.2.',
+        '2.2.2.2.2.2'
+      ]
+    },
+    {
+      name: '断层矩阵', paddleW: 106,
+      rows: [
+        '22.22.22.22',
+        '.2.2...2.2.',
+        '2.2.222.2.2',
+        '...2.b.2...',
+        '2.2.222.2.2',
+        '.2.2...2.2.',
+        '22.22.22.22'
+      ]
+    },
+    {
+      name: '蜂巢脉冲', paddleW: 103,
+      rows: [
+        '.2.2.2.2.2.',
+        '2.2.2.2.2.2',
+        '.2.2.b.2.2.',
+        '2.2.222.2.2',
+        '.2.2.b.2.2.',
+        '2.2.2.2.2.2',
+        '.2.2.2.2.2.'
+      ]
+    },
+    {
+      name: '熔芯连桥', paddleW: 100,
+      rows: [
+        '11111111111',
+        '1.........1',
+        '1.2.....2.1',
+        '1.2.bbb.2.1',
+        '1.2.....2.1',
+        '1.2222222.1',
+        '1.........1',
+        '11111111111'
+      ]
+    },
+    {
+      name: '折跃星门', paddleW: 97,
+      rows: [
+        '2.2.....2.2',
+        '.2.2...2.2.',
+        '..2.2.2.2..',
+        '...2.2.2...',
+        '..2.2b2.2..',
+        '...2.2.2...',
+        '..2.2.2.2..',
+        '.2.2...2.2.',
+        '2.2.....2.2'
+      ]
+    },
+    {
+      name: '逆流风暴', paddleW: 94,
+      rows: [
+        '2.2.2.2.2.2',
+        '.2.2.2.2.2.',
+        '..2.2.2.2..',
+        '...2.2.2...',
+        '....2.2....',
+        '...2.b.2...',
+        '..2.2.2.2..',
+        '.2.2.2.2.2.',
+        '2.2.2.2.2.2'
+      ]
+    },
+    {
+      name: '暗物质环', paddleW: 91,
+      rows: [
+        '..2222222..',
+        '.2.......2.',
+        '2.2.....2.2',
+        '2..2...2..2',
+        '2...2.2...2',
+        '2..2.b.2..2',
+        '2...2.2...2',
+        '2..2...2..2',
+        '2.2.....2.2',
+        '.2.......2.',
+        '..2222222..'
+      ]
+    },
+    {
+      name: '棱镜迷宫', paddleW: 88,
+      rows: [
+        '2.2.2.2.2.2',
+        '.2.2.2.2.2.',
+        '2.2.2.2.2.2',
+        '.2.b2.2b.2.',
+        '2.2.2.2.2.2',
+        '.2.2.b.2.2.',
+        '2.2.2.2.2.2',
+        '.2.2.2.2.2.',
+        '2.2.2.2.2.2'
+      ]
+    },
+    {
+      name: '超新星', paddleW: 85,
+      rows: [
+        '.....2.....',
+        '....222....',
+        '...22222...',
+        '..22b2b22..',
+        '.2222g2222.',
+        '..22b2b22..',
+        '...22222...',
+        '....222....',
+        '.....2.....'
+      ]
+    },
+    {
+      name: '终局奇点', paddleW: 82,
+      rows: [
+        '22222222222',
+        '2.2.2.2.2.2',
+        '2.2222222.2',
+        '2.2.bbb.2.2',
+        '2.2.2g2.2.2',
+        '2.2.bbb.2.2',
+        '2.2222222.2',
+        '2.2.2.2.2.2',
+        '22222222222'
+      ]
     }
   ];
   var TOTAL_LEVELS = LEVELS.length;
   var MAX_LIVES = 5;
-  var MENU_PANEL_H = 470;
+  var MENU_PANEL_H = 500;
   var runStartLevel = 1;
   var FONT = '"Microsoft YaHei", "PingFang SC", "Noto Sans SC", "Hiragino Sans GB", sans-serif';
 
@@ -202,6 +338,10 @@
   var readyLine = '';
   var wideTimer = 0;
   var slowTimer = 0;
+  var pierceTimer = 0;
+  var combo = 0;
+  var tripHits = 0;
+  var muted = readMuted();
   var bestRecord = readBestRecord();
   var bestScore = bestRecord.score;
   var bestLevel = bestRecord.level;
@@ -273,6 +413,129 @@
     }
   }
 
+  function readMuted() {
+    try {
+      return window.localStorage.getItem('breakoutMuted') === '1';
+    } catch (err) {
+      return false;
+    }
+  }
+
+  var AudioCtor = window.AudioContext || window.webkitAudioContext;
+  var actx = null;
+  var masterGain = null;
+  var noiseBuffer = null;
+  var lastBrickSfx = 0;
+  var lastBombSfx = 0;
+
+  function ensureAudio() {
+    if (muted) return null;
+    try {
+      if (!actx) {
+        if (!AudioCtor) return null;
+        actx = new AudioCtor();
+        masterGain = actx.createGain();
+        masterGain.gain.value = 0.5;
+        masterGain.connect(actx.destination);
+      }
+      if (actx.state === 'suspended') actx.resume();
+      return actx;
+    } catch (err) {
+      return null;
+    }
+  }
+
+  function blip(freq, dur, type, vol, slide, delay) {
+    var a = ensureAudio();
+    if (!a) return;
+    try {
+      var t0 = a.currentTime + (delay || 0);
+      var osc = a.createOscillator();
+      var g = a.createGain();
+      osc.type = type || 'square';
+      osc.frequency.setValueAtTime(freq, t0);
+      if (slide) osc.frequency.exponentialRampToValueAtTime(Math.max(30, slide), t0 + dur);
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(vol || 0.05, t0 + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      osc.connect(g);
+      g.connect(masterGain);
+      osc.start(t0);
+      osc.stop(t0 + dur + 0.03);
+    } catch (err) {
+      // 音频不可用时不影响游戏。
+    }
+  }
+
+  function noiseBurst(dur, vol, cutoff) {
+    var a = ensureAudio();
+    if (!a) return;
+    try {
+      if (!noiseBuffer) {
+        var len = Math.floor(a.sampleRate * 0.5);
+        noiseBuffer = a.createBuffer(1, len, a.sampleRate);
+        var data = noiseBuffer.getChannelData(0);
+        for (var i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+      }
+      var src = a.createBufferSource();
+      var filter = a.createBiquadFilter();
+      var g = a.createGain();
+      var t0 = a.currentTime;
+      src.buffer = noiseBuffer;
+      filter.type = 'lowpass';
+      filter.frequency.value = cutoff || 1200;
+      g.gain.setValueAtTime(vol || 0.08, t0);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      src.connect(filter);
+      filter.connect(g);
+      g.connect(masterGain);
+      src.start(t0);
+      src.stop(t0 + dur + 0.02);
+    } catch (err) {
+      // 静默降级。
+    }
+  }
+
+  function sfx(kind) {
+    if (muted) return;
+    var now = performance.now();
+    if ((kind === 'brick' || kind === 'hit' || kind === 'gold') && now - lastBrickSfx < 26) return;
+    if (kind === 'brick' || kind === 'hit' || kind === 'gold') lastBrickSfx = now;
+    if (kind === 'bomb') {
+      if (now - lastBombSfx < 90) return;
+      lastBombSfx = now;
+    }
+
+    if (kind === 'paddle') blip(520, 0.055, 'square', 0.045, 760);
+    else if (kind === 'wall') blip(300, 0.045, 'triangle', 0.03, 240);
+    else if (kind === 'hit') blip(200, 0.04, 'square', 0.026, 150);
+    else if (kind === 'brick') { blip(360, 0.06, 'square', 0.033, 220); noiseBurst(0.06, 0.028, 2200); }
+    else if (kind === 'gold') blip(880, 0.09, 'triangle', 0.05, 1320);
+    else if (kind === 'bomb') { noiseBurst(0.35, 0.16, 700); blip(90, 0.32, 'sine', 0.12, 40); }
+    else if (kind === 'power') { blip(660, 0.08, 'sine', 0.05, 880); blip(990, 0.1, 'sine', 0.045, 1320, 0.07); }
+    else if (kind === 'lose') { blip(240, 0.32, 'sawtooth', 0.07, 70); noiseBurst(0.2, 0.05, 500); }
+    else if (kind === 'clear') {
+      var notes = [523, 659, 784, 1046];
+      for (var i = 0; i < notes.length; i++) blip(notes[i], 0.18, 'sine', 0.05, 0, i * 0.09);
+    }
+    else if (kind === 'launch') blip(360, 0.12, 'triangle', 0.05, 720);
+    else if (kind === 'ui') blip(700, 0.045, 'sine', 0.03, 760);
+  }
+
+  function setMuted(v, silent) {
+    muted = !!v;
+    try {
+      window.localStorage.setItem('breakoutMuted', muted ? '1' : '0');
+    } catch (err) {
+      // 写入失败不影响本次静音。
+    }
+    if (!muted && !silent) sfx('ui');
+  }
+
+  function comboMult() {
+    return Math.min(5, Math.max(1, combo));
+  }
+
   function addScore(n) {
     score += n;
     if (score > bestScore) {
@@ -305,37 +568,46 @@
     ctx.closePath();
   }
 
-  function levelSpeedFor(n) {
-    var data = LEVELS[clamp(n, 1, TOTAL_LEVELS) - 1];
-    return data ? data.speed : 430;
-  }
-
   function levelNameFor(n) {
     var data = LEVELS[clamp(n, 1, TOTAL_LEVELS) - 1];
     return data ? data.name : '';
   }
 
   function levelSelectLayout(panelH) {
+    var perRow = 10;
     var w = 42;
     var h = 42;
     var gap = 8;
-    var totalW = TOTAL_LEVELS * w + (TOTAL_LEVELS - 1) * gap;
+    var rowGap = 8;
+    var rows = Math.ceil(TOTAL_LEVELS / perRow);
+    var totalW = perRow * w + (perRow - 1) * gap;
     var panelY = (H - panelH) / 2;
     return {
       w: w,
       h: h,
       gap: gap,
+      rowGap: rowGap,
+      perRow: perRow,
+      rows: rows,
       sx: (W - totalW) / 2,
-      sy: panelY + panelH - 172
+      sy: panelY + panelH - 200
+    };
+  }
+
+  function levelChipPos(index, L) {
+    var row = Math.floor((index - 1) / L.perRow);
+    var col = (index - 1) % L.perRow;
+    return {
+      x: L.sx + col * (L.w + L.gap),
+      y: L.sy + row * (L.h + L.rowGap)
     };
   }
 
   function levelChipAt(wx, wy) {
     var L = levelSelectLayout(MENU_PANEL_H);
-    if (wy < L.sy || wy > L.sy + L.h) return 0;
     for (var i = 1; i <= TOTAL_LEVELS; i++) {
-      var x = L.sx + (i - 1) * (L.w + L.gap);
-      if (wx >= x && wx <= x + L.w) return i;
+      var p = levelChipPos(i, L);
+      if (wx >= p.x && wx <= p.x + L.w && wy >= p.y && wy <= p.y + L.h) return i;
     }
     return 0;
   }
@@ -350,8 +622,10 @@
     ctx.fillText('选择关卡 · 点击任意一关直接开始', W / 2, L.sy - 18);
 
     for (var i = 1; i <= TOTAL_LEVELS; i++) {
-      var x = L.sx + (i - 1) * (L.w + L.gap);
-      var hover = pointerY >= L.sy && pointerY <= L.sy + L.h &&
+      var p = levelChipPos(i, L);
+      var x = p.x;
+      var y = p.y;
+      var hover = pointerY >= y && pointerY <= y + L.h &&
         pointerX >= x && pointerX <= x + L.w;
       var hue = 190 + ((i - 1) / Math.max(1, TOTAL_LEVELS - 1)) * 150;
 
@@ -360,21 +634,21 @@
         ctx.shadowColor = 'hsla(' + hue + ', 95%, 65%, 0.85)';
         ctx.shadowBlur = 18;
       }
-      var fill = ctx.createLinearGradient(x, L.sy, x, L.sy + L.h);
+      var fill = ctx.createLinearGradient(x, y, x, y + L.h);
       fill.addColorStop(0, 'hsla(' + hue + ', 90%, ' + (hover ? 68 : 56) + '%, ' + (hover ? 0.96 : 0.20) + ')');
       fill.addColorStop(1, 'hsla(' + hue + ', 85%, 44%, ' + (hover ? 0.86 : 0.12) + ')');
       ctx.fillStyle = fill;
-      rr(x, L.sy, L.w, L.h, 11);
+      rr(x, y, L.w, L.h, 11);
       ctx.fill();
       ctx.strokeStyle = 'hsla(' + hue + ', 92%, 70%, ' + (hover ? 0.95 : 0.52) + ')';
       ctx.lineWidth = hover ? 1.8 : 1;
-      rr(x + 0.5, L.sy + 0.5, L.w - 1, L.h - 1, 10.5);
+      rr(x + 0.5, y + 0.5, L.w - 1, L.h - 1, 10.5);
       ctx.stroke();
       ctx.restore();
 
       ctx.fillStyle = hover ? '#ffffff' : 'hsla(' + hue + ', 95%, 88%, 0.95)';
       setFont(17, 800);
-      ctx.fillText(String(i), x + L.w / 2, L.sy + L.h / 2 + 1);
+      ctx.fillText(String(i), x + L.w / 2, y + L.h / 2 + 1);
     }
     ctx.restore();
   }
@@ -594,6 +868,14 @@
     ctx.fillStyle = '#e2e8f0';
     ctx.fillText(String(score), 46, 68);
 
+    ctx.textAlign = 'left';
+    setFont(13, 600);
+    ctx.fillStyle = 'rgba(148, 163, 184, 0.92)';
+    ctx.fillText('连击', 236, 41);
+    setFont(28, 800);
+    ctx.fillStyle = comboMult() > 1 ? '#fbbf24' : 'rgba(148, 163, 184, 0.45)';
+    ctx.fillText('x' + comboMult(), 236, 68);
+
     ctx.textAlign = 'center';
     setFont(13, 600);
     ctx.fillStyle = 'rgba(148, 163, 184, 0.92)';
@@ -741,7 +1023,7 @@
 
   function drawBall(b) {
     ctx.save();
-    ctx.shadowColor = '#38bdf8';
+    ctx.shadowColor = comboMult() >= 5 ? '#fbbf24' : '#38bdf8';
     ctx.shadowBlur = 22;
     var g = ctx.createRadialGradient(b.x - 2.5, b.y - 3, 0.5, b.x, b.y, b.r + 2);
     g.addColorStop(0, '#ffffff');
@@ -754,6 +1036,17 @@
     ctx.fill();
     ctx.restore();
 
+    if (pierceTimer > 0) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(251, 191, 36, ' + (0.55 + 0.3 * Math.sin(ambient * 12)) + ')';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.r + 5, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
     ctx.beginPath();
     ctx.arc(b.x - 2, b.y - 2, 2.1, 0, Math.PI * 2);
     ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
@@ -764,6 +1057,7 @@
     if (type === 'wide') return { label: '宽', color: '#22d3ee', ring: 'rgba(34, 211, 238, 0.75)' };
     if (type === 'multi') return { label: '多', color: '#f472b6', ring: 'rgba(244, 114, 182, 0.75)' };
     if (type === 'slow') return { label: '缓', color: '#a78bfa', ring: 'rgba(167, 139, 250, 0.75)' };
+    if (type === 'pierce') return { label: '穿', color: '#fbbf24', ring: 'rgba(251, 191, 36, 0.75)' };
     return { label: '命', color: '#4ade80', ring: 'rgba(74, 222, 128, 0.75)' };
   }
 
@@ -836,17 +1130,18 @@
     setFont(12, 500);
     ctx.fillStyle = 'rgba(148, 163, 184, 0.72)';
     ctx.fillText(recordLine(), W / 2, H - 58);
-    if (wideTimer > 0 || slowTimer > 0) {
+    if (wideTimer > 0 || slowTimer > 0 || pierceTimer > 0) {
       var parts = [];
       if (wideTimer > 0) parts.push('加长挡板 ' + Math.ceil(wideTimer) + 's');
       if (slowTimer > 0) parts.push('缓速 ' + Math.ceil(slowTimer) + 's');
+      if (pierceTimer > 0) parts.push('穿甲 ' + Math.ceil(pierceTimer) + 's');
       ctx.fillStyle = 'rgba(125, 211, 252, 0.92)';
       setFont(12, 700);
       ctx.fillText(parts.join('  ·  '), W / 2, H - 38);
     }
     setFont(13, 500);
     ctx.fillStyle = 'rgba(148, 163, 184, 0.82)';
-    ctx.fillText('移动鼠标 或 ← → 控制挡板 · 空格暂停 · 1-0 快速选关 · L 返回选关', W / 2, H - 18);
+    ctx.fillText('移动鼠标 或 ← → 控制挡板 · 空格暂停 · M 音效' + (muted ? '（关）' : '（开）') + ' · 1-0 / Q-P 选关 · L 返回选关', W / 2, H - 18);
     ctx.restore();
   }
 
@@ -854,11 +1149,12 @@
     if (gameState === STATE.MENU) {
       return {
         height: MENU_PANEL_H,
-        kicker: '经典街机 · 全离线单机',
+        kicker: '经典街机 · 20 关 · 全离线单机',
         title: '打  砖  块',
         lines: [
-          '移动鼠标或按 ← → 控制挡板',
-          '空格暂停 · 清空砖块过关 · 掉球扣一条命',
+          '移动鼠标或按 ← → 控制挡板 · 空格暂停 · M 音效',
+          '连续击碎叠加连击，×5 时重击穿透，空接会断',
+          '道具：加长 / 多球 / 缓速 / 穿甲 / 加命',
           recordLine()
         ],
         levels: true,
@@ -942,6 +1238,17 @@
     ctx.fill();
     ctx.restore();
 
+    // 上半部高光，让主按钮更像有厚度的实体键
+    ctx.save();
+    rr(cx - w / 2, cy - h / 2, w, h, h / 2);
+    ctx.clip();
+    var sheen = ctx.createLinearGradient(0, cy - h / 2, 0, cy);
+    sheen.addColorStop(0, 'rgba(255, 255, 255, 0.38)');
+    sheen.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    ctx.fillStyle = sheen;
+    ctx.fillRect(cx - w / 2, cy - h / 2, w, h / 2);
+    ctx.restore();
+
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.32)';
     ctx.lineWidth = 1;
     rr(cx - w / 2, cy - h / 2, w, h, h / 2);
@@ -952,6 +1259,34 @@
     setFont(17, 700);
     ctx.fillStyle = 'rgba(255, 255, 255, 0.96)';
     ctx.fillText(text, cx, cy + 1);
+  }
+
+  function muteChipRect() {
+    var pw = 620;
+    var ph = MENU_PANEL_H;
+    var px = (W - pw) / 2;
+    var py = (H - ph) / 2;
+    return { x: px + pw - 136, y: py + ph - 79, w: 112, h: 34 };
+  }
+
+  function drawMuteChip() {
+    var r = muteChipRect();
+    var hot = pointerX >= r.x && pointerX <= r.x + r.w &&
+      pointerY >= r.y && pointerY <= r.y + r.h;
+    ctx.save();
+    ctx.fillStyle = hot ? 'rgba(34, 211, 238, 0.16)' : 'rgba(148, 163, 184, 0.08)';
+    rr(r.x, r.y, r.w, r.h, 17);
+    ctx.fill();
+    ctx.strokeStyle = muted ? 'rgba(148, 163, 184, 0.38)' : 'rgba(34, 211, 238, 0.55)';
+    ctx.lineWidth = 1;
+    rr(r.x + 0.5, r.y + 0.5, r.w - 1, r.h - 1, 16.5);
+    ctx.stroke();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    setFont(13, 600);
+    ctx.fillStyle = muted ? 'rgba(148, 163, 184, 0.85)' : 'rgba(165, 243, 252, 0.95)';
+    ctx.fillText('♪ 音效 ' + (muted ? '关' : '开'), r.x + r.w / 2, r.y + r.h / 2 + 1);
+    ctx.restore();
   }
 
   function drawOverlay() {
@@ -972,6 +1307,18 @@
     ctx.fillStyle = 'rgba(8, 14, 32, 0.94)';
     rr(px, py, pw, ph, 24);
     ctx.fill();
+    ctx.restore();
+
+    // 面板内侧的冷光，让整块卡片不至于是一块死板的深蓝
+    ctx.save();
+    rr(px, py, pw, ph, 24);
+    ctx.clip();
+    var innerGlow = ctx.createRadialGradient(W / 2, py + 10, 0, W / 2, py + 10, pw * 0.62);
+    innerGlow.addColorStop(0, 'rgba(56, 189, 248, 0.13)');
+    innerGlow.addColorStop(0.55, 'rgba(99, 102, 241, 0.05)');
+    innerGlow.addColorStop(1, 'rgba(99, 102, 241, 0)');
+    ctx.fillStyle = innerGlow;
+    ctx.fillRect(px, py, pw, ph * 0.8);
     ctx.restore();
 
     var border = ctx.createLinearGradient(px, py, px + pw, py + ph);
@@ -1032,6 +1379,7 @@
       var pulse = 0.5 + 0.5 * Math.sin(ambient * 3.1);
       drawButton(W / 2, py + ph - 62, 330, 52, cfg.button, pulse);
     }
+    if (cfg.levels) drawMuteChip();
 
     ctx.restore();
   }
@@ -1081,7 +1429,7 @@
   }
 
   function currentBallSpeed() {
-    return levelSpeedFor(level) * (slowTimer > 0 ? 0.76 : 1);
+    return BALL_SPEED * (slowTimer > 0 ? 0.76 : 1);
   }
 
   function buildLevel(n) {
@@ -1106,7 +1454,7 @@
         if (ch === 'b') { kind = 'bomb'; hp = 1; }
         else if (ch === 'g') { kind = 'gold'; hp = 2; }
         if (!hp || hp < 1) hp = 1;
-        if (hp > 4) hp = 4;
+        if (hp > 2) hp = 2;
 
         var hue = 335 - (r / Math.max(1, rows - 1)) * 155;
         var pts = 10 + (rows - r) * 2;
@@ -1164,6 +1512,9 @@
     levelClearBonus = 0;
     wideTimer = 0;
     slowTimer = 0;
+    pierceTimer = 0;
+    combo = 0;
+    tripHits = 0;
     powerups.length = 0;
     particles.length = 0;
     floating.length = 0;
@@ -1196,8 +1547,9 @@
     usingMouse = false;
     setupLevel(level);
     markLevelReached();
-    gameState = STATE.PLAYING;
-    launchBall(balls[0]);
+    gameState = STATE.READY;
+    readyTitle = '第 ' + level + ' 关 · ' + levelNameFor(level);
+    readyLine = '连击不断，得分翻倍更快';
   }
 
   function toMenu() {
@@ -1227,9 +1579,11 @@
     gameState = STATE.PLAYING;
     launchBall(balls[0]);
     paddle.flash = 0.45;
+    sfx('launch');
   }
 
   function pressAction() {
+    if (gameState !== STATE.PLAYING) sfx('ui');
     if (gameState === STATE.MENU) {
       startGame(1);
     } else if (gameState === STATE.READY) {
@@ -1303,17 +1657,20 @@
       b.vx = Math.abs(b.vx);
       fixMinVertical(b);
       shake = Math.max(shake, 1.4);
+      sfx('wall');
     } else if (b.x + b.r > RIGHT) {
       b.x = RIGHT - b.r;
       b.vx = -Math.abs(b.vx);
       fixMinVertical(b);
       shake = Math.max(shake, 1.4);
+      sfx('wall');
     }
     if (b.y - b.r < TOP) {
       b.y = TOP + b.r;
       b.vy = Math.abs(b.vy);
       fixMinVertical(b);
       shake = Math.max(shake, 1.4);
+      sfx('wall');
     }
   }
 
@@ -1356,8 +1713,11 @@
 
     b.y = paddle.y - b.r - 1;
     paddle.flash = 1;
+    if (tripHits === 0) combo = 0;
+    tripHits = 0;
     shake = Math.max(shake, 3);
     spawnPaddleSparks(b.x);
+    sfx('paddle');
   }
 
   function countAlive() {
@@ -1420,9 +1780,9 @@
   }
 
   function maybeDropPowerup(brick) {
-    var chance = brick.kind === 'gold' ? 1 : (brick.kind === 'bomb' ? 0.45 : 0.08);
+    var chance = brick.kind === 'gold' ? 1 : (brick.kind === 'bomb' ? 0.5 : 0.1);
     if (Math.random() > chance) return;
-    var pool = ['wide', 'multi', 'slow', 'life'];
+    var pool = ['wide', 'multi', 'slow', 'pierce', 'life'];
     var type = pool[Math.floor(Math.random() * pool.length)];
     powerups.push({
       x: brick.x + brick.w / 2,
@@ -1437,39 +1797,57 @@
     spawnBombBurst(brick);
     shake = Math.max(shake, 9);
     flash = Math.max(flash, 0.22);
+    sfx('bomb');
     for (var dr = -1; dr <= 1; dr++) {
       for (var dc = -1; dc <= 1; dc++) {
         if (dr === 0 && dc === 0) continue;
         var other = brickAt(brick.row + dr, brick.col + dc);
-        if (other) damageBrick(other);
+        if (other) damageBrick(other, 2);
       }
     }
   }
 
-  function damageBrick(brick) {
+  function damageBrick(brick, amount) {
     if (!brick || !brick.alive) return;
-    brick.hp -= 1;
+    brick.hp -= (amount || 1);
     brick.flash = 0.16;
     if (brick.hp > 0) {
       addScore(2);
       spawnHitParticles(brick);
       shake = Math.max(shake, 1.6);
+      sfx('hit');
       return;
     }
 
     brick.alive = false;
-    addScore(brick.points);
+    combo++;
+    tripHits++;
+    var mult = comboMult();
+    var gain = Math.round(brick.points * mult);
+    addScore(gain);
     spawnBrickParticles(brick);
     floating.push({
       x: brick.x + brick.w / 2,
       y: brick.y + brick.h / 2,
-      text: '+' + brick.points,
+      text: '+' + gain,
       life: 0.8,
       maxLife: 0.8,
-      color: brick.kind === 'gold' ? '#fde047' : (brick.kind === 'bomb' ? '#fdba74' : '#fef08a')
+      color: brick.kind === 'gold' ? '#fde047' : (brick.kind === 'bomb' ? '#fdba74' : (mult > 1 ? '#fbbf24' : '#fef08a'))
     });
+    if (mult > 1 && combo === 5) {
+      floating.push({
+        x: brick.x + brick.w / 2,
+        y: brick.y - 6,
+        text: '连击 x' + mult,
+        life: 1.0,
+        maxLife: 1.0,
+        color: '#fbbf24'
+      });
+    }
     shake = Math.max(shake, 4);
     maybeDropPowerup(brick);
+    if (brick.kind === 'gold') sfx('gold');
+    else sfx('brick');
 
     if (brick.kind === 'bomb') explodeBomb(brick);
     if (gameState === STATE.PLAYING && countAlive() === 0) onLevelClear();
@@ -1486,6 +1864,11 @@
       var dy = b.y - cy;
       if (dx * dx + dy * dy > b.r * b.r) continue;
 
+      if (pierceTimer > 0 || comboMult() >= 5) {
+        damageBrick(brick, comboMult() >= 5 ? 2 : 1);
+        return;
+      }
+
       var bcx = brick.x + brick.w / 2;
       var bcy = brick.y + brick.h / 2;
       var overlapX = b.r + brick.w / 2 - Math.abs(b.x - bcx);
@@ -1499,7 +1882,7 @@
         b.y += (b.vy > 0 ? 1 : -1) * overlapY;
       }
       fixMinVertical(b);
-      damageBrick(brick);
+      damageBrick(brick, comboMult() >= 5 ? 2 : 1);
       return;
     }
   }
@@ -1693,6 +2076,9 @@
     } else if (type === 'slow') {
       slowTimer = 8;
       label = '缓速';
+    } else if (type === 'pierce') {
+      pierceTimer = 7;
+      label = '穿甲';
     } else {
       if (lives < MAX_LIVES) {
         lives++;
@@ -1703,6 +2089,7 @@
       }
     }
 
+    sfx('power');
     floating.push({
       x: x,
       y: y,
@@ -1783,15 +2170,20 @@
     flash = 0.3;
     paddle.flash = 0;
     setupLevel(level);
-    gameState = STATE.PLAYING;
-    launchBall(balls[0]);
+    gameState = STATE.READY;
+    readyTitle = '第 ' + level + ' 关 · 重新挑战';
+    readyLine = '生命已补满，调整挡板后开球';
   }
 
   function loseLife(x, y) {
     if (gameState !== STATE.PLAYING) return;
     lives--;
+    combo = 0;
+    tripHits = 0;
+    pierceTimer = 0;
     shake = 12;
     flash = 1;
+    sfx('lose');
     if (typeof x === 'number') spawnLoss(x, y);
     balls.length = 0;
 
@@ -1811,9 +2203,12 @@
 
   function onLevelClear() {
     gameState = STATE.LEVELCLEAR;
+    combo = 0;
+    tripHits = 0;
     levelClearBonus = 100 * level;
     addScore(levelClearBonus);
     flash = 0.7;
+    sfx('clear');
     shake = 9;
     balls.length = 0;
     powerups.length = 0;
@@ -1835,7 +2230,7 @@
     setupLevel(level);
     markLevelReached();
     readyTitle = '第 ' + level + ' 关 · ' + levelNameFor(level);
-    readyLine = '生命保留 ' + lives + ' 条 · 球速提升';
+    readyLine = '生命保留 ' + lives + ' 条 · 挡板更短';
     gameState = STATE.READY;
     flash = 0.35;
     shake = 0;
@@ -1850,6 +2245,7 @@
       }
     }
     if (slowTimer > 0) slowTimer = Math.max(0, slowTimer - dt);
+    if (pierceTimer > 0) pierceTimer = Math.max(0, pierceTimer - dt);
 
     if (gameState === STATE.PLAYING || gameState === STATE.READY || gameState === STATE.MENU) {
       updatePaddle(dt);
@@ -1915,7 +2311,14 @@
     if (e.button !== undefined && e.button !== 0) return;
     e.preventDefault();
     if (gameState === STATE.MENU) {
-      var pick = levelChipAt(screenToWorldX(e.clientX), screenToWorldY(e.clientY));
+      var mx = screenToWorldX(e.clientX);
+      var my = screenToWorldY(e.clientY);
+      var mr = muteChipRect();
+      if (mx >= mr.x && mx <= mr.x + mr.w && my >= mr.y && my <= mr.y + mr.h) {
+        setMuted(!muted);
+        return;
+      }
+      var pick = levelChipAt(mx, my);
       if (pick > 0) {
         startGame(pick);
         return;
@@ -1926,6 +2329,15 @@
 
   window.addEventListener('keydown', function (e) {
     var k = e.key;
+    if (e.repeat) {
+      if (k === ' ' || k === 'Enter') e.preventDefault();
+      return;
+    }
+    if (k === 'm' || k === 'M') {
+      e.preventDefault();
+      setMuted(!muted);
+      return;
+    }
     if (k === 'ArrowLeft' || k === 'a' || k === 'A') {
       keys.left = true;
       usingMouse = false;
@@ -1945,7 +2357,10 @@
       startGame(parseInt(k, 10));
     } else if (gameState === STATE.MENU && k === '0') {
       e.preventDefault();
-      startGame(TOTAL_LEVELS);
+      startGame(10);
+    } else if (gameState === STATE.MENU && 'qwertyuiop'.indexOf(k.toLowerCase()) >= 0) {
+      e.preventDefault();
+      startGame(11 + 'qwertyuiop'.indexOf(k.toLowerCase()));
     } else if ((k === 'l' || k === 'L') &&
       (gameState === STATE.PAUSED || gameState === STATE.READY ||
        gameState === STATE.OVER || gameState === STATE.VICTORY ||
@@ -1965,11 +2380,15 @@
   });
 
   window.addEventListener('blur', function () {
+    keys.left = false;
+    keys.right = false;
     if (gameState === STATE.PLAYING) gameState = STATE.PAUSED;
   });
 
   document.addEventListener('visibilitychange', function () {
     if (document.hidden) {
+      keys.left = false;
+      keys.right = false;
       persistBest();
       if (gameState === STATE.PLAYING) gameState = STATE.PAUSED;
     }
@@ -1985,6 +2404,13 @@
     level: function () { return level; },
     lives: function () { return lives; },
     score: function () { return score; },
+    combo: function () { return comboMult(); },
+    comboRaw: function () { return combo; },
+    pierce: function () { return pierceTimer; },
+    muted: function () { return muted; },
+    mute: function (v) { setMuted(!!v, true); return muted; },
+    speed: function () { return Math.round(currentBallSpeed()); },
+    ready: function () { return gameState === STATE.READY; },
     start: function (n) { startGame(n || 1); },
     smash: function () {
       var list = [];

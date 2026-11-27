@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="theme-color" content="#0a1220">
+<title>方块城市 · BLOCK CITY</title>
+<style>
+  :root{
+    --bg:#08101c;--panel:#0e1a2b;--text:#eaf3ff;--muted:#8ea6c4;--line:rgba(148,163,184,.16);
+    --gold:#ffd166;--green:#5ce6a8;--sky:#58c8ff;--rose:#ff7d95;--violet:#b69cff;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{margin:0;overflow:hidden;color:var(--text);background:var(--bg);
+    font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;user-select:none;touch-action:none;
+    display:flex;justify-content:center;}
+  #wrap{width:100%;max-width:1000px;height:100%;display:flex;flex-direction:column;padding:10px 12px 8px;position:relative;}
+  header{display:flex;align-items:center;gap:9px;flex:0 0 auto;z-index:4;flex-wrap:nowrap;}
+  .brand{font-weight:800;font-size:16px;letter-spacing:.06em;white-space:nowrap;}
+  .brand b{color:var(--green);}
+  .brand small{display:block;font-size:9px;color:var(--muted);letter-spacing:.22em;font-weight:500;}
+  .stats{margin-left:auto;display:flex;gap:6px;align-items:center;font-variant-numeric:tabular-nums;flex-wrap:nowrap;}
+  .chip{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,.045);border:1px solid var(--line);
+    padding:4px 8px;border-radius:9px;font-size:12px;white-space:nowrap;}
+  .chip i{font-style:normal;font-size:12px;opacity:.9;}
+  .chip b{font-size:12.5px;font-weight:700;}
+  #dayChip{color:var(--muted);}
+  #soundBtn{border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--muted);
+    width:30px;height:30px;border-radius:9px;font-size:13px;cursor:pointer;flex:0 0 auto;}
+  #soundBtn.on{color:var(--gold);border-color:rgba(255,209,102,.35);}
+  #goal{height:3px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden;margin:7px 2px 0;flex:0 0 auto;}
+  #goalFill{height:100%;width:0;background:linear-gradient(90deg,#5ce6a8,#58c8ff);transition:width .4s ease;}
+  #stage{position:relative;flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center;}
+  canvas{display:block;border-radius:14px;background:#071120;
+    box-shadow:0 0 0 1px rgba(88,200,255,.12),0 24px 60px -26px #000;cursor:pointer;}
+  #toolbar{flex:0 0 auto;display:flex;gap:7px;padding:8px 2px 2px;overflow-x:auto;scrollbar-width:none;}
+  #toolbar::-webkit-scrollbar{display:none;}
+  .build{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-start;gap:1px;
+    min-width:82px;padding:7px 10px;border-radius:11px;border:1px solid var(--line);
+    background:rgba(255,255,255,.035);color:var(--text);font-family:inherit;cursor:pointer;position:relative;
+    transition:transform .15s,border-color .15s,background .15s;}
+  .build:hover{transform:translateY(-2px);border-color:rgba(92,230,168,.35);}
+  .build.sel{border-color:var(--green);background:rgba(92,230,168,.12);box-shadow:0 0 0 2px rgba(92,230,168,.15);}
+  .build .nm{font-size:12.5px;font-weight:700;display:flex;align-items:center;gap:5px;}
+  .build .nm em{font-style:normal;font-size:14px;}
+  .build .cost{font-size:10.5px;color:var(--gold);}
+  .build .key{position:absolute;right:6px;top:5px;font-size:9px;color:#64748b;}
+  .build.demolish{color:#ffc2cc;}
+  .build.demolish.sel{border-color:var(--rose);background:rgba(255,125,149,.13);box-shadow:0 0 0 2px rgba(255,125,149,.15);}
+  .build.demolish .cost{color:var(--rose);}
+  #hint{flex:0 0 auto;text-align:center;font-size:10.5px;color:#5f7391;padding:5px 0 1px;}
+  .overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:6;
+    background:rgba(4,9,17,.78);backdrop-filter:blur(6px);border-radius:14px;padding:14px;}
+  .overlay.show{display:flex;}
+  .panel{width:min(370px,94%);text-align:center;background:linear-gradient(180deg,rgba(16,28,46,.98),rgba(7,12,22,.99));
+    border:1px solid rgba(92,230,168,.22);border-radius:16px;padding:20px 18px;box-shadow:0 26px 70px rgba(0,0,0,.6);}
+  .panel .kicker{font-size:10px;letter-spacing:.3em;color:var(--green);}
+  .panel .big{font-size:25px;font-weight:800;margin:5px 0 6px;letter-spacing:.04em;}
+  .panel p{margin:5px 0;font-size:12.5px;color:var(--muted);line-height:1.75;}
+  .panel .keys{font-size:11.5px;color:#94a3b8;background:rgba(255,255,255,.035);border:1px solid var(--line);
+    border-radius:10px;padding:9px 10px;margin:11px 0 13px;line-height:1.9;text-align:left;}
+  .panel .keys b{color:var(--text);}
+  .panel .scoreline{font-size:12.5px;color:var(--muted);margin:10px 0 13px;line-height:1.8;}
+  .panel .scoreline b{color:var(--gold);font-size:17px;}
+  button.primary{width:100%;border:0;border-radius:11px;padding:11px 14px;font-size:14px;font-weight:700;
+    color:#031a10;background:linear-gradient(180deg,#8ff7c9,#34d399);cursor:pointer;font-family:inherit;
+    box-shadow:0 10px 26px -10px rgba(52,211,153,.75);}
+  button.primary.ghost{background:rgba(255,255,255,.06);color:var(--text);box-shadow:none;margin-top:8px;border:1px solid var(--line);}
+  button.primary:active{transform:translateY(1px);}
+  .toast{position:absolute;left:50%;top:64px;transform:translateX(-50%) translateY(-8px);z-index:8;
+    background:rgba(8,16,28,.92);border:1px solid rgba(88,200,255,.25);color:var(--text);
+    font-size:12px;padding:7px 14px;border-radius:99px;opacity:0;pointer-events:none;transition:.25s;white-space:nowrap;
+    box-shadow:0 10px 30px rgba(0,0,0,.4);}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  #viewCtl{position:absolute;right:8px;top:8px;z-index:5;display:flex;align-items:center;gap:5px;
+    background:rgba(6,14,26,.62);border:1px solid rgba(148,163,184,.18);border-radius:11px;
+    padding:4px;backdrop-filter:blur(6px);box-shadow:0 8px 22px rgba(0,0,0,.35);}
+  #viewCtl button{width:30px;height:30px;border-radius:8px;border:1px solid rgba(148,163,184,.2);
+    background:rgba(255,255,255,.05);color:#d7e8ff;font-size:16px;line-height:1;cursor:pointer;
+    font-family:inherit;display:grid;place-items:center;transition:background .15s,border-color .15s;}
+  #viewCtl button:hover{background:rgba(92,230,168,.12);border-color:rgba(92,230,168,.4);}
+  #viewCtl button:active{transform:translateY(1px);}
+  #compass{display:flex;align-items:center;gap:4px;padding:0 5px;min-width:52px;justify-content:center;
+    font-size:10px;color:#7f96b3;font-variant-numeric:tabular-nums;letter-spacing:.04em;}
+  #compass i{font-style:normal;display:inline-block;font-size:11px;color:var(--green);
+    transition:transform .28s cubic-bezier(.2,.7,.2,1);}
+  #viewAngle{font-weight:700;color:#a9c3df;}
+  @media (max-width:760px){
+    #viewCtl{right:6px;top:6px;padding:3px;gap:3px;}
+    #viewCtl button{width:27px;height:27px;font-size:14px;}
+    #compass{min-width:44px;font-size:9px;padding:0 2px;}
+  }
+  @media (max-width:760px){
+    .brand small{display:none}.brand{font-size:14px}
+    .chip{padding:3px 6px;font-size:11px}
+    .chip b{font-size:11.5px}
+    #dayChip{display:none}
+    #toolbar{flex-wrap:wrap;gap:6px;overflow:visible}
+    .build{flex:1 1 30%;min-width:0;padding:6px 8px}
+    #hint{display:none}
+  }
+  @media (max-height:600px){#hint{display:none}}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <header>
+    <div class="brand"><b>方块城市</b><small>BLOCK CITY</small></div>
+    <div class="stats">
+      <div class="chip" title="金币"><i>◈</i><b id="gold">0</b></div>
+      <div class="chip" title="食物"><i>🌾</i><b id="food">0</b></div>
+      <div class="chip" title="人口"><i>👥</i><b id="pop">0</b></div>
+      <div class="chip" title="幸福度"><i>☺</i><b id="happy">0</b></div>
+      <div class="chip" id="dayChip">第 <b id="day">1</b> 天</div>
+      <button id="soundBtn" class="on" type="button" aria-label="音效开关">♪</button>
+    </div>
+  </header>
+  <div id="goal"><div id="goalFill"></div></div>
+  <div id="stage">
+    <canvas id="game"></canvas>
+    <div id="viewCtl" role="group" aria-label="视角旋转">
+      <button id="rotL" type="button" title="逆时针旋转视角 (Q)" aria-label="逆时针旋转视角">↺</button>
+      <span id="compass"><i id="compassArrow">▲</i><b id="viewAngle">0°</b></span>
+      <button id="rotR" type="button" title="顺时针旋转视角 (E)" aria-label="顺时针旋转视角">↻</button>
+    </div>
+    <div class="overlay show" id="screenStart">
+      <div class="panel">
+        <div class="kicker">A TINY ISLAND, A GROWING TOWN</div>
+        <div class="big">方块城市</div>
+        <p>在漂浮的小岛上盖房子、种田、开工坊。<br>让人口涨到 40，把小渔村变成小城。</p>
+        <div class="keys">
+          <b>点击地块</b> 建造当前选中的建筑<br>
+          <b>1–5</b> 切换建筑　·　<b>X</b> 拆除模式<br>
+          <b>Q / E</b> 平面旋转视角<br>
+          每天自动结算产出，注意食物和幸福度
+        </div>
+        <button class="primary" id="startBtn" type="button">开始建城</button>
+      </div>
+    </div>
+    <div class="overlay" id="screenWin">
+      <div class="panel">
+        <div class="kicker">TOWN COMPLETE</div>
+        <div class="big">小城落成</div>
+        <div class="scoreline">第 <b id="winDay">1</b> 天，人口达到 <b id="winPop">40</b><br><span id="winNote"></span></div>
+        <button class="primary" id="continueBtn" type="button">继续经营</button>
+        <button class="primary ghost" id="restartBtn" type="button">重新开岛</button>
+      </div>
+    </div>
+    <div class="toast" id="toast"></div>
+  </div>
+  <div id="toolbar"></div>
+  <div id="hint">点击地块建造　·　1–5 选择建筑　·　X 拆除　·　Q / E 旋转视角　·　人口 40 达成目标</div>
+</div>
+<script>
+(function () {
+  'use strict';
+  var COLS = 8, ROWS = 8;
+  var GOAL_POP = 40;
+  var cvs = document.getElementById('game');
+  var ctx = cvs.getContext('2d');
+  var $ = function (id) { return document.getElementById(id); };
+  var stage = $('stage');
+  var W = 900, H = 620, DPR = 1;
+  var TW = 70, TH = 35, OX = 450, OY = 160;
+  var HW = 35, HH = 17.5;
+  var state = 'start', wonOnce = false;
+  var gold = 120, food = 30, pop = 4, happy = 62, day = 1;
+  var dayLen = 11, dayT = 0;
+  var tiles = [], buildings = [], particles = [], floats = [], clouds = [];
+  var selected = 'house', demolish = false, hover = null;
+  var time = 0, dayPulse = 0, rot = 0;
+  var soundOn = loadNum('blockcity.sound', 1) === 1;
+
+  var TYPES = {
+    house:    { name: '小屋', icon: '🏠', cost: 25, cap: 4, happy: 1, key: '1',
+                desc: '住 4 个人，基础居所。' },
+    farm:     { name: '农田', icon: '🌾', cost: 18, cap: 0, happy: 0, key: '2', food: 6,
+                desc: '每天产出 6 份食物。' },
+    workshop: { name: '工坊', icon: '🔨', cost: 40, cap: 0, happy: -3, key: '3', gold: 4,
+                desc: '每天赚 4 金币，但会降低幸福度。' },
+    park:     { name: '公园', icon: '🌳', cost: 22, cap: 0, happy: 6, key: '4',
+                desc: '提升幸福度，让居民更愿意留下。' },
+    well:     { name: '水井', icon: '💧', cost: 14, cap: 0, happy: 4, key: '5', food: 1,
+                desc: '便宜的民生设施，小幅提升幸福与食物。' }
+  };
+  var TYPE_ORDER = ['house', 'farm', 'workshop', 'park', 'well'];
+
+  function loadNum(k, d) { try { var v = localStorage.getItem(k); return v === null ? d : parseFloat(v); } catch (e) { return d; } }
+  function saveNum(k, v) { try { localStorage.setItem(k, String(v)); } catch (e) {} }
+
+  /* ---------- audio ---------- */
+  var ac = null;
+  function audio() {
+    if (!soundOn) return null;
+    if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { ac = null; } }
+    if (ac && ac.state === 'suspended') { try { ac.resume(); } catch (e) {} }
+    return ac;
+  }
+  function tone(f, dur, type, vol, slide) {
+    var a = audio(); if (!a) return;
+    var o = a.createOscillator(), g = a.createGain();
+    o.type = type || 'sine';
+    o.frequency.setValueAtTime(f, a.currentTime);
+    if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, slide), a.currentTime + dur);
+    g.gain.setValueAtTime(vol == null ? 0.04 : vol, a.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + dur);
+    o.connect(g); g.connect(a.destination);
+    o.start(); o.stop(a.currentTime + dur + 0.01);
+  }
+  function sfxPlace() { tone(220, 0.09, 'triangle', 0.05, 150); setTimeout(function(){ tone(440,0.07,'sine',0.04,520); },70); }
+  function sfxErr() { tone(160, 0.12, 'square', 0.04, 110); }
+  function sfxCoin() { tone(880, 0.06, 'sine', 0.035, 1180); }
+  function sfxDay() { tone(520, 0.1, 'sine', 0.03, 620); setTimeout(function(){ tone(780,0.12,'sine',0.028,900); },110); }
+
+  /* ---------- build world ---------- */
+  function resetWorld() {
+    gold = 120; food = 30; pop = 4; happy = 62; day = 1; dayT = 0;
+    buildings = []; particles = []; floats = [];
+    tiles = [];
+    for (var y = 0; y < ROWS; y++) {
+      tiles.push([]);
+      for (var x = 0; x < COLS; x++) {
+        tiles[y].push({ b: null, seed: Math.random() });
+      }
+    }
+    // 预置几块农田和小屋，让开局有画面
+    placeFree(4, 5, 'farm');
+    placeFree(3, 4, 'house');
+    placeFree(4, 3, 'house');
+    placeFree(2, 4, 'park');
+    placeFree(5, 4, 'well');
+    pop = 4; gold = 120;
+    selected = 'house'; demolish = false;
+    syncToolbar();
+    updHud();
+  }
+  function placeFree(x, y, type) {
+    var b = makeBuilding(x, y, type);
+    if (!b) return;
+    tiles[y][x].b = b;
+    buildings.push(b);
+  }
+  function makeBuilding(x, y, type) {
+    var t = TYPES[type];
+    if (!t) return null;
+    return { x: x, y: y, type: type, t: 0, seed: Math.random() * 10, pop: 0 };
+  }
+
+  function resize() {
+    var r = stage.getBoundingClientRect();
+    W = Math.max(320, Math.floor(r.width - 2));
+    H = Math.max(300, Math.floor(r.height - 2));
+    cvs.style.width = W + 'px';
+    cvs.style.height = H + 'px';
+    DPR = Math.min(2.5, window.devicePixelRatio || 1);
+    cvs.width = Math.round(W * DPR);
+    cvs.height = Math.round(H * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    var fitW = 2 * (W - 30) / (COLS + ROWS);
+    var fitH = 4 * (H - 40) / (COLS + ROWS);
+    TW = Math.max(48, Math.min(108, Math.floor(Math.min(fitW, fitH))));
+    TH = TW / 2; HW = TW / 2; HH = TH / 2;
+    OX = W / 2;
+    OY = (H - (COLS + ROWS - 2) * TH / 2 - TH) / 2 + TH * 0.9;
+    makeClouds();
+  }
+  function makeClouds() {
+    clouds = [];
+    for (var i = 0; i < 4; i++) {
+      clouds.push({ x: Math.random() * W, y: 30 + Math.random() * (H * 0.35),
+        s: 60 + Math.random() * 90, v: 5 + Math.random() * 12, a: 0.05 + Math.random() * 0.06 });
+    }
+  }
+
+  /* ---------- screen mapping ---------- */
+  /* 世界坐标按 90° 步进旋转后再投影；棋盘为正方形，旋转后轮廓不变 */
+  function rotXY(x, y) {
+    if (rot === 1) return { x: ROWS - 1 - y, y: x };
+    if (rot === 2) return { x: COLS - 1 - x, y: ROWS - 1 - y };
+    if (rot === 3) return { x: y, y: COLS - 1 - x };
+    return { x: x, y: y };
+  }
+  function tileScreen(x, y) {
+    var r = rotXY(x, y);
+    return { x: OX + (r.x - r.y) * HW, y: OY + (r.x + r.y) * HH };
+  }
+  function screenTile(mx, my) {
+    var dx = mx - OX, dy = my - OY;
+    var fx = (dx / HW + dy / HH) / 2;
+    var fy = (dy / HH - dx / HW) / 2;
+    var rx = Math.floor(fx), ry = Math.floor(fy);
+    if (rx < 0 || ry < 0 || rx >= COLS || ry >= ROWS) return null;
+    var x, y;
+    if (rot === 1) { x = ry; y = ROWS - 1 - rx; }
+    else if (rot === 2) { x = COLS - 1 - rx; y = ROWS - 1 - ry; }
+    else if (rot === 3) { x = COLS - 1 - ry; y = rx; }
+    else { x = rx; y = ry; }
+    if (x < 0 || y < 0 || x >= COLS || y >= ROWS) return null;
+    return { x: x, y: y };
+  }
+
+  /* ---------- economy ---------- */
+  function countType(t) {
+    var n = 0;
+    for (var i = 0; i < buildings.length; i++) if (buildings[i].type === t) n++;
+    return n;
+  }
+  function popCap() {
+    return 8 + countType('house') * 4;
+  }
+  function endDay() {
+    day++;
+    dayPulse = 1;
+    var houses = countType('house');
+    var farms = countType('farm');
+    var shops = countType('workshop');
+    var parks = countType('park');
+    var wells = countType('well');
+
+    var dGold = 2 + houses + shops * 4 + Math.floor(pop * 0.35) - Math.ceil(buildings.length * 0.25);
+    var dFood = farms * 6 + wells - Math.ceil(pop * 0.9);
+    gold = Math.max(0, gold + dGold);
+    food = Math.max(0, food + dFood);
+
+    var target = 52 + parks * 6 + wells * 4 + houses * 0.5 - shops * 3 - Math.max(0, pop - 18) * 0.25;
+    target = Math.max(0, Math.min(100, target));
+    happy += Math.max(-6, Math.min(5, (target - happy) * 0.5));
+    happy = Math.max(0, Math.min(100, happy));
+
+    var cap = popCap();
+    if (food <= 0) {
+      happy = Math.max(0, happy - 5);
+      pop = Math.max(1, pop - 1);
+      showToast('粮食见底，有人离开了小岛');
+    } else if (happy >= 45 && pop < cap) {
+      var grow = 1 + Math.floor(parks / 3) + (food > pop * 2 ? 1 : 0);
+      pop = Math.min(cap, pop + grow);
+      if (pop >= GOAL_POP && !wonOnce) winGame();
+    }
+    if (happy < 22 && pop > 2 && Math.random() < 0.6) {
+      pop = Math.max(1, pop - 1);
+      showToast('幸福度太低，居民搬走了');
+    }
+
+    // 随机事件
+    if (Math.random() < 0.3) randomEvent();
+
+    // 浮字
+    addFloat('+' + dGold + ' 金', OX, OY - 8, '#ffd166');
+    if (dFood >= 0) addFloat('+' + dFood + ' 粮', OX, OY + 12, '#8ff7c9');
+    sfxDay();
+    updHud();
+  }
+  function randomEvent() {
+    var r = Math.random();
+    if (r < 0.22) {
+      var g = 18 + Math.floor(Math.random() * 20);
+      gold += g; showToast('商队路过，带来 ' + g + ' 金币'); addFloat('+' + g + ' 金', OX, OY, '#ffd166');
+    } else if (r < 0.42) {
+      var f = 12 + Math.floor(Math.random() * 14);
+      food += f; showToast('风调雨顺，收获 ' + f + ' 份食物'); addFloat('+' + f + ' 粮', OX, OY, '#8ff7c9');
+    } else if (r < 0.6) {
+      var hap = countType('park') > 0 ? 8 : 4;
+      happy = Math.min(100, happy + hap); showToast('岛上办了场小庆典，幸福度 +' + hap);
+      burst(OX, OY - 40, '#ffd166', 22, 120, 0.9);
+    } else if (r < 0.78) {
+      if (food > 8) { food = Math.floor(food * 0.8); showToast('一场暴雨泡了粮仓，损失两成存粮'); }
+      else { showToast('乌云压境，幸好粮仓没多少存货'); }
+    } else {
+      var cost = Math.min(gold, 8 + Math.floor(Math.random() * 10));
+      gold -= cost; showToast('港口修缮花掉 ' + cost + ' 金币');
+    }
+    sfxCoin();
+  }
+  function winGame() {
+    wonOnce = true;
+    state = 'won';
+    $('winDay').textContent = day;
+    $('winPop').textContent = pop;
+    $('winNote').textContent = '幸福度 ' + Math.round(happy) + ' · 金币 ' + Math.round(gold) + ' · 建筑 ' + buildings.length;
+    $('screenWin').classList.add('show');
+    tone(660, 0.16, 'sine', 0.05, 880);
+    setTimeout(function(){ tone(880, 0.22, 'sine', 0.05, 1100); }, 160);
+    setTimeout(function(){ tone(1100, 0.3, 'sine', 0.04, 1320); }, 340);
+  }
+
+  /* ---------- interactions ---------- */
+  function canBuild(x, y) {
+    return x >= 0 && y >= 0 && x < COLS && y < ROWS && !tiles[y][x].b;
+  }
+  function tryAction(x, y) {
+    if (state !== 'playing' && state !== 'won') return;
+    var t = tiles[y][x];
+    if (demolish) {
+      if (!t.b) { sfxErr(); return; }
+      var refund = Math.floor(TYPES[t.b.type].cost * 0.5);
+      gold += refund;
+      addFloat('+' + refund + ' 金', OX + (x - y) * HW, OY + (x + y) * HH, '#ffd166');
+      burst(OX + (x - y) * HW, OY + (x + y) * HH, '#c8b18a', 12, 90, 0.5);
+      t.b = null;
+      rebuildList();
+      sfxPlace();
+      updHud();
+      return;
+    }
+    if (t.b) {
+      showTileInfo(t.b);
+      return;
+    }
+    var def = TYPES[selected];
+    if (gold < def.cost) { showToast('金币不够，还差 ' + (def.cost - gold)); sfxErr(); return; }
+    gold -= def.cost;
+    var b = makeBuilding(x, y, selected);
+    t.b = b; buildings.push(b);
+    var sp = tileScreen(x, y);
+    burst(sp.x, sp.y + HH, selected === 'farm' ? '#8ff7c9' : '#f3e4c6', 14, 110, 0.55);
+    addFloat('-' + def.cost, sp.x, sp.y + HH, '#ff9db0');
+    sfxPlace();
+    updHud();
+  }
+  function tileBuilding(x, y) { return tiles[y][x].b; }
+  function rebuildList() {
+    buildings = [];
+    for (var y = 0; y < ROWS; y++) for (var x = 0; x < COLS; x++) if (tiles[y][x].b) buildings.push(tiles[y][x].b);
+  }
+  function showTileInfo(b) {
+    var t = TYPES[b.type];
+    showToast(t.icon + ' ' + t.name + ' · ' + t.desc);
+  }
+
+  /* ---------- fx ---------- */
+  function burst(x, y, color, n, spd, life) {
+    for (var i = 0; i < n; i++) {
+      var a = Math.random() * Math.PI * 2, v = (0.3 + Math.random()) * spd;
+      particles.push({ x: x, y: y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 20,
+        life: life * (0.6 + Math.random() * 0.6), max: life, color: color, r: 1 + Math.random() * 2 });
+    }
+  }
+  function addFloat(text, x, y, color) {
+    floats.push({ text: text, x: x, y: y, color: color, t: 0 });
+  }
+
+  var toastTimer = 0;
+  function showToast(msg) {
+    var el = $('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.classList.remove('show'); }, 2400);
+  }
+
+  /* ---------- HUD/toolbar ---------- */
+  function updHud() {
+    $('gold').textContent = Math.floor(gold);
+    $('food').textContent = Math.floor(food);
+    $('pop').textContent = Math.floor(pop) + '/' + popCap();
+    $('happy').textContent = Math.round(happy);
+    $('day').textContent = day;
+    $('goalFill').style.width = Math.min(100, Math.floor(pop / GOAL_POP * 100)) + '%';
+    $('goalFill').style.background = pop >= GOAL_POP
+      ? 'linear-gradient(90deg,#ffd166,#5ce6a8)' : 'linear-gradient(90deg,#5ce6a8,#58c8ff)';
+  }
+  function syncToolbar() {
+    var bar = $('toolbar');
+    bar.innerHTML = '';
+    TYPE_ORDER.forEach(function (k) {
+      var t = TYPES[k];
+      var btn = document.createElement('button');
+      btn.className = 'build' + (selected === k && !demolish ? ' sel' : '');
+      btn.type = 'button';
+      btn.innerHTML = '<span class="key">' + t.key + '</span><span class="nm"><em>' + t.icon + '</em>' + t.name +
+        '</span><span class="cost">◈ ' + t.cost + '</span>';
+      btn.addEventListener('click', function () {
+        selected = k; demolish = false; syncToolbar(); updHud(); audio();
+      });
+      bar.appendChild(btn);
+    });
+    var db = document.createElement('button');
+    db.className = 'build demolish' + (demolish ? ' sel' : '');
+    db.type = 'button';
+    db.innerHTML = '<span class="key">X</span><span class="nm"><em>⛏</em>拆除</span><span class="cost">返还一半</span>';
+    db.addEventListener('click', function () { demolish = !demolish; syncToolbar(); audio(); });
+    bar.appendChild(db);
+  }
+
+  /* ---------- drawing ---------- */
+  function isoDiamond(cx, cy, hw, hh) {
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - hh);
+    ctx.lineTo(cx + hw, cy);
+    ctx.lineTo(cx, cy + hh);
+    ctx.lineTo(cx - hw, cy);
+    ctx.closePath();
+  }
+  function drawBackground() {
+    var g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#0a1a2c'); g.addColorStop(0.55, '#071322'); g.addColorStop(1, '#040b14');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    // 水面光斑
+    for (var i = 0; i < 5; i++) {
+      var y = H * 0.55 + i * 26 + Math.sin(time * 0.5 + i) * 5;
+      var rg = ctx.createRadialGradient(W * (0.15 + i * 0.17), y, 4, W * (0.15 + i * 0.17), y, 160);
+      rg.addColorStop(0, 'rgba(88,200,255,.055)'); rg.addColorStop(1, 'rgba(88,200,255,0)');
+      ctx.fillStyle = rg; ctx.fillRect(0, 0, W, H);
+    }
+    // 云影
+    for (i = 0; i < clouds.length; i++) {
+      var c = clouds[i];
+      ctx.save();
+      ctx.globalAlpha = c.a;
+      ctx.fillStyle = '#cfeaff';
+      ctx.beginPath(); ctx.ellipse(c.x, c.y, c.s, c.s * 0.32, 0, 0, 6.2832); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(c.x + c.s * 0.4, c.y - c.s * 0.15, c.s * 0.6, c.s * 0.24, 0, 0, 6.2832); ctx.fill();
+      ctx.restore();
+    }
+  }
+  function drawIslandBase() {
+    var pts = [tileScreen(0, 0), tileScreen(COLS - 1, 0), tileScreen(COLS - 1, ROWS - 1), tileScreen(0, ROWS - 1)];
+    var minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (var i = 0; i < pts.length; i++) {
+      var cx0 = pts[i].x, cy0 = pts[i].y + HH;
+      if (cx0 < minX) minX = cx0;
+      if (cx0 > maxX) maxX = cx0;
+      if (cy0 < minY) minY = cy0;
+      if (cy0 > maxY) maxY = cy0;
+    }
+    var cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+    var top = minY - 2 * HH, bottom = maxY, left = minX - HW, right = maxX + HW;
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,.55)'; ctx.shadowBlur = 40; ctx.shadowOffsetY = 18;
+    ctx.fillStyle = '#1d3a2c';
+    ctx.beginPath();
+    ctx.moveTo(cx, top + 8);
+    ctx.lineTo(right, cy + 8);
+    ctx.lineTo(cx, bottom + 22);
+    ctx.lineTo(left, cy + 8);
+    ctx.closePath(); ctx.fill();
+    ctx.restore();
+    // 沙边
+    ctx.fillStyle = '#2a4a35';
+    ctx.beginPath();
+    ctx.moveTo(cx, top + 2);
+    ctx.lineTo(right + 6, cy + 2);
+    ctx.lineTo(cx, bottom + 10);
+    ctx.lineTo(left - 6, cy + 2);
+    ctx.closePath(); ctx.fill();
+  }
+  function drawTiles() {
+    for (var y = 0; y < ROWS; y++) {
+      for (var x = 0; x < COLS; x++) {
+        var p = tileScreen(x, y);
+        var cx = p.x, cy = p.y + HH;
+        var shade = ((x + y) % 2 === 0) ? '#2f5c44' : '#2a5440';
+        // 地基阴影
+        ctx.fillStyle = 'rgba(0,0,0,.18)';
+        isoDiamond(cx, cy + 2, HW - 1, HH - 1); ctx.fill();
+        // 草地
+        var gg = ctx.createLinearGradient(cx, cy - HH, cx, cy + HH);
+        gg.addColorStop(0, ((x + y) % 2 === 0) ? '#396b4f' : '#356349');
+        gg.addColorStop(1, shade);
+        ctx.fillStyle = gg;
+        isoDiamond(cx, cy, HW - 2, HH - 2); ctx.fill();
+        ctx.strokeStyle = 'rgba(120,200,160,.10)';
+        ctx.lineWidth = 1;
+        isoDiamond(cx, cy, HW - 2, HH - 2); ctx.stroke();
+        // 角落小草
+        if (!tiles[y][x].b) {
+          var seed = tiles[y][x].seed;
+          if (seed > 0.72) drawTuft(cx - HW * 0.35, cy + HH * 0.25, 0.8 + seed * 0.4);
+          if (seed < 0.2) drawTuft(cx + HW * 0.4, cy - HH * 0.1, 0.8 + (1 - seed) * 0.4);
+        }
+      }
+    }
+  }
+  function drawTuft(x, y, s) {
+    ctx.strokeStyle = 'rgba(128,220,160,.55)';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(x, y); ctx.quadraticCurveTo(x - 2 * s, y - 5 * s, x - 3 * s, y - 8 * s);
+    ctx.moveTo(x, y); ctx.quadraticCurveTo(x + 1 * s, y - 6 * s, x + 1 * s, y - 9 * s);
+    ctx.moveTo(x, y); ctx.quadraticCurveTo(x + 3 * s, y - 4 * s, x + 5 * s, y - 7 * s);
+    ctx.stroke();
+  }
+
+  function drawBuildings() {
+    var order = [];
+    for (var y = 0; y < ROWS; y++) for (var x = 0; x < COLS; x++) if (tiles[y][x].b) order.push(tiles[y][x].b);
+    order.sort(function (a, b) {
+      var ra = rotXY(a.x, a.y), rb = rotXY(b.x, b.y);
+      return (ra.x + ra.y) - (rb.x + rb.y) || ra.y - rb.y;
+    });
+    for (var i = 0; i < order.length; i++) drawBuilding(order[i]);
+  }
+  function drawBuilding(b) {
+    var p = tileScreen(b.x, b.y);
+    var cx = p.x, cy = p.y + HH + 1;
+    var t = TYPES[b.type];
+    ctx.save();
+    // 影子
+    ctx.fillStyle = 'rgba(0,0,0,.24)';
+    ctx.beginPath(); ctx.ellipse(cx, cy + 2, HW * 0.62, HH * 0.55, 0, 0, 6.2832); ctx.fill();
+    if (b.type === 'house') drawHouse(cx, cy, b.seed);
+    else if (b.type === 'farm') drawFarm(cx, cy, b);
+    else if (b.type === 'workshop') drawWorkshop(cx, cy, b);
+    else if (b.type === 'park') drawPark(cx, cy, b);
+    else if (b.type === 'well') drawWell(cx, cy, b);
+    ctx.restore();
+  }
+  function isoBox(cx, cy, hw, hh, wallH, cTop, cLeft, cRight) {
+    var ty = cy - wallH;
+    // 左面
+    ctx.fillStyle = cLeft;
+    ctx.beginPath();
+    ctx.moveTo(cx - hw, cy - hh);
+    ctx.lineTo(cx, cy);
+    ctx.lineTo(cx, ty);
+    ctx.lineTo(cx - hw, ty - hh);
+    ctx.closePath(); ctx.fill();
+    // 右面
+    ctx.fillStyle = cRight;
+    ctx.beginPath();
+    ctx.moveTo(cx + hw, cy - hh);
+    ctx.lineTo(cx, cy);
+    ctx.lineTo(cx, ty);
+    ctx.lineTo(cx + hw, ty - hh);
+    ctx.closePath(); ctx.fill();
+    // 顶面
+    ctx.fillStyle = cTop;
+    isoDiamond(cx, ty, hw, hh); ctx.fill();
+    return ty;
+  }
+  function drawHouse(cx, cy, seed) {
+    var hw = HW * 0.60, hh = HH * 0.60;
+    var wallH = 30 + (seed % 1) * 6;
+    var ty = isoBox(cx, cy, hw, hh, wallH, '#f6e7c8', '#dcc9a3', '#c7b189');
+    // 屋顶（金字塔）
+    var rh = 20;
+    var apex = { x: cx, y: ty - hh - rh };
+    var L = { x: cx - hw, y: ty }, R = { x: cx + hw, y: ty };
+    var T = { x: cx, y: ty - hh }, B = { x: cx, y: ty + hh };
+    ctx.fillStyle = '#e2735a';
+    ctx.beginPath(); ctx.moveTo(L.x, L.y); ctx.lineTo(T.x, T.y); ctx.lineTo(apex.x, apex.y); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#c75b45';
+    ctx.beginPath(); ctx.moveTo(T.x, T.y); ctx.lineTo(R.x, R.y); ctx.lineTo(apex.x, apex.y); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#a94a39';
+    ctx.beginPath(); ctx.moveTo(R.x, R.y); ctx.lineTo(B.x, B.y); ctx.lineTo(apex.x, apex.y); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#8f3c2f';
+    ctx.beginPath(); ctx.moveTo(B.x, B.y); ctx.lineTo(L.x, L.y); ctx.lineTo(apex.x, apex.y); ctx.closePath(); ctx.fill();
+    // 门和窗
+    ctx.fillStyle = '#6b4a2f';
+    ctx.fillRect(cx - hw * 0.16, ty + hh * 0.1, hw * 0.3, wallH * 0.35);
+    ctx.fillStyle = '#ffd88a';
+    ctx.fillRect(cx - hw * 0.62, ty - hh * 0.15, hw * 0.2, wallH * 0.2);
+    ctx.fillRect(cx + hw * 0.42, ty - hh * 0.1, hw * 0.2, wallH * 0.2);
+    // 烟囱
+    ctx.fillStyle = '#b86a52';
+    ctx.fillRect(cx + hw * 0.3, ty - hh - rh * 0.6, hw * 0.18, rh * 0.8);
+  }
+  function drawFarm(cx, cy, b) {
+    var hw = HW * 0.76, hh = HH * 0.76;
+    ctx.fillStyle = '#6b4f2a';
+    isoDiamond(cx, cy, hw, hh); ctx.fill();
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,220,150,.35)';
+    ctx.lineWidth = 1;
+    for (var i = 1; i < 4; i++) {
+      var t = i / 4;
+      ctx.beginPath();
+      ctx.moveTo(cx - hw + 2 * hw * t, cy - hh + 2 * hh * t);
+      ctx.lineTo(cx + 2 * hw * t - 0, cy + 2 * hh * t);
+      ctx.stroke();
+    }
+    ctx.restore();
+    // 麦穗
+    for (var k = 0; k < 7; k++) {
+      var a = (k / 7) * 6.2832 + b.seed;
+      var rx = Math.cos(a) * hw * 0.45, ry = Math.sin(a) * hh * 0.45;
+      var sway = Math.sin(time * 2 + k + b.seed) * 1.4;
+      ctx.strokeStyle = '#e8c36a'; ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.moveTo(cx + rx, cy + ry);
+      ctx.lineTo(cx + rx + sway, cy + ry - 8 - (k % 3) * 2); ctx.stroke();
+      ctx.fillStyle = '#ffd97a';
+      ctx.beginPath(); ctx.arc(cx + rx + sway, cy + ry - 9 - (k % 3) * 2, 1.8, 0, 6.2832); ctx.fill();
+    }
+    // 小稻草人
+    ctx.strokeStyle = '#c9a15a'; ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.moveTo(cx, cy + 4); ctx.lineTo(cx, cy - 12); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx - 5, cy - 7); ctx.lineTo(cx + 5, cy - 7); ctx.stroke();
+    ctx.fillStyle = '#e0b361';
+    ctx.beginPath(); ctx.arc(cx, cy - 14, 2.6, 0, 6.2832); ctx.fill();
+  }
+  function drawWorkshop(cx, cy, b) {
+    var hw = HW * 0.58, hh = HH * 0.58;
+    var wallH = 36;
+    var ty = isoBox(cx, cy, hw, hh, wallH, '#c9a887', '#8d6a4c', '#74553e');
+    // 屋顶
+    ctx.fillStyle = '#6b7a8f';
+    isoDiamond(cx, ty, hw * 1.04, hh * 1.04); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.15)'; ctx.lineWidth = 1; ctx.stroke();
+    // 烟囱
+    ctx.fillStyle = '#4a5568';
+    ctx.fillRect(cx + hw * 0.28, ty - hh - 16, hw * 0.2, 20);
+    // 烟
+    for (var i = 0; i < 3; i++) {
+      var ph = (time * 0.5 + i * 0.33 + b.seed) % 1;
+      ctx.globalAlpha = (1 - ph) * 0.35;
+      ctx.fillStyle = '#d7e3f2';
+      ctx.beginPath();
+      ctx.arc(cx + hw * 0.38 + Math.sin(ph * 6 + i) * 3, ty - hh - 20 - ph * 26, 3 + ph * 5, 0, 6.2832);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    // 门
+    ctx.fillStyle = '#3b2a1c';
+    ctx.fillRect(cx - hw * 0.15, ty + hh * 0.12, hw * 0.3, wallH * 0.32);
+  }
+  function drawPark(cx, cy, b) {
+    var hw = HW * 0.72, hh = HH * 0.72;
+    ctx.fillStyle = '#3f7a55';
+    isoDiamond(cx, cy, hw, hh); ctx.fill();
+    // 小路
+    ctx.strokeStyle = 'rgba(210,190,150,.55)';
+    ctx.lineWidth = Math.max(2, HW * 0.08);
+    ctx.beginPath();
+    ctx.moveTo(cx - hw * 0.8, cy + hh * 0.2);
+    ctx.quadraticCurveTo(cx, cy - hh * 0.1, cx + hw * 0.75, cy - hh * 0.2);
+    ctx.stroke();
+    // 两棵树
+    drawTree(cx - hw * 0.35, cy - hh * 0.1, 1 + (b.seed % 0.3));
+    drawTree(cx + hw * 0.35, cy + hh * 0.2, 0.8 + (b.seed % 0.25));
+    // 长椅
+    ctx.fillStyle = '#a87644';
+    ctx.fillRect(cx - 4, cy + hh * 0.55, 9, 2);
+  }
+  function drawTree(x, y, s) {
+    ctx.fillStyle = '#6b4423';
+    ctx.fillRect(x - 1.4 * s, y - 10 * s, 2.8 * s, 10 * s);
+    var c1 = '#4f9e63', c2 = '#6dc47f';
+    var sway = Math.sin(time * 1.6 + x * 0.1) * 1.2;
+    ctx.fillStyle = c1;
+    ctx.beginPath(); ctx.arc(x + sway, y - 15 * s, 7.5 * s, 0, 6.2832); ctx.fill();
+    ctx.fillStyle = c2;
+    ctx.beginPath(); ctx.arc(x - 3 * s + sway, y - 19 * s, 5.2 * s, 0, 6.2832); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + 4 * s + sway, y - 18 * s, 4.6 * s, 0, 6.2832); ctx.fill();
+  }
+  function drawWell(cx, cy, b) {
+    // 石井
+    ctx.fillStyle = '#8d9aab';
+    ctx.beginPath(); ctx.ellipse(cx, cy - 2, HW * 0.32, HH * 0.42, 0, 0, 6.2832); ctx.fill();
+    ctx.fillStyle = '#1b2c3d';
+    ctx.beginPath(); ctx.ellipse(cx, cy - 3, HW * 0.2, HH * 0.28, 0, 0, 6.2832); ctx.fill();
+    // 木架
+    ctx.strokeStyle = '#a87644'; ctx.lineWidth = 2.2;
+    ctx.beginPath(); ctx.moveTo(cx - HW * 0.24, cy - 2); ctx.lineTo(cx - HW * 0.24, cy - 22); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx + HW * 0.24, cy - 2); ctx.lineTo(cx + HW * 0.24, cy - 22); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx - HW * 0.3, cy - 22); ctx.lineTo(cx + HW * 0.3, cy - 22); ctx.stroke();
+    // 小顶棚
+    ctx.fillStyle = '#c75b45';
+    ctx.beginPath();
+    ctx.moveTo(cx - HW * 0.32, cy - 22);
+    ctx.lineTo(cx, cy - 30);
+    ctx.lineTo(cx + HW * 0.32, cy - 22);
+    ctx.closePath(); ctx.fill();
+    // 水桶
+    ctx.fillStyle = '#7a5a3a';
+    ctx.fillRect(cx - 2, cy - 14 + Math.sin(time * 2 + b.seed) * 2, 4, 4);
+  }
+
+  function drawHover() {
+    if (!hover || state === 'start') return;
+    var x = hover.x, y = hover.y, p = tileScreen(x, y);
+    var cx = p.x, cy = p.y + HH;
+    var ok = demolish ? !!tiles[y][x].b : !tiles[y][x].b;
+    ctx.save();
+    ctx.globalAlpha = 0.9;
+    ctx.fillStyle = ok ? 'rgba(140,255,190,.18)' : 'rgba(255,110,130,.18)';
+    isoDiamond(cx, cy, HW - 2, HH - 2); ctx.fill();
+    ctx.strokeStyle = ok ? 'rgba(140,255,190,.8)' : 'rgba(255,110,130,.8)';
+    ctx.lineWidth = 2;
+    isoDiamond(cx, cy, HW - 2, HH - 2); ctx.stroke();
+    ctx.restore();
+    // 建造预览
+    if (!demolish && !tiles[y][x].b && TYPES[selected]) {
+      ctx.save();
+      ctx.globalAlpha = 0.35;
+      drawGhostBuilding(cx, cy);
+      ctx.restore();
+    }
+  }
+  function drawGhostBuilding(cx, cy) {
+    if (selected === 'house') {
+      isoBox(cx, cy, HW * 0.60, HH * 0.60, 30, 'rgba(246,231,200,.7)', 'rgba(220,201,163,.7)', 'rgba(199,177,137,.7)');
+    } else {
+      ctx.fillStyle = 'rgba(255,255,255,.25)';
+      isoDiamond(cx, cy - 6, HW * 0.55, HH * 0.55); ctx.fill();
+    }
+  }
+
+  function drawParticles() {
+    for (var i = 0; i < particles.length; i++) {
+      var p = particles[i];
+      ctx.globalAlpha = Math.max(0, p.life / p.max);
+      ctx.fillStyle = p.color;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.2832); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+  function drawFloats() {
+    for (var i = 0; i < floats.length; i++) {
+      var f = floats[i];
+      ctx.globalAlpha = Math.max(0, 1 - f.t / 1.6);
+      ctx.fillStyle = f.color;
+      ctx.font = 'bold 13px "Microsoft YaHei",sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(f.text, f.x, f.y - f.t * 26);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function draw() {
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    drawBackground();
+    drawIslandBase();
+    drawTiles();
+    drawBuildings();
+    drawHover();
+    drawParticles();
+    drawFloats();
+    // 天数进度
+    if (state === 'playing' || state === 'won') {
+      var pw = Math.max(40, Math.min(160, W * 0.18));
+      var px = W - pw - 18, py = H - 16;
+      ctx.fillStyle = 'rgba(0,0,0,.35)';
+      ctx.fillRect(px, py, pw, 4);
+      ctx.fillStyle = '#5ce6a8';
+      ctx.fillRect(px, py, pw * (dayT / dayLen), 4);
+      ctx.fillStyle = '#6b8099'; ctx.font = '9px "Microsoft YaHei",sans-serif'; ctx.textAlign = 'right';
+      ctx.fillText('下一天', px - 6, py + 5);
+    }
+  }
+
+  /* ---------- loop ---------- */
+  var last = 0;
+  function loop(now) {
+    if (!last) last = now;
+    var dt = Math.min(0.05, Math.max(0, (now - last) / 1000));
+    last = now;
+    time += dt;
+    if (dayPulse > 0) dayPulse = Math.max(0, dayPulse - dt * 1.6);
+    // 云
+    for (var i = 0; i < clouds.length; i++) {
+      clouds[i].x += clouds[i].v * dt;
+      if (clouds[i].x - clouds[i].s > W) clouds[i].x = -clouds[i].s * 2;
+    }
+    if (state === 'playing' || state === 'won') {
+      dayT += dt;
+      if (dayT >= dayLen) { dayT = 0; endDay(); }
+    }
+    for (i = particles.length - 1; i >= 0; i--) {
+      var p = particles[i];
+      p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 60 * dt;
+      p.vx *= 0.97; p.vy *= 0.97; p.life -= dt;
+      if (p.life <= 0) particles.splice(i, 1);
+    }
+    for (i = floats.length - 1; i >= 0; i--) {
+      floats[i].t += dt;
+      if (floats[i].t > 1.6) floats.splice(i, 1);
+    }
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  /* ---------- view rotation ---------- */
+  function updateCompass() {
+    var arrow = $('compassArrow'), ang = $('viewAngle');
+    if (arrow) arrow.style.transform = 'rotate(' + (rot * 90) + 'deg)';
+    if (ang) ang.textContent = (rot * 90) + '°';
+  }
+  function rotateView(dir) {
+    rot = (rot + dir + 4) % 4;
+    hover = null;
+    particles.length = 0;
+    floats.length = 0;
+    updateCompass();
+    showToast(dir > 0 ? '视角右转 90°' : '视角左转 90°');
+    tone(360, 0.07, 'sine', 0.025, 520);
+  }
+  $('rotL').addEventListener('click', function (e) { e.preventDefault(); rotateView(-1); audio(); });
+  $('rotR').addEventListener('click', function (e) { e.preventDefault(); rotateView(1); audio(); });
+  updateCompass();
+
+  /* ---------- input ---------- */
+  cvs.addEventListener('pointermove', function (e) {
+    var r = cvs.getBoundingClientRect();
+    hover = screenTile(e.clientX - r.left, e.clientY - r.top);
+  });
+  cvs.addEventListener('pointerleave', function () { hover = null; });
+  cvs.addEventListener('pointerdown', function (e) {
+    e.preventDefault();
+    var r = cvs.getBoundingClientRect();
+    var t = screenTile(e.clientX - r.left, e.clientY - r.top);
+    if (t) tryAction(t.x, t.y);
+    audio();
+  });
+  document.addEventListener('keydown', function (e) {
+    var found = null;
+    for (var k in TYPES) if (TYPES[k].key === e.key) found = k;
+    if (found) {
+      e.preventDefault(); selected = found; demolish = false; syncToolbar(); audio(); return;
+    }
+    if (e.key === 'q' || e.key === 'Q') {
+      e.preventDefault(); rotateView(-1); return;
+    }
+    if (e.key === 'e' || e.key === 'E') {
+      e.preventDefault(); rotateView(1); return;
+    }
+    if (e.key === 'x' || e.key === 'X') {
+      e.preventDefault(); demolish = !demolish; syncToolbar(); return;
+    }
+    if (e.key === 'Enter' || e.key === ' ') {
+      if (state === 'start') { e.preventDefault(); startGame(); }
+      else if (state === 'won') { e.preventDefault(); state = 'playing'; $('screenWin').classList.remove('show'); }
+    }
+  });
+  var startBtn = $('startBtn'), continueBtn = $('continueBtn'), restartBtn = $('restartBtn');
+  startBtn.addEventListener('click', startGame);
+  continueBtn.addEventListener('click', function () { state = 'playing'; $('screenWin').classList.remove('show'); });
+  restartBtn.addEventListener('click', function () {
+    $('screenWin').classList.remove('show');
+    wonOnce = false;
+    resetWorld(); state = 'playing'; dayT = 0;
+  });
+  function startGame() {
+    $('screenStart').classList.remove('show');
+    resetWorld();
+    state = 'playing'; dayT = 0;
+    tone(420, 0.1, 'sine', 0.04, 620);
+    showToast('小岛交给你了，先盖两间小屋吧');
+  }
+  $('soundBtn').addEventListener('click', function () {
+    soundOn = !soundOn; saveNum('blockcity.sound', soundOn ? 1 : 0);
+    this.classList.toggle('on', soundOn); this.textContent = soundOn ? '♪' : '×';
+    if (soundOn) tone(700, 0.06, 'sine', 0.03);
+  });
+  $('soundBtn').classList.toggle('on', soundOn);
+  $('soundBtn').textContent = soundOn ? '♪' : '×';
+
+  window.addEventListener('resize', resize);
+  window.addEventListener('orientationchange', function () { setTimeout(resize, 120); });
+
+  resetWorld();
+  resize();
+  draw();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
+

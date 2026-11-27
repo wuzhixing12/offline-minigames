@@ -1,0 +1,1493 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>象棋残局</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden;background:#0b1017;color:#dbe6f5;font-family:system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+  #app{display:flex;flex-direction:column;height:100%}
+  #top{flex-shrink:0;display:flex;align-items:flex-end;gap:8px;padding:8px 12px 4px}
+  .t{font:700 16px "KaiTi","STKaiti","Microsoft YaHei",serif;color:#e8c98a;letter-spacing:1px}
+  .sub{margin-top:2px;font-size:11px;color:#7f93ac;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70vw}
+  .count{margin-left:auto;font-size:11px;color:#8ea3bd;white-space:nowrap;padding-bottom:2px}
+  #wrap{position:relative;flex:1;min-height:0;overflow:hidden}
+  canvas{display:block;width:100%;height:100%;touch-action:manipulation}
+  #bar{flex-shrink:0;display:flex;gap:5px;padding:6px 8px;background:#111823;border-top:1px solid #26344a}
+  #bar button{flex:1;font:inherit;font-size:12.5px;padding:7px 4px;border-radius:9px;border:1px solid #33445f;background:#1b2534;color:#cfe0f3;cursor:pointer;outline:none}
+  #bar button:hover{background:#233149}
+  #bar button:active{transform:translateY(1px)}
+  #nextBtn{background:#243b2e;border-color:#3d6b4e;color:#c9f3d6}
+  #nextBtn:hover{background:#2d4a39}
+  .toast{position:absolute;left:50%;bottom:10px;transform:translateX(-50%) translateY(8px);max-width:calc(100% - 24px);padding:7px 12px;border-radius:999px;background:rgba(8,12,18,.94);border:1px solid rgba(231,192,122,.4);color:#f0dfb8;font-size:12px;opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;white-space:nowrap;z-index:20}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  #banner{position:absolute;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;background:rgba(5,8,12,.74);padding:16px}
+  #banner[hidden]{display:none}
+  .bcard{width:100%;max-width:300px;padding:16px 16px 14px;border-radius:16px;background:linear-gradient(180deg,#1a2432,#131b26);border:1px solid #3a4d69;box-shadow:0 20px 60px rgba(0,0,0,.6);text-align:center}
+  .btitle{font:700 20px "KaiTi","STKaiti","Microsoft YaHei",serif;color:#f0d49a;letter-spacing:2px}
+  .bstars{margin:6px 0 2px;font-size:22px;color:#f5c451;letter-spacing:5px;min-height:26px}
+  .bdesc{font-size:12px;color:#9fb2c8;line-height:1.6;margin-bottom:12px}
+  .brow{display:flex;gap:6px}
+  .brow button{flex:1;font:inherit;font-size:12.5px;padding:8px 4px;border-radius:9px;border:1px solid #33445f;background:#1b2534;color:#cfe0f3;cursor:pointer}
+  .brow button.primary{background:#2f4a6b;border-color:#4d6f9c;color:#f0f7ff}
+  #levels{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;background:rgba(6,10,15,.97)}
+  #levels[hidden]{display:none}
+  .lhead{flex-shrink:0;display:flex;align-items:baseline;gap:8px;padding:12px 14px 6px;padding-top:max(12px,env(safe-area-inset-top))}
+  .lt{font:700 17px "KaiTi","STKaiti","Microsoft YaHei",serif;color:#e8c98a;letter-spacing:1px}
+  .lp{font-size:11px;color:#8ea3bd}
+  .lnote{flex-shrink:0;padding:0 14px 8px;font-size:11px;color:#72869e;line-height:1.5}
+  .lpager{flex-shrink:0;display:flex;gap:6px;padding:0 14px 8px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .lpager button{flex:1 0 auto;min-width:58px;font:inherit;font-size:11px;padding:6px 8px;border-radius:8px;border:1px solid #2c3b52;background:#141d2a;color:#9fb2c8;cursor:pointer;outline:none;white-space:nowrap}
+  .lpager button:hover{background:#1c2837;border-color:#405673}
+  .lpager button.on{border-color:#e7c07a;background:#1f2a3a;color:#f0dfb8;box-shadow:0 0 0 1px rgba(231,192,122,.35)}
+  .lgrid{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:6px 14px 14px;align-content:start}
+  .lv{position:relative;aspect-ratio:1/1;border-radius:11px;border:1px solid #2c3b52;background:#141d2a;color:#b9c9dc;font:600 14px system-ui;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;outline:none}
+  .lv:hover{background:#1c2837;border-color:#405673}
+  .lv.cur{border-color:#e7c07a;box-shadow:0 0 0 1px rgba(231,192,122,.5),0 0 18px rgba(231,192,122,.18);color:#f0dfb8}
+  .lv.done{background:#16241f;border-color:#2f5a47;color:#bfe6cf}
+  .lv em{font-style:normal;font-size:9px;color:#f5c451;letter-spacing:1px;height:10px}
+  .lv.done em{color:#7fe0aa}
+  .lfoot{flex-shrink:0;display:flex;gap:8px;padding:8px 14px calc(10px + env(safe-area-inset-bottom));border-top:1px solid #223047;background:#0d141d}
+  .lfoot button{flex:1;font:inherit;font-size:12.5px;padding:9px 6px;border-radius:9px;border:1px solid #33445f;background:#1b2534;color:#cfe0f3;cursor:pointer}
+  .lfoot button.primary{background:#2f4a6b;border-color:#4d6f9c;color:#f0f7ff}
+  #loading{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:#080c12;padding:18px}
+  #loading[hidden]{display:none}
+  .loadcard{width:100%;max-width:320px;padding:20px 18px;border-radius:16px;background:#111a25;border:1px solid #2c3d55;text-align:center;box-shadow:0 20px 70px rgba(0,0,0,.6)}
+  .ltitle{font:700 17px "KaiTi","STKaiti","Microsoft YaHei",serif;color:#e8c98a;letter-spacing:1px}
+  .lbar{margin:14px 0 8px;height:6px;border-radius:99px;background:#1d2938;overflow:hidden}
+  .lbar i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#8a6a2d,#f0cf86);transition:width .2s}
+  .ltext{font-size:11.5px;color:#a9bdd3}
+  .ltip{margin-top:8px;font-size:10.5px;color:#61758c;line-height:1.5}
+</style>
+<style id="tx-aurora-skin">
+/* tx-aurora-skin:xiangqi-endgame */
+:root{--tx-a1:#e7c07a;--tx-a2:#c0603a;}
+html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+::selection{background:rgba(231,192,122,0.38);color:#fff}
+*::-webkit-scrollbar{width:8px;height:8px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:rgba(231,192,122,0.26);border-radius:99px;border:2px solid transparent;background-clip:content-box}
+*::-webkit-scrollbar-thumb:hover{background:rgba(231,192,122,0.46);background-clip:content-box}
+body{background-color:#0b1017!important;background-image:radial-gradient(1100px 640px at 6% -12%, rgba(231,192,122,0.16), transparent 62%), radial-gradient(900px 680px at 104% 112%, rgba(192,96,58,0.12), transparent 62%)!important}
+button{transition:transform .14s ease,filter .16s ease,box-shadow .2s ease,border-color .16s ease,background-color .16s ease}
+button:hover{filter:brightness(1.07)}
+button:active{transform:translateY(1px) scale(.995)}
+button:focus-visible{outline:2px solid rgba(231,192,122,0.72);outline-offset:2px}
+.overlay,.modal,.dialog,.sheet,#levels,#loading{background-image:radial-gradient(900px 520px at 50% 0%,rgba(231,192,122,0.15),transparent 62%),radial-gradient(720px 520px at 50% 100%,rgba(192,96,58,0.08),transparent 60%)!important}
+.overlay,.modal,.dialog,.sheet{backdrop-filter:blur(9px) saturate(1.1)}
+.overlay h1,.modal h1,.screen h1,.overlay-card h1,.win-card h1,.result-card h1,.bcard .btitle,.loadcard .ltitle{text-shadow:0 2px 30px rgba(231,192,122,0.45)}
+.overlay .screen,.overlay .panel,.overlay-card,.modal .panel,.win-card,.result-card,.bcard,.loadcard,.rules-dialog,.panel{box-shadow:0 38px 96px -34px rgba(0,0,0,.95), inset 0 1px 0 rgba(255,255,255,.07)!important}
+.bcard,.loadcard{border-color:rgba(231,192,122,0.34)!important}
+.overlay .panel,.overlay-card,.win-card,.result-card,.modal .panel{backdrop-filter:blur(10px) saturate(1.08);border-color:rgba(231,192,122,0.26)!important}
+#top{padding:10px 14px 6px;background:linear-gradient(180deg,rgba(22,32,46,.92),rgba(11,16,23,0))}
+.t{font-size:18px;text-shadow:0 2px 22px rgba(231,192,122,.38)}
+.sub{color:#8ea0b6}
+#bar{background:linear-gradient(180deg,#141e2c,#0d141d);border-top-color:#2b3b52;box-shadow:0 -10px 30px rgba(0,0,0,.35)}
+#bar button{background:linear-gradient(180deg,#223149,#182231);border-color:#3a4f6d;transition:transform .14s,background .16s,border-color .16s}
+#bar button:hover{background:linear-gradient(180deg,#2b3d59,#1e2b3e);border-color:#54709a}
+#nextBtn{background:linear-gradient(180deg,#2c4d3a,#1d3729);border-color:#47795a;color:#d6ffe4}
+#nextBtn:hover{background:linear-gradient(180deg,#376048,#244534)}
+.bcard{background:linear-gradient(180deg,#1d2938,#121a25);border-color:rgba(231,192,122,.4);box-shadow:0 30px 80px -30px #000,inset 0 1px 0 rgba(255,255,255,.08)}
+.lv{background:linear-gradient(160deg,#1b2637,#111925);border-color:#2f4056;box-shadow:inset 0 1px 0 rgba(255,255,255,.045);transition:transform .14s,box-shadow .18s,border-color .16s,background .16s}
+.lv:hover{transform:translateY(-2px);background:linear-gradient(160deg,#223149,#16202e);border-color:#4a6485;box-shadow:0 12px 26px -12px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.07)}
+.lv.cur{background:linear-gradient(160deg,#2a2c30,#1b1d22);border-color:#e7c07a;box-shadow:0 0 0 1px rgba(231,192,122,.5),0 10px 30px -12px rgba(231,192,122,.35),inset 0 1px 0 rgba(255,255,255,.08);color:#ffe9b8}
+.lv.done{background:linear-gradient(160deg,#1a3328,#10251c);border-color:#356b52;color:#c8f0d8;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
+.lpager button{background:linear-gradient(180deg,#18222f,#111925);border-color:#2f4056}
+.lpager button.on{background:linear-gradient(180deg,#2b2a26,#1d1c19);border-color:#e7c07a;color:#ffe9b8}
+.lfoot{background:linear-gradient(180deg,#101823,#0b1119)}
+#levels{background-color:#070b11!important}
+</style>
+<style id="tx-levels-v2">
+/* 选关界面 · 卷轴式关卡墙 */
+#levels{
+  display:flex;flex-direction:column;overflow:hidden;
+  background:
+    radial-gradient(1100px 700px at 12% -14%,rgba(231,192,122,.15),transparent 62%),
+    radial-gradient(900px 700px at 102% 112%,rgba(186,88,52,.12),transparent 62%),
+    linear-gradient(180deg,#0a1017,#070b11 45%,#06090e)!important;
+  color:#dce7f5;
+}
+#levels[hidden]{display:none}
+#levels::before{
+  content:"殘局";position:absolute;right:-1.5vw;bottom:-5vh;pointer-events:none;
+  font:700 min(34vw,400px)/1 "KaiTi","STKaiti","Microsoft YaHei",serif;
+  color:rgba(231,192,122,.035);letter-spacing:.06em;transform:rotate(-5deg);
+}
+#levels::after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(120% 90% at 50% 40%,transparent 55%,rgba(2,4,7,.55) 100%);
+}
+#levels .lvs{
+  position:relative;z-index:1;display:flex;flex-direction:column;
+  width:100%;max-width:1080px;height:100%;min-height:0;margin:0 auto;
+  padding:20px 22px 0;
+}
+#levels .lvhead{flex:0 0 auto;display:flex;flex-direction:column;gap:12px;padding-bottom:14px;border-bottom:1px solid rgba(231,192,122,.12)}
+#levels .lvtitle{display:flex;align-items:center;gap:12px}
+#levels .seal{
+  width:42px;height:42px;flex:0 0 auto;border-radius:11px;display:grid;place-items:center;
+  font:700 22px "KaiTi","STKaiti",serif;color:#221705;
+  background:linear-gradient(150deg,#f4dca6,#c89546);
+  border:1px solid rgba(255,255,255,.4);
+  box-shadow:0 10px 26px -12px rgba(231,192,122,.85),inset 0 1px 0 rgba(255,255,255,.6);
+}
+#levels .lt{font-size:21px;letter-spacing:.12em;color:#f0d9a8;text-shadow:0 2px 26px rgba(231,192,122,.35)}
+#levels .lp{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin-top:3px;font-size:11px;color:#9aabc0}
+#lprog{color:#dcbc7d;font-weight:600;font-variant-numeric:tabular-nums}
+#levels .lpd{color:#677a92}
+#levels .lvbar{height:4px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.65)}
+#levels .lvbar i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#8a6a2d,#f0cf86);box-shadow:0 0 12px rgba(240,207,134,.55);transition:width .35s ease}
+#levels .lvtags{display:flex;flex-wrap:wrap;align-items:center;gap:7px}
+#levels .tag{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:10.5px;color:#a3b3c6;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07)}
+#levels .tag b{font-weight:600;letter-spacing:.04em}
+#levels .tag span{font-size:9.5px;color:#6f8399;font-variant-numeric:tabular-nums}
+#levels .tag.t2{border-color:rgba(226,181,106,.3);background:rgba(226,181,106,.07)}
+#levels .tag.t2 b{color:#e8c58a}
+#levels .tag.t3{border-color:rgba(208,128,90,.3);background:rgba(208,128,90,.07)}
+#levels .tag.t3 b{color:#e0a07c}
+#levels .tag.t4{border-color:rgba(127,163,201,.3);background:rgba(127,163,201,.07)}
+#levels .tag.t4 b{color:#a9c6e2}
+#levels .tag.tn{margin-left:auto;color:#72859b}
+#levels .lpager{display:flex;gap:6px;overflow-x:auto;overscroll-behavior-x:contain;padding:2px 0;scrollbar-width:none}
+#levels .lpager::-webkit-scrollbar{display:none}
+#levels .lpager button{
+  flex:0 0 auto;padding:7px 13px;border-radius:999px;font-size:11px;letter-spacing:.03em;
+  color:#93a6bc;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);
+  font-variant-numeric:tabular-nums;cursor:pointer;outline:none;
+  transition:background .16s,border-color .16s,color .16s,box-shadow .2s;
+}
+#levels .lpager button:hover{background:rgba(231,192,122,.09);border-color:rgba(231,192,122,.32);color:#e8d3a4}
+#levels .lpager button.on{
+  background:linear-gradient(160deg,#f2d79b,#cfa257);color:#241a08;font-weight:700;
+  border-color:rgba(255,255,255,.4);
+  box-shadow:0 6px 18px -8px rgba(231,192,122,.8),inset 0 1px 0 rgba(255,255,255,.55);
+}
+#levels .lvbody{flex:1;min-height:0;display:flex;padding-top:14px}
+#levels .lgrid{
+  flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:10px;
+  padding:2px 6px 22px 2px;align-content:start;
+}
+#levels .lv{
+  position:relative;aspect-ratio:1/1;border-radius:13px;
+  display:flex;align-items:center;justify-content:center;
+  color:#c9d7e6;font:600 21px "KaiTi","STKaiti",serif;letter-spacing:.02em;
+  background:linear-gradient(160deg,#1b2634,#101720 62%,#0d131b);
+  border:1px solid rgba(231,192,122,.13);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.055),0 3px 8px -4px rgba(0,0,0,.7);
+  cursor:pointer;outline:none;
+  transition:transform .16s,box-shadow .2s,border-color .16s,background .16s,color .16s;
+}
+#levels .lv::before{content:"";position:absolute;inset:4px;border-radius:9px;border:1px solid rgba(255,255,255,.045);pointer-events:none}
+#levels .lv .n{position:relative;z-index:1;transform:translateY(-3px);text-shadow:0 1px 0 rgba(0,0,0,.55)}
+#levels .lv .d{position:absolute;top:8px;right:8px;width:5px;height:5px;border-radius:50%;background:#b9955b;opacity:.55;box-shadow:0 0 6px rgba(185,149,91,.45)}
+#levels .lv.t3 .d{background:#b5795a;box-shadow:0 0 6px rgba(181,121,90,.45)}
+#levels .lv.t4 .d{background:#7d9cba;box-shadow:0 0 6px rgba(125,156,186,.45)}
+#levels .lv em{position:absolute;left:0;right:0;bottom:6px;height:10px;font:400 8.5px/10px system-ui,sans-serif;font-style:normal;letter-spacing:1px;text-align:center;color:#8c7343}
+#levels .lv:not(.cur):not(.done):hover{
+  transform:translateY(-2px);border-color:rgba(231,192,122,.45);
+  background:linear-gradient(160deg,#243245,#141d28);
+  box-shadow:0 12px 24px -12px rgba(0,0,0,.85),0 0 0 1px rgba(231,192,122,.1),inset 0 1px 0 rgba(255,255,255,.08);
+}
+#levels .lv.cur{
+  transform:translateY(-1px);color:#ffe9b8;border-color:rgba(240,207,134,.9);
+  background:linear-gradient(160deg,#342a19,#1d1810 66%,#15120c);
+  box-shadow:0 0 0 1px rgba(240,207,134,.32),0 12px 28px -12px rgba(231,192,122,.65),inset 0 1px 0 rgba(255,255,255,.1);
+}
+#levels .lv.cur::after{content:"";position:absolute;top:7px;left:7px;width:5px;height:5px;border-radius:50%;background:#f0cf86;box-shadow:0 0 8px rgba(240,207,134,.95)}
+#levels .lv.done{color:#cdeedd;border-color:rgba(83,142,113,.5);background:linear-gradient(160deg,#152a21,#0e1d17 66%,#0b1712);box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
+#levels .lv.done em{color:#83d6a8}
+#levels .lv.done::after{content:"";position:absolute;top:7px;left:7px;width:5px;height:5px;border-radius:50%;background:#4fae7e;box-shadow:0 0 7px rgba(79,174,126,.85)}
+#levels .lv.done.cur{border-color:rgba(240,207,134,.9);box-shadow:0 0 0 1px rgba(240,207,134,.3),0 12px 28px -12px rgba(240,207,134,.55)}
+#levels .lv.done.cur::after{background:#f0cf86;box-shadow:0 0 8px rgba(240,207,134,.95)}
+#levels .lfoot{
+  flex:0 0 auto;display:flex;gap:10px;padding:14px 0 calc(16px + env(safe-area-inset-bottom));
+  border-top:1px solid rgba(231,192,122,.1);
+  background:linear-gradient(180deg,transparent,#070b11 55%);
+}
+#levels .lfoot button{
+  flex:1;padding:11px 10px;border-radius:11px;font-size:12.5px;cursor:pointer;
+  color:#c6d4e4;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.1);
+  transition:background .16s,border-color .16s,box-shadow .2s;
+}
+#levels .lfoot button:hover{background:rgba(255,255,255,.065);border-color:rgba(255,255,255,.18)}
+#levels .lfoot button.primary{
+  background:linear-gradient(150deg,#f2d79b,#cfa257);color:#241a08;font-weight:700;
+  border-color:rgba(255,255,255,.4);
+  box-shadow:0 8px 22px -10px rgba(231,192,122,.7),inset 0 1px 0 rgba(255,255,255,.55);
+}
+#levels #lreset{flex:0 0 auto;min-width:112px;color:#c99a8d;border-color:rgba(192,96,58,.22);background:rgba(192,96,58,.06)}
+#levels #lreset:hover{color:#e8b3a3;background:rgba(192,96,58,.12);border-color:rgba(192,96,58,.4)}
+@media (min-width:900px){
+  #levels .lgrid{grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:12px}
+  #levels .lv{font-size:24px;border-radius:14px}
+  #levels .lv::before{inset:5px;border-radius:9px}
+  #levels .lv .n{transform:translateY(-4px)}
+  #levels .lv em{bottom:8px;font-size:9px}
+}
+@media (max-width:640px){
+  #levels .lvs{padding:14px 14px 0}
+  #levels .lvtitle{gap:10px}
+  #levels .seal{width:36px;height:36px;border-radius:9px;font-size:19px}
+  #levels .lt{font-size:18px}
+  #levels .lpd{display:none}
+  #levels .lvtags{gap:6px}
+  #levels .tag{font-size:10px;padding:3px 8px;gap:5px}
+  #levels .tag.tn{flex-basis:100%;margin-left:0}
+  #levels .lpager button{padding:6px 11px}
+  #levels .lvbody{padding-top:12px}
+  #levels .lgrid{grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:8px;padding-right:2px}
+  #levels .lv{font-size:19px;border-radius:11px}
+  #levels .lv::before{inset:3px;border-radius:8px}
+  #levels .lv .d{top:6px;right:6px;width:4px;height:4px}
+  #levels .lv em{bottom:5px;font-size:8px}
+  #levels .lfoot{padding:12px 0 calc(12px + env(safe-area-inset-bottom))}
+  #levels #lreset{min-width:96px}
+}
+@media (max-width:380px){
+  #levels .lgrid{grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:7px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="top">
+    <div>
+      <div class="t">象棋残局</div>
+      <div class="sub" id="sub">正在准备…</div>
+    </div>
+    <div class="count" id="count"></div>
+  </div>
+  <div id="wrap">
+    <canvas id="cv"></canvas>
+    <div class="toast" id="toast"></div>
+    <div id="banner" hidden>
+      <div class="bcard">
+        <div class="btitle" id="bTitle">过关</div>
+        <div class="bstars" id="bStars"></div>
+        <div class="bdesc" id="bDesc"></div>
+        <div class="brow">
+          <button id="bNext" class="primary">下一关</button>
+          <button id="bRetry">重玩</button>
+          <button id="bLevels">选关</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="bar">
+    <button id="levelsBtn">选关</button>
+    <button id="undoBtn">撤销</button>
+    <button id="retryBtn">重来</button>
+    <button id="nextBtn">下一关</button>
+  </div>
+</div>
+
+<div id="levels" hidden>
+  <div class="lvs">
+    <header class="lvhead">
+      <div class="lvtitle">
+        <span class="seal" aria-hidden="true">残</span>
+        <div class="lvtxt">
+          <div class="lt">选择关卡</div>
+          <div class="lp"><span id="lprog">已通关 0 / 300</span><span class="lpd">每 40 关一页 · 共 8 页</span></div>
+        </div>
+      </div>
+      <div class="lvbar" aria-hidden="true"><i id="lpfill"></i></div>
+      <div class="lvtags">
+        <span class="tag t2"><b>两步杀</b><span>1–60</span></span>
+        <span class="tag t3"><b>三步杀</b><span>61–180</span></span>
+        <span class="tag t4"><b>四步杀</b><span>181–300</span></span>
+        <span class="tag tn">红先 · 将死或困毙即胜 · 走错一步判负 · 无提示</span>
+      </div>
+      <div class="lpager" id="lpager"></div>
+    </header>
+    <div class="lvbody">
+      <div class="lgrid" id="lgrid"></div>
+    </div>
+    <footer class="lfoot">
+      <button id="lreset">清空进度</button>
+      <button id="lclose" class="primary">返回棋盘</button>
+    </footer>
+  </div>
+</div>
+
+<div id="loading">
+  <div class="loadcard">
+    <div class="ltitle">正在载入 300 局残局</div>
+    <div class="lbar"><i id="lfill"></i></div>
+    <div class="ltext" id="ltext">准备中…</div>
+    <div class="ltip">60 关两步杀、120 关三步杀、120 关四步杀，全部杀法已离线校验。不提供提示，走错一步即告负。</div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ================= 基础常量 ================= */
+var RED=1, BLACK=-1, K=1, A=2, B=3, N=4, R=5, C=6, P=7;
+var board = new Int8Array(90);
+var turn = RED;
+var NAMES = {1:['帅','将'],2:['仕','士'],3:['相','象'],4:['马','马'],5:['车','车'],6:['炮','炮'],7:['兵','卒']};
+var CODEmap = {A:A,B:B,N:N,R:R,C:C,P:P};
+
+function mulberry32(a){
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    var t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+var genRng = mulberry32(0x51ED2701);
+
+function ri(n){ return (genRng()*n)|0; }
+function pick(a){ return a[ri(a.length)]; }
+function inBounds(x,y){ return x>=0 && x<9 && y>=0 && y<10; }
+function inPalace(x,y,side){
+  if(x<3||x>5) return false;
+  return side===RED ? (y>=7&&y<=9) : (y>=0&&y<=2);
+}
+
+/* ================= 走子引擎 ================= */
+function applyRaw(m){
+  var from=(m/90)|0, to=m%90;
+  var p=board[from], cap=board[to];
+  board[to]=p; board[from]=0;
+  return cap;
+}
+function undoRaw(m,cap){
+  var from=(m/90)|0, to=m%90;
+  board[from]=board[to];
+  board[to]=cap;
+}
+function kingSquare(side){
+  for(var i=0;i<90;i++) if(board[i]===K*side) return i;
+  return -1;
+}
+function canLand(q,side){
+  if(!q) return true;
+  return q*side<0 && Math.abs(q)!==K;
+}
+function inCheck(side){
+  var kq=kingSquare(side);
+  if(kq<0) return true;
+  var x=kq%9, y=(kq-x)/9;
+  var dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+  var i, nx, ny, q, screen;
+  for(i=0;i<4;i++){
+    nx=x+dirs[i][0]; ny=y+dirs[i][1]; screen=0;
+    while(nx>=0&&nx<9&&ny>=0&&ny<10){
+      q=board[ny*9+nx];
+      if(q){
+        if(screen===0){
+          if(q*side<0 && (Math.abs(q)===R || Math.abs(q)===K)) return true;
+          screen=1;
+        }else{
+          if(q*side<0 && Math.abs(q)===C) return true;
+          break;
+        }
+      }
+      nx+=dirs[i][0]; ny+=dirs[i][1];
+    }
+  }
+  var hs=[[1,2],[2,1],[-1,2],[-2,1],[1,-2],[2,-1],[-1,-2],[-2,-1]];
+  for(i=0;i<8;i++){
+    var dx=hs[i][0], dy=hs[i][1];
+    nx=x+dx; ny=y+dy;
+    if(nx<0||nx>8||ny<0||ny>9) continue;
+    q=board[ny*9+nx];
+    if(q*side<0 && Math.abs(q)===N){
+      var lx, ly;
+      if(Math.abs(dx)===2){ lx=x+dx/2; ly=y+dy; }
+      else { lx=x+dx; ly=y+dy/2; }
+      if(!board[ly*9+lx]) return true;
+    }
+  }
+  if(side===RED){
+    if(y-1>=0 && board[(y-1)*9+x]===-P) return true;
+    if(y>=5){
+      if(x>0 && board[y*9+x-1]===-P) return true;
+      if(x<8 && board[y*9+x+1]===-P) return true;
+    }
+  }else{
+    if(y+1<10 && board[(y+1)*9+x]===P) return true;
+    if(y<=4){
+      if(x>0 && board[y*9+x-1]===P) return true;
+      if(x<8 && board[y*9+x+1]===P) return true;
+    }
+  }
+  return false;
+}
+function pseudoMoves(side){
+  var out=[], i, x, y, q, t, d, nx, ny, q2;
+  for(i=0;i<90;i++){
+    q=board[i];
+    if(!q || q*side<0) continue;
+    x=i%9; y=(i-x)/9; t=Math.abs(q);
+    if(t===K){
+      var kd=[[1,0],[-1,0],[0,1],[0,-1]];
+      for(d=0;d<4;d++){
+        nx=x+kd[d][0]; ny=y+kd[d][1];
+        if(!inPalace(nx,ny,side)) continue;
+        q2=board[ny*9+nx];
+        if(canLand(q2,side)) out.push(i*90+ny*9+nx);
+      }
+    }else if(t===A){
+      var ad=[[1,1],[1,-1],[-1,1],[-1,-1]];
+      for(d=0;d<4;d++){
+        nx=x+ad[d][0]; ny=y+ad[d][1];
+        if(!inPalace(nx,ny,side)) continue;
+        q2=board[ny*9+nx];
+        if(canLand(q2,side)) out.push(i*90+ny*9+nx);
+      }
+    }else if(t===B){
+      var bd=[[2,2],[2,-2],[-2,2],[-2,-2]];
+      for(d=0;d<4;d++){
+        nx=x+bd[d][0]; ny=y+bd[d][1];
+        if(!inBounds(nx,ny)) continue;
+        if(side===RED ? ny<5 : ny>4) continue;
+        if(board[(y+bd[d][1]/2)*9+(x+bd[d][0]/2)]) continue;
+        q2=board[ny*9+nx];
+        if(canLand(q2,side)) out.push(i*90+ny*9+nx);
+      }
+    }else if(t===N){
+      var nd=[[2,1],[1,2],[-2,1],[-1,2],[2,-1],[1,-2],[-2,-1],[-1,-2]];
+      for(d=0;d<8;d++){
+        var dx=nd[d][0], dy=nd[d][1];
+        nx=x+dx; ny=y+dy;
+        if(!inBounds(nx,ny)) continue;
+        var lx = Math.abs(dx)===2 ? x+dx/2 : x;
+        var ly = Math.abs(dx)===2 ? y : y+dy/2;
+        if(board[ly*9+lx]) continue;
+        q2=board[ny*9+nx];
+        if(canLand(q2,side)) out.push(i*90+ny*9+nx);
+      }
+    }else if(t===R){
+      var rd=[[1,0],[-1,0],[0,1],[0,-1]];
+      for(d=0;d<4;d++){
+        nx=x+rd[d][0]; ny=y+rd[d][1];
+        while(inBounds(nx,ny)){
+          q2=board[ny*9+nx];
+          if(!q2){ out.push(i*90+ny*9+nx); }
+          else{ if(canLand(q2,side)) out.push(i*90+ny*9+nx); break; }
+          nx+=rd[d][0]; ny+=rd[d][1];
+        }
+      }
+    }else if(t===C){
+      var cd=[[1,0],[-1,0],[0,1],[0,-1]];
+      for(d=0;d<4;d++){
+        nx=x+cd[d][0]; ny=y+cd[d][1];
+        var screen=false;
+        while(inBounds(nx,ny)){
+          q2=board[ny*9+nx];
+          if(!screen){
+            if(!q2) out.push(i*90+ny*9+nx);
+            else screen=true;
+          }else if(q2){
+            if(canLand(q2,side)) out.push(i*90+ny*9+nx);
+            break;
+          }
+          nx+=cd[d][0]; ny+=cd[d][1];
+        }
+      }
+    }else if(t===P){
+      var fy = side===RED ? y-1 : y+1;
+      if(fy>=0 && fy<10){
+        q2=board[fy*9+x];
+        if(canLand(q2,side)) out.push(i*90+fy*9+x);
+      }
+      var crossed = side===RED ? y<=4 : y>=5;
+      if(crossed){
+        if(x>0){ q2=board[y*9+x-1]; if(canLand(q2,side)) out.push(i*90+y*9+x-1); }
+        if(x<8){ q2=board[y*9+x+1]; if(canLand(q2,side)) out.push(i*90+y*9+x+1); }
+      }
+    }
+  }
+  return out;
+}
+function legalMoves(side){
+  var ms=pseudoMoves(side), out=[], i, cap;
+  for(i=0;i<ms.length;i++){
+    cap=applyRaw(ms[i]);
+    if(!inCheck(side)) out.push(ms[i]);
+    undoRaw(ms[i],cap);
+  }
+  return out;
+}
+function hasAnyLegalMove(side){
+  var ms=pseudoMoves(side), i, cap, ok;
+  for(i=0;i<ms.length;i++){
+    cap=applyRaw(ms[i]);
+    ok=!inCheck(side);
+    undoRaw(ms[i],cap);
+    if(ok) return true;
+  }
+  return false;
+}
+
+/* ================= 杀法分析 ================= */
+function findMateIn1(side){
+  var ms=pseudoMoves(side), i, m, cap;
+  for(i=0;i<ms.length;i++){
+    m=ms[i]; cap=applyRaw(m);
+    if(!inCheck(side) && inCheck(-side) && !hasAnyLegalMove(-side)){
+      undoRaw(m,cap);
+      return m;
+    }
+    undoRaw(m,cap);
+  }
+  return -1;
+}
+function findMateIn2Key(){
+  var ms=pseudoMoves(RED), i, m, cap, bms, j, bm, cap2, ok, has;
+  for(i=0;i<ms.length;i++){
+    m=ms[i]; cap=applyRaw(m);
+    if(inCheck(RED)){ undoRaw(m,cap); continue; }
+    if(!inCheck(BLACK)){ undoRaw(m,cap); continue; }
+    bms=legalMoves(BLACK);
+    ok=bms.length>0;
+    for(j=0;j<bms.length && ok;j++){
+      bm=bms[j]; cap2=applyRaw(bm);
+      has=findMateIn1(RED)>=0;
+      undoRaw(bm,cap2);
+      if(!has) ok=false;
+    }
+    undoRaw(m,cap);
+    if(ok) return m;
+  }
+  return -1;
+}
+function forceMate(side,moves){
+  if(moves<=0) return -1;
+  var ms=legalMoves(side), i, m, cap, replies, j, r, cap2, all, ok;
+  for(i=0;i<ms.length;i++){
+    m=ms[i]; cap=applyRaw(m);
+    if(!hasAnyLegalMove(-side)){ undoRaw(m,cap); return m; }
+    if(moves>1){
+      all=true;
+      replies=legalMoves(-side);
+      for(j=0;j<replies.length;j++){
+        r=replies[j]; cap2=applyRaw(r);
+        ok=forceMate(side,moves-1)>=0;
+        undoRaw(r,cap2);
+        if(!ok){ all=false; break; }
+      }
+    }else all=false;
+    undoRaw(m,cap);
+    if(all) return m;
+  }
+  return -1;
+}
+function allBlackRepliesMate(moves){
+  var bms=legalMoves(BLACK), i, bm, cap, ok;
+  for(i=0;i<bms.length;i++){
+    bm=bms[i]; cap=applyRaw(bm);
+    ok=forceMate(RED,moves)>=0;
+    undoRaw(bm,cap);
+    if(!ok) return false;
+  }
+  return true;
+}
+function analyzePosition(idx){
+  if(findMateIn1(RED)>=0) return null;
+  var m2=findMateIn2Key();
+  if(m2>=0) return {mate:2, key:m2};
+  return null;
+}
+/* ================= 残局生成 ================= */
+function placeRaw(p,x,y){
+  if(!inBounds(x,y)) return false;
+  var i=y*9+x;
+  if(board[i]) return false;
+  board[i]=p;
+  return true;
+}
+function buildRandomPosition(idx){
+  board.fill(0);
+  var bx=3+ri(3), by=ri(3);
+  var rx=3+ri(3), ry=7+ri(3), tries=0;
+  while(rx===bx && tries<12){ rx=3+ri(3); tries++; }
+  if(rx===bx) return false;
+  if(!placeRaw(-K,bx,by)) return false;
+  if(!placeRaw(K,rx,ry)) return false;
+
+  var defCount = idx<30 ? (ri(2)?0:1) : (idx<60 ? 1+ri(2) : 2);
+  var defs=['A','B','N','R','C','P'];
+  var d,t,tr,x,y,pt,ok;
+  for(d=0;d<defCount;d++){
+    t=pick(defs); ok=false;
+    for(tr=0;tr<24 && !ok;tr++){
+      if(t==='A'){ pt=pick([[3,0],[5,0],[4,1],[3,2],[5,2]]); x=pt[0]; y=pt[1]; }
+      else if(t==='B'){ pt=pick([[2,0],[6,0],[0,2],[4,2],[8,2],[2,4],[6,4]]); x=pt[0]; y=pt[1]; }
+      else if(t==='N'){ x=ri(9); y=ri(4); }
+      else if(t==='R'||t==='C'){ x=ri(9); y=ri(4); }
+      else { x=ri(9); y=3+ri(4); }
+      ok=placeRaw(-CODEmap[t],x,y);
+    }
+    if(!ok) return false;
+  }
+
+  var three = idx<60;
+  var sets = three
+    ? [['R','R','P'],['R','N','P'],['R','C','P'],['R','N','N'],['C','N','P'],['R','R','N'],['R','C','N']]
+    : [['R','R'],['R','C'],['R','N'],['C','N'],['R','P'],['C','P'],['N','N'],['C','C']];
+  var set=pick(sets);
+  var a, type, placed;
+  for(a=0;a<set.length;a++){
+    type=set[a]; placed=false;
+    for(tr=0;tr<36 && !placed;tr++){
+      if(ri(10)<7){ x=2+ri(5); y=ri(4); }
+      else { x=ri(9); y=ri(6); }
+      if(type==='P' && y>4) y=ri(5);
+      placed=placeRaw(CODEmap[type],x,y);
+    }
+    if(!placed) return false;
+  }
+  return true;
+}
+function validStart(){
+  return !inCheck(RED) && !inCheck(BLACK) && hasAnyLegalMove(RED) && hasAnyLegalMove(BLACK);
+}
+function encodeBoard(){
+  var s='', i, v, ch;
+  for(i=0;i<90;i++){
+    v=board[i];
+    if(!v){ s+='.'; continue; }
+    ch='KABNRCP'.charAt(Math.abs(v)-1);
+    s += v>0 ? ch : ch.toLowerCase();
+  }
+  return s;
+}
+function decodeBoard(str){
+  board.fill(0);
+  for(var i=0;i<90;i++){
+    var c=str.charAt(i);
+    if(!c || c==='.') continue;
+    var idx='KABNRCP'.indexOf(c.toUpperCase());
+    if(idx<0) continue;
+    board[i] = c===c.toUpperCase() ? idx+1 : -(idx+1);
+  }
+}
+function matLabel(){
+  var order=[R,N,C,P], names={5:'车',4:'马',6:'炮',7:'兵'};
+  var cnt={}, i, v, n, s='';
+  for(i=0;i<90;i++){
+    v=board[i];
+    if(v>0 && v!==K) cnt[v]=(cnt[v]||0)+1;
+  }
+  for(i=0;i<order.length;i++){
+    var t=order[i]; n=cnt[t]||0;
+    if(n===1) s+=names[t];
+    else if(n===2) s+='双'+names[t];
+    else if(n>=3) s+='三'+names[t];
+  }
+  return s || '单帅';
+}
+var MATE_LABEL={1:'一步杀',2:'两步杀',3:'三步杀',4:'四步杀',5:'五步杀'};
+function makeLevelData(mate){
+  return {
+    pos: encodeBoard(),
+    mate: mate,
+    par: mate,
+    label: MATE_LABEL[mate]||(mate+'步杀'),
+    mat: matLabel()
+  };
+}
+function makeLevelAttempt(idx){
+  if(!buildRandomPosition(idx)) return null;
+  if(!validStart()) return null;
+  var a=analyzePosition(idx);
+  if(!a) return null;
+  return makeLevelData(a.mate);
+}
+function fallbackLevel(idx){
+  var bases=[
+    { bk:[3,0], cover:[P,3,2], rf:8, tr:0 },
+    { bk:[5,0], cover:[P,5,2], rf:0, tr:0 },
+    { bk:[3,2], cover:[N,1,2], rf:8, tr:2 },
+    { bk:[5,2], cover:[N,7,2], rf:0, tr:2 }
+  ];
+  var i, bd, cv, sr, rx, ry;
+  for(i=0;i<96;i++){
+    board.fill(0);
+    bd=bases[i%4];
+    if(!placeRaw(-K,bd.bk[0],bd.bk[1])) continue;
+    cv=bd.cover;
+    if(!placeRaw(cv[0],cv[1],cv[2])) continue;
+    sr=3+ri(5);
+    if(!placeRaw(R,bd.rf,sr)) continue;
+    rx=3+ri(3); ry=7+ri(3);
+    if(!placeRaw(K,rx,ry)) continue;
+    if(!validStart()) continue;
+    if(findMateIn1(RED)>=0) return makeLevelData(1);
+  }
+  board.fill(0);
+  placeRaw(-K,3,0);
+  placeRaw(K,4,9);
+  placeRaw(R,8,4);
+  placeRaw(P,3,2);
+  return makeLevelData(1);
+}
+/* ================= 本地存储 ================= */
+var LEVEL_KEY='txq_xqend_levels_v5';
+var PROG_KEY='txq_xqend_prog_v1';
+var LAST_KEY='txq_xqend_last_v1';
+function store(k,v){
+  try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){}
+}
+function read(k){
+  try{
+    var s=localStorage.getItem(k);
+    return s ? JSON.parse(s) : null;
+  }catch(e){ return null; }
+}
+
+/* ================= 绘制 ================= */
+var cv=document.getElementById('cv');
+var ctx=cv.getContext('2d');
+var wrapEl=document.getElementById('wrap');
+var levelsEl=document.getElementById('levels');
+var W=0,H=0,cell=0,ox=0,oy=0;
+
+function px(x){ return ox+x*cell; }
+function py(y){ return oy+y*cell; }
+function line(x1,y1,x2,y2){
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+}
+function roundRect(x,y,w,h,r){
+  if(w<2*r) r=w/2;
+  if(h<2*r) r=h/2;
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+function resize(){
+  var r=wrapEl.getBoundingClientRect();
+  var dpr=Math.min(2, window.devicePixelRatio||1);
+  W=Math.max(1, Math.floor(r.width));
+  H=Math.max(1, Math.floor(r.height));
+  cv.width=Math.floor(W*dpr);
+  cv.height=Math.floor(H*dpr);
+  cv.style.width=W+'px';
+  cv.style.height=H+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  cell=Math.min((W-24)/9.6, (H-24)/10.6);
+  if(cell<8) cell=8;
+  ox=(W-cell*8)/2;
+  oy=(H-cell*9)/2;
+  draw();
+}
+function markSquare(sq,color){
+  var x=sq%9, y=(sq-x)/9, cx=px(x), cy=py(y), s=cell*0.47, l=cell*0.14;
+  ctx.strokeStyle=color;
+  ctx.lineWidth=Math.max(1.3,cell*0.032);
+  ctx.beginPath();
+  ctx.moveTo(cx-s,cy-s+l); ctx.lineTo(cx-s,cy-s); ctx.lineTo(cx-s+l,cy-s);
+  ctx.moveTo(cx+s-l,cy-s); ctx.lineTo(cx+s,cy-s); ctx.lineTo(cx+s,cy-s+l);
+  ctx.moveTo(cx+s,cy+s-l); ctx.lineTo(cx+s,cy+s); ctx.lineTo(cx+s-l,cy+s);
+  ctx.moveTo(cx-s+l,cy+s); ctx.lineTo(cx-s,cy+s); ctx.lineTo(cx-s,cy+s-l);
+  ctx.stroke();
+}
+function drawBoard(){
+  var pad=cell*0.62;
+  var bx=ox-pad, by=oy-pad, bw=cell*8+pad*2, bh=cell*9+pad*2;
+  var fp=cell*0.14;
+
+  ctx.save();
+  ctx.shadowColor='rgba(0,0,0,.68)';
+  ctx.shadowBlur=cell*1.3;
+  ctx.shadowOffsetY=cell*0.38;
+  roundRect(bx-fp,by-fp,bw+fp*2,bh+fp*2,cell*0.3);
+  var fg=ctx.createLinearGradient(bx,by,bx,by+bh);
+  fg.addColorStop(0,'#8c5e2c');
+  fg.addColorStop(0.5,'#6a4118');
+  fg.addColorStop(1,'#4a2b0e');
+  ctx.fillStyle=fg;
+  ctx.fill();
+  ctx.restore();
+
+  roundRect(bx,by,bw,bh,cell*0.24);
+  var g=ctx.createLinearGradient(bx,by,bx+bw*0.38,by+bh);
+  g.addColorStop(0,'#f8e5ba');
+  g.addColorStop(0.3,'#eed3a1');
+  g.addColorStop(0.62,'#e5c288');
+  g.addColorStop(1,'#d1a55f');
+  ctx.fillStyle=g;
+  ctx.fill();
+
+  ctx.save();
+  roundRect(bx,by,bw,bh,cell*0.24);
+  ctx.clip();
+  var gi,gx,gwx;
+  for(gi=0;gi<22;gi++){
+    var gy=by+bh*((gi+0.5)/22);
+    ctx.beginPath();
+    ctx.moveTo(bx,gy);
+    for(gx=0;gx<=bw;gx+=cell*0.3){
+      ctx.lineTo(bx+gx,gy+Math.sin(gi*1.7+(gx/bw)*6.4)*cell*0.038);
+    }
+    ctx.strokeStyle=gi%3===0?'rgba(140,95,40,.075)':'rgba(255,255,255,.055)';
+    ctx.lineWidth=Math.max(1,cell*0.018);
+    ctx.stroke();
+  }
+  var ry0=py(4), ry1=py(5);
+  var river=ctx.createLinearGradient(0,ry0,0,ry1);
+  river.addColorStop(0,'rgba(255,251,236,0)');
+  river.addColorStop(0.5,'rgba(255,251,236,.28)');
+  river.addColorStop(1,'rgba(255,251,236,0)');
+  ctx.fillStyle=river;
+  ctx.fillRect(bx,ry0,bw,ry1-ry0);
+  ctx.strokeStyle='rgba(122,84,36,.14)';
+  ctx.lineWidth=Math.max(1,cell*0.02);
+  for(var wv=0;wv<2;wv++){
+    var wy=ry0+cell*(0.33+wv*0.3);
+    ctx.beginPath();
+    ctx.moveTo(px(0)+cell*0.2,wy);
+    for(gwx=cell*0.2;gwx<=cell*7.8;gwx+=cell*0.22){
+      ctx.lineTo(px(0)+gwx,wy+Math.sin((gwx/cell)*1.5+wv*1.4)*cell*0.035);
+    }
+    ctx.stroke();
+  }
+  var vig=ctx.createRadialGradient(bx+bw*0.5,by+bh*0.46,bw*0.2,bx+bw*0.5,by+bh*0.5,bw*0.82);
+  vig.addColorStop(0,'rgba(0,0,0,0)');
+  vig.addColorStop(1,'rgba(64,36,8,.15)');
+  ctx.fillStyle=vig;
+  ctx.fillRect(bx,by,bw,bh);
+  ctx.restore();
+
+  ctx.save();
+  roundRect(bx,by,bw,bh,cell*0.24);
+  ctx.strokeStyle='rgba(118,80,34,.62)';
+  ctx.lineWidth=Math.max(1,cell*0.03);
+  ctx.stroke();
+  roundRect(bx+cell*0.07,by+cell*0.07,bw-cell*0.14,bh-cell*0.14,cell*0.19);
+  ctx.strokeStyle='rgba(255,252,240,.4)';
+  ctx.lineWidth=Math.max(1,cell*0.022);
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.strokeStyle='#7b5624';
+  ctx.lineWidth=Math.max(1,cell*0.024);
+  var i;
+  for(i=0;i<10;i++) line(ox,py(i),ox+cell*8,py(i));
+  for(i=0;i<9;i++){
+    if(i===0||i===8) line(px(i),py(0),px(i),py(9));
+    else { line(px(i),py(0),px(i),py(4)); line(px(i),py(5),px(i),py(9)); }
+  }
+  line(px(3),py(0),px(5),py(2));
+  line(px(5),py(0),px(3),py(2));
+  line(px(3),py(7),px(5),py(9));
+  line(px(5),py(7),px(3),py(9));
+
+  ctx.strokeStyle='rgba(80,52,16,.9)';
+  ctx.lineWidth=Math.max(1,cell*0.022);
+  ctx.strokeRect(ox,oy,cell*8,cell*9);
+  ctx.lineWidth=Math.max(1.5,cell*0.05);
+  ctx.strokeRect(ox-cell*0.12,oy-cell*0.12,cell*8+cell*0.24,cell*9+cell*0.24);
+
+  ctx.fillStyle='rgba(100,66,22,.6)';
+  ctx.font='600 '+(cell*0.5)+'px "KaiTi","STKaiti","Microsoft YaHei",serif';
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.fillText('楚  河', ox+cell*2, oy+cell*4.5);
+  ctx.fillText('汉  界', ox+cell*6, oy+cell*4.5);
+}
+function drawPiece(i){
+  var v=board[i];
+  if(!v) return;
+  var x=i%9, y=(i-x)/9;
+  var cx=px(x), cy=py(y), r=cell*0.43;
+
+  ctx.save();
+  ctx.shadowColor='rgba(38,22,4,.45)';
+  ctx.shadowBlur=cell*0.18;
+  ctx.shadowOffsetY=cell*0.06;
+  ctx.beginPath();
+  ctx.arc(cx,cy,r,0,Math.PI*2);
+  var g=ctx.createRadialGradient(cx-r*0.35,cy-r*0.42,r*0.1,cx,cy,r*1.05);
+  g.addColorStop(0,'#fffdf6');
+  g.addColorStop(0.58,'#f6e6c2');
+  g.addColorStop(0.86,'#e8cd9a');
+  g.addColorStop(1,'#cfa86c');
+  ctx.fillStyle=g;
+  ctx.fill();
+  ctx.restore();
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx,cy,r,0,Math.PI*2);
+  ctx.clip();
+  var gloss=ctx.createRadialGradient(cx-r*0.36,cy-r*0.44,0,cx-r*0.36,cy-r*0.44,r*0.92);
+  gloss.addColorStop(0,'rgba(255,255,255,.9)');
+  gloss.addColorStop(0.5,'rgba(255,255,255,.16)');
+  gloss.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=gloss;
+  ctx.fillRect(cx-r,cy-r,r*2,r*2);
+  var shade=ctx.createLinearGradient(0,cy+r*0.15,0,cy+r);
+  shade.addColorStop(0,'rgba(96,64,24,0)');
+  shade.addColorStop(1,'rgba(96,64,24,.22)');
+  ctx.fillStyle=shade;
+  ctx.fillRect(cx-r,cy,r*2,r);
+  ctx.restore();
+
+  ctx.beginPath();
+  ctx.arc(cx,cy,r,0,Math.PI*2);
+  ctx.strokeStyle = v>0 ? '#a83226' : '#2b3444';
+  ctx.lineWidth=Math.max(1.2,cell*0.034);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(cx,cy,r*0.82,0,Math.PI*2);
+  ctx.strokeStyle = v>0 ? 'rgba(168,50,38,.42)' : 'rgba(43,52,68,.42)';
+  ctx.lineWidth=Math.max(0.8,cell*0.015);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(cx,cy,r*0.93,Math.PI*1.06,Math.PI*1.84);
+  ctx.strokeStyle='rgba(255,255,255,.5)';
+  ctx.lineWidth=Math.max(1,cell*0.02);
+  ctx.stroke();
+
+  ctx.fillStyle = v>0 ? '#9e291c' : '#182636';
+  ctx.font='700 '+(r*1.04)+'px "KaiTi","STKaiti","Kaiti SC","Microsoft YaHei",serif';
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.fillText(NAMES[Math.abs(v)][v>0?0:1],cx,cy+cell*0.015);
+}
+function ringKing(side){
+  var kq=kingSquare(side);
+  if(kq<0) return;
+  var x=kq%9, y=(kq-x)/9;
+  ctx.beginPath();
+  ctx.arc(px(x),py(y),cell*0.52,0,Math.PI*2);
+  ctx.strokeStyle='rgba(235,70,55,.9)';
+  ctx.lineWidth=Math.max(2,cell*0.055);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(px(x),py(y),cell*0.45,0,Math.PI*2);
+  ctx.strokeStyle='rgba(255,170,120,.42)';
+  ctx.lineWidth=Math.max(1,cell*0.022);
+  ctx.stroke();
+}
+function drawArrow(from,to){
+  var fx=from%9, fy=(from-fx)/9, tx=to%9, ty=(to-tx)/9;
+  var x1=px(fx), y1=py(fy), x2=px(tx), y2=py(ty);
+  var ang=Math.atan2(y2-y1,x2-x1);
+  var head=Math.min(cell*0.34, Math.sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1))*0.36);
+  var sx=x1+Math.cos(ang)*cell*0.44, sy=y1+Math.sin(ang)*cell*0.44;
+  var ex=x2-Math.cos(ang)*cell*0.46, ey=y2-Math.sin(ang)*cell*0.46;
+  ctx.save();
+  ctx.strokeStyle='rgba(84,220,158,.92)';
+  ctx.fillStyle='rgba(84,220,158,.92)';
+  ctx.lineWidth=Math.max(2,cell*0.05);
+  ctx.lineCap='round';
+  ctx.beginPath();
+  ctx.moveTo(sx,sy);
+  ctx.lineTo(ex,ey);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(ex,ey);
+  ctx.lineTo(ex-Math.cos(ang-0.42)*head,ey-Math.sin(ang-0.42)*head);
+  ctx.lineTo(ex-Math.cos(ang+0.42)*head,ey-Math.sin(ang+0.42)*head);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+function draw(){
+  if(!W||!H) return;
+  ctx.clearRect(0,0,W,H);
+  var bg=ctx.createRadialGradient(W*0.5,H*0.34,8,W*0.5,H*0.5,Math.max(W,H)*0.8);
+  bg.addColorStop(0,'#1a2535');
+  bg.addColorStop(0.6,'#0f1721');
+  bg.addColorStop(1,'#070b10');
+  ctx.fillStyle=bg;
+  ctx.fillRect(0,0,W,H);
+
+  var halo=ctx.createRadialGradient(W*0.5,H*0.48,0,W*0.5,H*0.5,Math.max(W,H)*0.62);
+  halo.addColorStop(0,'rgba(222,172,92,.13)');
+  halo.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=halo;
+  ctx.fillRect(0,0,W,H);
+
+  drawBoard();
+
+  if(lastMove>=0){
+    markSquare((lastMove/90)|0,'rgba(231,192,122,.86)');
+    markSquare(lastMove%90,'rgba(231,192,122,.86)');
+  }
+
+  var i, d, dx, dy;
+  for(i=0;i<legalForSel.length;i++){
+    d=legalForSel[i]; dx=d%9; dy=(d-dx)/9;
+    if(board[d]){
+      ctx.beginPath();
+      ctx.arc(px(dx),py(dy),cell*0.46,0,Math.PI*2);
+      ctx.strokeStyle='rgba(231,192,122,.85)';
+      ctx.lineWidth=Math.max(1.6,cell*0.045);
+      ctx.stroke();
+    }else{
+      ctx.beginPath();
+      ctx.arc(px(dx),py(dy),Math.max(2,cell*0.09),0,Math.PI*2);
+      ctx.fillStyle='rgba(231,192,122,.55)';
+      ctx.fill();
+    }
+  }
+
+  for(i=0;i<90;i++) if(board[i]) drawPiece(i);
+
+  if(selected>=0){
+    var sx=selected%9, sy=(selected-sx)/9;
+    ctx.beginPath();
+    ctx.arc(px(sx),py(sy),cell*0.475,0,Math.PI*2);
+    ctx.strokeStyle='#f5d78e';
+    ctx.lineWidth=Math.max(2,cell*0.052);
+    ctx.stroke();
+  }
+
+  if(!gameOver){
+    if(turn===RED && inCheck(RED)) ringKing(RED);
+    if(turn===BLACK && inCheck(BLACK)) ringKing(BLACK);
+  }
+}
+
+/* ================= 游戏状态 ================= */
+var LEVELS=[];
+var progress={};
+var cur=-1;
+var PAGE_SIZE=40;
+var lpage=0;
+var redMoves=0;
+var history=[];
+var selected=-1;
+var legalForSel=[];
+var hintMove=-1;
+var lastMove=-1;
+var gameOver=false;
+var thinking=false;
+var timerToken=0;
+var toastTimer=0;
+function toast(msg){
+  var el=document.getElementById('toast');
+  el.textContent=msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){ el.classList.remove('show'); },1700);
+}
+function updateCount(){
+  var el=document.getElementById('count');
+  if(cur<0){ el.textContent=''; return; }
+  if(thinking) el.textContent='黑方应着…';
+  else if(gameOver) el.textContent='本关结束';
+  else if(LEVELS.length){
+    el.textContent='已走 '+redMoves+' 步 / 标准 '+LEVELS[cur].par+' 步';
+  }else el.textContent='';
+}
+function updateSub(){
+  var el=document.getElementById('sub');
+  if(!LEVELS.length){ el.textContent='正在准备…'; return; }
+  var lv=LEVELS[cur];
+  if(cur<0 || !lv){ el.textContent='选择关卡开始'; return; }
+  el.textContent='第 '+(cur+1)+' 关 · '+lv.label+' · '+lv.mat;
+}
+function undoOne(){
+  if(!history.length) return;
+  var h=history.pop();
+  undoRaw(h.m,h.cap);
+  turn=-turn;
+  if(h.by===RED) redMoves--;
+  lastMove = history.length ? history[history.length-1].m : -1;
+}
+function loadLevel(i){
+  if(i<0||i>=LEVELS.length) return;
+  cur=i;
+  lpage=(i/PAGE_SIZE)|0;
+  decodeBoard(LEVELS[i].pos);
+  turn=RED;
+  redMoves=0;
+  history=[];
+  selected=-1;
+  legalForSel=[];
+  hintMove=-1;
+  lastMove=-1;
+  gameOver=false;
+  thinking=false;
+  timerToken++;
+  document.getElementById('banner').hidden=true;
+  levelsEl.hidden=true;
+  updateSub();
+  updateCount();
+  draw();
+  store(LAST_KEY,i);
+}
+function selectSquare(sq){
+  selected=sq;
+  legalForSel=[];
+  hintMove=-1;
+  var ms=legalMoves(RED), i, from;
+  for(i=0;i<ms.length;i++){
+    from=(ms[i]/90)|0;
+    if(from===sq) legalForSel.push(ms[i]%90);
+  }
+  draw();
+}
+function playRed(m){
+  var cap=applyRaw(m);
+  turn=BLACK;
+  history.push({m:m,cap:cap,by:RED});
+  redMoves++;
+  lastMove=m;
+  selected=-1;
+  legalForSel=[];
+  hintMove=-1;
+  draw();
+  updateCount();
+
+  if(!hasAnyLegalMove(BLACK)){ winLevel(); return; }
+
+  var left=LEVELS[cur].par-redMoves;
+  if(left<=0){ loseLevel('这一步没能保持杀势，本局失败。'); return; }
+
+  thinking=true;
+  updateCount();
+  draw();
+  var token=++timerToken;
+  setTimeout(function(){
+    if(token!==timerToken || gameOver) return;
+    if(!allBlackRepliesMate(left)){ loseLevel('这一步没能保持杀势，本局失败。'); return; }
+    blackReply();
+  },40);
+}
+function blackReply(){
+  thinking=false;
+  var bms=legalMoves(BLACK);
+  if(!bms.length){ winLevel(); return; }
+  var caps=[], i, to;
+  for(i=0;i<bms.length;i++){
+    to=bms[i]%90;
+    if(board[to]) caps.push(bms[i]);
+  }
+  var m = caps.length ? pick(caps) : pick(bms);
+  var cap=applyRaw(m);
+  turn=RED;
+  history.push({m:m,cap:cap,by:BLACK});
+  lastMove=m;
+  selected=-1;
+  legalForSel=[];
+  hintMove=-1;
+  draw();
+  updateCount();
+  if(!hasAnyLegalMove(RED)){ loseLevel('红方已无子可走，本局失败。'); }
+}
+function starStr(n){
+  var s='', i;
+  for(i=0;i<3;i++) s += i<n ? '★' : '☆';
+  return s;
+}
+function winLevel(){
+  gameOver=true;
+  thinking=false;
+  timerToken++;
+  var lv=LEVELS[cur];
+  var stars = redMoves<=lv.par ? 3 : (redMoves<=lv.par+1 ? 2 : 1);
+  var pr=progress[cur] || {};
+  pr.done=true;
+  pr.stars=Math.max(pr.stars||0,stars);
+  pr.best=Math.min(pr.best||999,redMoves);
+  progress[cur]=pr;
+  store(PROG_KEY,progress);
+  renderGrid();
+  updateLevelProgress();
+  showBanner(true,stars);
+  updateCount();
+  draw();
+}
+function loseLevel(reason){
+  gameOver=true;
+  thinking=false;
+  timerToken++;
+  showBanner(false,0,reason);
+  updateCount();
+  draw();
+}
+function showBanner(win,stars,reason){
+  var lv=LEVELS[cur];
+  document.getElementById('bTitle').textContent = win ? (cur===LEVEL_TOTAL-1?'全部通关':'过 关') : '再试一次';
+  document.getElementById('bStars').textContent = win ? starStr(stars) : '';
+  var desc;
+  if(win){
+    desc='第 '+(cur+1)+' 关 · 用 '+redMoves+' 步 · 标准 '+lv.par+' 步';
+  }else{
+    desc=reason || '本局失败。';
+  }
+  document.getElementById('bDesc').textContent=desc;
+  var bn=document.getElementById('bNext');
+  bn.textContent = win ? (cur<LEVEL_TOTAL-1?'下一关':'选关') : '重玩';
+  bn.setAttribute('data-act', win ? 'next' : 'retry');
+  document.getElementById('banner').hidden=false;
+}
+function pageCount(){
+  return Math.ceil(LEVEL_TOTAL/PAGE_SIZE);
+}
+function renderPager(){
+  var host=document.getElementById('lpager');
+  if(!host) return;
+  var html='', p, a, b;
+  for(p=0;p<pageCount();p++){
+    a=p*PAGE_SIZE+1;
+    b=Math.min(LEVEL_TOTAL,(p+1)*PAGE_SIZE);
+    html+='<button type="button" class="'+(p===lpage?'on':'')+'" data-p="'+p+'">'+a+'–'+b+'</button>';
+  }
+  host.innerHTML=html;
+}
+function openLevels(){
+  if(cur>=0) lpage=Math.min(pageCount()-1,Math.floor(cur/PAGE_SIZE));
+  if(lpage<0) lpage=0;
+  renderGrid();
+  updateLevelProgress();
+  levelsEl.hidden=false;
+}
+function closeLevels(){
+  levelsEl.hidden=true;
+  if(cur<0){
+    var last=read(LAST_KEY);
+    var i=(typeof last==='number' && last>=0 && last<LEVEL_TOTAL) ? last : lpage*PAGE_SIZE;
+    if(i>=LEVEL_TOTAL) i=0;
+    loadLevel(i);
+  }
+}
+function renderGrid(){
+  var g=document.getElementById('lgrid');
+  if(!g) return;
+  var html='', i, pr, cls, st, tier;
+  var start=lpage*PAGE_SIZE, end=Math.min(LEVEL_TOTAL,start+PAGE_SIZE);
+  for(i=start;i<end;i++){
+    pr=progress[i];
+    tier=i<60?2:(i<180?3:4);
+    cls='lv t'+tier+(pr&&pr.done?' done':'')+(i===cur?' cur':'');
+    st=pr&&pr.done ? starStr(pr.stars) : '';
+    html+='<button class="'+cls+'" data-i="'+i+'"><span class="n">'+(i+1)+'</span><i class="d" aria-hidden="true"></i><em>'+st+'</em></button>';
+  }
+  g.innerHTML=html;
+  renderPager();
+  var ph=document.getElementById('lpager'), act=ph&&ph.querySelector('button.on');
+  if(act){ ph.scrollLeft=Math.max(0,act.offsetLeft-(ph.clientWidth-act.offsetWidth)/2); }
+}
+function updateLevelProgress(){
+  var n=0, k, idx;
+  for(k in progress){
+    idx=parseInt(k,10);
+    if(progress[k]&&progress[k].done&&idx>=0&&idx<LEVEL_TOTAL) n++;
+  }
+  document.getElementById('lprog').textContent='已通关 '+n+' / '+LEVEL_TOTAL;
+  var fill=document.getElementById('lpfill');
+  if(fill) fill.style.width=(LEVEL_TOTAL?n/LEVEL_TOTAL*100:0).toFixed(2)+'%';
+}
+
+/* ================= 关卡数据 ================= */
+var LEVEL_TOTAL=300;
+var attemptsForLevel=0;
+/* 紧凑格式：[棋盘, 杀棋步数, 子力标签] */
+var LEVEL_SEED=[[".c..........k.......R.........p.R.....N.............................K.....................",2,"双车马"],[".............k.C.....Rb...............R...........................K.......................",2,"双车炮"],["....Ca.........C.....k.a..................N..........................................K....",2,"马双炮"],["..R.n.C......k..................R..........................................K..............",2,"双车炮"],["...aC.N.......k.................C...........p......................K......................",2,"马双炮"],["............C..........k..b.............RC....p.............................K.............",2,"车双炮"],["....PR......k..................c.R..........................................K.............",2,"双车兵"],["....Ca........k......R.N............................................................K.....",2,"车马炮"],
+["..b..R......k..........................N..R.................p......K......................",2,"双车马"],["...........n.........Ck......N....c.....C.............................................K...",2,"马双炮"],["...a.C........k..........n....R.........N..........................K......................",2,"车马炮"],["..R.........N...n....k........N......................................................K....",2,"车双马"],["...........nR.........k.C......C...........................p......K.......................",2,"车双炮"],["..N.R.........k...r..R.a...........................................K......................",2,"双车马"],["..N.................C.k........C............pp........................................K...",2,"马双炮"],["............k.......R..R...............C.....p........................................K...",2,"双车炮"],
+[".....rR.....k........N.......C.......................................................K....",2,"车马炮"],[".....N....n..k..........R.....R...........b...........................................K...",2,"双车马"],["....................NN.k...............C..........pp........................K.............",2,"双马炮"],["...R......n..aR.......k........N....................................................K.....",2,"双车马"],["...........R.Nk......N.............r.......................................K..............",2,"车双马"],[".....nN....r.........k..C....N..............................................K.............",2,"双马炮"],["...k..........r.......RP.........R...................................................K....",2,"双车兵"],[".c....b................k........N.......R.R.......................K.......................",2,"双车马"],
+["...R.......N.........a.kN..................................................K..............",2,"车双马"],["..N..kb..........................C........R.........................................K.....",2,"车马炮"],["....k.............b..R..R.............bN............................K.....................",2,"双车马"],["..b..N......C.......C..k...........................p........................K.............",2,"马双炮"],["..N.N.........r........k.....C........b..............................................K....",2,"双马炮"],[".....k............b.........cN.R..........C................................K..............",2,"车马炮"],["....k......R.n......C.....................R..................................K............",2,"双车炮"],["..............k.....N..................C.Cb...................p......................K....",2,"马双炮"],
+[".....k......RN..c...............N.................................K.......................",2,"车双马"],["...k....................R.............RCp...........................K.....................",2,"双车炮"],["...R..........k......aN.......n.......C............................K......................",2,"车马炮"],["..bk.......N..........................RN...........................K......................",2,"车双马"],["..N.........N.k.............nR......................................................K.....",2,"车双马"],[".....a......k..................C.R.......R..................................K.............",2,"双车炮"],["...k.....c.....N........C........R..................................K.....................",2,"车马炮"],["....k...............N............n.......RR................p......K.......................",2,"双车马"],
+[".....C.........N.....k.n.................R...........................................K....",2,"车马炮"],["..bPC........k......R...............................................K.....................",2,"车炮兵"],["...Ck............................R.p...R...................................K..............",2,"双车炮"],["........r....k.................N.C.....R..........................K.......................",2,"车马炮"],["..Nk..........R......N...............p......................................K.............",2,"车双马"],["..R.........ka.................CR...................................K.....................",2,"双车炮"],["............RN.C.......k...........p................................................K.....",2,"车马炮"],[".....k.....N..................pRN..................................K......................",2,"车双马"],
+[".....cN.....C.k..............R....................................K.......................",2,"车马炮"],["...k...........N...........p.c..........RR...................................K............",2,"双车马"],["....k......R.................R.pC.....................................................K...",2,"双车炮"],["....k........a................N..C.....R............................................K.....",2,"车马炮"],["...k......................b....P.R....C.....................................K.............",2,"车炮兵"],[".....k.........n......................R.C.R................................K..............",2,"双车炮"],[".............k......PR..R.............b.............................................K.....",2,"双车兵"],["...R..........k.........c....R........b..N.........................K......................",2,"双车马"],
+["..R......n...k......C...........R............................................K............",2,"双车炮"],["....k...............R.....b...R...........Np........................................K.....",2,"双车马"],["..Nk.......R..........................N.....p...............................K.............",2,"车双马"],["..c.k...............R..................C..R.........................................K.....",2,"双车炮"],["..C....c.....k........................pRPR........................K.......................",3,"双车炮兵"],["...RCP..c........c..Rak......................................................K............",3,"双车炮兵"],["....k......P........C........R....n...................p.............K.....................",3,"车炮兵"],["..bk.a..............C.P.R...........p.R............................K......................",3,"双车炮兵"],
+["....R.n......a.N....C..k.............................................................K....",3,"车马炮"],["..r........RNnk.......C.............................................................K.....",3,"车马炮"],["....ka......C.........bR......R...........P.........................................K.....",3,"双车炮兵"],["c.....C..............k...................RN...........................................K...",3,"车马炮"],["...C.......R.........k.a......c.........P...........................K.....................",3,"车炮兵"],[".n...kC......C................R..............p...............p.......................K....",3,"车双炮"],["..R....n..............ka.......pC........R.................................K..............",3,"双车炮"],[".....a......N.k.......N.......RpCc...................................................K....",3,"车双马炮"],
+["....kaN.......C..............N......................................K.....................",3,"双马炮"],["............kC..........N.....p..r.......NR...........p.....................K.............",3,"车双马炮"],[".....k........CC......b.................N..........................K......................",3,"马双炮"],["..............k...b...........C.C.....R...N................................K..............",3,"车马双炮"],["..........r..k....b.R..................Rp.N...........................................K...",3,"双车马"],["...k.NR..c...C......................................................K.....................",3,"车马炮"],["...a.........kCR.....Cb......p..N...................................................K.....",3,"车马双炮"],[".....kN........r..n.....C...............R.R................................K..............",3,"双车马炮"],
+["...........N.k......RP............n......C.................................K..............",3,"车马炮兵"],["..Nk......r.........R..........NC...........................................K.............",3,"车双马炮"],["...C.k.....RCN....c..a.....................................................K..............",3,"车马双炮"],["...R.........k......r..a.....C....c.......R.......................K.......................",3,"双车炮"],[".............R.......kC..........c.......N..........................K.....................",3,"车马炮"],["...a.k.....R..................C.C........Nb.................................K.............",3,"车马双炮"],[".....kc...........b...........RC.........N........................K.......................",3,"车马炮"],["...k...................a..n.....CR...p..N..........................K......................",3,"车马炮"],
+["..rc.........kC..............R.P.......R.........p...........................K............",3,"双车炮兵"],["....k.C.........................RC....b...........................K.......................",3,"车双炮"],["......b.....k..P....R........C..cR......................p....................K............",3,"双车炮兵"],["...C........k........NbR.....c............C.................................K.............",3,"车马双炮"],[".................cb.N..k..b.....CR................................K.......................",3,"车马炮"],["..............k..c...R..C.......N............p.............................K..............",3,"车马炮"],["..R...........rC....Nk...................C...........................................K....",3,"车马双炮"],[".....RC.....k........a.R..........c.....N...........................K.....................",3,"双车马炮"],
+[".....c.........R..b...k.....n.R...........C...........................................K...",3,"双车炮"],["..R.........C....n..rk.C..............bN............................K.....................",3,"车马双炮"],["............r..........k.c....RR........C.........................K.......................",3,"双车炮"],["....................RC.kC....................p.............................K..............",3,"车双炮"],["...r........N.......nkC...............R..............................................K....",3,"车马炮"],["....k.b.............R..aP................R.................................K..............",3,"双车兵"],[".....k.c..n............C.........R....N..............................................K....",3,"车马炮"],["...a........NCk.....n..a.....R...........R........................K.......................",3,"双车马炮"],
+["............k.....c.....C........N.......R.........................K......................",3,"车马炮"],["......b.....k........aN.C.......N.........R.................................K.............",3,"车双马炮"],["c..Nkn......R....................R.............p...........................K..............",3,"双车马"],[".....k...............a........C....p....C.R................................K..............",3,"车双炮"],["..P..C.......k............b........p..RN............................K.....................",3,"车马炮兵"],["....C......N.kN...........................b................................K..............",3,"双马炮"],["r.C..........k.......a.......P....p...R...N...........................................K...",3,"车马炮兵"],[".............k.......R........P.......b...R.........................................K.....",3,"双车兵"],
+[".....k.c.....R......N.........C...c....p.............................................K....",3,"车马炮"],["......R..n..........Rn.k.......Cc....................................................K....",3,"双车炮"],["......C......a.R......Ckr.....................................p....K......................",3,"车双炮"],["..C..k............c...P......R........R..............................................K....",3,"双车炮兵"],["...Nk..........R........C....c....p.......R................................K..............",3,"双车马炮"],["...k.........N..........R......P.C..........................p...............K.............",3,"车马炮兵"],[".....k.....rR...c....N........c..........N.........................K......................",3,"车双马"],["...a.kN...................b.....N.....R..............................................K....",3,"车双马"],
+["....k.......R.......C............C....b.............................................K.....",3,"车双炮"],["....C........k......R..RP.........c...b...............p.............................K.....",3,"双车炮兵"],[".............k....b...c.R.............NC.R.................................K..............",3,"双车马炮"],["c....k...............CP...b..Rp............................................K..............",3,"车炮兵"],["......C........N..b..a.k.......N...................................K......................",3,"双马炮"],["....P.......k...........R.b....R........p.................p.................K.............",3,"双车兵"],["....k..................a.....PC.R........N...................................K............",3,"车马炮兵"],["....k..........C...............p.C....R...............................................K...",3,"车双炮"],
+["...k..........CN..........b.............C............................................K....",3,"马双炮"],["....C........k.......................p.C.R..........................K.....................",3,"车双炮"],["...........RC.kc..b...N...............N...........................K.......................",3,"车双马炮"],["....n......C..k..............R..P...........................................K.............",3,"车炮兵"],[".....k................r...r..R..NN.........................................K..............",3,"车双马"],["......c.......k.....C.b.......R.........R..................................K..............",3,"双车炮"],[".....a.....R.rk........N.......P........C.........................K.......................",3,"车马炮兵"],["...........RNk.........a............p.R..............p................................K...",3,"双车马"],
+[".....k............b....C.....C...R..................................................K.....",3,"车双炮"],["....c......Rr.........kC......Pp......R.............................................K.....",3,"双车炮兵"],["....k.........R......a...........C........C.........................K.....................",3,"车双炮"],["....k.................NaC....R............R..................................K............",3,"双车马炮"],["...a.R................k.......C..C.........................................K..............",3,"车双炮"],["....N.........k......ar.....c..R.......N.............................................K....",3,"车双马"],["......N.......C.....R.bk..................b.........................................K.....",3,"车马炮"],[".....k.....R........Pa.......N........R......................p......................K.....",3,"双车马兵"],
+["..PR.ac.......k.......b...............RN...........................K......................",3,"双车马兵"],["...N....n.rr.NR......k..........C..................................K......................",3,"车双马炮"],["......R.......n......k.........C.........C.............p............K.....................",3,"车双炮"],["..R................r..k.C.....C.......................................................K...",3,"车双炮"],["....k........N.c......RR..c............C.....p....................K.......................",3,"双车马炮"],["..b...........nC.....k........N...........N..........................................K....",3,"双马炮"],["..Ck..b...........b....r.......NN.....R.....................................K.............",3,"车双马炮"],["..P.k......C.................CN..................p................K.......................",3,"马双炮兵"],
+["....N.......k..........a................C.Np.......................K......................",3,"双马炮"],["....k......R.........................p.RP...................p.......K.....................",3,"双车兵"],["n..k..N................R.........C....C......................................K............",3,"车马双炮"],["..Ca.......nC.k..............R......................................................K.....",3,"车双炮"],["....P........k........Na...............C..C................................K..............",3,"马双炮兵"],[".....R........Nc.....C.k.n...R................p.....................................K.....",3,"双车马炮"],["....k........c.R....C..rP....N....................................K.......................",3,"车马炮兵"],["...k..r......r............c..R........N..RC.........................K.....................",3,"双车马炮"],
+["..n...b.......k.......N.R.....pC......N..............................................K....",3,"车双马炮"],["...........n..C......kN....p..C........R..............................................K...",3,"车马双炮"],[".......c...N.k.................C.N........................p...........................K...",3,"双马炮"],[".cR...P......k.........a........R............................................K............",3,"双车兵"],["....k....c.....R..b.R.b...............P...C.........................................K.....",3,"双车炮兵"],[".....R.....N.k......R..a..c.................................p.........................K...",3,"双车马"],["..b..k..............N...c....C...Rn.........................................K.............",3,"车马炮"],["....k......C.n.........aR....R......................................................K.....",3,"双车炮"],
+["...k...........C......n.........C.........R.................................K.............",3,"车双炮"],["...Cc.N....R.........k....................C.........................K.....................",3,"车马双炮"],[".....Rb.....ka..........C.............R...........p...................................K...",3,"双车炮"],["..N.kC..................................N..p.................................K............",3,"双马炮"],["....C.N.......k.......bn.................N......p....................................K....",3,"双马炮"],[".........n..k.N............n.....N....C.............................K.....................",3,"双马炮"],["............k...........C......R........P.b..........................................K....",3,"车炮兵"],[".....C......k........C........N...r...R......................................K............",3,"车马双炮"],
+["....k...............R.......nRp........P...................................K..............",3,"双车兵"],["..b.........k.........b......c..N.....RC..............................................K...",3,"车马炮"],[".n...........kC...n..........pR.........C...........................................K.....",3,"车双炮"],["..bk.........C.......P...........C........N.................................K.............",3,"马双炮兵"],["...ak......N.a.......C...........P........R..................p.............K..............",4,"车马炮兵"],["............k........a.aRn...P..R.........C..................................K............",4,"双车炮兵"],["..b...R..r...k........bC..............C.N..................................K..............",4,"车马双炮"],[".....k.......aN........a...............N.R...................p....K.......................",4,"车双马"],
+["...N.k.................a.....nCpR.....R.............................................K.....",4,"双车马炮"],["r.....R.....kC.R...c................................................K.....................",4,"双车炮"],["..b.k....r.......................C....R...R...........................................K...",4,"双车炮"],["...a..P..............k..C....CN.......b.............................K.....................",4,"马双炮兵"],["..nk..........C.........R....r.........N....................................K.............",4,"车马炮"],["r..R..........kC................C............................p.............K..............",4,"车双炮"],[".r...k.....c.RN.........P.....R..r...................................................K....",4,"双车马兵"],[".....c...............k.......R.r.C.....pPR.........................K......................",4,"双车炮兵"],
+[".....................ak.N......C.....p.C..P................................K..............",4,"马双炮兵"],[".c...........k.N.....C..C........R....................................................K...",4,"车马双炮"],["..C..........a........k.........C..n......R.......................K.......................",4,"车双炮"],["...P..R....R.a..n....k.......C..c....................................................K....",4,"双车炮兵"],["...P..C...............k........c.......R...................................K..............",4,"车炮兵"],["...Nk.............b....R........C.....P..........p....................................K...",4,"车马炮兵"],["...k..C..........n....b......Rp.NC.................................K......................",4,"车马双炮"],["............Ck.......a.........C.n.....PN..................................K..............",4,"马双炮兵"],
+["...k.r..............P...C.b............N..C..........................................K....",4,"马双炮兵"],[".c....C.....Na........Nk..b..........................................................K....",4,"双马炮"],["..R.n.........k...b............Cr........NR........................K......................",4,"双车马炮"],[".............k.C........P.....p.........CN...................................K............",4,"马双炮兵"],["...N..n.....k.......P.C................C.....................................K............",4,"马双炮兵"],["..C.........kC........RN..........n..............p...................................K....",4,"车马双炮"],[".....NC.......CP.......k.......c.....................................................K....",4,"马双炮兵"],["..bNk........................C...C....................................................K...",4,"马双炮"],
+["..................c...k.P.....N.C.......C.............................................K...",4,"马双炮兵"],[".....k........N......C...n...............RC..........p............K.......................",4,"车马双炮"],[".............ak.....n........R........P...C................................K..............",4,"车炮兵"],["..N..a.....P...C....C..k...................................................K..............",4,"马双炮兵"],[".............Nk.......b.R.b......P.....C....................................K.............",4,"车马炮兵"],[".nb...........k.....C...P.............CN..........................K.......................",4,"马双炮兵"],[".......n.......N......ka......N.........C....................................K............",4,"双马炮"],["....Ck......r................RN..........N........................K.......................",4,"车双马炮"],
+["......R.......C........kN.....Cn.....................................................K....",4,"车马双炮"],["....k................Cb.P.....CN..................................K.......................",4,"马双炮兵"],["r...k........a.......c...........R......PR...................................K............",4,"双车兵"],[".....N........k.....nR.r.................N..p........................................K....",4,"车双马"],["...k.a...........................N......C.R...........p.............K.....................",4,"车马炮"],["....k..........R..b.....C.b..............N..................p.........................K...",4,"车马炮"],["...k..b......N.C.....n..........CR..........p.........................................K...",4,"车马双炮"],["....k.........N......n.C.....RP...........b.......................K.......................",4,"车马炮兵"],
+["...a..N......N........k.....c..C.......R.................p...................K............",4,"车双马炮"],["..P...C......N.......C.k..............b..............................................K....",4,"马双炮兵"],["....Ckc...c.N.......R...n.................R.......................K.......................",4,"双车马炮"],[".....Cb....C.........kN...........p..................................................K....",4,"马双炮"],["..c.k..........C.......R.......n..........N...........................................K...",4,"车马炮"],["..c.........k.P..c...a..........RR.....N............................K.....................",4,"双车马兵"],["...C.R.....C.n.......k.....p...n.N...........................................K............",4,"车马双炮"],["...a..C......k.......N..n......P.........C........................K.......................",4,"马双炮兵"],
+["....kC............b..C..........N.................................K.......................",4,"马双炮"],["...........C.k........C................N................p.........K.......................",4,"马双炮"],[".....C.......Nk......r..r......R......C.....................................K.............",4,"车马双炮"],["...a.k..............R..C..b....n.......NC.........................K.......................",4,"车马双炮"],["....k.b.......................C.......N...N.......................K.......................",4,"双马炮"],[".............k....b....C......P........R............................K.....................",4,"车炮兵"],["....k.......P.C................Cc.......N...........................................K.....",4,"马双炮兵"],["n.b...R.......P......k.......C........................................................K...",4,"车炮兵"],
+["....k.......C..........a.......N.C...........................................K............",4,"马双炮"],["...n..N..n..C..C......k.........P......p............................K.....................",4,"马双炮兵"],[".....C.....Ck...........N...n...R.......p..........p................K.....................",4,"车马双炮"],["..............k......C.CP...............N.b..........................................K....",4,"马双炮兵"],[".....kb........N....C........C........b...P..........................................K....",4,"马双炮兵"],["..N...........k.....C.C...............P......................p....K.......................",4,"马双炮兵"],["............k.......P..rC....C...........N.........................K......................",4,"马双炮兵"],["....C......R.....rb...kN............................................K.....................",4,"车马炮"],
+["..............C...b.Nk.......N..............................p.......K.....................",4,"双马炮"],["..............kN....N......c.....C...........................p....K.......................",4,"双马炮"],["..C..C............b...k........N....................................K.....................",4,"马双炮"],["....C........a.......k.N..................N..........................................K....",4,"双马炮"],["...R.........k..c.....N......Cr.......b..R...................................K............",4,"双车马炮"],["......R.....k.c...b..N...........Nr..................................................K....",4,"车双马"],["..nk.......R.C......C........c...........N..................................K.............",4,"车马双炮"],[".....k...............R.......C...n.....R...........p..............K.......................",4,"双车炮"],
+[".....n...............ck...............NR.C...................................K............",4,"车马炮"],["..b..........akN.....CR...r............R............................................K.....",4,"双车马炮"],[".....ab.....k.......N..C........N...................................K.....................",4,"双马炮"],["..N..C..............n..k.....C.n.R.................................K......................",4,"车马双炮"],["...kc.........CP.............N............C...p..............................K............",4,"马双炮兵"],["...k..........C........R......nC....................................K.....................",4,"车双炮"],["..r.k.........C...............P..........NR.........................................K.....",4,"车马炮兵"],["..bk.a.........N...............CcN..........................................K.............",4,"双马炮"],
+["...k.a.........R....P...R.......c.......Cp.........................K......................",4,"双车炮兵"],["...ak.......C.n.......N......R.............................................K..............",4,"车马炮"],["..C..k.....P.aC................N.............p....................K.......................",4,"马双炮兵"],[".....kb..n...C.R.................P...................................................K....",4,"车炮兵"],["..bNk..................C......c.........N.R.p.......................................K.....",4,"车双马炮"],["....k............n....NC.c......R............................................K............",4,"车马炮"],["..P..k.......a....r..C.......R...........N.........................K......................",4,"车马炮兵"],["..N..kC..c........................n.....R..................................K..............",4,"车马炮"],
+["...aC..................k.........C....N....................................K..............",4,"马双炮"],[".....a.....NkC...............C.......................................................K....",4,"马双炮"],["....k.......N..R....ca.P.........C............................p..............K............",4,"车马炮兵"],[".....kb....rR................C........N.P...................................K.............",4,"车马炮兵"],["....C........NC......k....b.........................................K.....................",4,"马双炮"],["............C.C........k.....Pp.p.........N.........................................K.....",4,"马双炮兵"],[".....aC.......k............p.R.r.R......P.........................K.......................",4,"双车炮兵"],["...C..R...........b..P.k.......n....................................................K.....",4,"车炮兵"],
+["............CkNR.....a........P....c..............................K.......................",4,"车马炮兵"],["............k........Cr.......c.......R.R.............................................K...",4,"双车炮"],[".n..k........N......R.........P.r.....R...b................................K..............",4,"双车马兵"],["..RN........k.C.................p...........................p.......K.....................",4,"车马炮"],["..b.C.C....P.N.........k.n.........................................K......................",4,"马双炮兵"],["....k.........C..................N....b...N................................K..............",4,"双马炮"],["...C...c....k.............c..R.n.R......P.............................................K...",4,"双车炮兵"],["...a.a.n.....k.......C.........C.......R..N................................K..............",4,"车马双炮"],
+[".............kC........r......RN.n.r...R............................................K.....",4,"双车马炮"],["....k....r.P.a..........R.....R...........b.........................K.....................",4,"双车兵"],["............P.k........C...p.c.CN...........................................K.............",4,"马双炮兵"],["......R...r.........NCk.N.b.....n..........................................K..............",4,"车双马炮"],[".c.k.C..................N.......PC...........................................K............",4,"马双炮兵"],[".....C.....NR.......N..k....r........p.....................................K..............",4,"车双马炮"],["...........n.C.P.....k.N.......C.............................................K............",4,"马双炮兵"],["....k......c........C..CR..............N..........................K.......................",4,"车马双炮"],
+["..............R.....Ck....n.....C.........................p.........K.....................",4,"车双炮"],["r.b..kr........C.....R................C.N...........................................K.....",4,"车马双炮"],["......C.....R..........k..............P...................p.................K.............",4,"车炮兵"],["..b..k...c.P.C...............N.........C....p.......................................K.....",4,"马双炮兵"]];
+function buildLevelsFromSeed(){
+  LEVELS=LEVEL_SEED.map(function(a){
+    var mate=a[1];
+    return {
+      pos:a[0],
+      mate:mate,
+      par:mate,
+      label:MATE_LABEL[mate]||(mate+'步杀'),
+      mat:a[2]||'残局'
+    };
+  });
+}
+function loadProgress(){
+  var p=read(PROG_KEY);
+  progress = (p && typeof p==='object') ? p : {};
+  /* 300 关全部重制，旧通关记录与现有关卡已不对应，首次升级时整体清空 */
+  if(!read('txq_xqend_prog_v5')){
+    progress={};
+    store(PROG_KEY,progress);
+    store('txq_xqend_prog_v5',1);
+  }
+}
+function cacheValid(v){
+  if(!v || v.length!==LEVEL_TOTAL) return false;
+  for(var i=0;i<v.length;i++){
+    if(!v[i] || typeof v[i].pos!=='string' || v[i].pos.length!==90) return false;
+    if(v[i].mate!==v[i].par || v[i].mate<2 || v[i].mate>5) return false;
+  }
+  return true;
+}
+function afterReady(){
+  var last=read(LAST_KEY);
+  cur=-1;
+  lpage=(typeof last==='number' && last>=0 && last<LEVEL_TOTAL) ? Math.floor(last/PAGE_SIZE) : 0;
+  board.fill(0);
+  turn=RED;
+  redMoves=0;
+  history=[];
+  selected=-1;
+  legalForSel=[];
+  hintMove=-1;
+  lastMove=-1;
+  gameOver=false;
+  thinking=false;
+  updateSub();
+  updateCount();
+  draw();
+  renderGrid();
+  updateLevelProgress();
+  levelsEl.hidden=false;
+  resize();
+}
+function boot(){
+  loadProgress();
+  var cached=read(LEVEL_KEY);
+  if(cacheValid(cached)){
+    LEVELS=cached;
+  }else{
+    buildLevelsFromSeed();
+    store(LEVEL_KEY,LEVELS);
+  }
+  document.getElementById('loading').hidden=true;
+  afterReady();
+}
+
+/* ================= 事件绑定 ================= */
+cv.addEventListener('click',function(e){
+  if(cur<0 || !LEVELS.length || gameOver || thinking || turn!==RED) return;
+  var r=cv.getBoundingClientRect();
+  var mx=e.clientX-r.left, my=e.clientY-r.top;
+  var x=Math.round((mx-ox)/cell), y=Math.round((my-oy)/cell);
+  if(x<0||x>8||y<0||y>9) return;
+  var cx=ox+x*cell, cy=oy+y*cell;
+  if((mx-cx)*(mx-cx)+(my-cy)*(my-cy) > (cell*0.58)*(cell*0.58)) return;
+  var sq=y*9+x;
+  if(selected>=0 && legalForSel.indexOf(sq)>=0){
+    playRed(selected*90+sq);
+    return;
+  }
+  if(board[sq]>0){
+    selectSquare(sq);
+    return;
+  }
+  selected=-1;
+  legalForSel=[];
+  draw();
+});
+
+document.getElementById('levelsBtn').addEventListener('click',openLevels);
+document.getElementById('lclose').addEventListener('click',closeLevels);
+document.getElementById('retryBtn').addEventListener('click',function(){
+  if(cur>=0) loadLevel(cur);
+});
+document.getElementById('nextBtn').addEventListener('click',function(){
+  if(!LEVELS.length) return;
+  if(cur<0){ openLevels(); return; }
+  if(cur<LEVEL_TOTAL-1) loadLevel(cur+1);
+  else { toast('已经是最后一关'); openLevels(); }
+});
+document.getElementById('undoBtn').addEventListener('click',function(){
+  if(cur<0 || !LEVELS.length || gameOver) return;
+  if(thinking){ toast('等黑方走完再撤销'); return; }
+  if(!history.length){ toast('还没有可撤销的走法'); return; }
+  var did=0;
+  while(history.length && (did===0 || turn!==RED)){
+    undoOne();
+    did++;
+  }
+  selected=-1;
+  legalForSel=[];
+  hintMove=-1;
+  document.getElementById('banner').hidden=true;
+  updateCount();
+  draw();
+});
+document.getElementById('bNext').addEventListener('click',function(){
+  var bn=document.getElementById('bNext');
+  if(bn.getAttribute('data-act')==='retry'){ if(cur>=0) loadLevel(cur); return; }
+  if(LEVELS.length && cur>=0 && cur<LEVEL_TOTAL-1) loadLevel(cur+1);
+  else openLevels();
+});
+document.getElementById('bRetry').addEventListener('click',function(){
+  if(cur>=0) loadLevel(cur);
+});
+document.getElementById('bLevels').addEventListener('click',openLevels);
+document.getElementById('lreset').addEventListener('click',function(){
+  if(!confirm('确定清空全部通关记录吗？')) return;
+  progress={};
+  store(PROG_KEY,progress);
+  renderGrid();
+  updateLevelProgress();
+  toast('进度已清空');
+});
+document.getElementById('lgrid').addEventListener('click',function(e){
+  var b=e.target.closest ? e.target.closest('.lv') : null;
+  if(!b) return;
+  var i=parseInt(b.getAttribute('data-i'),10);
+  if(!isNaN(i)) loadLevel(i);
+});
+document.getElementById('lpager').addEventListener('click',function(e){
+  var b=e.target.closest ? e.target.closest('button[data-p]') : null;
+  if(!b) return;
+  var p=parseInt(b.getAttribute('data-p'),10);
+  if(isNaN(p) || p<0 || p>=pageCount()) return;
+  lpage=p;
+  renderGrid();
+  document.getElementById('lgrid').scrollTop=0;
+});
+window.addEventListener('resize',function(){
+  if(!LEVELS.length) return;
+  resize();
+});
+
+boot();
+
+})();
+</script>
+</body>
+</html>
+
